@@ -1,0 +1,22 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e265]:
+      - generic [ref=e267]:
+        - generic [ref=e268] [cursor=pointer]
+        - generic [ref=e269]: 4/5
+      - generic [ref=e270]:
+        - generic [ref=e272]: 내가 선호하는 여행 스타일은?
+        - generic [ref=e273]: 다중 선택이 가능해요.
+      - generic [ref=e275]:
+        - generic [ref=e276]: 체험·액티비티
+        - generic [ref=e278]: SNS 핫플레이스
+        - generic [ref=e280]: 자연과 함께
+        - generic [ref=e282]: 유명 관광지는 필수
+        - generic [ref=e284]: 여유롭게 힐링
+        - generic [ref=e286]: 문화·예술·역사
+        - generic [ref=e288]: 여행지 느낌 물씬
+        - generic [ref=e290]: 쇼핑은 열정적으로
+        - generic [ref=e292]: 관광보다 먹방
+      - button "다음" [disabled] [ref=e296]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]: 나를 아는 여행 앱, 트리플

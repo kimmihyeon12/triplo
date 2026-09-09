@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e237]:
+      - generic [ref=e239]:
+        - generic [ref=e240] [cursor=pointer]
+        - generic [ref=e241]: 3/5
+      - generic [ref=e242]:
+        - generic [ref=e244]: 누구와 떠나나요?
+        - generic [ref=e245]: 다중 선택이 가능해요.
+      - generic [ref=e247]:
+        - generic [ref=e248]: 혼자
+        - generic [ref=e250]: 친구와
+        - generic [ref=e252]: 연인과
+        - generic [ref=e254]: 배우자와
+        - generic [ref=e256]: 아이와
+        - generic [ref=e258]: 부모님과
+        - generic [ref=e260]: 기타
+      - button "다음" [disabled] [ref=e264]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]: 나를 아는 여행 앱, 트리플

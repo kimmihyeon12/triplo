@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>현재 여행 앱과 트리플 — 디자인 비교</title>
+<style>
+body{margin:0;background:#f5f5f5;color:#202020;font:16px/1.6 system-ui,sans-serif}main{max-width:1080px;margin:auto;padding:32px 20px}h1{font-size:26px;line-height:1.4}p{max-width:850px}.pair{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}figure{margin:0;width:390px;max-width:100%}figcaption{font-weight:700;margin:12px 0}img{display:block;width:100%;height:auto;border:1px solid #ddd;box-sizing:border-box}small{display:block;color:#555}a{color:#2458bb}li{margin:8px 0}
+</style>
+<main>
+<h1>현재 여행 앱과 트리플 비교</h1>
+<p>2026-09-09 캡처 기준. 현재 앱은 수동 일정 편집 화면, 트리플은 공개 웹의 추천 결과 화면이다. 모바일은 모두 390×844. 현재 앱 지도는 테스트 픽스처로, 실제 지도 품질을 평가하는 화면이 아니다.</p>
+<div class="pair">
+<figure><figcaption>현재 앱 · 날짜별 일정</figcaption><img src="mobile-days-viewport.png" alt="현재 여행 앱: 제목과 탭 아래 큰 테스트 지도가 있고 첫 장소는 화면 아래에 있음"><small>첫 화면에서 장소명이 보이지 않는다. 하단은 장소·숙소 추가 동작.</small></figure>
+<figure><figcaption>트리플 · 맞춤 일정 결과</figcaption><img src="../triple-reference/06-result-day1.png" alt="트리플: 상단 지도 아래 날짜 탭과 사진을 포함한 장소 카드 두 개, 하단 담기 버튼"><small>지도·탭 아래 장소 카드 두 개를 읽을 수 있다. 하단은 담기 동작.</small></figure>
+</div>
+<p><a href="mobile-days.png">현재 날짜별 화면 전체</a> · <a href="desktop-days-viewport.png">현재 PC 화면</a> · <a href="../triple-reference/08-result-desktop.png">트리플 PC 결과</a> · <a href="mobile-overview.png">현재 전체 보기</a> · <a href="mobile-add-place.png">현재 장소 추가</a></p>
+<ol>
+<li>모바일 머리글과 지도를 줄이고 접기/확대를 제공해 첫 장소를 앞당긴다.</li>
+<li>장소 카드는 이름·분류·체류 계획·필요 상태를 우선하고 보조 편집 동작을 접는다.</li>
+<li>PC는 지도와 일정 목록을 나란히 배치한다. 이는 우리 편집 앱에 맞춘 제안이다.</li>
+<li>추가 화면은 장소 검색·선택을 앞세우고 선택 입력은 펼쳐 보기로 줄인다.</li>
+</ol>
+<p>색상은 현재 앱의 파랑을 기준으로 비교했다. 사진은 사용 권한이 확인된 장소 이미지가 있을 때만 도입한다. 트리플 이미지·문구를 제품 자산으로 복사하지 않는다.</p>
+<p><a href="https://triple.guide/trips/promotion/customized-schedule">트리플 공개 참고 페이지</a> · <a href="../../../docs/디자인-비교-검토-2026-09-09.md">상세 검토 보고서</a></p>
+</main>
+</html>

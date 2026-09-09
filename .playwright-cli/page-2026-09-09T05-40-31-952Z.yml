@@ -1,0 +1,10 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e16] [cursor=pointer]
+      - generic [ref=e17]:
+        - generic [ref=e18]: 취향에 맞게 일정을 추천해 드려요!
+        - generic [ref=e19]: 순식간에 여행 준비 끝
+      - button "바로 추천받기" [ref=e23] [cursor=pointer]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]

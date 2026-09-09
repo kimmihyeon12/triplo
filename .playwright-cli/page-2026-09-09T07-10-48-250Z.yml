@@ -1,0 +1,22 @@
+- generic [ref=f2e2]:
+  - link "본문으로 건너뛰기" [ref=f2e3] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - link "내 여행 홈" [ref=f2e6] [cursor=pointer]:
+        - /url: /trips
+        - generic [ref=f2e8]: 내 여행
+      - generic "이 기기에만 저장되는 내부 알파 버전입니다" [ref=f2e9]: 내부 알파 · 기기 저장
+  - main [ref=f2e10]:
+    - generic [ref=f2e12]:
+      - generic [ref=f2e13]:
+        - generic [ref=f2e14]:
+          - heading "내 여행" [level=1] [ref=f2e15]
+          - paragraph [ref=f2e16]: 여행을 만들고 장소와 숙소를 정리하세요
+        - link [ref=f2e17] [cursor=pointer]:
+          - /url: /trips/new
+      - generic [ref=f2e21]:
+        - heading "아직 만든 여행이 없습니다" [level=2] [ref=f2e25]
+        - paragraph [ref=f2e26]: 날짜를 정하지 않아도 시작할 수 있습니다. 장소와 숙소는 나중에 채워도 됩니다.
+        - link "첫 여행 만들기" [ref=f2e27] [cursor=pointer]:
+          - /url: /trips/new

@@ -1,0 +1,7 @@
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+startup_timeout_sec = 30
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?features=docs"
+startup_timeout_sec = 30

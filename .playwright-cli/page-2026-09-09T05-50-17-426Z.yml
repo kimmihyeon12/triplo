@@ -1,0 +1,116 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e326] [cursor=pointer]
+    - generic [ref=e327]:
+      - generic [ref=e329]:
+        - text: 강릉·속초, 3박 4일
+        - strong [ref=e330]: 추천일정
+        - text: 입니다.
+      - generic [ref=e331]: 트리플이 알려준 맞춤일정으로 여행을 떠나보세요.
+    - generic [ref=e332]:
+      - tablist [ref=e335]:
+        - tab "Day 1" [selected] [ref=e336] [cursor=pointer]
+        - tab "Day 2" [ref=e337] [cursor=pointer]
+        - tab "Day 3" [ref=e338] [cursor=pointer]
+        - tab "Day 4" [ref=e339] [cursor=pointer]
+      - tabpanel "Day 1" [ref=e340]:
+        - list [ref=e341]:
+          - listitem [ref=e342]:
+            - generic [ref=e343]: "1"
+            - generic [ref=e344] [cursor=pointer]:
+              - img "강릉역" [ref=e346]
+              - generic [ref=e347]:
+                - generic [ref=e348]: 강릉역
+                - generic [ref=e349]: 관광명소 · 강릉
+              - generic [ref=e351]:
+                - generic [ref=e352]: 추천
+                - generic [ref=e353]: KTX와 무궁화호 등 전국으로 향하는 다양한 열차를 탑승할 수 있는 역
+          - listitem [ref=e354]:
+            - generic [ref=e355]: "2"
+            - generic [ref=e356] [cursor=pointer]:
+              - img "강릉 중앙 시장" [ref=e358]
+              - generic [ref=e359]:
+                - generic [ref=e360]: 강릉 중앙 시장
+                - generic [ref=e361]: 쇼핑 · 강릉
+              - generic [ref=e363]:
+                - generic [ref=e364]: 추천
+                - generic [ref=e365]: 강릉 대표 간식거리가 모두 모여있는 전통 시장
+          - listitem [ref=e366]:
+            - generic [ref=e367]: "3"
+            - generic [ref=e368]: 식사 장소 추천
+            - generic [ref=e369] [cursor=pointer]:
+              - img "벌집" [ref=e371]
+              - generic [ref=e372]:
+                - generic [ref=e373]: 벌집
+                - generic [ref=e374]: 음식점 · 강릉
+              - generic [ref=e376]:
+                - generic [ref=e377]: 추천
+                - generic [ref=e378]: "'백종원의 3대 천왕'에 소개된, 얼큰한 맛이 일품인 장 칼국수 맛집"
+          - listitem [ref=e379]:
+            - generic [ref=e380]: "4"
+            - generic [ref=e381] [cursor=pointer]:
+              - img "안목 해변" [ref=e383]
+              - generic [ref=e384]:
+                - generic [ref=e385]: 안목 해변
+                - generic [ref=e386]: 관광명소 · 강릉
+              - generic [ref=e388]:
+                - generic [ref=e389]: 추천
+                - generic [ref=e390]: 강릉 커피 거리가 위치한 강릉의 대표 해변
+          - listitem [ref=e391]:
+            - generic [ref=e392]: "5"
+            - generic [ref=e393] [cursor=pointer]:
+              - img "경포호" [ref=e395]
+              - generic [ref=e396]:
+                - generic [ref=e397]: 경포호
+                - generic [ref=e398]: 관광명소 · 강릉
+              - generic [ref=e400]:
+                - generic [ref=e401]: 추천
+                - generic [ref=e402]: 산책로를 걷거나 자전거를 타기 좋은 아름다운 호수
+          - listitem [ref=e403]:
+            - generic [ref=e404]: "6"
+            - generic [ref=e405]: 식사 장소 추천
+            - generic [ref=e406] [cursor=pointer]:
+              - img "테라로사 경포호 점" [ref=e408]
+              - generic [ref=e409]:
+                - generic [ref=e410]: 테라로사 경포호 점
+                - generic [ref=e411]: 카페/디저트 · 강릉
+              - generic [ref=e413]:
+                - generic [ref=e414]: 추천
+                - generic [ref=e415]: 벽면을 가득 채운 아트북 컬렉션이 시선을 사로잡는 스페셜티 카페
+          - listitem [ref=e416]:
+            - generic [ref=e417]: "7"
+            - generic [ref=e418]: 숙소로 이동
+            - generic [ref=e419] [cursor=pointer]:
+              - img "강릉 세인트존스호텔" [ref=e421]
+              - generic [ref=e422]:
+                - generic [ref=e423]: 강릉 세인트존스호텔
+                - generic [ref=e424]: 강릉
+              - generic [ref=e426]:
+                - generic [ref=e427]: 추천
+                - generic [ref=e428]: 버블 파티와 디제잉 공연을 즐길 수 있는 인피니티 풀로 인기인 호텔
+      - generic [ref=e429]:
+        - img "heart" [ref=e430]
+        - generic [ref=e431]: 추천일정이 마음에 드세요?
+        - generic [ref=e432]: 추천받은 일정을 내 일정으로 담으면 언제든 확인하고 편집할 수 있어요!
+      - generic [ref=e433]:
+        - button "내 일정으로 담기" [ref=e435] [cursor=pointer]
+        - generic [ref=e437]:
+          - img "notice icon" [ref=e438]
+          - generic [ref=e439]: 담은 일정은 트리플 앱에서 다시 확인하실 수 있습니다.
+        - generic [ref=e440]:
+          - button "새로운 추천받기" [ref=e441] [cursor=pointer]
+          - button "다시하기" [ref=e443] [cursor=pointer]
+        - button "내 일정으로 담기" [ref=e445] [cursor=pointer]
+    - generic [ref=e447]:
+      - generic [ref=e448]: APP Download
+      - generic [ref=e449]: 더 많은 도시와 다양한 일정은트리플에서 확인하세요!
+      - generic [ref=e451]:
+        - button "트리플 앱 다운로드" [ref=e452] [cursor=pointer]
+        - button "다시하기" [ref=e453] [cursor=pointer]
+      - generic [ref=e457]:
+        - generic [ref=e458]: 30초 만에 일정 완성!
+        - generic [ref=e459]: 여행 준비 중인 친구에게 보내주세요.
+        - button "공유하기" [ref=e460] [cursor=pointer]
+    - img "신규가입 웰컴쿠폰 30만원 팩!" [ref=e466] [cursor=pointer]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]: "[트리플] ‘강릉·속초 3박 4일’ 일정 완성"
