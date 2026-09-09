@@ -1,0 +1,12 @@
+node_modules/
+.cache/
+.env
+.env.*
+!.env.example
+artifacts/
+.playwright-mcp/
+app/dist/
+app/e2e-report/
+app/test-results/
+.impeccable/review/
+app/public/app-config.json

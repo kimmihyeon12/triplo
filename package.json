@@ -1,0 +1,17 @@
+{
+  "name": "travel-companion",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Domestic travel planning - internal alpha (Angular app in app/)",
+  "scripts": {
+    "spec": "openspec",
+    "spec:check": "openspec validate --all --strict",
+    "app:start": "npm --prefix app start",
+    "app:test": "npm --prefix app test",
+    "app:e2e": "npm --prefix app run e2e",
+    "app:build": "npm --prefix app run build"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.12.0"
+  }
+}

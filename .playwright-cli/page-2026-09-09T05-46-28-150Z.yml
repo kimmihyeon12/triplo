@@ -1,0 +1,19 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e211]:
+      - generic [ref=e213]:
+        - generic [ref=e214] [cursor=pointer]
+        - generic [ref=e215]: 2/5
+      - generic [ref=e216]:
+        - generic [ref=e218]: 여행 기간은?
+        - generic [ref=e219]: 원하는 기간을 선택해 주세요.
+      - generic [ref=e221]:
+        - generic [ref=e222]: 당일치기
+        - generic [ref=e224]: 1박 2일
+        - generic [ref=e226]: 2박 3일
+        - generic [ref=e228]: 3박 4일
+        - generic [ref=e230]: 4박 5일
+        - generic [ref=e232]: 5박 6일
+      - button "다음" [ref=e236] [cursor=pointer]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]: 나를 아는 여행 앱, 트리플

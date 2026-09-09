@@ -1,0 +1,15 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e297]:
+      - generic [ref=e299]:
+        - generic [ref=e300] [cursor=pointer]
+        - generic [ref=e301]: 5/5
+      - generic [ref=e302]:
+        - generic [ref=e304]: 선호하는 여행 일정은?
+        - generic [ref=e305]: 선택해주신 스타일로 일정을 만들어드려요.
+      - generic [ref=e307]:
+        - generic [ref=e308]: 빼곡한 일정 선호
+        - generic [ref=e310]: 널널한 일정 선호
+      - button "다음" [ref=e314] [cursor=pointer]
+    - region "Notifications Alt+T"
+  - alert [ref=e24]: 나를 아는 여행 앱, 트리플

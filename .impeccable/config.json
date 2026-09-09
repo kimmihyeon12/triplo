@@ -1,0 +1,23 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "noto sans kr",
+        "createdAt": "2026-09-09T06:28:27.826Z",
+        "reason": "2026-09-09 사용자가 리뉴얼 방향 C(클린 앱 표준)를 선택함; 표시 서체 Jua를 버리고 Noto Sans KR 한 가족으로 교체, DESIGN.md는 리뉴얼 완료 후 재작성"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "app/src/styles.css"
+        ],
+        "createdAt": "2026-09-09T06:38:20.793Z",
+        "reason": "격자 배경은 테스트 앱 전용 픽스처 지도(.tc-fixture-map)의 타일 대체 표면이며, 규칙이 허용하는 지도 표면에 해당함(설계자 판단, 런타임 앱에는 노출되지 않음)"
+      }
+    ]
+  }
+}
