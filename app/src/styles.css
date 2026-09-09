@@ -22,9 +22,6 @@
   --accent-deep-hover: #2650bd;
   --accent-tint: #eaf0fe;
 
-  /* 여행 상단 헤더 전용 그라데이션 (The Single Accent Rule의 명시적 예외, DESIGN.md 참고) */
-  --header-gradient: linear-gradient(135deg, #4c3fd6 0%, #a13fd6 100%);
-
   /* 지도 앱 브랜드색(로고 이미지 아님, 배경색만) */
   --naver-brand: #03c75a;
   --kakao-brand: #fee500;
@@ -215,19 +212,6 @@ textarea {
 .hero__sub {
   color: var(--ink-2);
   font-size: var(--fs-14);
-}
-.hero--gradient {
-  background: var(--header-gradient);
-  border-radius: var(--radius-panel);
-  padding: var(--sp-4);
-  color: #ffffff;
-}
-.hero--gradient .hero__sub,
-.hero--gradient .head__region {
-  color: rgba(255, 255, 255, 0.86);
-}
-.hero--gradient .head__link {
-  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* 상태 칩 ------------------------------------------------------- */
