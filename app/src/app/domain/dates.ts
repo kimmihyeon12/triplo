@@ -91,3 +91,21 @@ export function formatPeriod(start: IsoDate | null, end: IsoDate | null): string
 export function todayIso(): IsoDate {
   return fromUtc(Date.now() - new Date().getTimezoneOffset() * 60_000);
 }
+
+export type TripTimelineStatus =
+  | { kind: 'undecided' }
+  | { kind: 'upcoming'; daysUntil: number }
+  | { kind: 'today' }
+  | { kind: 'ongoing'; dayNumber: number }
+  | { kind: 'past' };
+
+/** 여행 시작·종료일과 오늘 날짜(Asia/Seoul 기준 IsoDate)로 진행 상태를 계산한다. */
+export function tripTimelineStatus(start: IsoDate | null, end: IsoDate | null, today: IsoDate): TripTimelineStatus {
+  if (!start || !end) return { kind: 'undecided' };
+  const untilStart = diffDays(today, start);
+  if (untilStart > 0) return { kind: 'upcoming', daysUntil: untilStart };
+  const untilEnd = diffDays(today, end);
+  if (untilEnd < 0) return { kind: 'past' };
+  if (untilStart === 0) return { kind: 'today' };
+  return { kind: 'ongoing', dayNumber: diffDays(start, today) + 1 };
+}
