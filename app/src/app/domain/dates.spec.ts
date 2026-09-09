@@ -7,6 +7,7 @@ import {
   formatPeriod,
   nightsBetween,
   validateTripDates,
+  tripTimelineStatus,
 } from './dates';
 
 describe('dates', () => {
@@ -66,5 +67,34 @@ describe('dates', () => {
     expect(formatPeriod('2026-05-01', '2026-05-05')).toBe('5월 1일(금) – 5월 5일(화) · 4박 5일');
     expect(formatPeriod('2026-05-01', '2026-05-01')).toBe('5월 1일(금) · 0박 1일');
     expect(formatPeriod(null, null)).toBe('날짜 미정');
+  });
+});
+
+describe('tripTimelineStatus', () => {
+  it('날짜가 없으면 undecided', () => {
+    expect(tripTimelineStatus(null, null, '2026-09-09')).toEqual({ kind: 'undecided' });
+    expect(tripTimelineStatus('2026-09-10', null, '2026-09-09')).toEqual({ kind: 'undecided' });
+  });
+
+  it('시작일 전이면 upcoming과 D-N', () => {
+    expect(tripTimelineStatus('2026-09-15', '2026-09-17', '2026-09-09')).toEqual({ kind: 'upcoming', daysUntil: 6 });
+  });
+
+  it('시작일이 오늘이면 today', () => {
+    expect(tripTimelineStatus('2026-09-09', '2026-09-11', '2026-09-09')).toEqual({ kind: 'today' });
+  });
+
+  it('여행 기간 중이면 ongoing과 dayNumber', () => {
+    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-09')).toEqual({ kind: 'ongoing', dayNumber: 3 });
+    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-11')).toEqual({ kind: 'ongoing', dayNumber: 5 });
+  });
+
+  it('종료일이 지나면 past이며 자동 완료로 표시하지 않는다', () => {
+    expect(tripTimelineStatus('2026-09-01', '2026-09-05', '2026-09-09')).toEqual({ kind: 'past' });
+  });
+
+  it('당일 여행(시작=종료)도 today·past를 정확히 구분한다', () => {
+    expect(tripTimelineStatus('2026-09-09', '2026-09-09', '2026-09-09')).toEqual({ kind: 'today' });
+    expect(tripTimelineStatus('2026-09-09', '2026-09-09', '2026-09-10')).toEqual({ kind: 'past' });
   });
 });
