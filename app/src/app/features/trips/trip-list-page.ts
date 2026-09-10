@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { TripStore } from '../../data/trip-store';
 import { formatPeriod, todayIso, tripTimelineStatus } from '../../domain/dates';
 import type { Trip } from '../../domain/model';
-import { WEATHER_ICON, WEATHER_LABEL } from '../../domain/weather';
 import { IconComponent } from '../../shared/icon';
 import { PageBar } from '../../shared/page-bar';
 
@@ -79,15 +78,6 @@ import { PageBar } from '../../shared/page-bar';
                     <!-- 제목과 가깝게 붙여 한 덩어리로 읽힌다 -->
                     <p class="card__when">
                       <span>{{ period(trip) }}</span>
-                      <!--
-                        날씨 자리: 제공자가 아직 없어 항상 '정보 없음'이다.
-                        임의의 날씨를 지어내지 않는다. 날짜 미정 여행은 날씨가 무의미하므로 숨긴다.
-                      -->
-                      @if (trip.startDate && trip.endDate) {
-                        <span class="card__weather" [attr.title]="weatherLabel" [attr.aria-label]="weatherLabel">
-                          <app-icon [name]="weatherIcon" [size]="14" />
-                        </span>
-                      }
                     </p>
 
                     <!-- 메타는 칩을 벗기고 가운뎃점으로 이어 붙인 옅은 한 줄 -->
@@ -214,12 +204,6 @@ import { PageBar } from '../../shared/page-bar';
         font-size: var(--fs-14);
         color: var(--ink-2);
       }
-      /* 날씨 미연결 상태: 흐린 회색 아이콘만. 값을 지어내지 않는다. */
-      .card__weather {
-        display: inline-flex;
-        color: var(--ink-3);
-        opacity: 0.6;
-      }
       /* 3단: 덩어리를 나누기 위해 위 여백을 넉넉히 준다 */
       .card__meta {
         display: flex;
@@ -295,10 +279,6 @@ import { PageBar } from '../../shared/page-bar';
 export class TripListPage implements OnInit {
   readonly store = inject(TripStore);
   private readonly pageBar = inject(PageBar);
-
-  /** 날씨 제공자 미연결: 모든 여행이 '정보 없음'이다. 추정값을 만들지 않는다. */
-  readonly weatherIcon = WEATHER_ICON.unknown;
-  readonly weatherLabel = WEATHER_LABEL.unknown;
 
   constructor() {
     // 상단 바: 왼쪽 T 심볼(홈), 가운데 '내 여행'. 새 여행은 우하단 FAB에 있다.
