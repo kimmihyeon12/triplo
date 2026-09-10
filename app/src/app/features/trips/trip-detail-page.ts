@@ -843,7 +843,7 @@ type Tab = 'overview' | 'days' | 'stays';
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        border-radius: 6px;
+        border-radius: var(--radius-cell);
         transition: opacity var(--dur) var(--ease-out);
       }
       /* 26px 아이콘이지만 조작 영역은 44px을 확보한다. */
@@ -863,7 +863,7 @@ type Tab = 'overview' | 'days' | 'stays';
       }
       .mapbtn img {
         display: block;
-        border-radius: 6px;
+        border-radius: var(--radius-cell);
       }
       .item__meta {
         display: flex;
