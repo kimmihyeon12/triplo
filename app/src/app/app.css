@@ -28,24 +28,36 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
   color: var(--ink);
   text-decoration: none;
   border-radius: var(--radius-cell);
-  padding: 4px 6px 4px 4px;
+  padding: 0 4px;
   margin-left: -4px;
 }
-.brand__mark {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent-deep);
+.brand:hover {
+  background: var(--accent-tint);
 }
-.brand__ko {
-  font-size: var(--fs-16);
+.brand:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 3px;
+}
+.brand__wordmark {
+  display: block;
+  color: var(--accent-deep);
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+@media (forced-colors: active) {
+  .brand__wordmark {
+    color: LinkText;
+  }
 }
 
 main:focus {
