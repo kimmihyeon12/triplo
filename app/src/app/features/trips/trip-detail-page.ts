@@ -7,6 +7,7 @@ import { RESERVATION_LABEL, STOP_KIND_LABEL, type AccommodationStay, type IsoDat
 import { buildOverview } from '../../domain/overview';
 import { dayStayInfo, nightCoverage, stayIssues, stayNightCount } from '../../domain/stays';
 import { IconComponent } from '../../shared/icon';
+import { PageBar } from '../../shared/page-bar';
 import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../shared/map-links';
 import { SaveStatusComponent } from '../../shared/save-status';
 import { TripMapComponent } from '../../shared/trip-map';
@@ -33,29 +34,29 @@ type Tab = 'overview' | 'days' | 'stays';
       </div>
     } @else {
       <div class="page stack">
-        <!-- 머리글 표지판 -->
-        <header class="hero head" data-testid="trip-header">
-          <div class="head__top">
-            <a class="btn btn--icon btn--on-hero" routerLink="/trips" aria-label="트립플로 목록으로"><app-icon name="back" /></a>
-            <app-save-status />
-          </div>
-          <h1 data-testid="trip-title">{{ trip()!.title }}</h1>
-          <p class="head__period" data-testid="trip-period">{{ period() }}</p>
-          <div class="head__bottom">
+        <!--
+          머리글: 제목·편집은 상단 바로 올라갔고 여기에는 기간·지역 한 줄만 남는다.
+          저장 상태는 저장 중·실패일 때만 나타난다(idle 숨김).
+        -->
+        <header class="head" data-testid="trip-header">
+          <h1 class="visually-hidden" data-testid="trip-title">{{ trip()!.title }}</h1>
+          <p class="head__line">
+            <span data-testid="trip-period">{{ period() }}</span>
             @if (trip()!.regions.length > 0) {
-              <p class="row head__regions" data-testid="trip-regions">
-                @for (r of trip()!.regions; track r.id; let last = $last) {
-                  <span class="head__region">{{ r.name }}</span>
-                  @if (!last) {
-                    <span class="head__link" aria-hidden="true"></span>
-                  }
-                }
-              </p>
+              <span class="head__dot" aria-hidden="true">·</span>
+              <span class="head__regions" data-testid="trip-regions">{{ regionPath() }}</span>
             } @else {
-              <p class="hero__sub">지역 미지정</p>
+              <span class="head__dot" aria-hidden="true">·</span>
+              <span class="muted">지역 미지정</span>
             }
-            <a class="btn btn--on-hero btn--sm" [routerLink]="['/trips', trip()!.id, 'edit']" data-testid="trip-edit"><app-icon name="edit" [size]="14" /> 편집</a>
-          </div>
+          </p>
+          <!--
+            idle('기기 저장본')은 늘 떠 있어 주의를 끌므로 숨긴다.
+            저장 중·저장됨·실패만 나타난다(저장됨은 방금 저장한 결과 확인용).
+          -->
+          @if (store.saveState() !== 'idle') {
+            <app-save-status />
+          }
         </header>
 
         <!-- 탭 -->
@@ -262,12 +263,14 @@ type Tab = 'overview' | 'days' | 'stays';
                     <ol class="items" data-testid="day-items">
                       @for (seg of segments(); track segKey(seg, $index); let idx = $index) {
                         @if (seg.type === 'leg') {
+                          <!-- 이동 구간: 자동차 아이콘은 '이동'을 뜻할 뿐 이동시간이 아니다(시간은 계속 미확인). -->
                           <li class="leg" [class.leg--change]="seg.regionChange" aria-label="이동 구간">
                             <span class="leg__line"></span>
+                            <span class="leg__car" aria-hidden="true"><app-icon name="car" [size]="14" /></span>
                             @if (seg.regionChange) {
-                              <span class="cell cell--ghost leg__change"><app-icon name="arrow-down" [size]="12" /> {{ seg.fromRegion }} → {{ seg.toRegion }} 이동 · 시간 미확인</span>
+                              <span class="cell cell--ghost leg__change">{{ seg.fromRegion }} → {{ seg.toRegion }} 이동 · 시간 미확인</span>
                             } @else {
-                              <span class="cell cell--ghost">이동 · 시간 미확인</span>
+                              <span class="leg__text">이동 · 시간 미확인</span>
                             }
                           </li>
                         } @else {
@@ -281,13 +284,22 @@ type Tab = 'overview' | 'days' | 'stays';
                             </button>
                             <div class="item__main">
                               <div class="item__title">
-                                <strong>{{ seg.stop.name }}</strong>
+                                <strong class="item__name">{{ seg.stop.name }}</strong>
                                 @if (seg.stop.excluded) {
                                   <span class="cell cell--ghost">제외됨</span>
                                 }
                                 @if (seg.stop.fixedTime) {
                                   <span class="cell" [class.cell--danger]="isConflicted(seg.stop.id)" [class.cell--ghost]="!isConflicted(seg.stop.id)"><app-icon name="lock" [size]="12" /> {{ seg.stop.fixedTime }} 고정</span>
                                 }
+                                <!-- 지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다 -->
+                                <span class="item__maps">
+                                  <a class="mapbtn" [href]="naverUrl(seg.stop)" target="_blank" rel="noopener noreferrer" [attr.aria-label]="seg.stop.name + ' 네이버지도에서 검색'">
+                                    <img src="brand/navermap.png" width="26" height="26" alt="" aria-hidden="true" />
+                                  </a>
+                                  <a class="mapbtn" [href]="kakaoUrl(seg.stop)" target="_blank" rel="noopener noreferrer" [attr.aria-label]="seg.stop.name + ' 카카오맵에서 검색'">
+                                    <img src="brand/kakaomap.png" width="26" height="26" alt="" aria-hidden="true" />
+                                  </a>
+                                </span>
                               </div>
                               <div class="item__meta small">
                                 <span class="muted">{{ kindLabel[seg.stop.kind] }}</span>
@@ -306,20 +318,26 @@ type Tab = 'overview' | 'days' | 'stays';
                                 }
                               </div>
                               @if (seg.stop.address) {
-                                <div class="item__addr small muted">{{ seg.stop.address }}</div>
+                                <!-- 주소 복사는 주소와 같은 행에 아이콘으로 둔다 -->
+                                <div class="item__addr small muted">
+                                  <span class="item__addr-text">{{ seg.stop.address }}</span>
+                                  <button
+                                    type="button"
+                                    class="item__copy"
+                                    (click)="copyAddress(seg.stop)"
+                                    [attr.aria-label]="seg.stop.name + ' 주소 복사'"
+                                    [attr.data-testid]="'copy-' + seg.stop.id"
+                                  >
+                                    <app-icon [name]="copiedId() === seg.stop.id ? 'check' : 'copy'" [size]="14" />
+                                  </button>
+                                  @if (copiedId() === seg.stop.id) {
+                                    <span class="item__copied" role="status">복사됨</span>
+                                  }
+                                </div>
                               }
                               @if (seg.stop.memo) {
                                 <div class="item__memo small">{{ seg.stop.memo }}</div>
                               }
-                              <div class="item__links row">
-                                <a class="btn btn--ghost btn--sm" [href]="naverUrl(seg.stop)" target="_blank" rel="noopener noreferrer"><app-icon name="map" [size]="14" /> 네이버지도 검색</a>
-                                <a class="btn btn--ghost btn--sm" [href]="kakaoUrl(seg.stop)" target="_blank" rel="noopener noreferrer"><app-icon name="map" [size]="14" /> 카카오맵 검색</a>
-                                @if (seg.stop.address) {
-                                  <button type="button" class="btn btn--ghost btn--sm" (click)="copyAddress(seg.stop)" [attr.data-testid]="'copy-' + seg.stop.id">
-                                    <app-icon name="copy" [size]="14" /> {{ copiedId() === seg.stop.id ? '복사됨' : '주소 복사' }}
-                                  </button>
-                                }
-                              </div>
                               @if (copyFallback() && copyFallbackId() === seg.stop.id) {
                                 <p class="small copy-fallback">클립보드를 사용할 수 없습니다. 아래 주소를 직접 선택해 복사하세요.<br /><output class="copy-fallback__text">{{ seg.stop.address }}</output></p>
                               }
@@ -463,64 +481,47 @@ type Tab = 'overview' | 'days' | 'stays';
   `,
   styles: [
     `
+      /* 머리글: 기간·지역 한 줄. 제목·편집은 상단 바에 있다. */
       .head {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .head__top {
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 8px;
-      }
-      .head h1 {
-        font-size: var(--fs-28);
-        line-height: 1.25;
-        overflow-wrap: anywhere;
-        margin-top: 2px;
-      }
-      .head__period {
-        font-size: var(--fs-14);
-        color: var(--ink-2);
-      }
-      .head__bottom {
-        display: flex;
         justify-content: space-between;
-        align-items: center;
-        gap: 8px;
+        gap: var(--sp-2);
         flex-wrap: wrap;
-        margin-top: 2px;
+        margin-bottom: -4px;
+      }
+      .head__line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 5px;
+        min-width: 0;
+        font-size: var(--fs-13);
+        color: var(--ink-2);
       }
       .head__regions {
-        gap: 6px;
-        font-size: var(--fs-14);
         font-weight: 500;
-        color: var(--ink-2);
-      }
-      .head__region {
+        color: var(--ink);
         overflow-wrap: anywhere;
       }
-      .head__link {
-        width: 14px;
-        height: 0;
-        border-top: 1.5px solid var(--border-strong);
-        flex: none;
+      .head__dot {
+        color: var(--border-strong);
       }
 
       .tabs {
         display: flex;
         border-bottom: 1px solid var(--border);
+        margin-top: -2px;
       }
       .tab {
         flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 44px;
+        min-height: 42px;
         text-decoration: none;
         color: var(--ink-2);
-        font-size: var(--fs-15);
+        font-size: var(--fs-14);
         font-weight: 500;
         border-bottom: 2px solid transparent;
         margin-bottom: -1px;
@@ -575,13 +576,13 @@ type Tab = 'overview' | 'days' | 'stays';
       .ov {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: var(--sp-3);
       }
       .ov__row {
         display: grid;
         grid-template-columns: 40px 1fr;
-        gap: 8px 12px;
-        padding: 14px 16px 14px 14px;
+        gap: var(--sp-2) var(--sp-3);
+        padding: var(--sp-4);
         background: var(--panel);
         border: 1px solid transparent;
         border-radius: var(--radius-panel);
@@ -593,12 +594,13 @@ type Tab = 'overview' | 'days' | 'stays';
       .ov__row:hover {
         border-color: var(--border-strong);
       }
+      /* 원형 배지는 일차·순번·숙소 모두 32px로 통일한다(글자 14px). */
       .ov__no {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         background: var(--accent-deep);
         color: #fff;
         border-radius: 50%;
@@ -606,14 +608,14 @@ type Tab = 'overview' | 'days' | 'stays';
         align-self: start;
       }
       .ov__day {
-        font-size: var(--fs-16);
+        font-size: var(--fs-14);
         font-weight: 700;
         line-height: 1;
       }
       .ov__main {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: var(--sp-1);
         min-width: 0;
       }
       .ov__date {
@@ -671,37 +673,51 @@ type Tab = 'overview' | 'days' | 'stays';
       .daytabs::-webkit-scrollbar {
         display: none;
       }
+      /*
+        날짜 칩: 알약 대신 부드러운 사각형. 선택 상태는 채움으로,
+        비선택은 옅은 바탕으로 구분한다. 테두리를 쓰지 않아 가로 스크롤이 조용하다.
+      */
       .daytab {
         flex: none;
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-width: 72px;
-        padding: 7px 12px;
-        border: 1px solid var(--border-strong);
-        border-radius: var(--radius-pill);
-        background: var(--panel);
+        gap: 1px;
+        min-width: 64px;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: var(--radius-control);
+        background: var(--ground-2);
         color: var(--ink-2);
         text-decoration: none;
         scroll-snap-align: start;
         transition:
           background-color var(--dur) var(--ease-out),
-          border-color var(--dur) var(--ease-out),
           color var(--dur) var(--ease-out);
       }
+      @media (hover: hover) {
+        .daytab:hover {
+          background: color-mix(in srgb, var(--ground-2) 85%, var(--ink));
+          color: var(--ink);
+        }
+      }
       .daytab:hover {
-        border-color: var(--ink-3);
+        border-color: var(--border-strong);
         color: var(--ink);
       }
-      .daytab--on {
-        background: var(--ink);
-        border-color: var(--ink);
+      /*
+        선택된 날짜는 잉크→네이비 그라데이션. 강조색(딥 블루)은 주 동작 버튼에
+        남겨 두어 '현재 위치'와 '다음 행동'을 구분한다.
+      */
+      .daytab--on,
+      .daytab--on:hover {
+        background: var(--selected-fill);
         color: #fff;
       }
       .daytab__no {
         font-size: var(--fs-14);
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 1.3;
       }
       .daytab__date {
         font-size: var(--fs-12);
@@ -745,9 +761,9 @@ type Tab = 'overview' | 'days' | 'stays';
       }
       .item {
         display: grid;
-        grid-template-columns: 28px 1fr;
-        gap: 8px 12px;
-        padding: 14px 16px;
+        grid-template-columns: 32px 1fr;
+        gap: var(--sp-2) var(--sp-3);
+        padding: var(--sp-4);
         background: var(--panel);
         border-top: 1px solid var(--border);
         transition: background-color var(--dur) var(--ease-out);
@@ -769,21 +785,22 @@ type Tab = 'overview' | 'days' | 'stays';
         background: var(--ground-2);
         color: var(--ink-3);
       }
+      /* 배지 중심을 제목 첫 줄 중심에 맞춘다(제목 15px · 행간 1.5 → 약 22px). */
       .item__badge {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
         background: var(--ground-2);
         color: var(--ink);
-        font-size: var(--fs-13);
+        font-size: var(--fs-14);
         font-weight: 700;
         border: 0;
         cursor: pointer;
         padding: 0;
-        margin-top: 1px;
+        margin-top: -5px;
       }
       .item__badge--place {
         background: var(--accent-deep);
@@ -795,7 +812,7 @@ type Tab = 'overview' | 'days' | 'stays';
       .item__main {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: var(--sp-1);
         min-width: 0;
       }
       .item__title {
@@ -806,6 +823,48 @@ type Tab = 'overview' | 'days' | 'stays';
         font-size: var(--fs-15);
         overflow-wrap: anywhere;
       }
+      .item__name {
+        min-width: 0;
+      }
+      /* 지도 버튼은 제목 행 오른쪽 끝으로 민다 */
+      .item__maps {
+        display: inline-flex;
+        gap: 4px;
+        margin-left: auto;
+        flex: none;
+      }
+      /*
+        지도 앱 버튼: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다.
+        로고는 변형·재색상하지 않는다(각 사 디자인 가이드).
+      */
+      .mapbtn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: opacity var(--dur) var(--ease-out);
+      }
+      /* 26px 아이콘이지만 조작 영역은 44px을 확보한다. */
+      .mapbtn::after {
+        content: '';
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      @media (hover: hover) {
+        .mapbtn:hover {
+          opacity: 0.75;
+        }
+      }
+      .mapbtn img {
+        display: block;
+        border-radius: 6px;
+      }
       .item__meta {
         display: flex;
         gap: 4px;
@@ -815,6 +874,55 @@ type Tab = 'overview' | 'days' | 'stays';
       }
       .item__unverified {
         margin-left: 2px;
+      }
+      /* 주소와 복사 버튼은 한 행에 둔다. 주소가 길면 줄바꿈하고 버튼은 첫 줄에 붙는다. */
+      .item__addr {
+        display: flex;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .item__addr-text {
+        min-width: 0;
+      }
+      .item__copy {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        margin-top: -2px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-cell);
+        background: transparent;
+        color: var(--ink-3);
+        cursor: pointer;
+        transition:
+          background-color var(--dur) var(--ease-out),
+          color var(--dur) var(--ease-out);
+      }
+      /* 24px 아이콘이지만 조작 영역은 44px을 확보한다. */
+      .item__copy::after {
+        content: '';
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        transform: translate(-10px, -10px);
+      }
+      .item__copy {
+        position: relative;
+      }
+      @media (hover: hover) {
+        .item__copy:hover {
+          background: var(--ground-2);
+          color: var(--ink);
+        }
+      }
+      .item__copied {
+        flex: none;
+        color: var(--ok-ink);
+        font-weight: 500;
       }
       .item__memo {
         white-space: pre-wrap;
@@ -843,6 +951,15 @@ type Tab = 'overview' | 'days' | 'stays';
       }
       .items .leg {
         border-top: 1px solid var(--border);
+      }
+      .leg__car {
+        display: inline-flex;
+        color: var(--ink-3);
+        flex: none;
+      }
+      .leg__text {
+        color: var(--ink-3);
+        font-size: var(--fs-12);
       }
       .leg__change {
         color: var(--ink-2);
@@ -903,8 +1020,8 @@ type Tab = 'overview' | 'days' | 'stays';
         border: 1px solid transparent;
       }
       .stay__badge {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -943,6 +1060,7 @@ export class TripDetailPage {
 
   readonly store = inject(TripStore);
   private readonly router = inject(Router);
+  private readonly pageBar = inject(PageBar);
 
   readonly tabs: { id: Tab; ko: string }[] = [
     { id: 'overview', ko: '전체' },
@@ -997,7 +1115,19 @@ export class TripDetailPage {
   readonly copyFallback = signal(false);
   readonly copyFallbackId = signal<string | null>(null);
 
+  /** 지역을 칩 대신 본문 텍스트 경로로 표시한다(예: 강릉 → 속초). */
+  readonly regionPath = computed(() => (this.trip()?.regions ?? []).map((r) => r.name).join(' → '));
+
   constructor() {
+    // 상단 바: ‹ 뒤로, 가운데 여행 제목(길면 말줄임), 오른쪽 편집
+    effect(() => {
+      const t = this.trip();
+      this.pageBar.set({
+        title: t?.title ?? '여행',
+        back: ['/trips'],
+        action: t ? { label: '편집', link: ['/trips', t.id, 'edit'], testId: 'trip-edit' } : null,
+      });
+    });
     effect(() => {
       const id = this.id();
       void this.store.open(id);

@@ -6,6 +6,7 @@ import { enumerateDays, formatKoreanDate } from '../../domain/dates';
 import { appendStop, removeStop, updateStop } from '../../domain/itinerary';
 import { createStop, STOP_KIND_DEFAULT_NAME, STOP_KIND_LABEL, type StopKind, type Trip, type TripStop } from '../../domain/model';
 import { IconComponent } from '../../shared/icon';
+import { PageBar } from '../../shared/page-bar';
 import { PlaceSearchBoxComponent } from '../../shared/place-search-box';
 import { SaveStatusComponent } from '../../shared/save-status';
 import { applyPlaceCandidate, clearLocation, type PlaceCandidate } from '../../domain/location';
@@ -17,11 +18,6 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page stack">
-      <header class="row head">
-        <a class="btn btn--icon" [routerLink]="backLink()" [queryParams]="backQuery()" aria-label="뒤로"><app-icon name="back" /></a>
-        <h1>{{ isEdit() ? '장소·활동 편집' : '장소·활동 추가' }}</h1>
-      </header>
-
       @if (!trip()) {
         <p class="muted" role="status">불러오는 중…</p>
       } @else {
@@ -124,13 +120,18 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
             </div>
           }
 
-          <div class="row form-actions">
-            <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="stop-save">
-              <app-icon name="save" [size]="16" /> {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
-            </button>
-            <a class="btn btn--ghost" [routerLink]="backLink()" [queryParams]="backQuery()">취소</a>
-            <span class="grow"></span>
-            <app-save-status />
+          @if (store.saveState() !== 'idle') {
+            <div class="row form-status"><app-save-status /></div>
+          }
+
+          <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+          <div class="action-bar">
+            <div class="action-bar__inner">
+              <a class="btn" [routerLink]="backLink()" [queryParams]="backQuery()">취소</a>
+              <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="stop-save">
+                {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -158,9 +159,6 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
   `,
   styles: [
     `
-      .head {
-        gap: var(--sp-3);
-      }
       .kinds {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -175,12 +173,12 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        min-height: 44px;
+        gap: 5px;
+        min-height: 40px;
         border: 1px solid var(--border-strong);
         border-radius: var(--radius-control);
         font-weight: 500;
-        font-size: var(--fs-14);
+        font-size: var(--fs-13);
         cursor: pointer;
         background: var(--panel);
         color: var(--ink-2);
@@ -189,28 +187,55 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
           border-color var(--dur) var(--ease-out),
           color var(--dur) var(--ease-out);
       }
-      .kind:hover {
-        border-color: var(--ink-3);
-        color: var(--ink);
+      /* 보이는 상자는 40px, 조작 영역은 44px을 유지한다. */
+      .kind {
+        position: relative;
       }
+      .kind::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 44px;
+        transform: translateY(-50%);
+      }
+      @media (hover: hover) {
+        .kind:hover {
+          border-color: var(--ink-3);
+          color: var(--ink);
+        }
+      }
+      /*
+        작은 세그먼트가 여러 개 붙는 자리는 단색 잉크로 채운다.
+        그라데이션은 화면당 하나만 선택되는 큰 요소(날짜 칩)에만 쓴다.
+      */
       .kind--on {
         background: var(--ink);
         border-color: var(--ink);
         color: #fff;
         font-weight: 700;
       }
+      /*
+         라디오는 시각적으로 숨기되 실제 조작 영역은 라벨 전체를 덮는다.
+         1px + opacity:0으로 줄이면 브라우저·자동화 도구가 '보이지 않는 요소'로
+         판단해 클릭을 거부하고, 확대 사용자에게도 표적이 사라진다.
+      */
       .kind input {
         position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
         opacity: 0;
-        width: 1px;
-        height: 1px;
+        cursor: pointer;
       }
       .kind:has(input:focus-visible) {
         outline: 2px solid var(--accent-deep);
         outline-offset: 2px;
       }
-      .form-actions {
-        gap: var(--sp-2);
+      .form-status {
+        justify-content: flex-end;
       }
       .grow {
         flex: 1;
@@ -235,6 +260,7 @@ export class StopFormPage {
 
   readonly store = inject(TripStore);
   private readonly router = inject(Router);
+  private readonly pageBar = inject(PageBar);
 
   readonly kinds: StopKind[] = ['place', 'meal', 'break', 'buffer'];
   readonly kindLabel = STOP_KIND_LABEL;
@@ -277,6 +303,15 @@ export class StopFormPage {
   readonly backQuery = computed(() => (this.date() ? { tab: 'days', day: this.date() } : { tab: 'overview' }));
 
   constructor() {
+    // 상단 바: ‹ 뒤로 + 화면 제목. 저장은 하단 고정 바에 둔다.
+    effect(() => {
+      this.pageBar.set({
+        title: this.isEdit() ? '장소·활동 편집' : '장소·활동 추가',
+        back: this.backLink(),
+        backQueryParams: this.backQuery(),
+        action: null,
+      });
+    });
     effect(() => {
       const id = this.id();
       const stopId = this.stopId();

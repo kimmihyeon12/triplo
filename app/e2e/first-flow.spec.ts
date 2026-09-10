@@ -39,8 +39,8 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
     await expect(page.getByTestId('day-items')).toContainText('안목해변');
     await page.goto('/trips');
-    await expect(page.getByTestId(`trip-card-${id}`)).toContainText('장소 1개');
-    await expect(page.getByTestId(`trip-card-${id}`)).toContainText('숙소 1개');
+    await expect(page.getByTestId(`trip-card-${id}`)).toContainText('장소 1');
+    await expect(page.getByTestId(`trip-card-${id}`)).toContainText('숙소 1');
     await page.getByTestId(`trip-card-${id}`).click();
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
   });

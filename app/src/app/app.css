@@ -12,52 +12,102 @@
   top: 8px;
 }
 
+/* 상단 바: 모바일 앱 표준 한 줄 — 왼쪽 ‹ 또는 T 심볼, 가운데 제목, 오른쪽 동작 */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 9;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
 .topbar__inner {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 10px var(--sp-4);
-  display: flex;
+  min-height: 52px;
+  padding: 0 var(--sp-2);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
+  gap: 4px;
 }
-.brand {
+
+/* 왼쪽: 테두리 없는 44×44 터치 영역 */
+.topbar__back,
+.topbar__brand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  min-width: 44px;
-  min-height: 44px;
+  width: 44px;
+  height: 44px;
   color: var(--ink);
   text-decoration: none;
   border-radius: var(--radius-cell);
-  padding: 0 4px;
-  margin-left: -4px;
+  flex: none;
 }
-.brand:hover {
-  background: var(--accent-tint);
-}
-.brand:focus-visible {
-  outline: 2px solid var(--accent-deep);
-  outline-offset: 3px;
-}
-.brand__wordmark {
-  display: block;
+.topbar__brand {
   color: var(--accent-deep);
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.035em;
-  white-space: nowrap;
+}
+.topbar__back:hover,
+.topbar__brand:hover {
+  background: var(--ground-2);
+}
+.topbar__back:focus-visible,
+.topbar__brand:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+.topbar__symbol {
+  width: 26px;
+  height: 26px;
 }
 @media (forced-colors: active) {
-  .brand__wordmark {
+  .topbar__brand {
     color: LinkText;
   }
+}
+
+/* 가운데: 화면 제목. 본문의 큰 h1을 대신한다. */
+.topbar__title {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--fs-17);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 오른쪽: 주 동작. 테두리 없는 텍스트 버튼(44px 터치 영역) */
+.topbar__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--accent-deep);
+  font-size: var(--fs-15);
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--radius-cell);
+  white-space: nowrap;
+}
+.topbar__action:hover {
+  background: var(--accent-tint);
+}
+.topbar__action:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: -2px;
+}
+.topbar__spacer {
+  display: block;
+  width: 44px;
+  height: 44px;
 }
 
 main:focus {
