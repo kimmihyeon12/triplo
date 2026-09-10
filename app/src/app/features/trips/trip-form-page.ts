@@ -6,6 +6,7 @@ import { formatNights, validateTripDates } from '../../domain/dates';
 import { createRegion, createTrip, type Trip, type TripRegion } from '../../domain/model';
 import { applyPeriodChange, periodChangeImpact, regionRemovalImpact, removeRegion } from '../../domain/period';
 import { IconComponent } from '../../shared/icon';
+import { PageBar } from '../../shared/page-bar';
 import { SaveStatusComponent } from '../../shared/save-status';
 
 interface RegionDraft {
@@ -20,11 +21,6 @@ interface RegionDraft {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page stack">
-      <header class="row head">
-        <a class="btn btn--icon" [routerLink]="backLink()" aria-label="뒤로"><app-icon name="back" /></a>
-        <h1>{{ isEdit() ? '여행 편집' : '여행 만들기' }}</h1>
-      </header>
-
       @if (isEdit() && store.currentState() === 'loading') {
         <p class="muted" role="status">불러오는 중…</p>
       } @else if (isEdit() && !original()) {
@@ -68,7 +64,7 @@ interface RegionDraft {
             <div class="row region-add">
               <label class="visually-hidden" for="region-name">지역 이름</label>
               <input id="region-name" class="input" [ngModel]="regionInput()" (ngModelChange)="regionInput.set($event)" name="regionName" placeholder="예: 강릉" maxlength="30" (keydown.enter)="addRegion($event)" data-testid="region-input" />
-              <button type="button" class="btn" (click)="addRegion()" data-testid="region-add"><app-icon name="plus" [size]="16" /> 추가</button>
+              <button type="button" class="btn" (click)="addRegion()" data-testid="region-add">추가</button>
             </div>
             @if (regions().length === 0) {
               <p class="field__hint">지역은 선택 사항입니다. 하루에 두 지역을 다닐 수도 있습니다.</p>
@@ -117,13 +113,18 @@ interface RegionDraft {
             </div>
           }
 
-          <div class="row form-actions">
-            <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="trip-save">
-              <app-icon name="save" [size]="16" /> {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
-            </button>
-            <a class="btn btn--ghost" [routerLink]="backLink()">취소</a>
-            <span class="grow"></span>
-            <app-save-status />
+          @if (store.saveState() !== 'idle') {
+            <div class="row form-status"><app-save-status /></div>
+          }
+
+          <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+          <div class="action-bar">
+            <div class="action-bar__inner">
+              <a class="btn" [routerLink]="backLink()">취소</a>
+              <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="trip-save">
+                {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+              </button>
+            </div>
           </div>
         </form>
       }
@@ -131,41 +132,38 @@ interface RegionDraft {
   `,
   styles: [
     `
-      .head {
-        gap: var(--sp-3);
-      }
       fieldset {
         border: 0;
         padding: 0;
-        margin: 0 0 var(--sp-4);
+        margin: 0 0 14px;
         min-width: 0;
       }
       legend {
         padding: 0;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
       }
       .region-add .input {
         flex: 1;
-        min-width: 160px;
+        min-width: 140px;
       }
       .regions {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         margin-top: 8px;
       }
       .region {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 8px 8px 10px;
+        gap: 8px;
+        padding: 5px 6px 5px 10px;
         border: 1px solid var(--border);
         border-radius: var(--radius-control);
         background: var(--panel);
       }
       .region__no {
-        min-width: 26px;
-        height: 26px;
+        min-width: 22px;
+        height: 22px;
         justify-content: center;
         border-radius: 50%;
         padding: 0;
@@ -185,8 +183,8 @@ interface RegionDraft {
         padding-left: 18px;
         list-style: disc;
       }
-      .form-actions {
-        gap: var(--sp-2);
+      .form-status {
+        justify-content: flex-end;
       }
       .grow {
         flex: 1;
@@ -198,6 +196,7 @@ export class TripFormPage {
   readonly id = input<string | undefined>();
   readonly store = inject(TripStore);
   private readonly router = inject(Router);
+  private readonly pageBar = inject(PageBar);
 
   readonly isEdit = computed(() => !!this.id());
   readonly original = signal<Trip | null>(null);
@@ -246,6 +245,10 @@ export class TripFormPage {
   readonly canSave = computed(() => this.dateValidation().ok && (this.impactLines().length === 0 || this.impactConfirmed()) && this.store.saveState() !== 'saving');
 
   constructor() {
+    // 상단 바: ‹ 뒤로 + 화면 제목. 저장은 하단 고정 바에 둔다.
+    effect(() => {
+      this.pageBar.set({ title: this.isEdit() ? '여행 편집' : '여행 만들기', back: this.backLink(), action: null });
+    });
     effect(() => {
       const id = this.id();
       if (!id) {

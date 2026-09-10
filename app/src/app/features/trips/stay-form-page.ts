@@ -6,6 +6,7 @@ import { addDays, formatPeriod } from '../../domain/dates';
 import { createStay, RESERVATION_LABEL, type AccommodationStay, type ReservationState, type Trip } from '../../domain/model';
 import { nightCoverage, stayNightCount, stayWarnings, validateStayDates } from '../../domain/stays';
 import { IconComponent } from '../../shared/icon';
+import { PageBar } from '../../shared/page-bar';
 import { PlaceSearchBoxComponent } from '../../shared/place-search-box';
 import { SaveStatusComponent } from '../../shared/save-status';
 import { applyPlaceCandidate, clearLocation, type PlaceCandidate } from '../../domain/location';
@@ -17,11 +18,6 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page stack">
-      <header class="row head">
-        <a class="btn btn--icon" [routerLink]="backLink()" [queryParams]="{ tab: 'stays' }" aria-label="뒤로"><app-icon name="back" /></a>
-        <h1>{{ isEdit() ? '숙소 편집' : '숙소 추가' }}</h1>
-      </header>
-
       @if (!trip()) {
         <p class="muted" role="status">불러오는 중…</p>
       } @else {
@@ -147,13 +143,18 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
             </div>
           }
 
-          <div class="row form-actions">
-            <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="stay-save">
-              <app-icon name="save" [size]="16" /> {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
-            </button>
-            <a class="btn btn--ghost" [routerLink]="backLink()" [queryParams]="{ tab: 'stays' }">취소</a>
-            <span class="grow"></span>
-            <app-save-status />
+          @if (store.saveState() !== 'idle') {
+            <div class="row form-status"><app-save-status /></div>
+          }
+
+          <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+          <div class="action-bar">
+            <div class="action-bar__inner">
+              <a class="btn" [routerLink]="backLink()" [queryParams]="{ tab: 'stays' }">취소</a>
+              <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="stay-save">
+                {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -178,26 +179,23 @@ import type { GeoPoint, PlaceRef } from '../../domain/model';
   `,
   styles: [
     `
-      .head {
-        gap: var(--sp-3);
-      }
       fieldset {
         border: 0;
         padding: 0;
-        margin: 0 0 var(--sp-4);
+        margin: 0 0 14px;
         min-width: 0;
       }
       legend {
         padding: 0;
-        margin-bottom: 8px;
+        margin-bottom: 5px;
       }
       .warn-list {
         margin-top: 6px;
         padding-left: 18px;
         list-style: disc;
       }
-      .form-actions {
-        gap: var(--sp-2);
+      .form-status {
+        justify-content: flex-end;
       }
       .grow {
         flex: 1;
@@ -218,6 +216,7 @@ export class StayFormPage {
   readonly stayId = input<string | undefined>();
   readonly store = inject(TripStore);
   private readonly router = inject(Router);
+  private readonly pageBar = inject(PageBar);
 
   readonly reservationStates: ReservationState[] = ['unknown', 'reserved', 'not_reserved'];
   readonly reservationLabel = RESERVATION_LABEL;
@@ -268,6 +267,15 @@ export class StayFormPage {
   readonly backLink = computed(() => ['/trips', this.id()]);
 
   constructor() {
+    // 상단 바: ‹ 뒤로 + 화면 제목. 저장은 하단 고정 바에 둔다.
+    effect(() => {
+      this.pageBar.set({
+        title: this.isEdit() ? '숙소 편집' : '숙소 추가',
+        back: this.backLink(),
+        backQueryParams: { tab: 'stays' },
+        action: null,
+      });
+    });
     effect(() => {
       const id = this.id();
       const stayId = this.stayId();

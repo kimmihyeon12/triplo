@@ -1,19 +1,26 @@
 /* ------------------------------------------------------------------
    트립플로(Triplo) · 국내 여행 비서 · 전역 스타일 (2026-09-09 리뉴얼: 클린 앱 표준)
    세계: 트리플·토스급 국내 앱 관례를 정석대로. 미지근한 회백색 바탕, 흰 카드,
-         1px 구분선 목록, 밑줄 탭, 굵기로만 세운 위계. 강조색은 코랄 하나.
-   색 법칙: 코랄=주 동작·현재 선택·순번 마커, 라벤더=숙소, 버터=확인 필요·미확인만,
-           로즈=충돌·오류만, 민트=완료. 나머지는 회색 위계.
+         1px 구분선 목록, 밑줄 탭, 굵기로만 세운 위계.
+   색 법칙(2026-09-10 개정): 조작(버튼·링크·탭·포커스·지도 마커)은 딥 블루 단색 하나.
+           상태·분류 라벨은 뜻마다 색을 배정한다 — 민트=진행 중·완료, 딥 블루=예정,
+           라벤더=숙소, 버터=확인 필요·미확인, 로즈=충돌·오류, 회색=지난 일정.
+   그라데이션은 어디에도 쓰지 않는다.
    ------------------------------------------------------------------ */
 
 :root {
   color-scheme: light;
 
-  /* 바탕과 판 */
-  --ground: #f7f6f4;
-  --ground-2: #eeece8;
+  /*
+    바탕과 판 (2026-09-10 색온도 정정).
+    옛 팔레트는 코랄 강조색에 맞춘 따뜻한 갈색빛 회색이라 딥 블루와 색온도가 충돌했다.
+    아주 약한 파랑기를 섞은 중성 회색으로 바꿔 강조색과 온도를 맞춘다.
+    의미색(ok·warn·stay·danger)은 그대로 둔다.
+  */
+  --ground: #fbfcfd;
+  --ground-2: #f4f6f9;
   --panel: #ffffff;
-  --panel-2: #faf9f7;
+  --panel-2: #fcfdfe;
 
   /* 강조: 딥 블루 하나 */
   --accent: #3b6fef;
@@ -50,29 +57,40 @@
   --ok-ink: #1e7a4e;
   --ok-tint: #e3f5ea;
 
-  /* 잉크와 선 */
-  --ink: #1c1917;
-  --ink-2: #57514c;
-  --ink-3: #736b65;
-  --border: #e9e5e1;
-  --border-strong: #cfc8c1;
+  /*
+    선택 상태 채움 (2026-09-10 확정): 잉크→네이비 그라데이션.
+    화면당 하나만 선택되는 큰 요소(날짜 칩)에만 쓴다. 종류 토글처럼 작은
+    세그먼트가 여러 개 붙는 자리는 단색 --ink로 채워야 산만하지 않다.
+    조작을 실행하는 버튼은 강조색(--accent-deep) 단색을 유지해 역할을 구분한다.
+  */
+  --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
+
+  /* 잉크와 선: 같은 중성~쿨 계열. ink-3는 흰 판 위 4.5:1을 유지한다. */
+  --ink: #16181d;
+  --ink-2: #4a4f58;
+  --ink-3: #6b7280;
+  --border: #e8eaef;
+  --border-strong: #d4d8e0;
 
   /* 형태 */
-  --radius-panel: 14px;
-  --radius-control: 12px;
+  /* 모서리: 판 > 주 컨트롤 > 작은 컨트롤 > 칩 순으로 한 단계씩 줄인다. */
+  --radius-panel: 16px;
+  --radius-control-lg: 12px;
+  --radius-control: 10px;
   --radius-cell: 8px;
   --radius-pill: 999px;
   --shadow-panel: 0 1px 2px rgba(28, 25, 23, 0.05), 0 8px 24px -14px rgba(28, 25, 23, 0.14);
   --shadow-float: 0 2px 4px rgba(28, 25, 23, 0.06), 0 14px 32px -12px rgba(28, 25, 23, 0.2);
 
   /* 타이포: 한 가족, 굵기로 위계 */
-  --font-body: 'Noto Sans KR', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-body: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-display: var(--font-body);
   --fs-12: 0.75rem;
   --fs-13: 0.8125rem;
   --fs-14: 0.875rem;
   --fs-15: 0.9375rem;
   --fs-16: 1rem;
+  --fs-17: 1.0625rem;
   --fs-18: 1.125rem;
   --fs-22: 1.375rem;
   --fs-28: 1.75rem;
@@ -114,7 +132,11 @@ body {
   font-feature-settings: 'tnum' 1;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.01em;
+  /*
+    한글은 정사각 프레임에 획이 많아 음수 자간을 주면 글자가 밀착해 답답해진다.
+    라틴 관행인 음수 자간을 쓰지 않고 0으로 둔다(2026-09-10 사용자 지적).
+  */
+  letter-spacing: 0;
   word-break: keep-all;
 }
 
@@ -147,21 +169,22 @@ h2,
 h3 {
   font-family: var(--font-body);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin: 0;
   text-wrap: balance;
 }
+/* 한글 제목은 행간 1.4 아래로 내려가면 답답하다. */
 h1 {
-  font-size: var(--fs-28);
-  line-height: 1.25;
+  font-size: var(--fs-22);
+  line-height: 1.4;
 }
 h2 {
-  font-size: var(--fs-22);
-  line-height: 1.3;
+  font-size: var(--fs-18);
+  line-height: 1.45;
 }
 h3 {
   font-size: var(--fs-16);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 p {
   margin: 0;
@@ -197,6 +220,15 @@ textarea {
 }
 
 /* 판 ------------------------------------------------------------ */
+/*
+  공통 레이아웃 리듬 (2026-09-10 확정). 모든 화면이 같은 수치를 쓴다.
+  화면 컴포넌트에서 개별 수치로 덮어쓰지 않는다.
+    페이지 상하 패딩  --sp-4 (16px)
+    섹션(카드) 사이   --sp-3 (12px)  → .stack
+    카드 내부 패딩    --sp-4 (16px)  → .panel
+    카드 안 줄 사이   --sp-2 (8px)
+    폼 필드 사이      --sp-4 (16px)  → .field margin-bottom
+*/
 .panel {
   background: var(--panel);
   border-radius: var(--radius-panel);
@@ -218,15 +250,16 @@ textarea {
 .cell {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 24px;
-  padding: 1px 8px;
+  gap: 4px;
+  min-height: 22px;
+  /* 한글 칩은 상하 패딩이 얇으면 글자가 갇혀 보인다. */
+  padding: 2px 8px;
   border-radius: var(--radius-cell);
   font-size: var(--fs-12);
   font-weight: 500;
   border: 1px solid transparent;
   white-space: nowrap;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 .cell--accent {
   background: var(--accent-tint);
@@ -274,94 +307,132 @@ textarea {
 }
 
 /* 버튼 ---------------------------------------------------------- */
+/*
+   버튼: 보이는 상자는 40px(모바일 밀도)이되, 세로 ±2px의 투명 의사요소로
+   실제 조작 영역은 44px을 유지한다(접근성 최소 터치 영역).
+*/
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 var(--sp-4);
   border-radius: var(--radius-control);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   background: var(--panel);
   color: var(--ink);
-  font-weight: 500;
-  font-size: var(--fs-15);
+  font-weight: 600;
+  font-size: var(--fs-14);
   text-decoration: none;
   transition:
     background-color var(--dur) var(--ease-out),
-    border-color var(--dur) var(--ease-out),
     color var(--dur) var(--ease-out),
-    box-shadow var(--dur) var(--ease-out);
+    transform var(--dur) var(--ease-out);
 }
-.btn:hover {
-  background: var(--panel-2);
-  border-color: var(--ink-3);
+.btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+/*
+  hover는 마우스가 있는 기기에서만 준다. 터치 기기는 탭 후에도 hover가 남아
+  버튼이 회색으로 눌린 채로 보인다.
+*/
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--ground-2);
+  }
 }
 .btn:active {
-  background: var(--ground-2);
+  transform: scale(0.98);
+}
+/* 모바일 브라우저의 기본 탭 하이라이트도 끈다. */
+.btn,
+.mapbtn,
+.item__copy,
+.daytab {
+  -webkit-tap-highlight-color: transparent;
 }
 .btn:disabled,
 .btn[aria-disabled='true'] {
-  opacity: 0.4;
+  opacity: 0.45;
+}
+.btn:disabled:active,
+.btn[aria-disabled='true']:active {
+  transform: none;
 }
 .btn--primary {
   background: var(--accent-deep);
-  border-color: var(--accent-deep);
   color: #ffffff;
-  font-weight: 700;
 }
-.btn--primary:hover {
-  background: var(--accent-deep-hover);
-  border-color: var(--accent-deep-hover);
+@media (hover: hover) {
+  .btn--primary:hover {
+    background: var(--accent-deep-hover);
+  }
 }
 .btn--danger {
-  border-color: var(--border-strong);
+  background: var(--danger-tint);
   color: var(--danger-ink);
 }
 .btn--danger:hover {
-  background: var(--danger-tint);
-  border-color: var(--danger-ink);
+  background: color-mix(in srgb, var(--danger-tint) 80%, var(--danger-ink));
 }
 .btn--ghost {
-  border-color: transparent;
   background: transparent;
-  min-height: 40px;
-  padding: 0 var(--sp-3);
-  color: var(--ink-2);
-}
-.btn--ghost:hover {
-  background: var(--ground-2);
-  border-color: transparent;
-  color: var(--ink);
-}
-.btn--sm {
   min-height: 36px;
   padding: 0 var(--sp-3);
-  font-size: var(--fs-14);
-  border-radius: 10px;
+  color: var(--ink-2);
+  font-weight: 500;
 }
+@media (hover: hover) {
+  .btn--ghost:hover {
+    background: var(--ground-2);
+    color: var(--ink);
+  }
+}
+.btn--sm {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: var(--fs-13);
+  border-radius: var(--radius-cell);
+}
+/* 아이콘 버튼은 테두리 없이 hover 배경으로만 알린다. */
 .btn--icon {
-  width: 40px;
-  min-height: 40px;
+  width: 36px;
+  min-height: 36px;
   padding: 0;
-  border-color: var(--border);
-  border-radius: 10px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-2);
+  border-radius: var(--radius-control);
 }
-.btn--icon:hover {
-  border-color: var(--ink-3);
+/* 아이콘 버튼은 가로도 44px 미만이므로 조작 영역을 양쪽으로 넓힌다. */
+.btn--icon::after {
+  left: -4px;
+  right: -4px;
 }
+@media (hover: hover) {
+  .btn--icon:hover {
+    background: var(--ground-2);
+    color: var(--ink);
+  }
+}
+/* 흰 판 위에 놓이는 버튼: 바탕과 구분되도록 옅은 채움을 쓴다. */
 .btn--on-hero {
-  background: var(--panel);
-  border-color: var(--border);
+  background: var(--ground-2);
   color: var(--ink);
 }
 .btn--on-hero:hover {
-  border-color: var(--ink-3);
+  background: color-mix(in srgb, var(--ground-2) 82%, var(--ink));
 }
 .btn--naver {
   background: var(--naver-brand);
-  border-color: var(--naver-brand);
   color: #ffffff;
 }
 .btn--naver:hover {
@@ -382,33 +453,58 @@ textarea {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: var(--sp-5);
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
 }
+/* 라벨은 보조 정보다. 입력한 값이 화면에서 가장 진해야 한다. */
 .field__label {
-  font-weight: 700;
-  font-size: var(--fs-14);
-  color: var(--ink);
+  font-weight: 500;
+  font-size: var(--fs-13);
+  color: var(--ink-2);
 }
 .field__hint {
-  font-size: var(--fs-13);
+  font-size: var(--fs-12);
   color: var(--ink-3);
+  line-height: 1.45;
 }
 .field__error {
-  font-size: var(--fs-13);
+  font-size: var(--fs-12);
   color: var(--danger-ink);
   font-weight: 500;
+}
+/*
+  입력: 평상시 테두리는 연한 --border. hover·focus에서만 진해진다.
+  라벨보다 입력한 값이 진하도록 테두리를 낮췄다.
+*/
+/*
+  입력 높이는 44px로 고정한다. min-height만 두면 date 입력이 브라우저 기본
+  달력 아이콘 때문에 더 커져 옆 버튼과 높이가 어긋난다.
+  date 입력은 좁은 화면에서 기본 너비가 컨테이너를 넘치므로 min-width도 푼다.
+*/
+.input,
+.select {
+  height: 44px;
+}
+.input[type='date'],
+.input[type='time'] {
+  min-width: 0;
+}
+/* 입력과 같은 행에 놓인 버튼은 입력 높이(44px)에 맞춘다. */
+.row .input + .btn,
+.row .select + .btn {
+  min-height: 44px;
 }
 .input,
 .select,
 .textarea {
   width: 100%;
-  min-height: 48px;
-  padding: 11px 14px;
-  border: 1px solid var(--border-strong);
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--panel);
   transition:
+    background-color var(--dur) var(--ease-out),
     border-color var(--dur) var(--ease-out),
     box-shadow var(--dur) var(--ease-out);
 }
@@ -416,30 +512,35 @@ textarea {
 .textarea::placeholder {
   color: var(--ink-3);
 }
-.input:hover,
-.select:hover,
-.textarea:hover {
-  border-color: var(--ink-3);
+@media (hover: hover) {
+  .input:hover,
+  .select:hover,
+  .textarea:hover {
+    background: var(--ground-2);
+  }
 }
+/* 포커스는 강조색 테두리와 링으로 알린다. */
 .input:focus-visible,
 .select:focus-visible,
 .textarea:focus-visible {
-  border-color: var(--ink);
+  background: var(--panel);
+  border-color: var(--accent-deep);
   outline: none;
-  box-shadow: 0 0 0 3px var(--ground-2);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 .input[aria-invalid='true'],
 .select[aria-invalid='true'] {
   border-color: var(--danger-ink);
+  background: var(--danger-tint);
 }
 .textarea {
-  min-height: 96px;
+  min-height: 80px;
   resize: vertical;
 }
 .select {
   appearance: none;
   padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%231c1917' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%234a4f58' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
@@ -461,7 +562,7 @@ textarea {
   padding: var(--sp-3);
   border-radius: var(--radius-control);
   background: var(--panel);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   color: var(--ink);
   font-weight: 500;
 }
@@ -476,10 +577,11 @@ textarea {
 /* 알림 ---------------------------------------------------------- */
 .notice {
   border-radius: var(--radius-control);
-  padding: var(--sp-3) var(--sp-4);
-  font-size: var(--fs-14);
+  padding: 10px var(--sp-3);
+  font-size: var(--fs-13);
+  line-height: 1.5;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: flex-start;
 }
 .notice--warn {
@@ -512,17 +614,17 @@ textarea {
 .page {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--sp-4) var(--sp-4) calc(var(--sp-8) + 88px);
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-6) + 80px);
 }
 @media (min-width: 720px) {
   .page {
-    padding: var(--sp-6) var(--sp-6) calc(var(--sp-8) + 88px);
+    padding: var(--sp-4) var(--sp-6) calc(var(--sp-6) + 80px);
   }
 }
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
 }
 .row {
   display: flex;
@@ -534,7 +636,8 @@ textarea {
   color: var(--ink-3);
 }
 .small {
-  font-size: var(--fs-13);
+  font-size: var(--fs-12);
+  line-height: 1.5;
 }
 .visually-hidden {
   position: absolute !important;
@@ -551,7 +654,7 @@ textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  padding: 10px var(--sp-4) calc(10px + env(safe-area-inset-bottom));
   background: color-mix(in srgb, var(--panel) 92%, transparent);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
@@ -563,8 +666,12 @@ textarea {
   display: flex;
   gap: var(--sp-2);
 }
+/* 하단 고정 바 버튼은 화면의 주 동작이므로 본문 버튼보다 크게 둔다. */
 .action-bar__inner .btn {
   flex: 1;
+  min-height: 50px;
+  font-size: var(--fs-15);
+  border-radius: var(--radius-control-lg);
 }
 
 /* 이동 구간 ----------------------------------------------------- */
@@ -647,7 +754,7 @@ textarea {
 .tc-marker--on {
   transform: scale(1.2);
   box-shadow:
-    0 0 0 4px rgba(201, 69, 47, 0.22),
+    0 0 0 4px rgba(47, 95, 219, 0.22),
     0 4px 10px rgba(28, 25, 23, 0.3);
   z-index: 3;
 }
