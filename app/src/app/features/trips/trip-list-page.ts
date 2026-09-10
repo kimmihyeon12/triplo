@@ -182,11 +182,17 @@ import { PageBar } from '../../shared/page-bar';
           border-color var(--dur) var(--ease-out),
           transform var(--dur) var(--ease-out);
       }
-      .card:hover {
-        border-color: var(--border-strong);
+      /*
+        hover는 마우스 기기에서만. 터치 기기는 탭 후에도 hover가 남아
+        테두리가 켜진 채로 보인다. 누를 때는 크기를 줄이지 않고 배경만 바꾼다.
+      */
+      @media (hover: hover) {
+        .card:hover {
+          border-color: var(--border-strong);
+        }
       }
       .card:active {
-        transform: scale(0.994);
+        background: var(--ground-2);
       }
 
       /* 1단: 가장 진하고 크다 */
@@ -272,12 +278,12 @@ import { PageBar } from '../../shared/page-bar';
          나머지 버튼·탭·링크는 계속 딥 블루 단색이다.
       */
       .btn--ai {
-        background: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+        background: var(--ai-fill);
         border-color: transparent;
         color: #fff;
       }
       .btn--ai:hover {
-        background: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);
+        background: var(--ai-fill-hover);
       }
       .make .btn {
         padding: 0 var(--sp-2);

@@ -1,11 +1,12 @@
 ---
 name: 트립플로 (국내 여행 비서)
-description: 미지근한 회백색 바탕 위 흰 카드와 1px 구분선, 밑줄 탭, 한 서체 가족의 굵기 위계, 딥 블루 하나의 클린 앱 표준.
+description: 밝은 중성 회색 바탕 위 흰 카드, 상단 바에 통합된 화면 제목, 프리텐다드 한 가족의 굵기 위계, 딥 블루 하나의 모바일 우선 클린 앱.
 colors:
-  ground: "#f7f6f4"
-  ground-2: "#eeece8"
+  ground: "#fbfcfd"
+  ground-2: "#f4f6f9"
   panel: "#ffffff"
-  panel-2: "#faf9f7"
+  panel-2: "#fcfdfe"
+  accent: "#3b6fef"
   accent-deep: "#2f5fdb"
   accent-deep-hover: "#2650bd"
   accent-tint: "#eaf0fe"
@@ -20,67 +21,76 @@ colors:
   danger-tint: "#fde8e6"
   ok-ink: "#1e7a4e"
   ok-tint: "#e3f5ea"
-  ink: "#1c1917"
-  ink-2: "#57514c"
-  ink-3: "#736b65"
-  border: "#e9e5e1"
-  border-strong: "#cfc8c1"
+  ink: "#16181d"
+  ink-2: "#4a4f58"
+  ink-3: "#6b7280"
+  border: "#e8eaef"
+  border-strong: "#d4d8e0"
   on-accent: "#ffffff"
   brand: "#2f5fdb"
+  naver-brand: "#03c75a"
+  kakao-brand: "#fee500"
+  kakao-brand-ink: "#3c1e1e"
+  selected-fill-from: "#16181d"
+  selected-fill-to: "#2a3b63"
+  ai-fill-from: "#3b6fef"
+  ai-fill-to: "#6d4fd6"
+  ai-fill-hover-from: "#2f5fdb"
+  ai-fill-hover-to: "#5c40c4"
 typography:
   headline:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: "-0.02em"
-  title:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "1.375rem"
     fontWeight: 700
-    lineHeight: 1.3
-    letterSpacing: "-0.02em"
+    lineHeight: 1.4
+    letterSpacing: "0"
+  title:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 700
+    lineHeight: 1.45
+    letterSpacing: "0"
   title-card:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 700
     lineHeight: 1.3
-    letterSpacing: "-0.02em"
+    letterSpacing: "0"
   subtitle:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "1rem"
     fontWeight: 700
     lineHeight: 1.4
-    letterSpacing: "-0.02em"
+    letterSpacing: "0"
   body:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: "-0.01em"
+    letterSpacing: "0"
   body-sm:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: "-0.01em"
+    letterSpacing: "0"
   label:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: "-0.01em"
+    letterSpacing: "0"
   caption:
-    fontFamily: "Noto Sans KR, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, Apple SD Gothic Neo, Malgun Gothic, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1.4
-    letterSpacing: "-0.01em"
+    letterSpacing: "0"
 rounded:
   cell: "8px"
-  button-sm: "10px"
-  control: "12px"
-  panel: "14px"
+  control: "10px"
+  control-lg: "12px"
+  panel: "16px"
   pill: "999px"
   circle: "50%"
 spacing:
@@ -95,20 +105,20 @@ components:
   button-primary:
     backgroundColor: "{colors.accent-deep}"
     textColor: "{colors.on-accent}"
-    typography: "{typography.body}"
+    typography: "{typography.body-sm}"
     rounded: "{rounded.control}"
     padding: "0 16px"
-    height: "44px"
+    height: "40px"
   button-primary-hover:
     backgroundColor: "{colors.accent-deep-hover}"
     textColor: "{colors.on-accent}"
   button-secondary:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
-    typography: "{typography.body}"
+    typography: "{typography.body-sm}"
     rounded: "{rounded.control}"
     padding: "0 16px"
-    height: "44px"
+    height: "40px"
   button-secondary-hover:
     backgroundColor: "{colors.panel-2}"
     textColor: "{colors.ink}"
@@ -141,72 +151,72 @@ components:
     textColor: "{colors.danger-ink}"
   button-sm:
     typography: "{typography.body-sm}"
-    rounded: "{rounded.button-sm}"
+    rounded: "{rounded.cell}"
     padding: "0 12px"
     height: "36px"
   button-icon:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.button-sm}"
+    backgroundColor: "transparent"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.control}"
     padding: "0"
-    width: "40px"
-    height: "40px"
+    width: "36px"
+    height: "36px"
   chip-accent:
     backgroundColor: "{colors.accent-tint}"
     textColor: "{colors.accent-deep}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-place:
     backgroundColor: "{colors.place-tint}"
     textColor: "{colors.place-ink}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-stay:
     backgroundColor: "{colors.stay-tint}"
     textColor: "{colors.stay-ink}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-warn:
     backgroundColor: "{colors.warn-tint}"
     textColor: "{colors.warn-ink}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-danger:
     backgroundColor: "{colors.danger-tint}"
     textColor: "{colors.danger-ink}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-ok:
     backgroundColor: "{colors.ok-tint}"
     textColor: "{colors.ok-ink}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-ghost:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink-3}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   chip-solid-accent:
     backgroundColor: "{colors.accent-deep}"
     textColor: "{colors.on-accent}"
     typography: "{typography.caption}"
     rounded: "{rounded.cell}"
-    padding: "1px 8px"
-    height: "24px"
+    padding: "2px 8px"
+    height: "22px"
   card-panel:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
@@ -234,8 +244,8 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.control}"
-    padding: "11px 14px"
-    height: "48px"
+    padding: "10px 12px"
+    height: "44px"
   tab:
     backgroundColor: "transparent"
     textColor: "{colors.ink-2}"
@@ -347,9 +357,14 @@ components:
 따뜻한 회백색 중립 위에 딥 블루 하나를 강조로 두고, 나머지 네 색상군(라벤더·버터·로즈·민트)은 각각 잉크(글자)·틴트(배경) 두 단계로만 존재하는 의미색이다.
 
 ### Primary
-현재 상단 로고는 2026-09-10 사용자 요청으로 ‘트립플로’ 워드마크를 시범 적용했다. Noto Sans KR 계열 22px/700, 자간 -0.035em이며 그림 심볼은 표시하지 않는다. 아래의 과거 브랜드 점·16px 브랜드 글자 설명보다 이 규칙이 우선한다. 링크의 최소 조작 영역은 44×44px이며 브라우저 탭은 같은 파랑 배경의 흰 T를 사용한다.
+현재 상단 로고는 필기체 T 심볼(`app/public/brand/triplo-symbol.svg`, `currentColor` 24~26px) 하나다. ‘트립플로’ 글자는 상단 바에 표시하지 않는다. 화면 제목이 상단 바 가운데에 들어가므로 워드마크까지 두면 중복이다. 아래의 과거 브랜드 점·16px 브랜드 글자 설명보다 이 규칙이 우선한다. 링크의 최소 조작 영역은 44×44px이며 브라우저 탭은 같은 파랑 배경의 흰 T를 사용한다.
 
-**No Gradient Rule (2026-09-10 확정).** 그라데이션은 어디에도 쓰지 않는다. 화면 UI는 물론 로고 워드마크·파비콘에도 쓰지 않는다. 여행 헤더 그라데이션을 시험했다가 화면에 과하다고 판단해 취소했고 로고 그라데이션도 함께 폐기했다. 브랜드와 강조는 `accent-deep` 단색 하나로 표현한다.
+**Gradient Rule (2026-09-10 개정).** 그라데이션은 두 곳에만 쓴다. 그 밖의 버튼·칩·카드·로고·파비콘은 단색이다.
+
+1. **선택된 날짜 칩** (`--selected-fill`, 잉크 `#16181d` → 네이비 `#2a3b63`, 135도). 화면당 하나만 선택되는 큰 요소라 미묘한 깊이가 도움이 된다. 종류 토글처럼 작은 세그먼트가 여러 개 붙는 자리는 단색 `ink`로 채운다. 여러 개가 동시에 그라데이션이면 산만해진다.
+2. **AI 만들기 진입 버튼** (`--ai-fill`, `#3b6fef` → `#6d4fd6`, 135도. hover는 `--ai-fill-hover`). ‘AI가 만들어 준다’는 특별함을 나타내는 진입점 하나뿐이다. 저장·추가 같은 일반 주 동작 버튼은 `accent-deep` 단색을 유지한다.
+
+여행 헤더 전체 배경과 로고 워드마크에 그라데이션을 시험했다가 과하다고 판단해 취소한 이력이 있다. 넓은 면적과 브랜드 자산에는 쓰지 않는다.
 - **진한 딥 블루** (`accent-deep`): 주 동작 버튼 채움, 링크 글자, 활성 탭 밑줄(2px), 상단 바 브랜드 점(10px), 일차 배지(40px)·장소 순번 배지(28px)·지도 마커(28px) 채움, 포커스 링(2px outline), 캐럿, 체크박스 `accent-color`, 지도 스피너 머리, 범례의 안내선 점선. 주 동작과 현재 위치·순번 외에는 쓰지 않는다.
 - **진한 딥 블루 호버** (`accent-deep-hover`): 주 동작 버튼의 hover 채움 전용.
 - **딥 블루 틴트** (`accent-tint`): 선택된 일정 행 배경, 순서 변경 직후 400ms 동안 켜지는 행 배경, ‘기기에 저장됨’ 칩 배경, 빈 상태 아이콘 원, 하루 합계 ‘체류’ 칩 배경. 딥 블루의 가장 약한 목소리다.

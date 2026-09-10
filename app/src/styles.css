@@ -65,6 +65,14 @@
   */
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
 
+  /*
+    AI 만들기 전용 그라데이션 (2026-09-10 사용자 승인).
+    'AI가 만들어 준다'는 특별함을 나타내는 진입점 하나에만 쓴다.
+    저장·추가 같은 일반 주 동작 버튼은 --accent-deep 단색을 유지한다.
+  */
+  --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+  --ai-fill-hover: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);
+
   /* 잉크와 선: 같은 중성~쿨 계열. ink-3는 흰 판 위 4.5:1을 유지한다. */
   --ink: #16181d;
   --ink-2: #4a4f58;
@@ -328,8 +336,7 @@ textarea {
   text-decoration: none;
   transition:
     background-color var(--dur) var(--ease-out),
-    color var(--dur) var(--ease-out),
-    transform var(--dur) var(--ease-out);
+    color var(--dur) var(--ease-out);
 }
 .btn::after {
   content: '';
@@ -349,8 +356,12 @@ textarea {
     background: var(--ground-2);
   }
 }
+/* 누를 때는 크기를 바꾸지 않고 배경만 한 단계 진하게 한다. */
 .btn:active {
-  transform: scale(0.98);
+  background: var(--ground-2);
+}
+.btn--primary:active {
+  background: var(--accent-deep-hover);
 }
 /* 모바일 브라우저의 기본 탭 하이라이트도 끈다. */
 .btn,
@@ -365,7 +376,7 @@ textarea {
 }
 .btn:disabled:active,
 .btn[aria-disabled='true']:active {
-  transform: none;
+  background: var(--panel);
 }
 .btn--primary {
   background: var(--accent-deep);
