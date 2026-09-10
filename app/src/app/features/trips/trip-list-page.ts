@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TripStore } from '../../data/trip-store';
-import { formatPeriod } from '../../domain/dates';
+import { formatPeriod, todayIso, tripTimelineStatus } from '../../domain/dates';
 import type { Trip } from '../../domain/model';
 import { IconComponent } from '../../shared/icon';
 
@@ -58,7 +58,10 @@ import { IconComponent } from '../../shared/icon';
                 <li>
                   <a class="panel card" [routerLink]="['/trips', trip.id]" [attr.data-testid]="'trip-card-' + trip.id">
                     <div class="card__main">
-                      <h2>{{ trip.title }}</h2>
+                      <div class="card__title-row">
+                        <h2>{{ trip.title }}</h2>
+                        <span [class]="timelineCellClass(trip)" [attr.data-testid]="'trip-timeline-' + trip.id">{{ timelineLabel(trip) }}</span>
+                      </div>
                       <p class="card__period">{{ period(trip) }}</p>
                       @if (trip.regions.length > 0) {
                         <p class="row card__regions">
@@ -70,6 +73,12 @@ import { IconComponent } from '../../shared/icon';
                           }
                         </p>
                       }
+                      <div class="row card__extra">
+                        <span class="cell cell--ghost" [attr.data-testid]="'trip-expense-' + trip.id">지출 미설정</span>
+                        <span class="cell cell--ghost" [attr.data-testid]="'trip-companions-' + trip.id">
+                          <app-icon name="luggage" [size]="12" /> 동행 준비 중
+                        </span>
+                      </div>
                     </div>
                     <div class="card__meta small muted">
                       <span>장소 {{ trip.stops.length }}개</span>
@@ -134,6 +143,16 @@ import { IconComponent } from '../../shared/icon';
       .card__regions {
         gap: 6px;
       }
+      .card__title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2);
+        flex-wrap: wrap;
+      }
+      .card__extra {
+        gap: 6px;
+        margin-top: 2px;
+      }
       .card__meta {
         display: flex;
         flex-direction: column;
@@ -154,5 +173,30 @@ export class TripListPage implements OnInit {
 
   period(trip: Trip): string {
     return formatPeriod(trip.startDate, trip.endDate);
+  }
+
+  /** 여행 카드에 표시할 진행 상태 라벨. 종료일 경과는 '완료'가 아니라 '일정 날짜 지남'이다. */
+  timelineLabel(trip: Trip): string {
+    const status = tripTimelineStatus(trip.startDate, trip.endDate, todayIso());
+    switch (status.kind) {
+      case 'undecided':
+        return '날짜 미정';
+      case 'upcoming':
+        return `예정 D-${status.daysUntil}`;
+      case 'today':
+        return '진행중 D-day';
+      case 'ongoing':
+        return `여행 중 · ${status.dayNumber}일차`;
+      case 'past':
+        return '일정 날짜 지남';
+    }
+  }
+
+  /** 상태별 칩 클래스. 진행 중만 강조하고 나머지는 중립 표시다. */
+  timelineCellClass(trip: Trip): string {
+    const status = tripTimelineStatus(trip.startDate, trip.endDate, todayIso());
+    if (status.kind === 'today' || status.kind === 'ongoing') return 'cell cell--solid-accent';
+    if (status.kind === 'past') return 'cell cell--warn';
+    return 'cell cell--ghost';
   }
 }
