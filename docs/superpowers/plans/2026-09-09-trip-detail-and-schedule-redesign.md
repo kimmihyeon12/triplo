@@ -4,7 +4,7 @@
 
 **2026-09-09 정정:** 이 계획은 원래 Task 3에서 그라데이션 헤더를 여행 상세 화면(`trip-detail-page.ts`)에 적용하려 했으나, 구현 도중 사용자가 실제 화면을 보고 "그라데이션 자체가 과하다"고 판단해 취소했고, D-day·지출·동행 정보는 여행 상세가 아니라 여행 목록 화면(`trip-list-page.ts`)의 카드에 넣는 것이 원래 의도였음이 확인됐다. 아래 Task 3은 이 정정을 반영해 다시 작성했다(구버전 Task 3은 미커밋 상태에서 폐기, `app/src/styles.css`의 그라데이션 CSS는 커밋 `ffd337a`로 되돌림).
 
-**Goal:** 여행 목록 화면(`/trips`)의 각 여행 카드에 D-day·지출 요약·동행 자리를 추가하고, 여행 상세 화면에서 모바일 첫 화면에 첫 장소가 보이도록 헤더·지도 높이를 줄이고, 장소 카드의 반복 편집 버튼을 순서 편집 모드로 분리하고, 지도 앱 버튼을 브랜드색으로 정리한다.
+**Goal:** 여행 목록 화면(`/trips`)의 각 여행 카드에 D-day·지출 요약·동행 자리를 추가하고, 여행 상세 화면에서 모바일 첫 화면에 첫 장소가 보이도록 헤더·지도 높이를 줄이고(토글 없이 고정 높이), 장소 카드의 반복 편집 버튼을 순서 편집 모드로 분리하고, 지도 앱 버튼을 브랜드색으로 정리한다.
 
 **Architecture:** 기존 Angular 20 standalone 컴포넌트 구조를 그대로 두고 그 안에서 템플릿·상태·도메인 함수를 확장한다. D-day 상태 계산은 `domain/dates.ts`의 순수 함수(`tripTimelineStatus`, Task 1에서 이미 완료)를 여행 목록 화면(`trip-list-page.ts`)에서 소비한다. 순서 편집 모드는 `trip-detail-page.ts`의 컴포넌트 signal로 관리한다. 지도 브랜드색은 `styles.css`의 CSS 변수와 유틸리티 클래스(Task 2에서 이미 완료)를 그대로 쓴다.
 
@@ -32,7 +32,7 @@
 - `app/src/styles.css` — **Modify(완료).** 지도 브랜드색 변수·`.btn--naver`/`.btn--kakao` 추가(Task 2, 커밋 `45327e7`). 그라데이션 토큰은 도입 후 정정으로 제거(커밋 `ffd337a`).
 - `app/src/app/features/trips/trip-list-page.ts` — **Modify.** 여행 카드에 D-day 배지, 지역 순서, 지출 요약 자리, 동행 프로필·초대 자리 추가(Task 3).
 - `app/src/app/features/trips/trip-detail-page.ts` — **Modify.** 순서 편집 모드 상태·토글, 지도 높이 축소 연결, 더보기 메뉴, 지도 버튼 브랜드색 클래스 적용(Task 4·5). 헤더는 건드리지 않는다.
-- `app/src/app/shared/trip-map.ts` — **Modify.** 모바일 기본 높이 축소, 확대/접기 토글 추가.
+- `app/src/app/shared/trip-map.ts` — **Modify.** 모바일 기본 높이 축소(접기·확대 토글은 2026-09-10 지시로 제외).
 - `PRODUCT.md`, `DESIGN.md` — **Modify.** 여행 카드 확장 정보, 지도 브랜드색, 순서 편집 모드 문서화(그라데이션 항목은 추가하지 않는다).
 - `docs/디자인-비교-검토-2026-09-09.md` — **Modify.** 상태를 "미확정 제안"에서 "2026-09-09 확정 반영"으로 갱신.
 
@@ -321,68 +321,47 @@ git commit -m "feat(app): 여행 목록 카드에 D-day·지출·동행 자리 �
 
 ---
 
-### Task 4: 모바일 첫 화면에 첫 장소 노출 — 지도 높이 축소 및 접기/확대
+### Task 4: 모바일 첫 화면에 첫 장소 노출 — 지도 높이 축소
 
 **Files:**
 - Modify: `app/src/app/shared/trip-map.ts`
 - Modify: `app/src/app/features/trips/trip-detail-page.ts`
 
+**2026-09-10 정정:** 원래 이 Task는 지도에 접기·확대 토글 버튼을 붙이려 했으나 사용자 지시로 토글 기능을 제외했다. 지도 높이를 고정값으로 줄이는 것만 수행한다.
+
 **Interfaces:**
 - Consumes: 없음(기존 `TripMapComponent`의 `model`, `selectedId`, `markerSelect` 입출력 그대로 사용).
-- Produces: `TripMapComponent`에 `collapsed = input(false)` input과 새 CSS 클래스 `.tc-map--collapsed`(높이 180px) 추가. `trip-detail-page.ts`에 `mapCollapsed = signal(true)` 상태와 토글 버튼 추가.
+- Produces: 없음(공개 인터페이스 변경 없음). `trip-map.ts` 내부의 지도 컨테이너 높이만 줄이고, 필요하면 `trip-detail-page.ts`의 머리글·탭 주변 여백을 줄인다.
 
-- [ ] **Step 1: `trip-map.ts` 구조 확인**
+- [ ] **Step 1: 현재 구조와 실제 높이 확인**
 
-`app/src/app/shared/trip-map.ts`를 읽어 현재 지도 컨테이너의 높이를 정의하는 CSS 규칙과 컴포넌트 input 목록을 확인한다(이미 87·148행에서 `--accent-deep` 참조를 확인했으므로 해당 파일이 존재함은 확인됨). 정확한 높이 값과 셀렉터 이름은 실행 시점에 파일을 읽어 확정한다 — 이 계획은 구조를 안다고 가정하지 않고, 실행자가 Step 2 전에 반드시 `Read` 도구로 전체 파일을 읽도록 지시한다.
+`app/src/app/shared/trip-map.ts` 전체를 `Read`로 읽어 지도 컨테이너의 높이를 정하는 CSS 규칙(셀렉터 이름과 현재 px 값)을 확인한다. 이어서 `app/src/app/features/trips/trip-detail-page.ts`에서 `<app-trip-map>` 사용처를 모두 찾고, 각 사용처에 별도 높이를 주는 클래스(예: `.stays-map`)가 있는지 확인한다. 이 계획은 구조를 안다고 가정하지 않으므로 실제 파일 내용을 기준으로 아래 스텝을 수행한다.
 
-- [ ] **Step 2: 지도 컴포넌트에 collapsed input과 높이 클래스 추가**
+- [ ] **Step 2: 지도 높이 축소**
 
-`app/src/app/shared/trip-map.ts`의 `@Component` 클래스 필드에 추가한다(기존 `model = input.required<...>()` 등이 있는 위치 근처):
+Step 1에서 확인한 지도 컨테이너 높이 규칙의 값을 모바일에서 첫 장소가 보이도록 줄인다. 목표는 390×844 뷰포트에서 첫 장소 카드의 이름이 스크롤 없이 보이는 것이다. 기준값은 180px 안팎이며, 실제 렌더 결과를 보고 조정한다.
 
-```typescript
-  readonly collapsed = input(false);
-```
+PC(720px 이상)에서는 화면이 넓으므로 미디어 쿼리로 기존 높이를 유지하거나 더 크게 둘 수 있다. 기존 CSS에 이미 미디어 쿼리가 있으면 그 구조를 따른다.
 
-템플릿의 최상위 지도 컨테이너 엘리먼트(예: `<div class="tc-map" ...>` 형태로 존재할 것)에 `[class.tc-map--collapsed]="collapsed()"` 바인딩을 추가한다. 정확한 엘리먼트와 기존 클래스 이름은 Step 1에서 읽은 실제 파일 내용을 기준으로 맞춘다.
+토글 버튼·`collapsed` input·상태 signal은 만들지 않는다.
 
-`styles: [...]` 배열 또는 별도 CSS에 다음 규칙을 추가한다:
+- [ ] **Step 3: 머리글·탭 여백 점검**
 
-```css
-.tc-map--collapsed {
-  height: 180px;
-}
-```
-
-(이미 지도 컨테이너에 고정 높이가 있다면 그 규칙을 오버라이드하도록 우선순위를 맞춘다.)
-
-- [ ] **Step 3: trip-detail-page.ts에 접기/확대 토글 상태 추가**
-
-클래스 필드에 추가한다:
-
-```typescript
-  readonly mapCollapsed = signal(true);
-```
-
-`<app-trip-map ... />` 사용처(전체 보기·날짜별 보기 각각에 있을 수 있음, 367행 부근과 날짜별 탭 부근을 모두 확인)에 `[collapsed]="mapCollapsed()"`를 추가하고, 바로 위나 아래에 토글 버튼을 추가한다:
-
-```typescript
-                <button type="button" class="btn btn--ghost btn--sm" (click)="mapCollapsed.set(!mapCollapsed())" [attr.aria-expanded]="!mapCollapsed()" data-testid="map-toggle">
-                  <app-icon [name]="mapCollapsed() ? 'arrow-down' : 'arrow-up'" [size]="14" /> {{ mapCollapsed() ? '지도 크게 보기' : '지도 접기' }}
-                </button>
-```
+지도 높이를 줄인 뒤에도 첫 장소가 첫 화면에 들어오지 않으면, `trip-detail-page.ts`의 머리글(`.hero.head`)과 탭(`.tabs`) 사이 여백을 줄인다. 기존 디자인 토큰(`--sp-*`)에서 한 단계 작은 값을 쓰고 임의의 px를 새로 만들지 않는다.
 
 - [ ] **Step 4: 모바일 뷰포트로 검증**
 
 Run: `cd app && npm run e2e`
-Expected: 기존 지도 관련 e2e(있다면)가 통과하는지 확인한다. 실패 시 selector 충돌을 실제 파일 확인 후 수정한다.
+Expected: 기존 e2e 전부 통과.
 
-이어서 모바일 최초 화면에 첫 장소가 보이는지 수동 확인이 필요하면 `npm start`로 개발 서버를 띄우고 브라우저 개발자 도구를 390×844로 설정해 확인한다. 자동화된 스크린샷 검증은 다음 Task에서 Playwright로 캡처한다.
+이어서 390×844에서 첫 장소가 실제로 보이는지 Playwright로 확인한다. `app/e2e`에 기존 모바일 시나리오가 있으면 그 안에서 첫 장소 요소의 `boundingBox().y` 값이 뷰포트 높이(844)에서 하단 고정 바 높이(약 88px)를 뺀 값보다 작은지 확인하는 방식이 쓸 만하다. 검증 방법과 실제 측정값을 보고서에 남긴다.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/src/app/shared/trip-map.ts app/src/app/features/trips/trip-detail-page.ts
-git commit -m "feat(app): 지도 접기·확대로 모바일 첫 화면에 첫 장소 노출"
+git add app/src/app/shared/trip-map.ts
+# trip-detail-page.ts도 수정했다면 함께 추가한다
+git commit -m "feat(app): 모바일 첫 화면에 첫 장소가 보이도록 지도 높이 축소"
 ```
 
 `git add -A`를 쓰지 않는다.
