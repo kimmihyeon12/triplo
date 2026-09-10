@@ -68,7 +68,7 @@ type MapState = 'checking' | 'unavailable' | 'loading' | 'ready' | 'error';
       }
       .canvas {
         width: 100%;
-        height: var(--map-height, 280px);
+        height: var(--map-height, 180px);
         border-radius: var(--radius-panel);
         overflow: hidden;
         background: var(--ground-2);
@@ -104,7 +104,7 @@ type MapState = 'checking' | 'unavailable' | 'loading' | 'ready' | 'error';
       .overlay {
         position: absolute;
         inset: 0 0 auto 0;
-        height: var(--map-height, 280px);
+        height: var(--map-height, 180px);
         display: flex;
         flex-direction: column;
         align-items: center;
