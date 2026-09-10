@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'trips' },
+  { path: 'login', loadComponent: () => import('./features/auth/login-page').then((m) => m.LoginPage), title: '로그인' },
   { path: 'trips', loadComponent: () => import('./features/trips/trip-list-page').then((m) => m.TripListPage), title: '트립플로' },
   { path: 'trips/new', loadComponent: () => import('./features/trips/trip-form-page').then((m) => m.TripFormPage), title: '여행 만들기' },
   { path: 'trips/ai', loadComponent: () => import('./features/trips/ai-plan-page').then((m) => m.AiPlanPage), title: 'AI 일정 만들기' },

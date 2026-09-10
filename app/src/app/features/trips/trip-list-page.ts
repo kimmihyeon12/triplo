@@ -99,7 +99,10 @@ import { PageBar } from '../../shared/page-bar';
         }
       }
 
-      <p class="alpha small muted">내부 알파 · 이 기기에만 저장됩니다</p>
+      <p class="alpha small muted">
+        내부 알파 · 이 기기에만 저장됩니다
+        <a routerLink="/login" class="alpha__login" data-testid="go-login">다른 기기에서도 보기</a>
+      </p>
     </div>
   `,
   styles: [
@@ -247,8 +250,21 @@ import { PageBar } from '../../shared/page-bar';
         color: var(--stay-ink);
       }
       .alpha {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: var(--sp-1) var(--sp-2);
         text-align: center;
         margin-top: var(--sp-2);
+      }
+      .alpha__login {
+        color: var(--accent-deep);
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+        /* 링크 자체는 작지만 조작 영역은 44px을 확보한다 */
+        padding: 12px 4px;
       }
 
       /* 여행 만들기 두 갈래: 반반 폭. 360px에서도 라벨이 잘리지 않는다. */
