@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { IconComponent } from '../../shared/icon';
 import { PageBar } from '../../shared/page-bar';
 
@@ -7,14 +6,17 @@ import { PageBar } from '../../shared/page-bar';
  * SNS 로그인 화면.
  *
  * 아직 Supabase Auth를 연결하지 않았으므로 버튼을 눌러도 실제 로그인은 되지 않는다.
- * 준비 중임을 화면에 분명히 밝히고, 로그인 없이 쓰는 길을 항상 열어 둔다
- * (기획안 24절: 로그인 전 기기 저장 흐름을 유지한다).
+ * 준비 중임을 화면에 분명히 밝힌다.
+ *
+ * 버튼은 카카오·구글이 배포하는 공식 이미지를 그대로 쓴다. 두 회사 모두
+ * 브랜드 가이드에서 로고 변형·심볼 단독 사용을 금지하고 버튼 문구도
+ * 정해진 범위로 제한하므로 자체 버튼을 만들지 않는다.
  */
-type Provider = 'kakao' | 'google' | 'apple';
+type Provider = 'kakao' | 'google';
 
 @Component({
   selector: 'app-login-page',
-  imports: [RouterLink, IconComponent],
+  imports: [IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="page login">
@@ -39,20 +41,19 @@ type Provider = 'kakao' | 'google' | 'apple';
         </div>
       </div>
 
+      <!--
+        두 버튼 모두 각 사 공식 자산에서 심볼만 가져와 같은 구조로 만든다.
+        로고는 왼쪽 끝에 고정하고 문구는 가운데에 둔다.
+        각 사 가이드가 정한 배경·글자 색과 로고 원형은 그대로 지킨다.
+      -->
       <nav class="providers" aria-label="소셜 로그인">
         <button type="button" class="sns sns--kakao" (click)="notReady('kakao')" data-testid="login-kakao">
-          <img class="sns__logo" src="brand/kakaomap.png" width="20" height="20" alt="" aria-hidden="true" />
-          <span>카카오로 계속하기</span>
+          <img class="sns__logo" src="brand/kakao-symbol.png" width="18" height="17" alt="" aria-hidden="true" />
+          <span class="sns__label">카카오 로그인</span>
         </button>
         <button type="button" class="sns sns--google" (click)="notReady('google')" data-testid="login-google">
-          <span>구글로 계속하기</span>
-        </button>
-        <!--
-          애플 로고 문자(U+F8FF)는 애플 기기 전용 사설 영역이라 다른 환경에서
-          엉뚱한 글자로 보인다. 로고를 임의로 그리지도 않고 글자만 쓴다.
-        -->
-        <button type="button" class="sns sns--apple" (click)="notReady('apple')" data-testid="login-apple">
-          <span>Apple로 계속하기</span>
+          <img class="sns__logo" src="brand/google-logo.svg" width="18" height="18" alt="" aria-hidden="true" />
+          <span class="sns__label">구글 로그인</span>
         </button>
       </nav>
 
@@ -61,8 +62,6 @@ type Provider = 'kakao' | 'google' | 'apple';
           {{ providerLabel[tried()!] }} 로그인은 계정 서버 연결 후 제공됩니다. 그때까지는 이 기기에 저장됩니다.
         </p>
       }
-
-      <a class="skip-login" routerLink="/trips" data-testid="login-skip">로그인 없이 둘러보기</a>
 
       <p class="terms small muted">
         계속하면 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.
@@ -107,50 +106,51 @@ type Provider = 'kakao' | 'google' | 'apple';
         gap: var(--sp-2);
       }
       /*
-        SNS 버튼: 각 서비스 브랜드 색을 배경으로 쓴다.
-        카카오만 공식 로고 파일이 있어 그대로 쓰고, 구글·애플은 로고를 임의로
-        그리지 않고 글자로 표시한다(상표 오사용 방지).
+        두 버튼은 같은 격자를 쓴다. 왼쪽에 로고 자리를 고정 폭으로 두고
+        문구는 남은 폭 가운데에 놓아, 문구 길이가 달라도 로고가 나란히 선다.
       */
       .sns {
-        position: relative;
-        display: flex;
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
         align-items: center;
-        justify-content: center;
-        gap: var(--sp-2);
         width: 100%;
-        min-height: 50px;
-        padding: 0 var(--sp-4);
-        border: 1px solid transparent;
+        height: 48px;
+        padding: 0;
+        border: 0;
         border-radius: var(--radius-control-lg);
         font-size: var(--fs-15);
-        font-weight: 600;
+        font-weight: 500;
         cursor: pointer;
-        transition: background-color var(--dur) var(--ease-out);
+        transition: opacity var(--dur) var(--ease-out);
       }
       .sns__logo {
         display: block;
-        border-radius: var(--radius-cell);
+        justify-self: center;
       }
+      .sns__label {
+        text-align: center;
+      }
+      /* 카카오 가이드: 배경 #FEE500, 글자·심볼 검정 */
       .sns--kakao {
         background: var(--kakao-brand);
-        color: var(--kakao-brand-ink);
+        color: #000000;
       }
+      /*
+        구글 가이드: 흰 배경, 글자 #1F1F1F, 로고는 표준 색상.
+        테두리는 가이드의 #747775가 화면에서 너무 진해 앱 토큰으로 낮췄다.
+      */
       .sns--google {
-        background: var(--panel);
-        border-color: var(--border-strong);
-        color: var(--ink);
-      }
-      .sns--apple {
-        background: #000000;
-        color: #ffffff;
+        background: #ffffff;
+        box-shadow: inset 0 0 0 1px var(--border-strong);
+        color: #1f1f1f;
       }
       @media (hover: hover) {
         .sns:hover {
-          filter: brightness(0.95);
+          opacity: 0.9;
         }
       }
       .sns:active {
-        filter: brightness(0.92);
+        opacity: 0.82;
       }
 
       .tried {
@@ -159,16 +159,6 @@ type Provider = 'kakao' | 'google' | 'apple';
         padding: var(--sp-3);
         border-radius: var(--radius-control);
         line-height: 1.6;
-      }
-
-      .skip-login {
-        align-self: center;
-        padding: var(--sp-3);
-        font-size: var(--fs-14);
-        font-weight: 600;
-        color: var(--ink-2);
-        text-decoration: underline;
-        text-underline-offset: 0.2em;
       }
 
       .terms {
@@ -184,7 +174,6 @@ export class LoginPage {
   readonly providerLabel: Record<Provider, string> = {
     kakao: '카카오',
     google: '구글',
-    apple: 'Apple',
   };
 
   /** 마지막으로 누른 제공자. 미연결 안내를 그 이름으로 보여준다. */
