@@ -31,6 +31,8 @@ colors:
   naver-brand: "#03c75a"
   kakao-brand: "#fee500"
   kakao-brand-ink: "#3c1e1e"
+  kakao-login-ink: "#000000"
+  google-login-ink: "#1f1f1f"
   selected-fill-from: "#16181d"
   selected-fill-to: "#2a3b63"
   ai-fill-from: "#3b6fef"

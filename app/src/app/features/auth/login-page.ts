@@ -133,16 +133,16 @@ type Provider = 'kakao' | 'google';
       /* 카카오 가이드: 배경 #FEE500, 글자·심볼 검정 */
       .sns--kakao {
         background: var(--kakao-brand);
-        color: #000000;
+        color: var(--kakao-login-ink);
       }
       /*
         구글 가이드: 흰 배경, 글자 #1F1F1F, 로고는 표준 색상.
         테두리는 가이드의 #747775가 화면에서 너무 진해 앱 토큰으로 낮췄다.
       */
       .sns--google {
-        background: #ffffff;
+        background: var(--panel);
         box-shadow: inset 0 0 0 1px var(--border-strong);
-        color: #1f1f1f;
+        color: var(--google-login-ink);
       }
       @media (hover: hover) {
         .sns:hover {
