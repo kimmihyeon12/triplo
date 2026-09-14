@@ -2,7 +2,11 @@ import { expect, test } from '@playwright/test';
 import { expectNoHorizontalScroll, resetApp } from './helpers';
 
 /** 목표 요소에 포커스가 닿을 때까지 Tab을 누른다(최대 6회). */
-async function tabUntil(page: import('@playwright/test').Page, testId: string, max = 6): Promise<void> {
+async function tabUntil(
+  page: import('@playwright/test').Page,
+  testId: string,
+  max = 6,
+): Promise<void> {
   for (let i = 0; i < max; i++) {
     await page.keyboard.press('Tab');
     const focused = await page.getByTestId(testId).evaluate((el) => el === document.activeElement);

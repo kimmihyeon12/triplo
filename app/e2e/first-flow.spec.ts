@@ -5,20 +5,36 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
   test.beforeEach(async ({ page }) => resetApp(page));
 
   test('전체·날짜별·숙소 보기와 새로고침 후 재열기', async ({ page }) => {
-    const id = await createTrip(page, { title: '강릉 주말', start: '2026-05-01', end: '2026-05-03', regions: ['강릉'] });
+    const id = await createTrip(page, {
+      title: '강릉 주말',
+      start: '2026-05-01',
+      end: '2026-05-03',
+      regions: ['강릉'],
+    });
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
     await expect(page.getByTestId('trip-period')).toContainText('2박 3일');
     await expect(page.getByTestId('empty-trip')).toBeVisible();
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved');
 
-    await addStop(page, id, { name: '안목해변', date: '2026-05-01', region: '강릉', address: '강원 강릉시 창해로 14번길', stayMinutes: 60 });
+    await addStop(page, id, {
+      name: '안목해변',
+      date: '2026-05-01',
+      region: '강릉',
+      address: '강원 강릉시 창해로 14번길',
+      stayMinutes: 60,
+    });
     await expect(page.getByTestId('panel-days')).toBeVisible();
     await expect(page.getByTestId('day-items')).toContainText('안목해변');
     await expect(page.getByTestId('day-items')).toContainText('위치 미확인');
     await expect(page.getByTestId('day-totals')).toContainText('체류 1시간');
     await expect(page.getByTestId('day-stay-info')).toContainText('숙소 미정');
 
-    await addStay(page, id, { name: 'A 호텔', checkIn: '2026-05-01', checkOut: '2026-05-03', region: '강릉' });
+    await addStay(page, id, {
+      name: 'A 호텔',
+      checkIn: '2026-05-01',
+      checkOut: '2026-05-03',
+      region: '강릉',
+    });
     await expect(page.getByTestId('panel-stays')).toBeVisible();
     await expect(page.getByTestId('night-1')).toHaveAttribute('data-state', 'covered');
     await expect(page.getByTestId('night-2')).toContainText('연박');

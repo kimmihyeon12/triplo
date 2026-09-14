@@ -10,7 +10,9 @@ test.describe('숙박 오류·중복·기간 밖', () => {
     await page.getByTestId('stay-name').fill('A');
     await page.getByTestId('stay-checkin').fill('2026-05-02');
     await page.getByTestId('stay-checkout').fill('2026-05-02');
-    await expect(page.getByTestId('stay-date-error')).toContainText('체크아웃 날짜는 체크인 다음 날 이후');
+    await expect(page.getByTestId('stay-date-error')).toContainText(
+      '체크아웃 날짜는 체크인 다음 날 이후',
+    );
     await expect(page.getByTestId('stay-save')).toBeDisabled();
     await page.getByTestId('stay-checkout').fill('2026-05-01');
     await expect(page.getByTestId('stay-save')).toBeDisabled();

@@ -20,15 +20,17 @@ test('AI 샘플 조건과 선택을 유지하고 저장 실패 후 한 여행에
   await expect(page.getByTestId('ai-summary')).toContainText('바다');
   await page.getByTestId('ai-generate').click();
   await expect(page.getByTestId('ai-pick-s1')).not.toBeChecked();
-  await page.evaluate(flag => localStorage.setItem(flag, '1'), FAIL_FLAG);
+  await page.evaluate((flag) => localStorage.setItem(flag, '1'), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
   await expect(page.getByRole('alert')).toContainText('저장에 실패');
-  await page.evaluate(flag => localStorage.removeItem(flag), FAIL_FLAG);
+  await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
   await expect(page.getByTestId('trip-header')).toBeVisible();
-  const raw = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+  const raw = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   const saved = JSON.parse(raw!);
-  const trips = Object.values(saved.trips) as { stops: { name: string; date: string | null; location: unknown }[] }[];
+  const trips = Object.values(saved.trips) as {
+    stops: { name: string; date: string | null; location: unknown }[];
+  }[];
   expect(trips).toHaveLength(1);
   expect(trips[0].stops).toHaveLength(4);
   expect(trips[0].stops.some((s: { name: string }) => s.name === '안목해변 카페거리')).toBe(false);

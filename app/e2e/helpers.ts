@@ -5,6 +5,34 @@ export const FAIL_FLAG = 'tc.test.trips.v1.failSave';
 
 /** 테스트 앱 저장소를 비우고 목록 화면에서 시작한다. */
 export async function resetApp(page: Page): Promise<void> {
+  // Exercise the real route guard with an isolated authenticated fixture session.
+  await page.route('**/supabase-config.test.json', (route) =>
+    route.fulfill({
+      json: { url: 'https://auth.test.supabase.co', publishableKey: 'sb_publishable_test-only' },
+    }),
+  );
+  await page.addInitScript(() => {
+    const user = {
+      id: 'trip-test-user',
+      email: 'trips@example.com',
+      aud: 'authenticated',
+      role: 'authenticated',
+      app_metadata: { provider: 'google' },
+      user_metadata: { travel_nickname: '여행테스터' },
+    };
+    const expires_at = Math.floor(Date.now() / 1000) + 3600;
+    const access_token = `${btoa('{}')}.${btoa(JSON.stringify({ sub: user.id, exp: expires_at }))}.sig`;
+    localStorage.setItem(
+      'tc.test.auth.v1',
+      JSON.stringify({
+        user,
+        access_token,
+        refresh_token: 'test-refresh',
+        token_type: 'bearer',
+        expires_at,
+      }),
+    );
+  });
   await page.goto('/trips');
   await page.evaluate(
     ([key, flag]) => {
@@ -62,7 +90,8 @@ export async function addStop(page: Page, tripId: string, input: StopInput): Pro
   if (input.address) await page.getByTestId('stop-address').fill(input.address);
   if (input.region) await page.getByTestId('stop-region').selectOption({ label: input.region });
   if (input.date) await page.getByTestId('stop-date').selectOption(input.date);
-  if (input.stayMinutes !== undefined) await page.getByTestId('stop-stay').fill(String(input.stayMinutes));
+  if (input.stayMinutes !== undefined)
+    await page.getByTestId('stop-stay').fill(String(input.stayMinutes));
   if (input.fixedTime) await page.getByTestId('stop-fixed').fill(input.fixedTime);
   if (input.memo) await page.getByTestId('stop-memo').fill(input.memo);
   await page.getByTestId('stop-save').click();
@@ -98,6 +127,8 @@ function kindLabel(kind: NonNullable<StopInput['kind']>): string {
 }
 
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
   expect(overflow, '가로 스크롤이 없어야 한다').toBeLessThanOrEqual(0);
 }

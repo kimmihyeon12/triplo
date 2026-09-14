@@ -22,7 +22,9 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved');
   });
 
-  test('상세에서 순서 변경 저장이 실패하면 화면 상태는 유지되고 재시도로 기기에 반영된다', async ({ page }) => {
+  test('상세에서 순서 변경 저장이 실패하면 화면 상태는 유지되고 재시도로 기기에 반영된다', async ({
+    page,
+  }) => {
     const id = await createTrip(page, { start: '2026-05-01', end: '2026-05-01' });
     await page.goto(`/trips/${id}/stops/new`);
     await page.getByTestId('stop-name').fill('가');

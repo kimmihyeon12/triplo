@@ -8,8 +8,15 @@ import { addStop, createTrip, resetApp } from './helpers';
 test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () => {
   test.beforeEach(async ({ page }) => resetApp(page));
 
-  test('검색 결과를 고르면 좌표가 저장되고 지도에 순번 마커와 안내선이 그려진다', async ({ page }) => {
-    const id = await createTrip(page, { title: '강릉 지도', start: '2026-05-01', end: '2026-05-02', regions: ['강릉'] });
+  test('검색 결과를 고르면 좌표가 저장되고 지도에 순번 마커와 안내선이 그려진다', async ({
+    page,
+  }) => {
+    const id = await createTrip(page, {
+      title: '강릉 지도',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉'],
+    });
 
     // 1) 검색 → 선택 → 저장
     await page.goto(`/trips/${id}/stops/new?date=2026-05-01`);
@@ -19,13 +26,17 @@ test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () =
     await page.getByTestId('place-result-f-anmok').click();
     await expect(page.getByTestId('stop-name')).toHaveValue('안목해변');
     await expect(page.getByTestId('stop-address')).toHaveValue('강원 강릉시 창해로14번길 20-1');
-    await expect(page.getByTestId('stop-location-verified')).toContainText('위치 확인됨 · 테스트 픽스처');
+    await expect(page.getByTestId('stop-location-verified')).toContainText(
+      '위치 확인됨 · 테스트 픽스처',
+    );
     await page.getByTestId('stop-save').click();
 
     // 카드에 위치 확인됨, 지도에 마커 1개(안내선 없음)
     await expect(page.getByTestId('day-items')).toContainText('위치 확인됨');
     await expect(page.getByTestId('trip-map')).toHaveAttribute('data-state', 'ready');
-    await expect(page.getByTestId('map-marker-' + (await stopIdByName(page, '안목해변')))).toHaveText('1');
+    await expect(
+      page.getByTestId('map-marker-' + (await stopIdByName(page, '안목해변'))),
+    ).toHaveText('1');
     await expect(page.getByTestId('map-guideline')).toHaveAttribute('data-points', '0');
 
     // 2) 두 번째 검색 장소 → 마커 2개, 안내선 2점
@@ -121,12 +132,16 @@ async function stopIdByName(page: import('@playwright/test').Page, name: string)
 test.describe('지도 상태: 로딩·오류', () => {
   test.beforeEach(async ({ page }) => resetApp(page));
 
-  test('지도 로드가 느리면 로딩 상태를, 실패하면 오류 상태를 보여주고 일정 편집은 계속 된다', async ({ page }) => {
+  test('지도 로드가 느리면 로딩 상태를, 실패하면 오류 상태를 보여주고 일정 편집은 계속 된다', async ({
+    page,
+  }) => {
     const id = await createTrip(page, { start: '2026-05-01', end: '2026-05-01' });
     await page.evaluate(() => localStorage.setItem('tc.test.mapDelayMs', '1500'));
     await page.goto(`/trips/${id}?tab=days`);
     await expect(page.getByTestId('map-loading')).toBeVisible();
-    await expect(page.getByTestId('trip-map')).toHaveAttribute('data-state', 'ready', { timeout: 5000 });
+    await expect(page.getByTestId('trip-map')).toHaveAttribute('data-state', 'ready', {
+      timeout: 5000,
+    });
 
     await page.evaluate(() => {
       localStorage.removeItem('tc.test.mapDelayMs');
