@@ -1,15 +1,47 @@
-<a class="skip" href="#main">본문으로 건너뛰기</a>
-<header class="topbar">
-  <div class="topbar__inner">
+<a
+  class="skip absolute left-2 bg-ink text-white rounded-control -top-12 z-20 py-2 px-3 focus-visible:top-2"
+  href="#main"
+  >본문으로 건너뛰기</a
+>
+<header class="topbar sticky bg-panel top-0 z-9 [border-bottom:1px_solid_var(--color-border)]">
+  <div
+    class="topbar__inner mx-auto my-0 min-h-13 grid items-center gap-1 max-w-(--content-max) py-0 px-2 grid-cols-[44px_minmax(0,1fr)_auto]"
+  >
     @if (bar().back) {
-      <a class="topbar__back" [routerLink]="bar().back" [queryParams]="bar().backQueryParams ?? {}" aria-label="뒤로">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <a
+        class="topbar__back inline-flex items-center justify-center w-11 h-11 text-ink no-underline rounded-cell flex-none hover:bg-ground-2 focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+        [routerLink]="bar().back"
+        [queryParams]="bar().backQueryParams ?? {}"
+        aria-label="뒤로"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
           <path d="M15 5l-7 7 7 7" />
         </svg>
       </a>
     } @else {
-      <a class="topbar__brand" routerLink="/trips" aria-label="트립플로 홈">
-        <svg class="topbar__symbol" viewBox="0 0 28 28" fill="none" aria-hidden="true" focusable="false">
+      <a
+        class="topbar__brand inline-flex items-center justify-center w-11 h-11 text-ink no-underline rounded-cell flex-none text-accent-deep hover:bg-ground-2 focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2 forced-colors:text-[LinkText]"
+        routerLink="/trips"
+        aria-label="트립플로 홈"
+      >
+        <svg
+          class="topbar__symbol w-6.5 h-6.5"
+          viewBox="0 0 28 28"
+          fill="none"
+          aria-hidden="true"
+          focusable="false"
+        >
           <path
             d="M6.5 7.5C9.8 6.6 14.6 6.2 19.5 6.6M13.2 6.9C12.6 12.4 12.3 16.6 12.6 19.2C12.8 21.1 13.6 21.9 15.1 21.6C16.4 21.3 17.7 20.3 19 18.6"
             stroke="currentColor"
@@ -20,27 +52,72 @@
         </svg>
       </a>
     }
-    <h1 class="topbar__title">{{ bar().title }}</h1>
-    @if (bar().action; as act) {
-      <a
-        class="topbar__action"
-        [routerLink]="act.link"
-        [queryParams]="act.queryParams ?? {}"
-        [attr.aria-label]="act.ariaLabel ?? act.label"
-        [attr.data-testid]="act.testId"
-      >
-        @if (act.icon) {
-          <app-icon [name]="act.icon" [size]="18" />
+    @if (bar().tools; as tools) {
+      <div class="flex min-w-0 items-center">
+        <h1 class="min-w-0 truncate text-17 font-bold text-ink" [title]="bar().title">
+          {{ bar().title }}
+        </h1>
+        @if (bar().action; as act) {
+          <a
+            [routerLink]="act.link"
+            [queryParams]="act.queryParams ?? {}"
+            [attr.data-testid]="act.testId"
+            [attr.aria-label]="act.ariaLabel ?? act.label"
+            class="flex size-11 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-ground-2 focus-visible:outline-2"
+            ><svg
+              aria-hidden="true"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m15 5 4 4M4.5 19.5l4.3-1 10.7-10.7a2.8 2.8 0 0 0-4-4L4.8 14.5l-.3 5Z" /></svg
+          ></a>
         }
-        @if (act.label) {
-          <span [class.visually-hidden]="!!act.icon && !act.label">{{ act.label }}</span>
-        }
-      </a>
+      </div>
+      <app-page-tools [tools]="tools" />
     } @else {
-      <span class="topbar__spacer" aria-hidden="true"></span>
+      <h1
+        class="topbar__title m-0 min-w-0 text-17 font-bold leading-[1.4] text-ink whitespace-nowrap overflow-hidden tracking-normal text-ellipsis"
+        [class.text-left]="!!bar().back"
+        [class.text-center]="!bar().back"
+      >
+        {{ bar().title }}
+      </h1>
+      @if (bar().action; as act) {
+        <a
+          class="topbar__action inline-flex items-center justify-center gap-1 min-w-11 min-h-11 text-accent-deep text-15 font-bold no-underline rounded-cell whitespace-nowrap py-0 px-2.5 hover:bg-accent-tint focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+          [routerLink]="act.link"
+          [queryParams]="act.queryParams ?? {}"
+          [attr.aria-label]="act.ariaLabel ?? act.label"
+          [attr.data-testid]="act.testId"
+        >
+          @if (act.icon) {
+            <app-icon [name]="act.icon" [size]="18" />
+          }
+          @if (act.label) {
+            <span
+              class="[&.visually-hidden]:w-px [&.visually-hidden]:h-px [&.visually-hidden]:overflow-hidden [&.visually-hidden]:whitespace-nowrap [&.visually-hidden]:absolute! [&.visually-hidden]:[clip:rect(0_0_0_0)]"
+              [class.visually-hidden]="!!act.icon && !act.label"
+              >{{ act.label }}</span
+            >
+          }
+        </a>
+      } @else {
+        <span class="topbar__spacer block w-11 h-11" aria-hidden="true"></span>
+      }
     }
   </div>
 </header>
-<main id="main" tabindex="-1">
+<main class="focus:[outline:none]" id="main" tabindex="-1" [attr.aria-busy]="!!navigating()">
   <router-outlet />
 </main>
+@if (showNavigationLoading()) {
+  <div class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center" role="status" aria-label="페이지 불러오는 중" data-testid="navigation-loading">
+    <div class="flex size-14 items-center justify-center rounded-2xl border border-border bg-panel text-2xl text-accent-deep shadow-lg"><app-spinner /></div>
+  </div>
+}

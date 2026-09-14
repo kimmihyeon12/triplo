@@ -17,7 +17,13 @@ export interface PageBarAction {
 }
 
 export interface PageBarState {
-  /** 가운데 제목. 비우면 제목 없이 심볼만 보인다. */
+  /** Optional compact people/tools area; supplied by the owning screen. */
+  readonly tools?: {
+    people: { id: string; name: string }[];
+    inviteLink: unknown[];
+    menu: PageBarAction[];
+  };
+  /** 뒤로가기가 있으면 왼쪽 정렬. 비우면 제목 없이 심볼만 보인다. */
   readonly title: string;
   /** 왼쪽 뒤로 가기 링크. null이면 T 심볼(홈)을 표시한다. */
   readonly back: unknown[] | null;
