@@ -1,0 +1,145 @@
+<form (ngSubmit)="submit()" class="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+  <h2 class="text-lg font-bold">{{ initial() ? '지출 수정' : '실제 지출 기록' }}</h2>
+  <app-field
+    label="일정에서 가져오기"
+    inputId="expense-link"
+    hint="예상 비용을 불러온 뒤 실제 결제한 금액으로 수정하세요."
+    ><select
+      appInput
+      id="expense-link"
+      name="link"
+      [ngModel]="linkId()"
+      (ngModelChange)="chooseLink($event)"
+    >
+      <option value="">직접 입력</option>
+      @for (link of links(); track link.id) {
+        <option [value]="link.id">{{ link.name }}</option>
+      }
+    </select></app-field
+  >
+  <app-field label="지출명" inputId="expense-title"
+    ><input
+      appInput
+      id="expense-title"
+      name="title"
+      maxlength="100"
+      required
+      [ngModel]="title()"
+      (ngModelChange)="title.set($event)"
+      placeholder="예: 첫날 저녁 식사"
+  /></app-field>
+  <app-field label="실제 금액 (원)" inputId="expense-amount"
+    ><input
+      appInput
+      id="expense-amount"
+      name="amount"
+      type="number"
+      min="1"
+      max="1000000000"
+      step="1"
+      required
+      [ngModel]="amount()"
+      (ngModelChange)="amount.set($event)"
+      placeholder="0"
+  /></app-field>
+  <div class="grid grid-cols-2 gap-3">
+    <app-field label="지출 날짜" inputId="expense-date"
+      ><input
+        appInput
+        id="expense-date"
+        name="date"
+        type="date"
+        required
+        [ngModel]="date()"
+        (ngModelChange)="date.set($event)" /></app-field
+    ><app-field label="분류" inputId="expense-category"
+      ><select
+        appInput
+        id="expense-category"
+        name="category"
+        [ngModel]="category()"
+        (ngModelChange)="category.set($event)"
+      >
+        @for (item of categories; track item[0]) {
+          <option [value]="item[0]">{{ item[1] }}</option>
+        }
+      </select></app-field
+    >
+  </div>
+  <app-field label="결제한 사람" inputId="expense-payer"
+    ><select
+      appInput
+      id="expense-payer"
+      name="payer"
+      [ngModel]="paidBy()"
+      (ngModelChange)="paidBy.set($event)"
+    >
+      @for (p of people(); track p.id) {
+        <option [value]="p.id">{{ p.name }}</option>
+      }
+    </select></app-field
+  >
+  <label class="flex min-h-11 items-center gap-2 text-sm"
+    ><input
+      type="checkbox"
+      name="personal"
+      [ngModel]="personal()"
+      (ngModelChange)="personal.set($event)"
+    />개인 지출 · 함께 정산하지 않아요</label
+  >
+  @if (!personal()) {
+    <fieldset class="space-y-2 border-t border-gray-100 pt-3">
+      <legend class="font-semibold">함께 나눌 사람</legend>
+      <label class="flex min-h-11 items-center gap-2 text-sm"
+        ><input
+          type="checkbox"
+          name="custom"
+          [ngModel]="custom()"
+          (ngModelChange)="custom.set($event)"
+        />분담 금액 직접 입력</label
+      >
+      @for (p of people(); track p.id) {
+        <div class="flex min-h-11 items-center justify-between gap-3">
+          <label class="flex items-center gap-2"
+            ><input
+              type="checkbox"
+              [checked]="selected().includes(p.id)"
+              (change)="toggle(p.id)"
+            />{{ p.name }}</label
+          >
+          @if (custom() && selected().includes(p.id)) {
+            <input
+              appInput
+              class="max-w-36"
+              type="number"
+              min="0"
+              step="1"
+              [attr.aria-label]="p.name + ' 분담 금액'"
+              [name]="'share-' + p.id"
+              [ngModel]="shares()[p.id] ?? 0"
+              (ngModelChange)="setShare(p.id, $event)"
+            />
+          }
+        </div>
+      }
+      <p class="text-xs text-ink-3">균등 분담 시 나머지 1원은 선택한 순서대로 배분해요.</p>
+    </fieldset>
+  }
+  <app-field label="메모" inputId="expense-memo">
+    <textarea
+      appInput
+      id="expense-memo"
+      name="memo"
+      rows="2"
+      [ngModel]="memo()"
+      (ngModelChange)="memo.set($event)"
+    ></textarea>
+  </app-field>
+  @if (error()) {
+    <p role="alert" class="text-sm text-red-700">{{ error() }}</p>
+  }
+  <div class="grid grid-cols-2 gap-2">
+    <button appButton type="button" (click)="cancelled.emit()">취소</button
+    ><button appButton variant="primary" type="submit">지출 저장</button>
+  </div>
+</form>
