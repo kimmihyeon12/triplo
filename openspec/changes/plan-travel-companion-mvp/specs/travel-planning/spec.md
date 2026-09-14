@@ -302,3 +302,12 @@
 - **WHEN** Supabase 연결 후 다른 탭이나 기기에 더 최신 버전이 저장된 상태에서 오래된 변경을 저장한다
 - **THEN** 충돌을 알리고 재검토하게 하며 최신 원본을 조용히 덮어쓰지 않는다
 
+
+### Requirement: Review AI conditions before generation
+시스템은 첫 AI 입력의 3단계와 편집 가능한 조건 요약을 SHALL 제공한다. 재생성은 이전 조건을 유지한 요약에서 시작한다. 현재 샘플 흐름과 실제 제공자 연결을 구분한다.
+#### Scenario: Edit conditions without generating
+- **WHEN** 사용자가 입력 단계나 요약을 오가거나 결과 선택을 바꾼다
+- **THEN** 기존 조건을 보존하고 최종 생성 버튼을 누르기 전에는 AI를 호출하지 않는다
+#### Scenario: Retry selected sample application
+- **WHEN** 선택한 샘플을 새 여행에 담다가 저장 실패 후 재시도한다
+- **THEN** 같은 여행 식별자로 재시도하고 선택하지 않은 항목을 추가하지 않으며 좌표를 미확인으로 둔다

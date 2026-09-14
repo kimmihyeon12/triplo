@@ -1,12 +1,12 @@
 # 프로젝트 문서 안내
 
-이 파일이 문서의 공통 목차다. 문서를 역할별로 묶어 찾고, 세부 내용은 각 원본에서 관리한다. 루트에는 에이전트 진입점과 공통 설계 원본을 유지한다. OpenSpec과 스킬이 사용하는 정해진 경로는 유지한다.
+이 파일이 문서의 공통 목차다. 문서를 역할별로 묶어 찾고, 세부 내용은 각 원본에서 관리한다. 루트에는 AGENTS.md·CLAUDE.md·README.md 진입점만 두고 설계 원본은 docs/architecture/와 docs/design/에서 관리한다. OpenSpec과 스킬이 사용하는 정해진 경로는 유지한다.
 
 ## 빠른 시작
 
 1. 공통 작업 규칙: [AGENTS.md](../AGENTS.md)
 2. 개발 범위·현재 단계·실행 순서: [DEVELOPMENT.md](DEVELOPMENT.md)
-3. 구조·상태관리·기술 결정: [ARCHITECTURE.md](../ARCHITECTURE.md)
+3. 구조·상태관리·기술 결정: [ARCHITECTURE.md](architecture/ARCHITECTURE.md)
 4. 이번 작업의 기획·명세·작업 현황: 아래 해당 문서
 
 ## 기획·요구사항
@@ -24,23 +24,23 @@
 
 | 원본 | 담당 내용 |
 | --- | --- |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) | Angular 21 목표, 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
+| [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Angular 21·NgRx Signals·Zoneless 구현과 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 개발 순서·연동 범위·검증 안내 |
 | [HARNESS.md](HARNESS.md) | MCP·스킬·지도 등 도구 설정과 설치 기록 |
+| [LOCAL-LLM.md](LOCAL-LLM.md) | RTX 3090 PC의 Ollama 설치·연결 절차, 모델 후보, 실제 검증 상태 |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
 
 ## 제품·디자인 원본
 
-- [PRODUCT.md](../PRODUCT.md): 제품·브랜드 방향.
-- [DESIGN.md](../DESIGN.md): 제품의 시각 규칙과 디자인 토큰.
+- [PRODUCT.md](design/PRODUCT.md): 제품·브랜드 방향.
+- [DESIGN.md](design/DESIGN.md): 제품의 시각 규칙과 디자인 토큰.
 - 실제 화면별 계약은 `.impeccable/surfaces/`를 확인한다(프로젝트 루트 기준).
 
 ## 참고·분석 기록
 
 - [트리플 맞춤 일정 분석](트리플-맞춤일정-분석.md)
-- [TourJ·AI 입력 방식 검토](TourJ-참고와-AI-입력방식-검토.md)
-- [디자인 비교 검토](디자인-비교-검토-2026-09-09.md)
+- [통합된 화면 결정](기획안-v0.1.md): 31절에 구형 화면 설계·계획과 비교 자료의 고유 요구를 보존했다.
 
 참고 문서의 제안·과거 관찰은 현재 결정이나 구현 완료를 뜻하지 않는다. 원본 링크와 확인 범위를 유지하고, 채택한 결정만 기획·설계 원본에 반영한다.
 

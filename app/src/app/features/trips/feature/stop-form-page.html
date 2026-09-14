@@ -1,0 +1,139 @@
+<div class="page stack">
+  @if (!trip()) {
+    <p class="muted" role="status">불러오는 중…</p>
+  } @else {
+    <form class="panel stack" (submit)="save($event)" novalidate>
+      <div class="field">
+        <span class="field__label" id="kind-label">종류</span>
+        <div class="kinds" role="radiogroup" aria-labelledby="kind-label">
+          @for (k of kinds; track k) {
+            <label class="kind" [class.kind--on]="kind() === k">
+              <input type="radio" name="kind" [value]="k" [checked]="kind() === k" (change)="setKind(k)" />
+              <app-icon [name]="k" [size]="16" />
+              <span>{{ kindLabel[k] }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">장소 검색으로 위치 확인</span>
+        <app-place-search-box inputId="stop-place-query" [initialQuery]="kind() === 'place' ? name() : ''" (picked)="onPicked($event)" />
+        @if (location()) {
+          <div class="row" data-testid="stop-location-verified">
+            <span class="cell cell--ok"><app-icon name="pin" [size]="14" /> 위치 확인됨 · {{ providerLabel() }}</span>
+            <span class="small muted">{{ location()!.lat.toFixed(5) }}, {{ location()!.lng.toFixed(5) }}</span>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="removeLocation()" data-testid="stop-location-clear">위치 지우기</button>
+          </div>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="name">{{ kind() === 'place' ? '장소 이름' : '이름' }}</label>
+        <input id="name" class="input" [ngModel]="name()" (ngModelChange)="name.set($event)" name="name" [placeholder]="kind() === 'place' ? '예: 안목해변' : kindDefault[kind()]" maxlength="80" (blur)="nameTouched.set(true)" [attr.aria-invalid]="nameError() && nameTouched() ? 'true' : null" data-testid="stop-name" />
+        @if (nameError() && nameTouched()) {
+          <p class="field__error" role="alert">{{ nameError() }}</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="address">주소 <span class="muted small">(선택)</span></label>
+        <input id="address" class="input" [ngModel]="address()" (ngModelChange)="address.set($event)" name="address" placeholder="지도 검색과 주소 복사에 사용" maxlength="200" data-testid="stop-address" />
+        @if (!location()) {
+          <span class="field__hint"><app-icon name="alert" [size]="12" /> 검색으로 고르지 않은 항목은 ‘위치 미확인’으로 저장됩니다.</span>
+        }
+      </div>
+
+      <div class="field-row">
+        @if (trip()!.regions.length > 0) {
+          <div class="field">
+            <label class="field__label" for="region">지역</label>
+            <select id="region" class="select" [ngModel]="regionId()" (ngModelChange)="regionId.set($event)" name="region" data-testid="stop-region">
+              <option value="">지역 없음</option>
+              @for (r of trip()!.regions; track r.id) {
+                <option [value]="r.id">{{ r.name }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="field">
+            <span class="field__label">지역</span>
+            <span class="field__hint">여행 편집에서 지역을 추가할 수 있습니다.</span>
+          </div>
+        }
+        <div class="field">
+          <label class="field__label" for="date">날짜</label>
+          <select id="date" class="select" [ngModel]="date()" (ngModelChange)="date.set($event)" name="date" data-testid="stop-date">
+            <option value="">미배치</option>
+            @for (d of days(); track d.date) {
+              <option [value]="d.date">{{ d.label }}</option>
+            }
+          </select>
+          @if (days().length === 0) {
+            <span class="field__hint">여행 날짜를 정하면 날짜에 배치할 수 있습니다.</span>
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field__label" for="stay">체류시간(분) <span class="muted small">(선택)</span></label>
+          <input id="stay" class="input" type="number" inputmode="numeric" min="0" step="5" [ngModel]="stayMinutes()" (ngModelChange)="stayMinutes.set($event)" name="stayMinutes" placeholder="예: 60" [attr.aria-invalid]="stayError() ? 'true' : null" data-testid="stop-stay" />
+          @if (stayError()) {
+            <p class="field__error" role="alert">{{ stayError() }}</p>
+          }
+        </div>
+        <div class="field">
+          <label class="field__label" for="fixed">고정 시각 <span class="muted small">(예약 등, 선택)</span></label>
+          <input id="fixed" class="input" type="time" [ngModel]="fixedTime()" (ngModelChange)="fixedTime.set($event)" name="fixedTime" data-testid="stop-fixed" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="memo">메모 <span class="muted small">(선택)</span></label>
+        <textarea id="memo" class="textarea" [ngModel]="memo()" (ngModelChange)="memo.set($event)" name="memo" maxlength="500" data-testid="stop-memo"></textarea>
+      </div>
+
+      @if (store.saveState() === 'error') {
+        <div class="notice notice--danger" role="alert">
+          <app-icon name="alert" />
+          <div class="notice__body"><strong>저장에 실패했습니다.</strong> 입력한 내용은 그대로 남아 있습니다.<div class="small">{{ store.saveError() }}</div></div>
+        </div>
+      }
+
+      @if (store.saveState() !== 'idle') {
+        <div class="row form-status"><app-save-status [state]="store.saveState()" [savedAt]="store.lastSavedAt()" (retry)="store.retrySave()" /></div>
+      }
+
+      <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+      <div class="action-bar">
+        <div class="action-bar__inner">
+          <a class="btn" [routerLink]="backLink()" [queryParams]="backQuery()">취소</a>
+          <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="stop-save">
+            {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    @if (isEdit()) {
+      <section class="panel danger">
+        @if (!confirmDelete()) {
+          <div class="row">
+            <div class="grow">
+              <strong>이 항목 삭제</strong>
+              <p class="small muted">일정에서만 빼려면 날짜별 보기의 ‘제외’를 사용하세요.</p>
+            </div>
+            <button type="button" class="btn btn--danger btn--sm" (click)="confirmDelete.set(true)" data-testid="stop-delete"><app-icon name="trash" [size]="14" /> 삭제</button>
+          </div>
+        } @else {
+          <div class="row">
+            <strong class="grow">정말 삭제할까요? 되돌릴 수 없습니다.</strong>
+            <button type="button" class="btn btn--danger btn--sm" (click)="remove()" data-testid="stop-delete-confirm">삭제 확인</button>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="confirmDelete.set(false)">취소</button>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

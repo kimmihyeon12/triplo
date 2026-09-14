@@ -55,7 +55,7 @@ Supabase DB 선택과 초기 사용 대상(본인과 친구들)은 기획안에 
 | 단위 테스트 | Vitest 3 (`app/vitest.config.ts`, 도메인·저장소 순수 모듈만). Karma는 제거 |
 | 브라우저 검증 | @playwright/test 1.63 (`app/playwright.config.ts`). 최초 1회 `npx playwright install chromium` 필요(기존 MCP용 브라우저와 별개 버전) |
 | 런타임/테스트 분리 | 런타임 `npm start` 4200 + 저장 키 `tc.trips.v1` / 테스트 `ng serve --configuration test` 4300 + 저장 키 `tc.test.trips.v1`(`src/environments/environment.test.ts`). 테스트 앱은 `tc.test.trips.v1.failSave` 키로 저장 실패를 주입한다 |
-| 디자인 | Impeccable 4.3: PRODUCT.md(문서 추론 표시), `.impeccable/surfaces/app-src-app-features-trips.md` 방향 계약. 1차 배정(시드 580ca994 표지판)은 사용자 거부로 폐기, 2차는 사용자 핀 고정(따뜻·귀여움), 3차(2026-09-09 리뉴얼, 시드 81aaffeb)는 후보 3개 비교 후 사용자가 ‘클린 앱 표준’ 선택. 감지기 `impeccable.cmd detect --json` 결과 0건. 리뷰 스크린샷은 `.impeccable/review/`(git 제외) |
+| 디자인 | Impeccable 4.3: docs/design/PRODUCT.md(문서 추론 표시), `.impeccable/surfaces/app-src-app-features-trips.md` 방향 계약. 1차 배정(시드 580ca994 표지판)은 사용자 거부로 폐기, 2차는 사용자 핀 고정(따뜻·귀여움), 3차(2026-09-09 리뉴얼, 시드 81aaffeb)는 후보 3개 비교 후 사용자가 ‘클린 앱 표준’ 선택. 감지기 `impeccable.cmd detect --json` 결과 0건. 리뷰 스크린샷은 `.impeccable/review/`(git 제외) |
 | 폰트 | Google Fonts Jua(제목)·Nanum Gothic(본문)을 `src/index.html`에서 로드. 오프라인·자체 호스팅은 PWA 단계에서 서브셋과 함께 처리 |
 
 2026-09-09 실행 결과: `npm test` 43건 통과, `npm run e2e` 28건 통과(데스크톱·360×740), `npm run build` 초기 277kB. 실제 장소 검색·경로·지도앱 스킴·Supabase는 연결하지 않았다.

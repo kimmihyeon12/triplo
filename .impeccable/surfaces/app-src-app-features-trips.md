@@ -37,4 +37,4 @@ Adaptations (근거): 360px에서 숙소 칩을 날짜 카드 아래 줄로 내�
 
 Cross-surface reach: 발견·AI 추천 단계 화면·기록지도·가계부도 같은 회백색 바탕·흰 카드·밑줄 탭·코랄 하나 체계를 쓴다. 선택형 AI 결과 화면은 지도 카드 → 날짜 칩 → 체크박스 목록 → 하단 고정 담기 버튼으로 같은 문법을 재사용한다. Honest risk: 다른 여행 앱과 구분이 약하다. 구분은 정직한 미확인 표시와 검증된 좌표만 그리는 지도에서 온다.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, docs/design/DESIGN.md, and every shipping raster carrying its provenance

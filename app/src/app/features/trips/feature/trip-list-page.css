@@ -1,0 +1,182 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+}
+.empty app-icon {
+  color: var(--accent-deep);
+  background: var(--accent-tint);
+  border-radius: 50%;
+  padding: 10px;
+  margin-bottom: 2px;
+}
+.empty .btn {
+  margin-top: var(--sp-2);
+}
+
+/*
+  타임라인 구분 행: 카드 사이를 얇은 선으로 나누고 가운데에 남은 날짜 라벨을 둔다.
+  이 축은 여행마다 색이 바뀌면 흔들려 보이므로 한 가지 회색 톤으로 통일한다.
+  의미별 다색은 카드 '안'의 상태·분류 라벨에서만 쓴다.
+*/
+.trips {
+  display: flex;
+  flex-direction: column;
+}
+.rule {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 2px 8px;
+}
+.trips__item:first-child .rule {
+  padding-top: 2px;
+}
+.rule__line {
+  flex: 1;
+  height: 0;
+  border-top: 1px solid var(--border);
+}
+.rule__label {
+  flex: none;
+  font-size: var(--fs-12);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-3);
+  background: var(--ground-2);
+}
+
+/*
+  여행 카드: 3줄 고정.
+  1줄 제목 + 오른쪽 끝 화살표, 2줄 기간·지역, 3줄 구성 요약.
+  화살표는 별도 격자 열이라 제목 길이에 흔들리지 않는다.
+*/
+.card {
+  display: block;
+  padding: var(--sp-4);
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  transition:
+    border-color var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+/*
+  hover는 마우스 기기에서만. 터치 기기는 탭 후에도 hover가 남아
+  테두리가 켜진 채로 보인다. 누를 때는 크기를 줄이지 않고 배경만 바꾼다.
+*/
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--border-strong);
+  }
+}
+.card:active {
+  background: var(--ground-2);
+}
+
+/* 1단: 가장 진하고 크다 */
+.card__title {
+  font-size: var(--fs-17);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 2단: 제목 바로 아래에 붙여 한 덩어리로 읽는다 */
+.card__when {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+  font-size: var(--fs-14);
+  color: var(--ink-2);
+}
+/* 3단: 덩어리를 나누기 위해 위 여백을 넉넉히 준다 */
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: var(--fs-12);
+  color: var(--ink-3);
+}
+.card__dot {
+  color: var(--border-strong);
+}
+.card__quiet {
+  color: var(--ink-3);
+}
+/*
+   태그: 의미별로 색을 나눈다. 테두리 없이 옅은 배경만 써서
+   카드가 라벨 무더기로 보이지 않게 한다.
+*/
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-cell);
+  font-size: var(--fs-12);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.tag--region {
+  background: var(--accent-tint);
+  color: var(--accent-deep);
+}
+.tag--place {
+  background: var(--ok-tint);
+  color: var(--ok-ink);
+}
+.tag--stay {
+  background: var(--stay-tint);
+  color: var(--stay-ink);
+}
+.alpha {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  text-align: center;
+  margin-top: var(--sp-2);
+}
+.alpha__login {
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  /* 링크 자체는 작지만 조작 영역은 44px을 확보한다 */
+  padding: 12px 4px;
+}
+
+/* 여행 만들기 두 갈래: 반반 폭. 360px에서도 라벨이 잘리지 않는다. */
+.make {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+/*
+   AI 만들기만 그라데이션을 쓴다(2026-09-10 사용자 승인).
+   나머지 버튼·탭·링크는 계속 딥 블루 단색이다.
+*/
+.btn--ai {
+  background: var(--ai-fill);
+  border-color: transparent;
+  color: #fff;
+}
+.btn--ai:hover {
+  background: var(--ai-fill-hover);
+}
+.make .btn {
+  padding: 0 var(--sp-2);
+  white-space: nowrap;
+}

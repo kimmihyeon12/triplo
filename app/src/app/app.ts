@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { IconComponent } from './shared/icon';
-import { PageBar } from './shared/page-bar';
+import { IconComponent } from './shared/ui/icon';
+import { PageBar } from './core/page-bar';
 
 @Component({
   selector: 'app-root',

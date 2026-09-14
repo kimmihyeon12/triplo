@@ -1,0 +1,109 @@
+<div class="page stack">
+  @if (isEdit() && store.currentState() === 'loading') {
+    <p class="muted" role="status">불러오는 중…</p>
+  } @else if (isEdit() && !original()) {
+    <div class="notice notice--danger" role="alert">
+      <app-icon name="alert" />
+      <div class="notice__body"><strong>여행을 찾을 수 없습니다.</strong>
+        <div class="notice__actions"><a routerLink="/trips" class="btn btn--sm">목록으로</a></div>
+      </div>
+    </div>
+  } @else {
+    <form class="panel stack" (submit)="save($event)" novalidate>
+      <div class="field">
+        <label class="field__label" for="title">여행 이름</label>
+        <input id="title" class="input" [ngModel]="title()" (ngModelChange)="title.set($event)" name="title" placeholder="새 여행" maxlength="60" data-testid="trip-title" />
+        <span class="field__hint">비워 두면 ‘새 여행’으로 저장됩니다.</span>
+      </div>
+
+      <fieldset class="dates">
+        <legend class="field__label">여행 기간</legend>
+        <div class="field-row">
+          <div class="field">
+            <label class="field__label small" for="start">시작일</label>
+            <input id="start" type="date" class="input" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" name="start" [attr.aria-invalid]="dateError() ? 'true' : null" data-testid="trip-start" />
+          </div>
+          <div class="field">
+            <label class="field__label small" for="end">종료일</label>
+            <input id="end" type="date" class="input" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" name="end" [attr.aria-invalid]="dateError() ? 'true' : null" data-testid="trip-end" />
+          </div>
+        </div>
+        @if (dateError()) {
+          <p class="field__error" role="alert" data-testid="date-error">{{ dateError() }}</p>
+        } @else if (nightsText()) {
+          <p class="cell cell--accent" data-testid="nights">{{ nightsText() }}</p>
+        } @else {
+          <p class="field__hint">날짜를 비워 두면 ‘날짜 미정’ 초안으로 저장됩니다.</p>
+        }
+      </fieldset>
+
+      <fieldset>
+        <legend class="field__label">지역 (순서대로)</legend>
+        <div class="row region-add">
+          <label class="visually-hidden" for="region-name">지역 이름</label>
+          <input id="region-name" class="input" [ngModel]="regionInput()" (ngModelChange)="regionInput.set($event)" name="regionName" placeholder="예: 강릉" maxlength="30" (keydown.enter)="addRegion($event)" data-testid="region-input" />
+          <button type="button" class="btn" (click)="addRegion()" data-testid="region-add">추가</button>
+        </div>
+        @if (regions().length === 0) {
+          <p class="field__hint">지역은 선택 사항입니다. 하루에 두 지역을 다닐 수도 있습니다.</p>
+        } @else {
+          <ol class="regions" data-testid="region-list">
+            @for (r of regions(); track r.id; let i = $index; let first = $first; let last = $last) {
+              <li class="region">
+                <span class="cell cell--solid-accent region__no">{{ i + 1 }}</span>
+                <span class="region__name">{{ r.name }}</span>
+                <span class="row region__actions">
+                  <button type="button" class="btn btn--icon" [disabled]="first" (click)="moveRegion(i, -1)" [attr.aria-label]="r.name + ' 위로'"><app-icon name="arrow-up" [size]="16" /></button>
+                  <button type="button" class="btn btn--icon" [disabled]="last" (click)="moveRegion(i, 1)" [attr.aria-label]="r.name + ' 아래로'"><app-icon name="arrow-down" [size]="16" /></button>
+                  <button type="button" class="btn btn--icon" (click)="removeRegionDraft(i)" [attr.aria-label]="r.name + ' 삭제'"><app-icon name="x" [size]="16" /></button>
+                </span>
+              </li>
+            }
+          </ol>
+        }
+      </fieldset>
+
+      @if (impactLines().length > 0) {
+        <div class="notice notice--warn" data-testid="impact-box">
+          <app-icon name="alert" />
+          <div class="notice__body">
+            <strong>저장하면 아래 영향이 생깁니다. 어떤 항목도 삭제되지 않습니다.</strong>
+            <ul class="impact-list">
+              @for (line of impactLines(); track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+            <label class="check" style="margin-top:8px">
+              <input type="checkbox" [ngModel]="impactConfirmed()" (ngModelChange)="impactConfirmed.set($event)" name="impactConfirmed" data-testid="impact-confirm" />
+              <span>영향을 확인했습니다</span>
+            </label>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() === 'error') {
+        <div class="notice notice--danger" role="alert">
+          <app-icon name="alert" />
+          <div class="notice__body">
+            <strong>저장에 실패했습니다.</strong> 입력한 내용은 그대로 남아 있습니다.
+            <div class="small">{{ store.saveError() }}</div>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() !== 'idle') {
+        <div class="row form-status"><app-save-status [state]="store.saveState()" [savedAt]="store.lastSavedAt()" (retry)="store.retrySave()" /></div>
+      }
+
+      <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+      <div class="action-bar">
+        <div class="action-bar__inner">
+          <a class="btn" [routerLink]="backLink()">취소</a>
+          <button type="submit" class="btn btn--primary" [disabled]="!canSave()" data-testid="trip-save">
+            {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+</div>

@@ -1,0 +1,88 @@
+      <section class="stack" role="tabpanel" data-testid="panel-stays">
+        @if (trip().stays.length > 0) {
+          <app-trip-map class="stays-map" [model]="staysMap()" [selectedId]="selectedMarkerId()" (markerSelect)="markerSelect.emit($event)" />
+        }
+        @if (overview().undecidedDates) {
+          <div class="notice notice--warn">
+            <app-icon name="calendar" />
+            <div class="notice__body">여행 날짜 미정: 등록한 숙박 날짜는 여행 날짜를 정한 뒤 확인 대상이 됩니다.</div>
+          </div>
+        } @else if (nights().length === 0) {
+          <div class="notice notice--ok" data-testid="no-nights">
+            <app-icon name="check" />
+            <div class="notice__body">당일 여행은 숙박이 없습니다. 숙소 등록 없이 일정을 작성할 수 있습니다.</div>
+          </div>
+        } @else {
+          <section class="panel">
+            <h3 class="section-title">밤별 숙소</h3>
+            <ol class="nights" data-testid="nights">
+              @for (n of nights(); track n.night) {
+                <li class="night" [attr.data-testid]="'night-' + n.nightNumber" [attr.data-state]="n.state">
+                  <span class="night__no">{{ n.nightNumber }}박</span>
+                  <span class="night__date muted small">{{ formatDate(n.night, true) }} 밤</span>
+                  <span class="night__stay">
+                    @switch (n.state) {
+                      @case ('undecided') {
+                        <span class="cell cell--warn">미정</span>
+                      }
+                      @case ('conflict') {
+                        <span class="cell cell--danger">중복: {{ stayNames(n.stays) }}</span>
+                      }
+                      @default {
+                        <span class="cell cell--stay"><app-icon name="bed" [size]="14" /> {{ n.stays[0].name }}{{ n.consecutive ? ' (연박)' : '' }}</span>
+                      }
+                    }
+                  </span>
+                </li>
+              }
+            </ol>
+          </section>
+        }
+
+        @if (trip().stays.length === 0) {
+          <section class="panel empty" data-testid="empty-stays">
+            <h3>등록된 숙소가 없습니다</h3>
+            <p class="muted small">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
+          </section>
+        } @else {
+          <ul class="stack" data-testid="stay-list">
+            @for (s of sortedStays(); track s.id) {
+              <li class="panel stay" [class.item--selected]="selectedMarkerId() === s.id" [attr.data-testid]="'stay-' + s.id" [id]="'stay-card-' + s.id">
+                <div class="stay__badge"><app-icon name="bed" [size]="18" /></div>
+                <div class="stay__main">
+                  <div class="row">
+                    <strong>{{ s.name }}</strong>
+                    @for (issue of issuesFor(s.id); track issue) {
+                      <span class="cell" [class.cell--danger]="issue === '다른 숙박과 중복'" [class.cell--warn]="issue !== '다른 숙박과 중복'">{{ issue }}</span>
+                    }
+                  </div>
+                  <div class="small">
+                    {{ formatDate(s.checkIn, true) }} 체크인{{ s.checkInTime ? ' ' + s.checkInTime : ' (시각 미정)' }} → {{ formatDate(s.checkOut, true) }} 체크아웃{{ s.checkOutTime ? ' ' + s.checkOutTime : ' (시각 미정)' }}
+                    · <strong>{{ nightCount(s) }}박</strong>
+                  </div>
+                  <div class="row small">
+                    <span class="cell cell--ghost">{{ reservationLabel[s.reservation] }}</span>
+                    @if (regionName(s.regionId); as rn) {
+                      <span class="cell cell--accent">{{ rn }}</span>
+                    }
+                    @if (s.location) {
+                      <span class="cell cell--ok"><app-icon name="pin" [size]="12" /> 위치 확인됨</span>
+                    } @else {
+                      <span class="cell cell--warn">위치 미확인</span>
+                    }
+                  </div>
+                  @if (s.address) {
+                    <div class="small muted">{{ s.address }}</div>
+                  }
+                  @if (s.memo) {
+                    <div class="small">{{ s.memo }}</div>
+                  }
+                </div>
+                <div class="stay__actions">
+                  <a class="btn btn--icon" [routerLink]="['/trips', trip().id, 'stays', s.id]" [attr.aria-label]="s.name + ' 편집'" [attr.data-testid]="'edit-stay-' + s.id"><app-icon name="edit" [size]="16" /></a>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>

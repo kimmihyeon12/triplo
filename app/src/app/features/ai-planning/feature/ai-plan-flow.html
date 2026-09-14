@@ -1,0 +1,225 @@
+<div class="page stack">
+  <!-- 진행 표시: 조건 입력 3단계 -->
+  @if (phase() === 'step1' || phase() === 'step2' || phase() === 'step3') {
+    <p class="steps" data-testid="ai-steps">
+      @for (n of [1, 2, 3]; track n) {
+        <span class="steps__dot" [class.steps__dot--on]="stepNumber() >= n" aria-hidden="true"></span>
+      }
+      <span class="steps__text">{{ stepNumber() }}단계 / 3</span>
+    </p>
+  }
+
+  @switch (phase()) {
+    <!-- 1단계: 지역·방문 순서·날짜 (필수) -->
+    @case ('step1') {
+      <section class="panel" data-testid="ai-step-1">
+        <h2 class="sec">어디로, 언제 가나요?</h2>
+        <p class="sec__hint">지역은 방문할 순서대로 넣으세요. 날짜는 비워 두면 ‘날짜 미정’ 초안이 됩니다.</p>
+
+        <div class="field">
+          <label class="field__label" for="ai-region">지역 (순서대로)</label>
+          <div class="row region-add">
+            <input id="ai-region" class="input" [ngModel]="regionInput()" (ngModelChange)="draft.set('regionInput', $event)" name="aiRegion" placeholder="예: 강릉" maxlength="30" (keydown.enter)="addRegion($event)" data-testid="ai-region-input" />
+            <button type="button" class="btn" (click)="addRegion()" data-testid="ai-region-add">추가</button>
+          </div>
+        </div>
+
+        @if (regions().length > 0) {
+          <ol class="regions" data-testid="ai-region-list">
+            @for (r of regions(); track r; let i = $index) {
+              <li class="region">
+                <span class="cell cell--solid-accent region__no">{{ i + 1 }}</span>
+                <span class="region__name">{{ r }}</span>
+                <button type="button" class="btn btn--icon" (click)="removeRegion(i)" [attr.aria-label]="r + ' 삭제'"><app-icon name="x" [size]="16" /></button>
+              </li>
+            }
+          </ol>
+        }
+
+        <div class="field-row" style="margin-top:16px">
+          <div class="field">
+            <label class="field__label" for="ai-start">시작일</label>
+            <input id="ai-start" type="date" class="input" [ngModel]="startDate()" (ngModelChange)="draft.set('startDate', $event)" name="aiStart" data-testid="ai-start" />
+          </div>
+          <div class="field">
+            <label class="field__label" for="ai-end">종료일</label>
+            <input id="ai-end" type="date" class="input" [ngModel]="endDate()" (ngModelChange)="draft.set('endDate', $event)" name="aiEnd" data-testid="ai-end" />
+          </div>
+        </div>
+        @if (dateError()) {
+          <p class="field__error" role="alert" data-testid="ai-date-error">{{ dateError() }}</p>
+        }
+      </section>
+    }
+
+    <!-- 2단계: 동행·취향·이동수단·밀도 (선택, 기본값 있음) -->
+    @case ('step2') {
+      <section class="panel" data-testid="ai-step-2">
+        <h2 class="sec">어떻게 다니나요?</h2>
+        <p class="sec__hint">모두 선택 사항입니다. 그대로 두고 건너뛰어도 됩니다.</p>
+
+        <div class="field">
+          <span class="field__label" id="ai-companion-label">동행</span>
+          <div class="chips" role="radiogroup" aria-labelledby="ai-companion-label">
+            @for (c of companions; track c) {
+              <label class="pick" [class.pick--on]="companion() === c">
+                <input type="radio" name="aiCompanion" [checked]="companion() === c" (change)="draft.set('companion', c)" />
+                <span>{{ c }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label" id="ai-transport-label">이동수단</span>
+          <div class="chips" role="radiogroup" aria-labelledby="ai-transport-label">
+            @for (t of transports; track t) {
+              <label class="pick" [class.pick--on]="transport() === t">
+                <input type="radio" name="aiTransport" [checked]="transport() === t" (change)="draft.set('transport', t)" />
+                <app-icon name="car" [size]="14" />
+                <span>{{ t }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label" id="ai-pace-label">일정 밀도</span>
+          <div class="chips" role="radiogroup" aria-labelledby="ai-pace-label">
+            @for (p of paces; track p) {
+              <label class="pick" [class.pick--on]="pace() === p">
+                <input type="radio" name="aiPace" [checked]="pace() === p" (change)="draft.set('pace', p)" />
+                <span>{{ p }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="ai-taste">취향 <span class="muted">(선택)</span></label>
+          <input id="ai-taste" class="input" [ngModel]="taste()" (ngModelChange)="draft.set('taste', $event)" name="aiTaste" placeholder="예: 바다, 카페, 사진" maxlength="80" data-testid="ai-taste" />
+        </div>
+      </section>
+    }
+
+    <!-- 3단계: 꼭 갈 장소·숙소·추가 요청 (선택) -->
+    @case ('step3') {
+      <section class="panel" data-testid="ai-step-3">
+        <h2 class="sec">꼭 넣을 것이 있나요?</h2>
+        <p class="sec__hint">모두 선택 사항입니다. 없으면 건너뛰세요.</p>
+
+        <div class="field">
+          <label class="field__label" for="ai-must">꼭 갈 장소</label>
+          <input id="ai-must" class="input" [ngModel]="mustGo()" (ngModelChange)="draft.set('mustGo', $event)" name="aiMust" placeholder="예: 안목해변, 속초 중앙시장" maxlength="200" data-testid="ai-must" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="ai-stay">이미 정한 숙소·예약</label>
+          <input id="ai-stay" class="input" [ngModel]="bookedStay()" (ngModelChange)="draft.set('bookedStay', $event)" name="aiStay" placeholder="예: 강릉 A 호텔 2박" maxlength="200" data-testid="ai-stay" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="ai-note">추가 요청</label>
+          <textarea id="ai-note" class="textarea" [ngModel]="extraNote()" (ngModelChange)="draft.set('extraNote', $event)" name="aiNote" maxlength="300" data-testid="ai-note"></textarea>
+        </div>
+      </section>
+    }
+
+    <!-- 조건 요약: 각 항목을 눌러 수정한 뒤에야 생성이 실행된다 -->
+    @case ('summary') {
+      <section class="panel" data-testid="ai-summary">
+        <h2 class="sec">이 조건으로 만들까요?</h2>
+        <p class="sec__hint">항목을 눌러 고칠 수 있습니다. [AI 일정 만들기]를 눌러야 생성됩니다.</p>
+        <ul class="sum">
+          @for (row of summaryRows(); track row.label) {
+            <li>
+              <button type="button" class="sum__row" (click)="draft.set('phase', row.phase)" [attr.data-testid]="'ai-summary-edit-' + row.phase">
+                <span class="sum__label">{{ row.label }}</span>
+                <span class="sum__value" [class.muted]="!row.value">{{ row.value || '지정 안 함' }}</span>
+                <app-icon name="chevron-right" [size]="16" />
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <div class="notice notice--warn">
+        <app-icon name="alert" />
+        <div class="notice__body">
+          실제 AI 제공자가 아직 연결되지 않았습니다. 지금 만들어지는 일정은 <strong>고정된 샘플 결과</strong>이며 실제 추천이 아닙니다.
+        </div>
+      </div>
+    }
+
+    <!-- 결과: 검증된 항목이 전체 선택된 상태로 시작. 담기를 눌러야 반영된다. -->
+    @case ('result') {
+      <div class="notice notice--warn" data-testid="ai-sample-notice">
+        <app-icon name="alert" />
+        <div class="notice__body">
+          <strong>샘플 결과</strong>입니다. 실제 AI가 만든 추천이 아니라 고정된 예시이며, 위치·영업정보는 확인되지 않았습니다.
+        </div>
+      </div>
+
+      <section class="panel" data-testid="ai-result">
+        <h2 class="sec">추천 일정</h2>
+        <p class="sec__hint">확인된 항목이 모두 선택되어 있습니다. 원치 않는 항목을 해제한 뒤 아래 버튼으로 담으세요.</p>
+        <ul class="picks">
+          @for (item of sampleItems; track item.id) {
+            <li class="pickrow" [class.pickrow--on]="selected().has(item.id)">
+              <label class="pickrow__label">
+                <input type="checkbox" [checked]="selected().has(item.id)" (change)="toggle(item.id)" [attr.data-testid]="'ai-pick-' + item.id" />
+                <span class="pickrow__main">
+                  <span class="pickrow__title">
+                    <strong>{{ item.name }}</strong>
+                    <span class="cell cell--place">{{ item.kindLabel }}</span>
+                    @if (item.verified) {
+                      <span class="cell cell--ok"><app-icon name="pin" [size]="12" /> 위치 확인됨</span>
+                    } @else {
+                      <span class="cell cell--warn">위치 미확인</span>
+                    }
+                  </span>
+                  <span class="pickrow__meta small muted">{{ item.day }}일차 · {{ item.note }}</span>
+                </span>
+              </label>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  <!-- 하단 고정 바: 단계별 다음 동작 -->
+  <div class="action-bar">
+    <div class="action-bar__inner">
+      @switch (phase()) {
+        @case ('step1') {
+          <a class="btn" href="/trips" (click)="leave($event)">그만두기</a>
+          <button type="button" class="btn btn--primary" [disabled]="!canLeaveStep1()" (click)="draft.set('phase', 'step2')" data-testid="ai-next-1">다음</button>
+        }
+        @case ('step2') {
+          <button type="button" class="btn" (click)="draft.set('phase', 'step1')">이전</button>
+          <button type="button" class="btn btn--primary" (click)="draft.set('phase', 'step3')" data-testid="ai-next-2">다음</button>
+        }
+        @case ('step3') {
+          <button type="button" class="btn" (click)="draft.set('phase', 'step2')">이전</button>
+          <button type="button" class="btn btn--primary" (click)="draft.set('phase', 'summary')" data-testid="ai-next-3">조건 확인</button>
+        }
+        @case ('summary') {
+          <button type="button" class="btn" (click)="draft.set('phase', 'step3')">이전</button>
+          <button type="button" class="btn btn--primary" (click)="generate()" data-testid="ai-generate"><app-icon name="sparkle" [size]="16" /> AI 일정 만들기</button>
+        }
+        @case ('result') {
+          <button type="button" class="btn" (click)="draft.set('phase', 'summary')" data-testid="ai-back-summary">조건 고치기</button>
+          <button type="button" class="btn btn--primary" [disabled]="selected().size === 0 || saving()" (click)="commit()" data-testid="ai-commit">
+            선택한 장소 {{ selected().size }}개 일정에 담기
+          </button>
+        }
+      }
+    </div>
+  </div>
+
+  @if (saveFailed()) {
+    <div class="notice notice--danger" role="alert">
+      <app-icon name="alert" />
+      <div class="notice__body"><strong>저장에 실패했습니다.</strong> 선택한 항목은 그대로 남아 있습니다.</div>
+    </div>
+  }
+</div>

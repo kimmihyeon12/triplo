@@ -1,0 +1,37 @@
+import { expect, test } from '@playwright/test';
+import { FAIL_FLAG, STORAGE_KEY, resetApp } from './helpers';
+
+test('AI 샘플 조건과 선택을 유지하고 저장 실패 후 한 여행에만 담는다', async ({ page }) => {
+  await resetApp(page);
+  await page.goto('/trips/ai');
+  await page.getByTestId('ai-region-input').fill('강릉');
+  await page.getByTestId('ai-region-add').click();
+  await page.getByTestId('ai-start').fill('2026-05-01');
+  await page.getByTestId('ai-end').fill('2026-05-01');
+  await page.getByTestId('ai-next-1').click();
+  await page.getByTestId('ai-taste').fill('바다');
+  await page.getByTestId('ai-next-2').click();
+  await page.getByTestId('ai-next-3').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('바다');
+  await page.getByTestId('ai-generate').click();
+  await expect(page.getByTestId('ai-sample-notice')).toContainText('샘플 결과');
+  await page.getByTestId('ai-pick-s1').uncheck();
+  await page.getByTestId('ai-back-summary').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('바다');
+  await page.getByTestId('ai-generate').click();
+  await expect(page.getByTestId('ai-pick-s1')).not.toBeChecked();
+  await page.evaluate(flag => localStorage.setItem(flag, '1'), FAIL_FLAG);
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByRole('alert')).toContainText('저장에 실패');
+  await page.evaluate(flag => localStorage.removeItem(flag), FAIL_FLAG);
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  const raw = await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY);
+  const saved = JSON.parse(raw!);
+  const trips = Object.values(saved.trips) as { stops: { name: string; date: string | null; location: unknown }[] }[];
+  expect(trips).toHaveLength(1);
+  expect(trips[0].stops).toHaveLength(4);
+  expect(trips[0].stops.some((s: { name: string }) => s.name === '안목해변 카페거리')).toBe(false);
+  expect(trips[0].stops.every((s: { location: unknown }) => s.location === null)).toBe(true);
+  expect(trips[0].stops.filter((s: { date: string | null }) => s.date === null)).toHaveLength(2);
+});

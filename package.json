@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm --prefix app start",
     "test": "npm --prefix app test",
+    "lint": "npm --prefix app run lint",
     "e2e": "npm --prefix app run e2e",
     "build": "npm --prefix app run build",
     "spec": "openspec",

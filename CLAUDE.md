@@ -4,11 +4,4 @@
 
 @docs/README.md
 
-## 작업 시작
-
-- 한국어로 소통하고 최신 사용자 지시를 우선한다.
-- 개발 작업은 `docs/DEVELOPMENT.md`와 `ARCHITECTURE.md`를 읽고 시작한다. 기능 변경은 관련 기획안·OpenSpec 요구사항·tasks와 실제 코드를 함께 확인한다.
-- 현재 진행 중인 작업을 먼저 마친다. 아키텍처 리팩터링·Angular 21 업그레이드는 이후 사용자가 별도로 지시할 때 착수하며, 문서를 읽은 것만으로 현재 작업 범위를 바꾸지 않는다.
-- 현재 코드 버전은 Angular 20이며 **목표는 Angular 21 + NgRx Signals 21.x**다. 업그레이드·검증 작업은 OpenSpec tasks 9절을 따른다. 패키지·빌드·테스트 확인 전에는 업그레이드 완료로 보고하지 않는다.
-- 제품 화면은 PRODUCT.md·DESIGN.md를 확인하고 작업에 맞는 스킬을 사용한다. 문서의 역할과 우선순위는 가져온 문서 목차를 따른다.
-- 기능 명세·설계·상세 진행 상황을 이 파일에 복제하지 않는다. 해당 원본을 수정하고 필요한 연결만 유지한다.
+작업 범위·검증은 `docs/DEVELOPMENT.md`, 구조·상태관리는 `docs/architecture/ARCHITECTURE.md`를 따른다. 제품 화면 작업은 `docs/design/PRODUCT.md`와 `docs/design/DESIGN.md`를 읽는다. 도구가 루트의 PRODUCT.md·DESIGN.md를 기본으로 찾더라도 실제 원본은 이 경로에 있으므로 새 원본을 루트에 만들지 않는다.

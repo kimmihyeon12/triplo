@@ -6,7 +6,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'e2e-report' }]],
+  outputDir: '../output/playwright/test-results',
+  reporter: [['list'], ['html', { open: 'never', outputFolder: '../output/playwright/report' }]],
   use: {
     baseURL: 'http://localhost:4300',
     trace: 'retain-on-failure',
@@ -21,9 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx ng serve --configuration test --port 4300',
+    command: 'npx ng serve --configuration test --port 4300 --watch=false --live-reload=false',
     url: 'http://localhost:4300',
-    reuseExistingServer: !process.env['CI'],
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });
