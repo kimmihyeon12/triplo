@@ -4,6 +4,10 @@
   "private": true,
   "description": "Domestic travel planning - internal alpha (Angular app in app/)",
   "scripts": {
+    "start": "npm --prefix app start",
+    "test": "npm --prefix app test",
+    "e2e": "npm --prefix app run e2e",
+    "build": "npm --prefix app run build",
     "spec": "openspec",
     "spec:check": "openspec validate --all --strict",
     "app:start": "npm --prefix app start",
