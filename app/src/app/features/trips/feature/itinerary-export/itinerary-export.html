@@ -1,0 +1,53 @@
+<div class="mx-auto max-w-180 px-4 py-6 pb-12 md:px-6">
+  <p class="mb-6 text-14 text-ink-2">필요한 일정만 골라 한 장의 이미지로 저장하세요.</p>
+  @if (store.current(); as trip) {
+    <section class="mb-6 rounded-panel bg-panel p-4 shadow-panel">
+      <app-field label="저장할 일정" inputId="export-date"
+        ><select appInput id="export-date" [ngModel]="date()" (ngModelChange)="date.set($event)">
+          <option value="">전체 일정</option>
+          @for (section of allSections(); track section.key) {
+            <option [value]="section.key">{{ section.title }}</option>
+          }
+        </select></app-field
+      >
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 text-14"
+        ><input
+          type="checkbox"
+          class="size-4 accent-accent-deep"
+          [ngModel]="includeCosts()"
+          (ngModelChange)="includeCosts.set($event)"
+        />예상 비용 포함</label
+      >
+      <p class="mt-2 text-12 text-ink-3">
+        개인 메모·예약정보·가계부·지도는 이미지에 포함하지 않습니다.
+      </p>
+    </section>
+    <app-itinerary-snapshot
+      [title]="trip.title"
+      [sections]="sections()"
+      [includeCosts]="includeCosts()"
+    />
+    <button
+      appButton
+      type="button"
+      variant="primary"
+      class="mt-6 min-h-12 w-full"
+      [loading]="busy()"
+      (click)="download()"
+      data-testid="download-itinerary"
+    >
+      PNG 이미지 저장
+    </button>
+  } @else {
+    <p class="py-8 text-ink-3" role="status">
+      {{
+        store.currentState() === 'loading'
+          ? '일정을 불러오는 중입니다.'
+          : '여행을 찾을 수 없습니다.'
+      }}
+    </p>
+  }
+  @if (error()) {
+    <app-error-toast [message]="error()" (dismissed)="error.set('')" />
+  }
+</div>
