@@ -1,0 +1,175 @@
+<div
+  class="page login mx-auto my-0 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)] flex flex-col gap-4 max-w-105"
+  [attr.aria-busy]="auth.loading() || auth.busy()"
+>
+  <section class="intro flex flex-col items-start gap-2 pt-6 px-0 pb-2">
+    <img
+      class="intro__mark text-accent-deep"
+      src="brand/triplo-symbol.svg"
+      width="44"
+      height="44"
+      alt=""
+      aria-hidden="true"
+    />
+    <h1 class="intro__title text-22 font-bold leading-[1.4]">
+      {{ displayedUser() ? '내 정보' : '내 계정으로 로그인' }}
+    </h1>
+    <p
+      class="intro__sub text-14 leading-[1.6] text-ink-2 [.account_details_&]:block [.account_details_&]:mb-3"
+      data-testid="login-storage-notice"
+    >
+      소셜 계정으로 시작할 수 있습니다. 여행은 아직 이 기기에만 저장되며, 계정별 저장·다른 기기와
+      동기화는 준비 중입니다.
+    </p>
+  </section>
+  @if (settling()) {
+    <div role="status" aria-label="로그인 상태 확인 중"><app-spinner /></div>
+  }
+  @if (auth.deleted()) {
+    <p
+      class="[.account_details_&]:block [.account_details_&]:mb-3"
+      role="status"
+      data-testid="account-deleted"
+    >
+      회원탈퇴가 완료되었습니다. 이 기기에 저장된 여행은 그대로 남아 있습니다.
+    </p>
+  }
+  @if (auth.error()) {
+    <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
+  }
+  @if (!auth.available() && !auth.loading() && !auth.busy()) {
+    <button appButton type="button" class="btn" (click)="reload()">다시 시도</button>
+  }
+  @if (settling()) {
+    <!-- The redirect is still resolving; neither surface is meaningful yet. -->
+  } @else if (displayedUser(); as user) {
+    <section
+      aria-label="로그인한 계정"
+      class="account grid gap-3 wrap-anywhere"
+      data-testid="login-account"
+    >
+      <strong class="in-[.notice]:font-bold">{{ auth.nickname() || '여행친구 · 미리보기' }}</strong>
+      <p class="[.account_details_&]:block [.account_details_&]:mb-3">
+        {{ user.email || '소셜 계정' }}
+      </p>
+      <p
+        class="text-12 leading-normal text-ink-3 [.account_details_&]:block [.account_details_&]:mb-3"
+      >
+        로그인 방식 · {{ user.app_metadata['provider'] === 'kakao' ? '카카오' : 'Google' }}
+      </p>
+      <button
+        appButton
+        type="button"
+        class="btn"
+        (click)="auth.signOut()"
+        [disabled]="!auth.available() || !auth.user()"
+        [attr.aria-busy]="auth.activity() === 'logout'"
+        data-testid="logout"
+      >
+        @if (auth.activity() === 'logout') {
+          <app-spinner />
+        }
+        로그아웃
+      </button>
+      <details class="in-[.account]:pt-3 in-[.account]:[border-top:1px_solid_var(--color-border)]">
+        <summary class="in-[.account]:cursor-pointer in-[.account]:py-3 in-[.account]:px-0">
+          회원탈퇴
+        </summary>
+        <p class="text-12 leading-normal [.account_details_&]:block [.account_details_&]:mb-3">
+          탈퇴하면 이 서비스의 계정이 삭제되며 되돌릴 수 없습니다. Google·카카오 계정과 이 기기에
+          저장된 여행은 삭제되지 않습니다.
+        </p>
+        @if (auth.deletionEnabled()) {
+          <label
+            class="[.account_details_&]:block [.account_details_&]:mb-3"
+            for="delete-confirmation"
+            >계정을 삭제하려면 ‘탈퇴’를 입력하세요.</label
+          >
+          <input
+            class="[.account_details_&]:block [.account_details_&]:mb-3"
+            appInput
+            id="delete-confirmation"
+            #confirmationInput
+            [value]="confirmation()"
+            (input)="confirmation.set(confirmationInput.value)"
+            autocomplete="off"
+            [disabled]="auth.busy()"
+          />
+          <button
+            appButton
+            type="button"
+            class="btn"
+            (click)="auth.deleteAccount(confirmation())"
+            [disabled]="!auth.available() || confirmation() !== '탈퇴'"
+            [attr.aria-busy]="auth.activity() === 'delete'"
+            data-testid="delete-account"
+          >
+            @if (auth.activity() === 'delete') {
+              <app-spinner />
+            }
+            계정 영구 삭제
+          </button>
+        } @else {
+          <p
+            class="text-12 leading-normal text-ink-3 [.account_details_&]:block [.account_details_&]:mb-3"
+          >
+            회원탈퇴 서버를 준비 중입니다. 연결 후 이곳에서 탈퇴할 수 있습니다.
+          </p>
+        }
+      </details>
+    </section>
+  } @else {
+    <nav class="providers flex flex-col gap-2" aria-label="소셜 로그인">
+      <button
+        type="button"
+        class="sns sns--google grid items-center w-full h-12 p-0 border-0 rounded-control-lg text-15 font-medium cursor-pointer grid-cols-[44px_1fr_44px] [transition:opacity_var(--dur)_var(--ease-out)] bg-panel text-google-login-ink [box-shadow:inset_0_0_0_1px_var(--color-border-strong)] hover:opacity-[0.9] active:opacity-[0.82] disabled:cursor-not-allowed disabled:opacity-[0.55]"
+        (click)="auth.signIn('google')"
+        [disabled]="!auth.available() || !auth.googleEnabled()"
+        [attr.aria-busy]="auth.activity() === 'login' && auth.signingProvider() === 'google'"
+        data-testid="login-google"
+      >
+        <img
+          class="sns__logo block justify-self-center"
+          src="brand/google-logo.svg"
+          width="18"
+          height="18"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="sns__label text-center">구글 로그인</span>
+        @if (auth.activity() === 'login' && auth.signingProvider() === 'google') {
+          <app-spinner />
+        }
+      </button>
+      <button
+        type="button"
+        class="sns sns--kakao grid items-center w-full h-12 p-0 border-0 rounded-control-lg text-15 font-medium cursor-pointer grid-cols-[44px_1fr_44px] [transition:opacity_var(--dur)_var(--ease-out)] bg-kakao-brand text-kakao-login-ink hover:opacity-[0.9] active:opacity-[0.82] disabled:cursor-not-allowed disabled:opacity-[0.55]"
+        (click)="auth.signIn('kakao')"
+        [disabled]="!auth.available() || !auth.kakaoEnabled()"
+        [attr.aria-busy]="auth.activity() === 'login' && auth.signingProvider() === 'kakao'"
+        data-testid="login-kakao"
+      >
+        <img
+          class="sns__logo block justify-self-center"
+          src="brand/kakao-symbol.svg"
+          width="18"
+          height="17"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="sns__label text-center">{{
+          auth.kakaoEnabled() ? '카카오 로그인' : '카카오 로그인 · 준비 중'
+        }}</span>
+        @if (auth.activity() === 'login' && auth.signingProvider() === 'kakao') {
+          <app-spinner />
+        }
+      </button>
+    </nav>
+  }
+  @if (auth.user()) {
+    <a appButton routerLink="/trips" class="btn">여행으로 돌아가기</a>
+  }
+  <a routerLink="/lab" class="self-center mt-4 py-2 text-13 text-ink-3 underline underline-offset-4"
+    >실험실</a
+  >
+</div>

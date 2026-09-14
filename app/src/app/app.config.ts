@@ -1,8 +1,22 @@
-import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling, withRouterConfig } from '@angular/router';
+import {
+  ApplicationConfig,
+  inject,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withRouterConfig,
+} from '@angular/router';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
-import { LocalStorageTripRepository, type KeyValueStorage } from './features/trips/data/local-storage-trip-repository';
+import {
+  LocalStorageTripRepository,
+  type KeyValueStorage,
+} from './features/trips/data/local-storage-trip-repository';
 import { TRIP_REPOSITORY } from './features/trips/data/trip-repository';
 import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
 import { FixturePlaceSearch } from './features/places/data/fixture/fixture-place-search';
@@ -17,12 +31,15 @@ class SafeLocalStorage implements KeyValueStorage {
   private get store(): Storage {
     return globalThis.localStorage;
   }
+
   getItem(key: string): string | null {
     return this.store.getItem(key);
   }
+
   setItem(key: string, value: string): void {
     this.store.setItem(key, value);
   }
+
   removeItem(key: string): void {
     this.store.removeItem(key);
   }
@@ -34,7 +51,12 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes, withComponentInputBinding(), withRouterConfig({ paramsInheritanceStrategy: 'always' }), withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
+    ),
     // 브라우저용 지도 키를 먼저 읽는다. 파일이 없어도 앱은 뜬다.
     provideAppInitializer(() => inject(MapConfig).load()),
     {

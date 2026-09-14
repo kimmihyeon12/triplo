@@ -1,0 +1,4 @@
+project_id = "travel-companion"
+
+[functions.delete-account]
+verify_jwt = true

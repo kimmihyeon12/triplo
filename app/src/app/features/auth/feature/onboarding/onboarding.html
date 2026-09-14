@@ -1,0 +1,42 @@
+<div
+  class="page max-w-105 mx-auto my-0 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  <section class="pt-6 pb-8">
+    <h2 class="text-22 font-bold leading-[1.4]">어떻게 불러드릴까요?</h2>
+    <p class="mt-2 text-14 leading-[1.6] text-ink-2">여행에서 사용할 닉네임을 정해주세요.</p>
+  </section>
+  @if (auth.error()) {
+    <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
+  }
+  <form
+    class="flex flex-col gap-6"
+    (submit)="save($event)"
+    [attr.aria-busy]="auth.activity() === 'profile'"
+    novalidate
+  >
+    <app-field label="닉네임" inputId="nickname" hint="2~20자로 입력해주세요.">
+      <input
+        appInput
+        id="nickname"
+        #nicknameInput
+        [value]="nickname()"
+        (input)="nickname.set(nicknameInput.value)"
+        name="nickname"
+        autocomplete="nickname"
+        placeholder="닉네임 입력"
+        aria-describedby="nickname-hint"
+        [disabled]="auth.busy()"
+      />
+    </app-field>
+    <button
+      appButton
+      type="submit"
+      variant="primary"
+      class="w-full min-h-12 rounded-control-lg"
+      [disabled]="auth.busy() || (!auth.designPreview && !auth.available())"
+      [loading]="auth.activity() === 'profile'"
+    >
+      시작하기
+    </button>
+  </form>
+</div>
