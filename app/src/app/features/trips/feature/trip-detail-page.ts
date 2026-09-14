@@ -175,6 +175,14 @@ export class TripDetailPage {
     await this.store.commit(toggleExcluded(t, stopId));
   }
 
+  /** 그날 방문할 곳의 수. 제외한 항목은 세지 않는다. */
+  readonly stopCount = computed(() => {
+    const t = this.trip();
+    const day = this.selectedDay();
+    if (!t || !day) return 0;
+    return dayStops(t, day).filter((s) => !s.excluded).length;
+  });
+
   /** 좌표가 있고 고정 시각이 없는 항목이 둘 이상일 때만 정렬할 수 있다. */
   readonly canSortByNearest = computed(() => {
     const t = this.trip();

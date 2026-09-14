@@ -220,17 +220,19 @@
                 </section>
               } @else {
                 <!--
-                  가까운 순 정렬: 직선 거리 기준 제안이다. 도로·대중교통·영업시간을
+                  일정 머리말: 왼쪽에 개수, 오른쪽에 정렬. 목록 바로 위에 붙여
+                  무엇을 정렬하는지 분명히 한다.
+                  가까운 순 정렬은 직선 거리 기준 제안이며 도로·대중교통·영업시간을
                   반영하지 않으므로 사용자가 확인해 조정해야 한다.
                 -->
-                @if (canSortByNearest()) {
-                  <div class="row sort-row">
-                    <button type="button" class="btn btn--sm" (click)="sortByNearest()" data-testid="sort-nearest">
-                      <app-icon name="pin" [size]="14" /> 가까운 순으로 정렬
+                <div class="day-head">
+                  <span class="day-head__label">{{ stopCount() }}곳 방문</span>
+                  @if (canSortByNearest()) {
+                    <button type="button" class="btn btn--sm btn--primary" (click)="sortByNearest()" data-testid="sort-nearest">
+                      <app-icon name="pin" [size]="14" /> 가까운 순 정렬
                     </button>
-                    <span class="small muted">직선 거리 기준 제안</span>
-                  </div>
-                }
+                  }
+                </div>
                 @if (sortNotice(); as notice) {
                   <p class="small sort-notice" role="status" data-testid="sort-nearest-notice">{{ notice }}</p>
                 }

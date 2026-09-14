@@ -469,10 +469,17 @@
   color: var(--ink);
 }
 
-/* 정렬 버튼 행: 목록 바로 위에 두고 기준을 함께 밝힌다 */
-.sort-row {
+/* 일정 머리말: 왼쪽 개수, 오른쪽 정렬 버튼 */
+.day-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: var(--sp-2);
   margin-bottom: var(--sp-2);
+}
+.day-head__label {
+  font-size: var(--fs-15);
+  font-weight: 700;
 }
 .sort-notice {
   margin-bottom: var(--sp-2);
