@@ -1,0 +1,229 @@
+<div
+  class="page flex flex-col gap-10 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  @if (designPreview) {
+    <section class="border-b border-border pb-5" aria-label="화면 미리보기">
+      <p class="mb-3 text-13 text-ink-3">
+        로컬 디자인 미리보기 · 로그인 없이 화면을 확인할 수 있습니다.
+      </p>
+      <nav class="flex flex-wrap gap-2" aria-label="주요 화면">
+        <a appButton routerLink="/trips">여행 목록</a
+        ><a appButton routerLink="/trips/new">여행 만들기</a
+        ><a appButton routerLink="/trips/ai">AI 만들기</a><a appButton routerLink="/login">로그인</a
+        ><a appButton routerLink="/onboarding">닉네임 설정</a
+        ><a appButton routerLink="/account">내 정보</a>
+      </nav>
+    </section>
+  }
+  <header class="pt-4">
+    <h2 class="text-28 font-bold leading-[1.3]">디자인 시스템</h2>
+    <p class="mt-3 max-w-150 text-14 leading-[1.6] text-ink-2">
+      트립플로의 화면을 만드는 기준입니다. 실제 서비스에 사용하는 컴포넌트와 상태를 여기서 확인할 수
+      있습니다.
+    </p>
+    <nav
+      aria-label="디자인 시스템 목차"
+      class="mt-5 flex flex-wrap gap-x-5 gap-y-3 border-b border-border pb-4 text-14 font-medium text-accent-deep"
+    >
+      <a href="/lab#lab-colors" (click)="scrollTo($event, 'lab-colors')">색상</a
+      ><a href="/lab#lab-type" (click)="scrollTo($event, 'lab-type')">서체·간격</a
+      ><a href="/lab#lab-buttons" (click)="scrollTo($event, 'lab-buttons')">버튼</a
+      ><a href="/lab#lab-inputs" (click)="scrollTo($event, 'lab-inputs')">입력폼</a
+      ><a href="/lab#lab-status" (click)="scrollTo($event, 'lab-status')">상태·알림</a>
+    </nav>
+  </header>
+
+  <section id="lab-colors" class="scroll-mt-20" aria-labelledby="colors-title">
+    <h3 id="colors-title" class="text-18 font-bold">색상</h3>
+    <p class="mt-2 mb-5 text-13 text-ink-3">
+      딥 블루는 조작, 라벤더는 숙소, 버터는 확인 필요, 로즈는 오류, 민트는 완료를 나타냅니다.
+    </p>
+    <div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+      @for (color of colors; track color.name) {
+        <div class="min-w-0">
+          <div
+            class="h-16 rounded-control-lg border border-border"
+            [style.background-color]="'var(--color-' + color.name + ')'"
+            aria-hidden="true"
+          ></div>
+          <p class="mt-2 text-14 font-semibold">{{ color.label }}</p>
+          <p class="mt-1 break-all text-12 text-ink-3">{{ color.name }} · {{ color.value }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section
+    id="lab-type"
+    class="scroll-mt-20 border-t border-border pt-7"
+    aria-labelledby="type-title"
+  >
+    <h3 id="type-title" class="mb-5 text-18 font-bold">서체·간격</h3>
+    <div class="grid gap-8 md:grid-cols-2">
+      <div class="flex flex-col gap-4">
+        <p class="text-22 font-bold leading-[1.4]">
+          여행의 시작 <span class="text-12 font-normal text-ink-3">22px / 제목</span>
+        </p>
+        <p class="text-18 font-bold">
+          강릉에서 보내는 하루 <span class="text-12 font-normal text-ink-3">18px / 섹션</span>
+        </p>
+        <p class="text-15 leading-[1.55]">장소와 숙소를 내 일정에 담아보세요.</p>
+        <p class="text-13 text-ink-2">라벨은 13px, 본문은 15px로 구분합니다.</p>
+        <p class="text-12 text-ink-3">보조 설명 · 12px · Pretendard</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        @for (space of spaces; track space) {
+          <div class="flex items-center gap-3">
+            <span class="w-12 text-12 text-ink-3">{{ space }}px</span
+            ><span class="h-3 bg-accent-deep" [style.width.px]="space * 4"></span>
+          </div>
+        }
+        <p class="text-12 text-ink-3">4px 단위 · 입력 모서리 10px · 큰 버튼 12px · 패널 16px</p>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="lab-buttons"
+    class="scroll-mt-20 border-t border-border pt-7"
+    aria-labelledby="buttons-title"
+  >
+    <h3 id="buttons-title" class="text-18 font-bold">버튼</h3>
+    <p class="mt-2 mb-5 text-13 text-ink-3">
+      주요 동작은 한 화면에 하나. 로딩 중에도 버튼 문구를 유지하고 중복 실행을 막습니다.
+    </p>
+    <div class="flex flex-wrap items-center gap-3">
+      <button appButton type="button" variant="primary">주요 동작</button>
+      <button appButton type="button">기본 버튼</button>
+      <button appButton type="button" variant="ghost">보조 동작</button>
+      <button appButton type="button" variant="danger">삭제</button>
+      <button appButton type="button" variant="icon" aria-label="장소 추가">
+        <app-icon name="plus" />
+      </button>
+      <button appButton type="button" disabled data-testid="lab-disabled">사용 불가</button>
+      <a
+        appButton
+        disabled
+        routerLink="/login"
+        (click)="linkClicks.set(linkClicks() + 1)"
+        data-testid="lab-disabled-link"
+        >비활성 링크</a
+      >
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        [loading]="busy()"
+        (click)="simulateLoading()"
+        data-testid="lab-loading"
+      >
+        로딩 체험
+      </button>
+    </div>
+    <p class="mt-3 text-12 text-ink-3" data-testid="lab-link-clicks">
+      비활성 링크 실행 횟수: {{ linkClicks() }}
+    </p>
+    <div class="mt-6 overflow-hidden rounded-panel border border-border">
+      <div class="bg-ground-2 px-4 py-5 text-13 text-ink-3">모바일 하단 동작 바</div>
+      <div appActionBar class="static! bg-panel! backdrop-blur-none!">
+        <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+          <button appButton type="button">취소</button
+          ><button appButton type="button" variant="primary">저장</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="lab-inputs"
+    class="scroll-mt-20 border-t border-border pt-7"
+    aria-labelledby="inputs-title"
+  >
+    <h3 id="inputs-title" class="mb-5 text-18 font-bold">입력폼</h3>
+    <div class="grid gap-6 md:grid-cols-2">
+      <div>
+        <app-field
+          label="예제 닉네임"
+          inputId="lab-nickname"
+          hint="여행에서 사용할 닉네임을 입력하세요."
+        >
+          <input
+            appInput
+            id="lab-nickname"
+            #nicknameInput
+            [value]="nickname()"
+            (input)="nickname.set(nicknameInput.value)"
+            placeholder="닉네임 입력"
+            aria-describedby="lab-nickname-hint"
+          />
+        </app-field>
+        <app-field label="비활성 입력" inputId="lab-disabled-input"
+          ><input appInput id="lab-disabled-input" value="수정할 수 없는 항목" disabled
+        /></app-field>
+        <app-field label="이동 수단" inputId="lab-select"
+          ><select appInput id="lab-select">
+            <option>대중교통</option>
+            <option>자동차</option>
+            <option>도보</option>
+          </select></app-field
+        >
+      </div>
+      <div>
+        <app-field label="입력 오류 예제" inputId="lab-error">
+          <input
+            appInput
+            id="lab-error"
+            placeholder="오류 상태를 확인해보세요"
+            [attr.aria-invalid]="inputError()"
+            [attr.aria-describedby]="inputError() ? 'lab-error-message' : null"
+          />
+          @if (inputError()) {
+            <p id="lab-error-message" class="field__error text-12 text-danger-ink font-medium">
+              입력한 값을 확인해주세요.
+            </p>
+          }
+        </app-field>
+        <button appButton type="button" (click)="inputError.set(!inputError())">
+          {{ inputError() ? '오류 해제' : '오류 상태 보기' }}
+        </button>
+        <app-field label="메모" inputId="lab-memo" class="mt-5">
+          <textarea appInput id="lab-memo" rows="3" placeholder="여행 메모를 남겨보세요"></textarea>
+        </app-field>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="lab-status"
+    class="scroll-mt-20 border-t border-border pt-7"
+    aria-labelledby="status-title"
+  >
+    <h3 id="status-title" class="mb-5 text-18 font-bold">상태·알림</h3>
+    <div class="mb-5 flex flex-wrap gap-2">
+      <span appBadge tone="accent">예정</span><span appBadge tone="stay">숙소</span
+      ><span appBadge tone="warn">확인 필요</span><span appBadge tone="danger">오류</span
+      ><span appBadge tone="ok">완료</span><span appBadge tone="neutral">지난 일정</span>
+    </div>
+    <div class="flex flex-col gap-3">
+      <div appNotice tone="warn">
+        <app-icon name="alert" />
+        <p>이동 시간이 아직 확인되지 않았습니다.</p>
+      </div>
+      <div appNotice tone="ok">
+        <app-icon name="check" />
+        <p>변경사항이 저장되었습니다.</p>
+      </div>
+      <div class="flex items-center gap-3 py-3 text-14">
+        <span role="status" aria-label="로딩 예제"><app-spinner /></span>초기 로딩은 스피너로
+        표시합니다.
+      </div>
+      <div><button appButton type="button" (click)="toast.set(true)">오류 토스트 보기</button></div>
+    </div>
+    @if (toast()) {
+      <app-error-toast
+        message="저장하지 못했습니다. 잠시 후 다시 시도해주세요."
+        (dismissed)="toast.set(false)"
+      />
+    }
+  </section>
+</div>

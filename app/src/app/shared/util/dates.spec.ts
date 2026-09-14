@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, diffDays, enumerateDays, formatKoreanDate, formatPeriod, nightsBetween, validateTripDates, tripTimelineStatus } from './dates';
+import {
+  addDays,
+  diffDays,
+  enumerateDays,
+  formatKoreanDate,
+  formatPeriod,
+  nightsBetween,
+  validateTripDates,
+  tripTimelineStatus,
+} from './dates';
 
 describe('dates', () => {
   it('diffDays는 두 날짜의 일수 차이를 돌려준다', () => {
@@ -20,7 +29,11 @@ describe('dates', () => {
   });
 
   it('enumerateDays는 시작·종료를 포함한 날짜 목록을 만든다', () => {
-    expect(enumerateDays('2026-05-01', '2026-05-03')).toEqual(['2026-05-01', '2026-05-02', '2026-05-03']);
+    expect(enumerateDays('2026-05-01', '2026-05-03')).toEqual([
+      '2026-05-01',
+      '2026-05-02',
+      '2026-05-03',
+    ]);
     expect(enumerateDays('2026-05-01', '2026-05-01')).toEqual(['2026-05-01']);
   });
 
@@ -68,7 +81,10 @@ describe('tripTimelineStatus', () => {
   });
 
   it('시작일 전이면 upcoming과 D-N', () => {
-    expect(tripTimelineStatus('2026-09-15', '2026-09-17', '2026-09-09')).toEqual({ kind: 'upcoming', daysUntil: 6 });
+    expect(tripTimelineStatus('2026-09-15', '2026-09-17', '2026-09-09')).toEqual({
+      kind: 'upcoming',
+      daysUntil: 6,
+    });
   });
 
   it('시작일이 오늘이면 today', () => {
@@ -76,8 +92,14 @@ describe('tripTimelineStatus', () => {
   });
 
   it('여행 기간 중이면 ongoing과 dayNumber', () => {
-    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-09')).toEqual({ kind: 'ongoing', dayNumber: 3 });
-    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-11')).toEqual({ kind: 'ongoing', dayNumber: 5 });
+    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-09')).toEqual({
+      kind: 'ongoing',
+      dayNumber: 3,
+    });
+    expect(tripTimelineStatus('2026-09-07', '2026-09-11', '2026-09-11')).toEqual({
+      kind: 'ongoing',
+      dayNumber: 5,
+    });
   });
 
   it('종료일이 지나면 past이며 자동 완료로 표시하지 않는다', () => {

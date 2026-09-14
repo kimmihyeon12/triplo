@@ -54,17 +54,20 @@ export function tripNights(start: IsoDate, end: IsoDate): IsoDate[] {
   return days.slice(0, -1);
 }
 
-export type TripDateValidation =
-  | { ok: true; undecided: boolean }
-  | { ok: false; message: string };
+export type TripDateValidation = { ok: true; undecided: boolean } | { ok: false; message: string };
 
-export function validateTripDates(start: string | null | undefined, end: string | null | undefined): TripDateValidation {
+export function validateTripDates(
+  start: string | null | undefined,
+  end: string | null | undefined,
+): TripDateValidation {
   const s = start?.trim() || null;
   const e = end?.trim() || null;
   if (!s && !e) return { ok: true, undecided: true };
   if (!s || !e) return { ok: false, message: '두 날짜를 모두 입력하거나 모두 비워 두세요.' };
-  if (!isIsoDate(s) || !isIsoDate(e)) return { ok: false, message: '날짜 형식이 올바르지 않습니다.' };
-  if (diffDays(s, e) < 0) return { ok: false, message: '종료일은 시작일과 같거나 이후여야 합니다.' };
+  if (!isIsoDate(s) || !isIsoDate(e))
+    return { ok: false, message: '날짜 형식이 올바르지 않습니다.' };
+  if (diffDays(s, e) < 0)
+    return { ok: false, message: '종료일은 시작일과 같거나 이후여야 합니다.' };
   return { ok: true, undecided: false };
 }
 
@@ -100,7 +103,11 @@ export type TripTimelineStatus =
   | { kind: 'past' };
 
 /** 여행 시작·종료일과 오늘 날짜(Asia/Seoul 기준 IsoDate)로 진행 상태를 계산한다. */
-export function tripTimelineStatus(start: IsoDate | null, end: IsoDate | null, today: IsoDate): TripTimelineStatus {
+export function tripTimelineStatus(
+  start: IsoDate | null,
+  end: IsoDate | null,
+  today: IsoDate,
+): TripTimelineStatus {
   if (!start || !end) return { kind: 'undecided' };
   const untilStart = diffDays(today, start);
   if (untilStart > 0) return { kind: 'upcoming', daysUntil: untilStart };

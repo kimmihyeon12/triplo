@@ -1,0 +1,51 @@
+@switch (state()) {
+  @case ('saving') {
+    <span
+      appBadge
+      class="cell cell--ghost"
+      role="status"
+      data-testid="save-status"
+      data-state="saving"
+      >저장 중…</span
+    >
+  }
+  @case ('saved') {
+    <span
+      appBadge
+      class="cell cell--accent"
+      role="status"
+      data-testid="save-status"
+      data-state="saved"
+    >
+      <app-icon name="check" [size]="14" />
+      기기에 저장됨 · {{ time() }}
+    </span>
+  }
+  @case ('error') {
+    <span
+      class="flex flex-wrap items-center gap-2"
+      role="alert"
+      data-testid="save-status"
+      data-state="error"
+    >
+      <span appBadge class="cell cell--danger"
+        ><app-icon name="alert" [size]="14" /> 저장 실패 · 입력은 유지됨</span
+      >
+      <button
+        appButton
+        type="button"
+        class="btn btn--sm"
+        (click)="retry.emit()"
+        data-testid="retry-save"
+        variant="danger"
+      >
+        <app-icon name="refresh" [size]="14" /> 다시 저장
+      </button>
+    </span>
+  }
+  @default {
+    <span appBadge class="cell cell--ghost" data-testid="save-status" data-state="idle"
+      >기기 저장본</span
+    >
+  }
+}
