@@ -1,0 +1,43 @@
+<div class="mx-auto max-w-2xl space-y-6 px-4 py-6">
+  <header class="space-y-2">
+    <p class="text-sm font-semibold text-accent-deep">함께 만드는 여행</p>
+    <h1 class="text-2xl font-bold tracking-tight">같이 보고, 같이 계획해요</h1>
+    <p class="text-sm leading-relaxed text-ink-3">
+      친구에게 일정을 보여주고, 마음에 드는 장소를 함께 채워보세요.
+    </p>
+  </header>
+  <section class="rounded-2xl bg-white p-5 shadow-sm">
+    <h2 class="font-bold">링크 하나로 함께</h2>
+    <ol class="mt-5 space-y-5">
+      <li class="flex gap-3">
+        <span class="text-accent-deep font-bold">01</span>
+        <div>
+          <h3 class="font-semibold">로그인 없이 일정 보기</h3>
+          <p class="mt-1 text-sm text-ink-3">공유받은 친구는 여행 날짜와 장소를 볼 수 있어요.</p>
+        </div>
+      </li>
+      <li class="flex gap-3">
+        <span class="text-accent-deep font-bold">02</span>
+        <div>
+          <h3 class="font-semibold">로그인하고 함께 편집</h3>
+          <p class="mt-1 text-sm text-ink-3">참여 후 장소를 추가하고 일정을 함께 수정해요.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+  <section class="rounded-2xl border border-dashed border-gray-300 p-5 space-y-4">
+    <div>
+      <h2 class="font-semibold">공유 화면 미리보기</h2>
+      <p class="mt-2 text-sm leading-relaxed text-ink-3">
+        현재는 디자인을 확인하는 단계예요. 미리보기는 이 기기의 일정으로 열리며, 실제 초대와 공동
+        편집은 아직 연결되지 않았어요.
+      </p>
+    </div>
+    <div class="grid gap-2 sm:grid-cols-2">
+      <a appButton [routerLink]="['/share-preview', id()]">비로그인 화면 보기</a
+      ><a appButton [routerLink]="['/share-preview', id()]" [queryParams]="{ view: 'editor' }"
+        >참여자 화면 보기</a
+      >
+    </div>
+  </section>
+</div>
