@@ -26,7 +26,7 @@
 | --- | --- |
 | [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Angular 21·NgRx Signals·Zoneless 구현과 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 개발 순서·연동 범위·검증 안내 |
-| [HARNESS.md](HARNESS.md) | MCP·스킬·지도 등 도구 설정과 설치 기록 |
+| [HARNESS.md](HARNESS.md) | MCP·지도·Supabase 인증 설정과 개발 도구 안내 |
 | [LOCAL-LLM.md](LOCAL-LLM.md) | RTX 3090 PC의 Ollama 설치·연결 절차, 모델 후보, 실제 검증 상태 |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
@@ -34,7 +34,7 @@
 ## 제품·디자인 원본
 
 - [PRODUCT.md](design/PRODUCT.md): 제품·브랜드 방향.
-- [DESIGN.md](design/DESIGN.md): 제품의 시각 규칙과 디자인 토큰.
+- [DESIGN.md](design/DESIGN.md): 현재 Tailwind 토큰 원본·공통 UI 계약·스피너·접근성 기준. 실제 예제는 [실험실](http://localhost:4200/lab).
 - 실제 화면별 계약은 `.impeccable/surfaces/`를 확인한다(프로젝트 루트 기준).
 
 ## 참고·분석 기록
@@ -42,7 +42,7 @@
 - [트리플 맞춤 일정 분석](트리플-맞춤일정-분석.md)
 - [통합된 화면 결정](기획안-v0.1.md): 31절에 구형 화면 설계·계획과 비교 자료의 고유 요구를 보존했다.
 
-참고 문서의 제안·과거 관찰은 현재 결정이나 구현 완료를 뜻하지 않는다. 원본 링크와 확인 범위를 유지하고, 채택한 결정만 기획·설계 원본에 반영한다.
+이미 대체된 설정·경로·중복 설명은 원본에서 제거한다. 필요한 미구현 요구와 검증 기록은 유지한다. 참고 문서의 제안·과거 관찰은 현재 결정이나 구현 완료를 뜻하지 않는다. 원본 링크와 확인 범위를 유지하고, 채택한 결정만 기획·설계 원본에 반영한다.
 
 ## 수정 기준
 

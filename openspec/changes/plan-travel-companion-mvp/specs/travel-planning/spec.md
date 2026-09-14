@@ -57,7 +57,7 @@
 - **THEN** 새 코드 또는 소유자 재초대로 새 승인 절차를 거치며 과거 회계 참여자를 이름만으로 자동 연결하지 않는다
 
 ### Requirement: Trip summary and companion profile states
-시스템은 여행 상단에 날짜 상태·숙박 기간·지역 구분·조회 권한에 맞는 지출·동행 프로필 영역을 SHALL 제공하고 미연결·미정 상태를 실제 값과 구분한다. AA.png의 구체적 배치는 이미지 확인 후 설계한다.
+시스템은 여행 상단에 날짜 상태·숙박 기간·지역 구분·조회 권한에 맞는 지출·동행 프로필 영역을 SHALL 제공하고 미연결·미정 상태를 실제 값과 구분한다. 구체적 배치는 현재 디자인 시스템을 기준으로 설계한다.
 #### Scenario: Date changes and undecided dates
 - **WHEN** Asia/Seoul 기준 오늘이 바뀌거나 여행 날짜를 수정한다
 - **THEN** D-N·D-day·여행 중 N일차·일정 날짜 지남과 N박 N+1일을 갱신하고 날짜 미정에는 D-day를 표시하지 않으며 예정일 경과로 여행을 자동 완료하지 않는다
@@ -302,7 +302,6 @@
 - **WHEN** Supabase 연결 후 다른 탭이나 기기에 더 최신 버전이 저장된 상태에서 오래된 변경을 저장한다
 - **THEN** 충돌을 알리고 재검토하게 하며 최신 원본을 조용히 덮어쓰지 않는다
 
-
 ### Requirement: Review AI conditions before generation
 시스템은 첫 AI 입력의 3단계와 편집 가능한 조건 요약을 SHALL 제공한다. 재생성은 이전 조건을 유지한 요약에서 시작한다. 현재 샘플 흐름과 실제 제공자 연결을 구분한다.
 #### Scenario: Edit conditions without generating
@@ -311,3 +310,115 @@
 #### Scenario: Retry selected sample application
 - **WHEN** 선택한 샘플을 새 여행에 담다가 저장 실패 후 재시도한다
 - **THEN** 같은 여행 식별자로 재시도하고 선택하지 않은 항목을 추가하지 않으며 좌표를 미확인으로 둔다
+
+### Requirement: Google authentication and account access
+시스템은 Supabase 카카오·Google OAuth와 PKCE를 통해 로그인하고 내 정보·로그아웃을 SHALL 제공한다. 계정별 여행 저장이 연결되기 전에는 기기 저장 상태를 명시한다.
+#### Scenario: Login completes
+- **WHEN** 카카오 또는 Google 인증 코드를 정상 교환한다
+- **THEN** 코드를 주소에서 제거하고 직접 저장한 닉네임이 있으면 여행 목록으로, 없으면 닉네임 설정으로 이동하며 새로고침 후 계정을 복원한다
+#### Scenario: Private account route
+- **WHEN** 비로그인 사용자가 /account 또는 /trips의 목록·상세·편집·AI 경로로 직접 이동한다
+- **THEN** 인증 확인 후 보호된 화면을 노출하지 않고 로그인 화면으로 보낸다
+#### Scenario: Sign out
+- **WHEN** 사용자가 로그아웃하거나 다른 탭에서 세션이 해제된다
+- **THEN** 내 정보와 여행 화면을 닫고 로그인 화면으로 이동한다
+#### Scenario: Authorization fails
+- **WHEN** 인증이 취소되거나 코드 교환이 실패한다
+- **THEN** 성공으로 표시하지 않고 민감한 오류 값을 숨긴 재시도 안내를 제공한다
+
+### Requirement: Delete own account
+시스템은 명시적 탈퇴 확인과 서버 인증 후 본인의 계정만 SHALL 삭제한다. 서버 미배포 상태는 사용 가능으로 표시하지 않는다.
+#### Scenario: Confirmed account deletion
+- **WHEN** 인증된 사용자가 탈퇴를 입력하고 계정 삭제를 확정한다
+- **THEN** 서버가 확인한 사용자 ID의 계정만 삭제하고 삭제 성공 후 로그인 상태를 해제한다
+#### Scenario: Unauthorized or failed deletion
+- **WHEN** 인증이 없거나 유효하지 않거나 서버 삭제가 실패한다
+- **THEN** 삭제 완료를 표시하지 않으며 타인 계정을 삭제할 수 없다
+#### Scenario: Local drafts remain
+- **WHEN** 현재 인증 전용 단계에서 탈퇴한다
+- **THEN** Google·카카오 원본 계정과 기기 저장 여행은 남는다는 사실을 확정 전에 명시한다
+
+### Requirement: Visible authentication progress
+시스템은 초기 인증 확인과 로그인·로그아웃·회원탈퇴 요청 중 진행 상태를 SHALL 표시하고 중복 실행을 막는다.
+#### Scenario: Request pending
+- **WHEN** 인증 요청이나 라우트 인증 확인이 끝나지 않았다
+- **THEN** 버튼 문구는 유지한 채 버튼 내부 스피너와 aria-busy를 제공하고 중복 실행을 막는다. 초기 인증 확인·라우트 대기는 접근성 이름이 있는 스피너로 표시하며 별도 처리 중 안내 문장은 표시하지 않는다
+
+### Requirement: Authentication error toast
+시스템은 로그인·로그아웃·탈퇴·닉네임 저장 오류를 닫을 수 있는 토스트로 SHALL 표시한다.
+#### Scenario: Dismiss and retry
+- **WHEN** 사용자가 오류 토스트를 닫는다
+- **THEN** 오류 표시를 제거하되 로그인·설정 재시도에 필요한 동작은 계속 사용할 수 있다
+
+#### Scenario: Bottom toast presentation
+- **WHEN** 인증 오류 토스트가 표시된다
+- **THEN** 화면 하단 중앙과 모바일 안전 영역 안에 배치하고 닫기 버튼·접근성 알림·모션 감소 설정을 유지한다
+
+### Requirement: Nickname only social onboarding
+시스템은 첫 카카오·Google 인증 후 닉네임만 SHALL 입력받고 저장 완료 후 여행 목록으로 이동한다. 제공자 프로필의 이름은 직접 선택한 닉네임을 대체하지 않는다.
+#### Scenario: First social authentication
+- **WHEN** 인증은 되었으나 유효한 travel_nickname이 없다
+- **THEN** /onboarding으로 이동하고 닉네임 입력 하나만 제공하며 여행과 내 정보 직접 접근도 닉네임 설정으로 보낸다
+#### Scenario: Save nickname
+- **WHEN** 사용자가 앞뒤 공백 제거·NFC 정규화 후 2~20 코드포인트이며 제어문자가 없는 닉네임을 저장한다
+- **THEN** 중복 이름을 허용하고 Auth user_metadata.travel_nickname에 저장 성공을 확인한 후 /trips로 이동한다. 저장 중 버튼 내부 스피너로 중복 실행을 막는다
+#### Scenario: Retry profile saving
+- **WHEN** 닉네임이 유효하지 않거나 서버 저장에 실패한다
+- **THEN** 입력을 보존하고 닫을 수 있는 오류 토스트를 표시하며 여행 화면으로 이동하지 않는다
+#### Scenario: Returning member
+- **WHEN** 직접 저장한 유효한 닉네임이 있는 회원이 로그인하거나 /onboarding을 연다
+- **THEN** 닉네임을 다시 받지 않고 여행 목록으로 이동한다
+
+### Requirement: Minimal Kakao consent
+시스템은 카카오 인증에 profile_nickname만 SHALL 요청하고 이메일·프로필 사진 동의를 추가하지 않는다. 제공자 설정은 이메일 없는 계정을 허용해야 한다.
+#### Scenario: Kakao authorization request
+- **WHEN** 사용자가 카카오 로그인을 시작한다
+- **THEN** 실제 카카오 인가 요청의 scope는 profile_nickname이며 Google 요청의 동의 범위는 변경하지 않는다
+
+### Requirement: Shared Tailwind design system
+시스템은 Tailwind 테마 토큰과 실제 제품에서 재사용하는 UI 컴포넌트를 SHALL 제공하고 모든 컴포넌트의 HTML과 TS를 분리한다. 화면별 CSS 대신 HTML Tailwind 유틸리티를 사용하고 공통 호스트·지도 DOM 클래스는 TS에서 공유한다. CSS는 테마·기반 스타일·키프레임에 한정한다.
+#### Scenario: Consistent form appearance
+- **WHEN** 사용자가 로그인·닉네임·여행 입력폼을 연다
+- **THEN** 동일한 색상·서체·입력·버튼·포커스·비활성 규칙을 사용하며 기존 인증·저장 동작을 유지한다
+#### Scenario: Design system laboratory
+- **WHEN** 사용자가 실험실 /lab을 연다
+- **THEN** 실제 공통 컴포넌트의 기본·비활성·로딩·오류 상태와 토큰을 확인하고 입력·토스트·버튼 예제를 조작할 수 있다
+
+#### Scenario: Visible loading rotation
+- **WHEN** 모션 감소 설정이 없는 사용자가 로딩 상태를 본다
+- **THEN** 스피너는 테두리의 열린 부분이 회전하여 처리 중임을 표시하고 모션 감소 설정에서는 회전을 멈춘다
+
+### Requirement: Local design preview
+시스템은 development 구성에서만 인증 없이 화면 디자인을 확인하는 미리보기를 SHALL 허용한다. production과 인증 회귀 테스트에서는 기존 인증·닉네임 가드를 유지한다.
+#### Scenario: Navigate without a completed profile
+- **WHEN** 로컬 미리보기에서 비로그인 또는 닉네임 미완료 사용자가 여행·온보딩·내 정보 화면으로 이동한다
+- **THEN** 인증 때문에 다른 화면으로 강제 이동하지 않는다. 계정 예시는 미리보기임을 표시하고 실제 세션을 생성하지 않는다
+
+### Requirement: Link based collaborative itinerary
+시스템은 유효 공유 링크의 비로그인 소지자에게 일정 조회를 SHALL 허용하고 로그인·닉네임 설정 후 참여한 사용자에게 공동 일정 편집을 허용한다. 기존 승인형·조회 전용 동행 규칙은 이 요구로 대체한다.
+#### Scenario: Guest and joined editor
+- **WHEN** 비로그인 방문자가 유효 링크를 열고 이후 로그인해 참여한다
+- **THEN** 비로그인에서는 일정만 보고 참여 후 기존 편집기를 사용한다. 다른 여행 ID와 만료 링크로 권한을 얻지 못한다.
+#### Scenario: Concurrent edit
+- **WHEN** 다른 참여자가 먼저 저장해 기준 버전이 바뀐다
+- **THEN** 오래된 저장을 거절하고 입력을 보존하며 최신 일정 다시 불러오기를 제공한다.
+### Requirement: Estimated costs separate from actual expenses
+시스템은 장소·활동·숙소에 선택적 예상 비용을 SHALL 저장하고 실제 가계부와 분리한다.
+#### Scenario: Plan without a confirmed price
+- **WHEN** 예상 비용을 비워두거나 실제 결제액이 예상과 다르다
+- **THEN** 미입력은 미정이고 실제 지출은 명시적 입력값으로 저장하며 두 합계를 구분한다.
+### Requirement: Itinerary image export
+시스템은 전체 또는 선택 날짜의 일정을 PNG로 SHALL 내보내고 개인정보·편집 버튼·지도 타일을 제외한다.
+#### Scenario: Download schedule
+- **WHEN** 사용자가 날짜 범위와 예상 비용 포함 여부를 선택해 내보낸다
+- **THEN** 긴 이름을 줄바꿈한 일정 이미지를 다운로드하며 실패 시 오류와 재시도를 제공한다.
+
+
+### Requirement: Companion entry within trip detail
+시스템은 개별 여행 상세 상단에 뒤로·여행 이름·편집 연필·참여자 이니셜·초대 +·더보기를 SHALL 배치한다. 가계부 진입은 일정 옆 탭, PNG 저장은 더보기 메뉴에서 제공한다.
+#### Scenario: Travel without connected companions
+- **WHEN** 실제 동행이 연결되지 않은 여행을 연다
+- **THEN** 가상 친구 프로필을 만들지 않고 실제 로그인한 본인의 닉네임 이니셜과 초대 +를 표시한다. 실제 동행 목록은 서버 연결 후 제공한다.
+#### Scenario: Preview before database connection
+- **WHEN** DB 연결 전 초대 화면에서 공유 미리보기를 연다
+- **THEN** 같은 기기의 일정으로 비로그인/참여자 화면을 보여주고 실제 초대·공동 편집 미연결 상태를 명시한다. 프로필·개인 메모·예약정보·가계부는 미리보기 일정에 포함하지 않는다.

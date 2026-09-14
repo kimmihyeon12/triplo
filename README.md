@@ -1,7 +1,7 @@
 # 트립플로 (국내 여행 비서)
 국내 여행 AI 후보 선택 → 일정 구성 → 방문 기록 → 사진 지도와 캐릭터 성장으로 이어지는 반응형 웹/PWA 프로젝트입니다.
 
-현재 단계는 **내부 알파(수동 일정 관리, 같은 기기 저장)** 입니다. 서비스 배포, 원격 저장소 생성, Supabase 연결은 아직 하지 않았습니다.
+현재 단계는 **내부 알파(수동 일정 관리, 같은 기기 저장)** 입니다. Supabase 소셜 인증과 디자인 시스템을 구현했습니다. 여행 데이터는 아직 기기 저장이며 서버 저장·RLS·회원탈퇴 함수 배포는 후속 작업입니다.
 - **Angular 21 + NgRx Signals 21 + Zoneless**를 사용합니다. 업그레이드 작업과 상태관리 결정은 [아키텍처](docs/architecture/ARCHITECTURE.md)와 OpenSpec tasks 9절을 따릅니다.
 - [전체 문서 목차](docs/README.md) · [개발 안내](docs/DEVELOPMENT.md)
 - [기획안](docs/기획안-v0.1.md)
@@ -21,6 +21,8 @@ npm run e2e          # 브라우저 시나리오 (테스트 앱 4300, 저장 키
 npm run build        # 프로덕션 빌드
 ```
 
-지도·장소 검색(카카오맵): `app/public/app-config.example.json`을 `app/public/app-config.json`으로 복사하고 카카오 디벨로퍼스 JavaScript 키를 넣습니다. 키 발급·도메인 등록 절차와 무료 한도는 [HARNESS.md](docs/HARNESS.md)의 ‘지도·장소 검색 제공자’ 절을 참고하세요. 키가 없어도 앱은 동작하며 지도·검색만 ‘연결 안 됨’으로 표시됩니다.
+지도·장소 검색(카카오맵): `app/public/app-config.example.json`을 `app/public/app-config.json`으로 복사하고 카카오 디벨로퍼스 JavaScript 키를 넣습니다. 키 발급·도메인 등록 안내는 [HARNESS.md](docs/HARNESS.md)의 ‘지도·장소 검색 제공자’ 절을 참고하세요. 키가 없어도 앱은 동작하며 지도·검색만 ‘연결 안 됨’으로 표시됩니다.
 
 명세 검증: `npm run spec:check` (저장소 루트)
+
+디자인 확인: development 앱은 로그인 없이 페이지에 진입할 수 있습니다. [실험실](http://localhost:4200/lab)에서 공통 UI를 확인하세요. production과 test는 인증 가드를 유지합니다. 소셜 로그인 설정은 [HARNESS.md](docs/HARNESS.md)를 따릅니다.

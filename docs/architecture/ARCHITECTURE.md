@@ -1,10 +1,10 @@
 # 여행 앱 아키텍처·상태관리 기준
 
-2026-09-09 설계 결정. 사용자가 지정한 Angular 프로젝트의 문서와 실제 코드를 비교한 결과다. 2026-09-14 사용자 요청으로 Angular 21.2.23(core)·21.2.24(CLI/build), NgRx Signals 21.1.1과 기능별 구조·Zoneless를 반영했다. 상태 경쟁 회귀 테스트와 실제 빌드 결과를 확인했으며 최종 브라우저 검증은 OpenSpec tasks 9절에 기록한다. 제품 요구사항은 기획안과 OpenSpec, 시각 체계는 docs/design/PRODUCT.md·DESIGN.md가 원본이다.
+현재 구현은 Angular 21·NgRx Signals·Zoneless와 기능별 구조다. 실제 패치 버전은 app/package.json과 잠금 파일, 검증 기록은 OpenSpec tasks 9·11절을 따른다. 제품 요구는 기획안·OpenSpec, 시각 규칙은 docs/design/DESIGN.md에서 관리한다.
 
 ## 1. 선택과 근거
 
-**Angular 21 + 기능별 구조 + Angular Signals + 서비스 내부 NgRx `signalState`를 채택한다.** 참고 프로젝트와 메이저 버전을 맞추고 단일 웹앱 규모에 맞게 적용한다. Angular 20이 더 우수해서 유지하는 것은 아니며, 초기 유지 제안은 변경 범위를 줄이기 위한 판단이었다. 사용자 최신 선택으로 이 판단을 대체한다.
+**Angular 21 + 기능별 구조 + Angular Signals + 서비스 내부 NgRx `signalState`를 채택한다.** 참고 프로젝트와 메이저 버전을 맞추고 단일 웹앱 규모에 맞게 적용한다.
 
 | 선택지 | 판단 |
 | --- | --- |
@@ -27,11 +27,12 @@ Angular core·CLI·build·compiler·forms·router는 21.x의 호환되는 릴리
 | Signal Forms 의무 사용 | Angular 21에서는 사용 가능하지만 experimental이다. 새 복잡한 폼의 기본은 typed Reactive Forms로 두고(기존 signal + ngModel 폼은 유지), 채택 검토 시 AI 입력처럼 독립된 흐름에서 복수 지역·숙소 날짜·단계 복원·검증을 실증한 뒤 범위를 결정한다. 전체 폼 자동 전환은 업그레이드 조건이 아니다. |
 | 서버 조회 `rxResource` 의무 사용 | 참고 프로젝트의 설치된 Angular 21 타입에서도 experimental로 확인했다. 기본은 Promise 계약 또는 HttpClient/RxJS다. 필요하면 읽기 전용 조회 한 곳에서 검증하며 쓰기·정산 저장 도구로 사용하지 않는다. |
 | Zoneless | 목표로 채택. Angular 21 업그레이드와 별도 검증 단계로 진행하며 지도 SDK 콜백·폼 프로그램 변경·저장 상태의 화면 갱신을 확인한 뒤 ZoneJS를 제거한다. |
-| Tailwind·cva, Storybook, SSR, 외부 배포 체계 | 이번 아키텍처 결정의 필수 의존성으로 가져오지 않는다. 기존 CSS 토큰·테스트·클라이언트 렌더링을 유지한다. |
+| Tailwind CSS | 2026-09-14 사용자 요청으로 v4와 공식 PostCSS 플러그인을 채택한다. 단일 테마 토큰·공통 UI·실험실로 화면 일관성을 관리한다. |
+| cva, Storybook, SSR, 외부 배포 체계 | 필수 의존성으로 추가하지 않는다. 디자인 시스템 예제는 앱 실험실 /lab에서 제공한다. |
 
 버전 판단 근거: [Angular 21 폼 안내](https://v21.angular.dev/guide/forms), [Angular 21 로드맵](https://v21.angular.dev/roadmap), [참고 프로젝트의 rxResource 타입](<C:/Users/123/Desktop/project/angular/01. work/web/node_modules/@angular/core/types/rxjs-interop.d.ts:181>), [Zoneless 공식 안내](https://angular.dev/guide/zoneless). 최신 문서의 안정화 상태와 21의 상태를 혼동하지 않는다. 기능 중심 구조는 [Angular 공식 스타일 가이드](https://angular.dev/style-guide#organize-your-project-by-feature-areas)에서도 권장한다. 아래 세부 폴더와 경계는 우리 앱의 설계 판단이다.
 
-## 3. 목표 폴더와 의존성
+## 3. 폴더와 의존성
 
 필요한 기능을 구현할 때 폴더를 만든다. 빈 디렉터리를 미리 대량 생성하지 않는다.
 
@@ -48,15 +49,15 @@ app/src/app/
       util/                           # 순수한 날짜·숙박·일정 계산
       trips.routes.ts
     ai-planning/                      # 입력·생성·선택 초안, 검증, 적용 요청
-    expenses/                         # 지출·분담·정산
-    collaboration/                    # 코드·초대·멤버·공유
     places/                           # 지도·장소 검색·경로와 제공자 어댑터
-    auth/                             # 사용자 세션
+    auth/                             # 소셜 인증·닉네임·계정
+    lab/                              # 공통 UI·토큰 실험실
   shared/
     ui/                               # 버튼·대화상자·일반 상태 표시·아이콘
     util/                             # 도메인을 모르는 순수 함수
 server/                               # AI·비공개 외부 API 서버, 도입 시 생성
-supabase/                             # DB migrations·RLS, 연결 시 구성
+supabase/functions/delete-account/    # 본인 탈퇴 함수. 미배포
+# expenses·collaboration·DB migrations/RLS는 후속 기능 구현 시 추가
 ```
 
 - 화면 `feature`가 상태 서비스·UI를 조합한다. UI는 입력을 표시하고 사용자 의도를 출력한다. `data`가 UI나 화면을 import하지 않는다.
@@ -66,7 +67,9 @@ supabase/                             # DB migrations·RLS, 연결 시 구성
 - 다른 기능의 화면 내부를 import하지 않는다. 공개 모델·작은 서비스 계약을 통한 단방향 의존만 허용한다. 예를 들어 여행 작업 화면이 경비 요약을 조합하되 경비 기능은 여행 화면이나 편집 상태를 참조하지 않는다.
 - AI 초안은 현재 여행의 읽기 전용 스냅샷을 입력받고 적용 명령을 반환한다. 실제 일정 변경은 여행 편집 서비스가 담당한다. AI와 trips 서비스가 서로 참조하지 않는다.
 - 응답 모델과 편집 모델이 다르거나 외부 신뢰 경계가 있을 때 매핑한다. 이름만 다른 동일 모델을 무조건 세 벌 만들지 않는다. API·LLM·localStorage 응답은 타입 선언만 믿지 않고 런타임 검증한다.
-- 관련 파일과 테스트는 가까이 둔다. 큰 화면은 책임별 UI와 별도 HTML/CSS로 분리하되 줄 수만을 기준으로 쪼개지 않는다. 경계가 정해지면 lint로 순환 참조와 금지 import를 검증한다.
+- 모든 컴포넌트는 이름별 폴더에 같은 이름의 `.ts`·`.html`을 함께 둔다. 공통 호스트 클래스는 같은 폴더의 `.styles.ts`에, 테스트도 해당 폴더에 둔다. 작은 컴포넌트도 인라인 `template`·`styles`를 사용하지 않는다. 예: `features/auth/feature/onboarding/onboarding.ts`와 `.html`, `shared/ui/button/button.ts`와 `.html`. 순수 서비스·모델·유틸리티는 기존 계층을 유지한다. lint로 컴포넌트 폴더·템플릿 분리·의존성 경계·순환 참조를 검증한다.
+- 화면 스타일은 HTML의 Tailwind 유틸리티로 작성한다. 공통 UI 호스트의 정적 클래스는 `.styles.ts`에서 공유한다. `app/src/styles/theme.css`는 테마 토큰의 실행 원본, `base.css`는 기반 스타일, `effects.css`는 키프레임과 동작 줄이기 설정이다. 컴포넌트 CSS 파일은 제거했으며 지도 SDK가 생성하는 DOM도 정적 Tailwind 클래스 모음을 사용한다. 기능별 임의 색상·입력·버튼 규칙을 새로 만들기 전에 `shared/ui`의 버튼·입력·필드·배지·안내·로딩·토스트·동작 바를 사용한다.
+- 실험실 `features/lab/feature/lab/`는 실제 공유 컴포넌트와 테마 토큰으로 예제를 렌더링한다. `/lab`은 계정 데이터를 읽지 않는 공개 컴포넌트 예제이며 여행 인증 가드와 독립적이다. 제품과 다른 모사 UI를 별도로 만들지 않는다.
 
 ## 4. 상태의 소유자와 수명
 
@@ -78,7 +81,7 @@ supabase/                             # DB migrations·RLS, 연결 시 구성
 | 현재 여행·편집·저장 상태 | 여행 작업 화면 서비스의 private `signalState` | 작업 화면 부모 컴포넌트 providers에 등록, 자식 장소·숙소 편집은 같은 인스턴스 사용 |
 | AI 입력·후보·선택·생성 상태 | AI 흐름 부모 화면 서비스의 private `signalState` | 단계 이동 시 유지, 새 요청·다른 여행·명시적 취소 시 구분 |
 | 경비·정산, 초대·동행 | 해당 기능 서비스의 private `signalState` | 여행·사용자 ID로 구분, 여행 또는 계정 변경 시 이전 응답 폐기 |
-| 로그인 세션 | auth 전역 서비스 | Supabase 연결 후 세션 수명에 맞춰 유지·정리 |
+| 로그인 세션 | auth 전역 서비스 | AuthStore가 인증 복원·변경·로그아웃을 관리 |
 | 저장 실패한 입력 | 여행·사용자별 PendingDraftRegistry | 화면 서비스와 별도인 세션 메모리 보관소, 저장 성공·명시적 폐기 시 제거, 로그아웃 시 비공개 초안 정리 |
 | 서버에 저장된 여행·경비·멤버 | Supabase 연결 후 DB | 클라이언트 상태는 조회·편집용 사본, 접근 권한과 저장 성공은 서버가 판단 |
 
@@ -107,7 +110,8 @@ flowchart TD
   State --> Rules[순수한 날짜·숙박·정산 규칙]
   State --> Ports[저장·장소·AI 계약]
   Ports --> Local[현재 localStorage 어댑터]
-  Ports --> DB[후속 Supabase Auth·DB·RLS]
+  Views --> Auth[AuthStore·Supabase Auth]
+  Ports --> DB[후속 Supabase DB·RLS]
   Ports --> Map[카카오 지도·검색 어댑터]
   Ports --> Server[AI·비공개 API 서버]
   Server --> LLM[친구 PC의 로컬 LLM]
@@ -115,16 +119,21 @@ flowchart TD
 
 브라우저에 필요한 지도 공개 키와 서버 비밀키를 구분한다. LLM 주소·인증과 비공개 API 키는 서버 설정으로 관리한다. 인증된 DB 접근은 Supabase RLS, 초대·공유·정산 등 복합 명령은 서버/RPC 검증을 경계로 삼는다. 서버 경유만으로 권한이 자동 해결되는 것은 아니다. DB·LLM 연결 상태는 실제 호출 검증과 별도로 기록한다.
 
-## 7. 이행 기록과 후속 순서
+## 7. 변경과 검증
 
-2026-09-14 사용자의 별도 리팩터링 지시에 따라 착수했다. 아래는 적용 순서와 후속 검증 기준이며 완료 여부는 OpenSpec tasks 9절의 실제 결과로 판단한다.
+Angular 21 마이그레이션·기능별 상태 분리·Zoneless 전환은 적용했다. 최초 이행 절차를 반복하지 않고 현재 코드에서 변경 범위를 정한다. 기존 domain 코드는 trips의 model/util/data로 이동했으며 새 기능도 같은 계층을 따른다.
 
-1. 변경 전 앱 빌드·Vitest·핵심 E2E 결과를 확보한다. [Angular 업데이트 가이드](https://angular.dev/update-guide?v=20.0-21.0&l=1)에 따라 app/에서 core·CLI 20→21 공식 마이그레이션을 적용하고 빌드·테스트 설정과 관련 의존성을 확인한다. 작업 중인 다른 변경을 덮어쓰지 않는다. 전역 CLI 교체는 필요하지 않다. 현재 ZoneJS 설정은 이 단계에서 유지해 버전 변경만 먼저 검증한다.
-2. `features/trips/data/trip-editor-store.ts`와 `trip-list-store.ts`가 읽기 상태만 노출한다. `PendingDraftRegistry`는 세션별 여행 초안·편집 버전·저장 큐와 저장 확인 시각을 관리한다. 저장 성공 시 목록을 재조회하고 최신 초안만 해제한다.
-3. 여행 작업 부모 화면과 목록 상태를 분리한다. 기존 domain 순수 함수·Repository를 보존하면서 trips의 model/util/data로 점진 이동한다. 큰 상세 화면의 헤더·일정·숙소 UI를 나눈다. 저장 상태 표시는 상태를 입력받는 공통 UI로 바꾼다. `@ngrx/signals` 21.x를 도입해 상태 서비스를 한 기능씩 옮긴다.
-4. Zoneless로 전환하며 provideZoneChangeDetection·polyfills·테스트 설정을 함께 정리한다. 지도 콜백이 읽히는 signal을 갱신하는지, Reactive Forms의 프로그램 변경이 화면에 반영되는지 검증한다. 필요한 경우 valueChanges/statusChanges를 signal 또는 markForCheck로 연결한다. Signal Forms·rxResource 실증과는 각각 분리한다.
-5. 기반 업그레이드 뒤 기존 우선순위인 지도 → AI → Supabase → 동행·공유 → 정산을 따른다. 새 기능은 이 구조로 작성하고 실제 사용하는 기능부터 이동한다. 폴더 전면 개편 때문에 지도·AI 연결을 미루지 않는다.
-6. 변경마다 관련 Vitest와 빌드, 사용자 흐름이 변한 경우 별도 테스트 앱 Playwright를 실행한다. 조회 응답 역전·빠른 연속 저장·실패 후 여행 이동·재시도·여행 ID 변경·로그아웃을 검증하고 lint 경계를 추가한다. 서버 버전·권한·중복 명령 검증은 Supabase 단계에서 실제 DB로 수행한다.
+변경에 맞는 단위·경계·빌드 검증을 실행하고 사용자 흐름이 바뀌면 별도 테스트 앱에서 PC·360px 브라우저 검증을 수행한다. 서버 버전·권한·중복 명령·트랜잭션은 Supabase DB 단계에서 실제 서버로 검증한다. 후속 기능 순서는 DEVELOPMENT.md를 따른다.
+
+### 파일과 서식
+
+컴포넌트 파일명에서 `-page` 접미사는 사용하지 않는다. 예: `onboarding/onboarding.ts`·`onboarding.html`. PascalCase 클래스 이름은 라우트 컴포넌트 구분을 위해 유지할 수 있다.
+
+TypeScript 함수·메서드 사이와 속성/생성자 영역 사이에는 빈 줄을 한 줄만 둔다. 들여쓰기·줄바꿈은 app/package.json의 Prettier 설정을 따른다.
+
+### 개발용 미리보기
+
+development 구성만 `designPreview=true`로 여행·계정·온보딩 진입을 허용한다. production과 test는 false로 인증·닉네임 가드를 유지한다. 미리보기 표시를 실제 AuthStore 세션으로 만들지 않는다. 실제 인증 사용자가 닉네임 저장에 성공하면 개발 앱에서도 여행 목록으로 이동한다.
 
 ## 8. 직접 확인한 참고 파일
 
@@ -139,3 +148,7 @@ flowchart TD
 - [외부 package.json](<C:/Users/123/Desktop/project/angular/01. work/web/package.json>) / [현재 package.json](../../app/package.json) — Angular·NgRx 버전 비교.
 
 공식 문서 링크는 각 결정 옆에 표시했다. 참고 프로젝트와 공식 자료를 근거로 선택했으며, 상태 수명·여행별 복구·이행 순서는 여행 앱 요구에 맞춰 추가한 설계다.
+
+
+### 로컬 비용·공유 화면 (2026-09-14)
+`features/expenses`는 순수 원화 분담/정산 모델·util, 기기 저장 data, 지출 폼 ui, 가계부 feature로 나눈다. `features/collaboration`은 동행 ui와 초대/공유 미리보기 feature를 제공한다. 여행 PNG는 순수 출력 모델(util)과 Canvas renderer(data), 미리보기 ui/화면(feature)로 분리한다. 여행 저장소는 기존 localStorage를 유지하며 실제 서버 공유나 권한을 대체하지 않는다.
