@@ -29,7 +29,11 @@ export function moveStop(trip: Trip, stopId: string, direction: 'up' | 'down'): 
   if (swapIdx < 0 || swapIdx >= group.length) return trip;
   const other = group[swapIdx];
   const stops = trip.stops.map((s) =>
-    s.id === target.id ? { ...s, order: other.order } : s.id === other.id ? { ...s, order: target.order } : s,
+    s.id === target.id
+      ? { ...s, order: other.order }
+      : s.id === other.id
+        ? { ...s, order: target.order }
+        : s,
   );
   return { ...trip, stops: renumber(stops, target.date) };
 }
@@ -55,7 +59,10 @@ export function appendStop(trip: Trip, stop: TripStop): Trip {
 export function updateStop(trip: Trip, updated: TripStop): Trip {
   const prev = trip.stops.find((s) => s.id === updated.id);
   if (!prev) return trip;
-  const merged = { ...trip, stops: trip.stops.map((s) => (s.id === updated.id ? { ...updated, order: prev.order } : s)) };
+  const merged = {
+    ...trip,
+    stops: trip.stops.map((s) => (s.id === updated.id ? { ...updated, order: prev.order } : s)),
+  };
   return prev.date === updated.date ? merged : placeStopOnDate(merged, updated.id, updated.date);
 }
 
@@ -67,7 +74,10 @@ export function removeStop(trip: Trip, stopId: string): Trip {
 }
 
 export function toggleExcluded(trip: Trip, stopId: string): Trip {
-  return { ...trip, stops: trip.stops.map((s) => (s.id === stopId ? { ...s, excluded: !s.excluded } : s)) };
+  return {
+    ...trip,
+    stops: trip.stops.map((s) => (s.id === stopId ? { ...s, excluded: !s.excluded } : s)),
+  };
 }
 
 /** 지구 반경(km). 두 좌표 사이 대권 거리를 구할 때 쓴다. */
@@ -141,7 +151,9 @@ export function sortDayByNearest(trip: Trip, date: IsoDate): NearestSortResult {
   let cursor = 0;
   const nextGroup = group.map((s) => (movableIds.has(s.id) ? ordered[cursor++] : s));
   const orderById = new Map(nextGroup.map((s, i) => [s.id, i] as const));
-  const stops = trip.stops.map((s) => (orderById.has(s.id) ? { ...s, order: orderById.get(s.id)! } : s));
+  const stops = trip.stops.map((s) =>
+    orderById.has(s.id) ? { ...s, order: orderById.get(s.id)! } : s,
+  );
 
   return { trip: { ...trip, stops }, sortedCount: movable.length, unlocatedCount, fixedCount };
 }
@@ -163,7 +175,13 @@ export function dayTotals(trip: Trip, date: IsoDate): DayTotals {
   const stayMinutes = active.reduce((sum, s) => sum + (s.stayMinutes ?? 0), 0);
   const unknownStayCount = active.filter((s) => s.stayMinutes === null).length;
   const legCount = Math.max(0, active.length - 1);
-  return { stayMinutes, activeCount: active.length, unknownStayCount, legCount, unknownLegCount: legCount };
+  return {
+    stayMinutes,
+    activeCount: active.length,
+    unknownStayCount,
+    legCount,
+    unknownLegCount: legCount,
+  };
 }
 
 export type DaySegment =
@@ -213,7 +231,8 @@ export function fixedTimeConflicts(trip: Trip, date: IsoDate): FixedTimeConflict
   const fixed = dayStops(trip, date).filter((s) => !s.excluded && s.fixedTime);
   const out: FixedTimeConflict[] = [];
   for (let i = 0; i < fixed.length - 1; i++) {
-    if (fixed[i].fixedTime! > fixed[i + 1].fixedTime!) out.push({ earlierId: fixed[i].id, laterId: fixed[i + 1].id });
+    if (fixed[i].fixedTime! > fixed[i + 1].fixedTime!)
+      out.push({ earlierId: fixed[i].id, laterId: fixed[i + 1].id });
   }
   return out;
 }

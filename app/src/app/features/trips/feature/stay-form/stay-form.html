@@ -1,0 +1,429 @@
+<div
+  class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  @if (!trip()) {
+    <p class="text-ink-3" role="status">불러오는 중…</p>
+  } @else {
+    <p class="flex flex-wrap items-center gap-2 text-12 leading-normal text-ink-3">
+      <app-icon
+        class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+        name="calendar"
+        [size]="14"
+      />
+      여행 기간: {{ period() }}
+    </p>
+    <form
+      class="panel flex flex-col gap-3 bg-panel rounded-panel shadow-panel p-4"
+      (submit)="save($event)"
+      novalidate
+    >
+      <div class="field flex flex-col gap-1 mb-4">
+        <span class="field__label font-medium text-13 text-ink-2">숙소 검색으로 위치 확인</span>
+        <app-place-search-box
+          inputId="stay-place-query"
+          placeholder="예: 강릉 호텔, 속초 게스트하우스"
+          [initialQuery]="name()"
+          (picked)="onPicked($event)"
+        />
+        @if (location()) {
+          <div class="flex flex-wrap items-center gap-2" data-testid="stay-location-verified">
+            <span appBadge class="cell cell--ok"
+              ><app-icon
+                class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+                name="pin"
+                [size]="14"
+              />
+              위치 확인됨 · {{ providerLabel() }}</span
+            >
+            <span class="text-12 leading-normal text-ink-3"
+              >{{ location()!.lat.toFixed(5) }}, {{ location()!.lng.toFixed(5) }}</span
+            >
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="removeLocation()"
+              data-testid="stay-location-clear"
+              variant="ghost"
+            >
+              위치 지우기
+            </button>
+          </div>
+        }
+      </div>
+
+      <app-field inputId="name" label="숙소 이름">
+        <input
+          appInput
+          id="name"
+          class="input"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          name="name"
+          placeholder="예: 강릉 A 호텔, 친구 집"
+          maxlength="80"
+          (blur)="nameTouched.set(true)"
+          [attr.aria-invalid]="nameError() && nameTouched() ? 'true' : null"
+          data-testid="stay-name"
+        />
+        @if (nameError() && nameTouched()) {
+          <p class="field__error text-12 text-danger-ink font-medium" role="alert">
+            {{ nameError() }}
+          </p>
+        }
+      </app-field>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <label class="field__label font-medium text-13 text-ink-2" for="address"
+          >주소 <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
+        >
+        <input
+          appInput
+          id="address"
+          class="input"
+          [ngModel]="address()"
+          (ngModelChange)="address.set($event)"
+          name="address"
+          maxlength="200"
+          data-testid="stay-address"
+        />
+        @if (!location()) {
+          <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+            ><app-icon
+              class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+              name="alert"
+              [size]="12"
+            />
+            검색으로 고르지 않은 숙소는 ‘위치 미확인’으로 저장되며 경로 계산 전 위치 확인이
+            필요합니다.</span
+          >
+        }
+      </div>
+
+      @if (trip()!.regions.length > 0) {
+        <div class="field flex flex-col gap-1 mb-4">
+          <label class="field__label font-medium text-13 text-ink-2" for="region"
+            >지역 <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
+          >
+          <select
+            appInput
+            id="region"
+            class="select"
+            [ngModel]="regionId()"
+            (ngModelChange)="regionId.set($event)"
+            name="region"
+            data-testid="stay-region"
+          >
+            <option value="">지역 없음</option>
+            @for (r of trip()!.regions; track r.id) {
+              <option [value]="r.id">{{ r.name }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <fieldset class="border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
+        <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">숙박 날짜</legend>
+        <div
+          class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+        >
+          <div class="field flex flex-col gap-1 mb-4">
+            <label
+              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+              for="checkin"
+              >체크인</label
+            >
+            <input
+              appInput
+              id="checkin"
+              type="date"
+              class="input"
+              [ngModel]="checkIn()"
+              (ngModelChange)="checkIn.set($event)"
+              name="checkIn"
+              (blur)="datesTouched.set(true)"
+              [attr.aria-invalid]="showDateError() ? 'true' : null"
+              data-testid="stay-checkin"
+            />
+          </div>
+          <div class="field flex flex-col gap-1 mb-4">
+            <label
+              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+              for="checkout"
+              >체크아웃</label
+            >
+            <input
+              appInput
+              id="checkout"
+              type="date"
+              class="input"
+              [ngModel]="checkOut()"
+              (ngModelChange)="checkOut.set($event)"
+              name="checkOut"
+              (blur)="datesTouched.set(true)"
+              [attr.aria-invalid]="showDateError() ? 'true' : null"
+              data-testid="stay-checkout"
+            />
+          </div>
+        </div>
+        @if (showDateError()) {
+          <p
+            class="field__error text-12 text-danger-ink font-medium"
+            role="alert"
+            data-testid="stay-date-error"
+          >
+            {{ dateError() }}
+          </p>
+        } @else if (!dateError()) {
+          <p
+            class="cell cell--stay inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-stay-tint text-stay-ink"
+            data-testid="stay-nights"
+          >
+            {{ nightsText() }}
+          </p>
+        } @else {
+          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
+            체크인 날짜와 체크아웃 날짜를 입력하면 몇 박인지 표시됩니다.
+          </p>
+        }
+      </fieldset>
+
+      <div
+        class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+      >
+        <div class="field flex flex-col gap-1 mb-4">
+          <label
+            class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+            for="checkin-time"
+            >체크인 시각 <span class="text-ink-3">(미정 가능)</span></label
+          >
+          <input
+            appInput
+            id="checkin-time"
+            type="time"
+            class="input"
+            [ngModel]="checkInTime()"
+            (ngModelChange)="checkInTime.set($event)"
+            name="checkInTime"
+            data-testid="stay-checkin-time"
+          />
+        </div>
+        <div class="field flex flex-col gap-1 mb-4">
+          <label
+            class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+            for="checkout-time"
+            >체크아웃 시각 <span class="text-ink-3">(미정 가능)</span></label
+          >
+          <input
+            appInput
+            id="checkout-time"
+            type="time"
+            class="input"
+            [ngModel]="checkOutTime()"
+            (ngModelChange)="checkOutTime.set($event)"
+            name="checkOutTime"
+            data-testid="stay-checkout-time"
+          />
+        </div>
+      </div>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <label class="field__label font-medium text-13 text-ink-2" for="reservation"
+          >예약 여부
+          <span class="text-ink-3 text-12 leading-normal"
+            >(사용자 입력, 실시간 확인 아님)</span
+          ></label
+        >
+        <select
+          appInput
+          id="reservation"
+          class="select"
+          [ngModel]="reservation()"
+          (ngModelChange)="reservation.set($event)"
+          name="reservation"
+          data-testid="stay-reservation"
+        >
+          @for (r of reservationStates; track r) {
+            <option [value]="r">{{ reservationLabel[r] }}</option>
+          }
+        </select>
+      </div>
+
+      <app-field
+        label="예상 비용"
+        inputId="estimated-cost"
+        hint="선택 · 원 단위, 숙소는 숙박 전체 금액을 입력해 주세요."
+      >
+        <input
+          appInput
+          id="estimated-cost"
+          name="estimatedCost"
+          type="number"
+          min="0"
+          max="1000000000"
+          step="1"
+          [ngModel]="estimatedCost()"
+          (ngModelChange)="estimatedCost.set($event)"
+          placeholder="아직 모르면 비워 두세요"
+        />
+        @if (!costValid()) {
+          <p class="text-sm text-red-700" role="alert">0 이상 정수 금액을 입력해 주세요.</p>
+        }
+      </app-field>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <label class="field__label font-medium text-13 text-ink-2" for="memo"
+          >메모 <span class="text-ink-3 text-12 leading-normal">(선택, 비공개)</span></label
+        >
+        <textarea
+          appInput
+          id="memo"
+          class="textarea"
+          [ngModel]="memo()"
+          (ngModelChange)="memo.set($event)"
+          name="memo"
+          maxlength="500"
+          data-testid="stay-memo"
+        ></textarea>
+      </div>
+
+      @if (undecidedTrip()) {
+        <div appNotice class="notice notice--warn">
+          <app-icon
+            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+            name="alert"
+          />
+          <div class="notice__body flex-1 min-w-0">
+            여행 날짜가 미정입니다. 여행 날짜를 정한 뒤 이 숙박이 기간 안에 있는지 다시 확인됩니다.
+          </div>
+        </div>
+      }
+
+      @if (warnings().length > 0) {
+        <div appNotice class="notice notice--warn" data-testid="stay-warnings">
+          <app-icon
+            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+            name="alert"
+          />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold">확인이 필요합니다</strong>
+            <ul class="warn-list mt-1.5 pl-4.5 [list-style:disc]">
+              @for (w of warnings(); track w) {
+                <li>{{ w }}</li>
+              }
+            </ul>
+            <label
+              class="check flex items-start gap-2.5 text-14 rounded-control bg-panel border border-border text-ink font-medium p-3"
+              style="margin-top: 8px"
+            >
+              <input
+                class="in-[.check]:w-5 in-[.check]:h-5 in-[.check]:flex-none in-[.check]:mt-px in-[.check]:mx-0 in-[.check]:mb-0 in-[.check]:accent-accent-deep"
+                type="checkbox"
+                [ngModel]="warningsConfirmed()"
+                (ngModelChange)="warningsConfirmed.set($event)"
+                name="warningsConfirmed"
+                data-testid="stay-warning-confirm"
+              />
+              <span>확인하고 저장합니다</span>
+            </label>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() === 'error') {
+        <div appNotice class="notice notice--danger" role="alert">
+          <app-icon
+            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+            name="alert"
+          />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은
+            그대로 남아 있습니다.
+            <div class="text-12 leading-normal">{{ store.saveError() }}</div>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() !== 'idle') {
+        <div class="flex flex-wrap items-center gap-2 form-status justify-end">
+          <app-save-status
+            [state]="store.saveState()"
+            [savedAt]="store.lastSavedAt()"
+            (retry)="store.retrySave()"
+          />
+        </div>
+      }
+
+      <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+      <div appActionBar class="action-bar">
+        <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+          <a appButton class="btn" [routerLink]="backLink()" [queryParams]="{ tab: 'stays' }"
+            >취소</a
+          >
+          <button
+            appButton
+            type="submit"
+            class="btn"
+            [disabled]="!canSave()"
+            data-testid="stay-save"
+            variant="primary"
+          >
+            {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    @if (isEdit()) {
+      <section
+        class="panel danger bg-panel rounded-panel shadow-panel p-4 border-[color-mix(in_srgb,var(--color-danger-ink)_35%,transparent)]"
+      >
+        @if (!confirmDelete()) {
+          <div class="flex flex-wrap items-center gap-2">
+            <strong class="grow in-[.notice]:font-bold flex-1 min-w-0">이 숙박 삭제</strong>
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="confirmDelete.set(true)"
+              data-testid="stay-delete"
+              variant="danger"
+            >
+              <app-icon
+                class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+                name="trash"
+                [size]="14"
+              />
+              삭제
+            </button>
+          </div>
+        } @else {
+          <div class="flex flex-wrap items-center gap-2">
+            <strong class="grow in-[.notice]:font-bold flex-1 min-w-0"
+              >정말 삭제할까요? 되돌릴 수 없습니다.</strong
+            >
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="remove()"
+              data-testid="stay-delete-confirm"
+              variant="danger"
+            >
+              삭제 확인
+            </button>
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="confirmDelete.set(false)"
+              variant="ghost"
+            >
+              취소
+            </button>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

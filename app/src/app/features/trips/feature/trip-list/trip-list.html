@@ -1,0 +1,191 @@
+<div
+  class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  <!-- 여행 만들기 두 갈래: AI가 초안을 짜거나, 직접 채우거나 -->
+  <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
+    <a
+      appButton
+      class="btn btn--ai in-[.empty]:mt-2 border-transparent text-white [background:var(--ai-fill)] hover:[background:var(--ai-fill-hover)] in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+      routerLink="/trips/ai"
+      data-testid="new-trip-ai"
+    >
+      <app-icon
+        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
+        name="sparkle"
+        [size]="16"
+      />
+      AI로 만들기
+    </a>
+    <a
+      appButton
+      class="btn in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+      routerLink="/trips/new"
+      data-testid="new-trip"
+    >
+      <app-icon
+        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
+        name="plus"
+        [size]="16"
+      />
+      직접 만들기
+    </a>
+  </nav>
+
+  @if (store.skippedCount() > 0) {
+    <div appNotice class="notice notice--warn" role="status">
+      <app-icon
+        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
+        name="alert"
+      />
+      <div class="notice__body flex-1 min-w-0">
+        읽을 수 없는 항목 {{ store.skippedCount() }}개를 건너뛰었습니다.
+      </div>
+    </div>
+  }
+
+  @switch (store.listState()) {
+    @case ('loading') {
+      <p class="text-ink-3" role="status">불러오는 중…</p>
+    }
+    @case ('error') {
+      <div appNotice class="notice notice--danger" role="alert">
+        <app-icon
+          class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
+          name="alert"
+        />
+        <div class="notice__body flex-1 min-w-0">
+          <strong class="in-[.notice]:font-bold">기기 저장소를 읽지 못했습니다.</strong>
+          <div class="text-12 leading-normal">{{ store.listError() }}</div>
+          <div class="notice__actions flex gap-2 flex-wrap mt-2">
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+              (click)="store.loadList()"
+              variant="danger"
+            >
+              다시 시도
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    @case ('ready') {
+      @if (store.trips().length === 0) {
+        <section
+          class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col items-start gap-2 p-5"
+          data-testid="empty-trips"
+        >
+          <app-icon
+            class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
+            name="luggage"
+            [size]="36"
+          />
+          <h2>아직 만든 여행이 없습니다</h2>
+          <p class="text-ink-3">
+            날짜를 정하지 않아도 시작할 수 있습니다. 장소와 숙소는 나중에 채워도 됩니다.
+          </p>
+          <a
+            appButton
+            routerLink="/trips/new"
+            class="btn in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+            variant="primary"
+            >첫 여행 만들기</a
+          >
+        </section>
+      } @else {
+        <ul class="trips flex flex-col" data-testid="trip-list">
+          @for (trip of store.trips(); track trip.id) {
+            <li class="trips__item">
+              <!--
+                타임라인 구분 행: 얇은 선 사이에 남은 날짜 라벨.
+                날짜 미정·지난 일정은 D-day가 없으므로 그 상태 이름을 대신 쓴다.
+              -->
+              <p
+                class="rule flex items-center gap-2 pt-2.5 px-0.5 pb-2 [.trips\_\_item:first-child_&]:pt-0.5"
+              >
+                <span
+                  class="rule__line flex-1 h-0 [border-top:1px_solid_var(--color-border)]"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="rule__label flex-none text-12 font-bold leading-normal rounded-pill text-ink-3 bg-ground-2 tracking-normal py-0.5 px-2.25"
+                  [attr.data-testid]="'trip-timeline-' + trip.id"
+                  >{{ timelineLabel(trip) }}</span
+                >
+                <span
+                  class="rule__line flex-1 h-0 [border-top:1px_solid_var(--color-border)]"
+                  aria-hidden="true"
+                ></span>
+              </p>
+
+              <!--
+                3단 위계: 제목(진함) → 날짜(중간) → 메타 한 줄(옅음).
+                목록의 목적은 '어느 여행인지 빠르게 찾기'이므로 칩을 벗기고 덜어낸다.
+                평상시 칩은 0개이고, 확인이 필요한 상태일 때만 하나 나타난다.
+              -->
+              <a
+                class="panel card bg-panel rounded-panel shadow-panel p-4 block no-underline text-inherit [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:bg-ground-2"
+                [routerLink]="['/trips', trip.id]"
+                [attr.data-testid]="'trip-card-' + trip.id"
+              >
+                <h2
+                  class="card__title text-17 font-bold leading-[1.4] text-ink overflow-hidden whitespace-nowrap text-ellipsis"
+                >
+                  {{ trip.title }}
+                </h2>
+
+                <!-- 제목과 가깝게 붙여 한 덩어리로 읽힌다 -->
+                <p class="card__when flex items-center gap-1 mt-1 text-14 text-ink-2">
+                  <span>{{ period(trip) }}</span>
+                </p>
+
+                <!-- 메타는 칩을 벗기고 가운뎃점으로 이어 붙인 옅은 한 줄 -->
+                <p class="card__meta flex flex-wrap items-center gap-1.5 mt-3 text-12 text-ink-3">
+                  @if (trip.regions.length > 0) {
+                    <span
+                      class="tag tag--region inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-accent-tint text-accent-deep"
+                      >{{ regionPath(trip) }}</span
+                    >
+                  }
+                  <span
+                    class="tag tag--place inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-ok-tint text-ok-ink"
+                    >장소 {{ trip.stops.length }}</span
+                  >
+                  <span
+                    class="tag tag--stay inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-stay-tint text-stay-ink"
+                    >숙소 {{ trip.stays.length }}</span
+                  >
+                  <span
+                    class="card__quiet text-ink-3"
+                    [attr.data-testid]="'trip-expense-' + trip.id"
+                    >지출 미설정</span
+                  >
+                  <span class="card__dot text-border-strong" aria-hidden="true">·</span>
+                  <span
+                    class="card__quiet text-ink-3"
+                    [attr.data-testid]="'trip-companions-' + trip.id"
+                    >동행 준비 중</span
+                  >
+                </p>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <p
+    class="alpha text-12 leading-normal text-ink-3 flex flex-wrap justify-center items-center text-center mt-2 gap-[var(--sp-1)_var(--sp-2)]"
+  >
+    내부 알파 · 이 기기에만 저장됩니다
+    <a
+      routerLink="/login"
+      class="alpha__login text-accent-deep font-semibold underline underline-offset-[0.2em] py-3 px-1"
+      data-testid="go-login"
+      >다른 기기에서도 보기</a
+    >
+    <a routerLink="/lab" class="ml-3 text-ink-3 underline underline-offset-4">실험실</a>
+  </p>
+</div>

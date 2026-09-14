@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createRegion, createStop, createTrip } from './factories';
-import { daySegments, dayStops, dayTotals, fixedTimeConflicts, formatMinutes, haversineKm, moveStop, placeStopOnDate, sortDayByNearest, unassignedStops } from './itinerary';
+import {
+  daySegments,
+  dayStops,
+  dayTotals,
+  fixedTimeConflicts,
+  formatMinutes,
+  haversineKm,
+  moveStop,
+  placeStopOnDate,
+  sortDayByNearest,
+  unassignedStops,
+} from './itinerary';
 
 const gangneung = createRegion('강릉', 0, 'r1');
 const sokcho = createRegion('속초', 1, 'r2');
@@ -11,10 +22,38 @@ function trip() {
     endDate: '2026-05-02',
     regions: [gangneung, sokcho],
     stops: [
-      createStop({ id: 's1', name: '안목해변', date: '2026-05-01', order: 0, regionId: 'r1', stayMinutes: 60 }),
-      createStop({ id: 's2', name: '점심', kind: 'meal', date: '2026-05-01', order: 1, stayMinutes: 60 }),
-      createStop({ id: 's3', name: '속초 중앙시장', date: '2026-05-01', order: 2, regionId: 'r2', stayMinutes: 90 }),
-      createStop({ id: 's4', name: '제외됨', date: '2026-05-01', order: 3, stayMinutes: 30, excluded: true }),
+      createStop({
+        id: 's1',
+        name: '안목해변',
+        date: '2026-05-01',
+        order: 0,
+        regionId: 'r1',
+        stayMinutes: 60,
+      }),
+      createStop({
+        id: 's2',
+        name: '점심',
+        kind: 'meal',
+        date: '2026-05-01',
+        order: 1,
+        stayMinutes: 60,
+      }),
+      createStop({
+        id: 's3',
+        name: '속초 중앙시장',
+        date: '2026-05-01',
+        order: 2,
+        regionId: 'r2',
+        stayMinutes: 90,
+      }),
+      createStop({
+        id: 's4',
+        name: '제외됨',
+        date: '2026-05-01',
+        order: 3,
+        stayMinutes: 30,
+        excluded: true,
+      }),
       createStop({ id: 'u1', name: '미배치 카페', date: null, order: 0 }),
     ],
   });
@@ -49,8 +88,20 @@ describe('itinerary', () => {
 
   it('dayTotals: 제외 항목을 빼고 체류를 합산하며 이동은 미확인 구간 수로만 센다', () => {
     const totals = dayTotals(trip(), '2026-05-01');
-    expect(totals).toEqual({ stayMinutes: 210, activeCount: 3, unknownStayCount: 0, legCount: 2, unknownLegCount: 2 });
-    expect(dayTotals(trip(), '2026-05-02')).toEqual({ stayMinutes: 0, activeCount: 0, unknownStayCount: 0, legCount: 0, unknownLegCount: 0 });
+    expect(totals).toEqual({
+      stayMinutes: 210,
+      activeCount: 3,
+      unknownStayCount: 0,
+      legCount: 2,
+      unknownLegCount: 2,
+    });
+    expect(dayTotals(trip(), '2026-05-02')).toEqual({
+      stayMinutes: 0,
+      activeCount: 0,
+      unknownStayCount: 0,
+      legCount: 0,
+      unknownLegCount: 0,
+    });
   });
 
   it('daySegments: 지역이 바뀌는 구간을 한 번만 표시한다', () => {
@@ -66,7 +117,13 @@ describe('itinerary', () => {
       startDate: '2026-05-01',
       endDate: '2026-05-01',
       stops: [
-        createStop({ id: 'a', name: '예약 식당', date: '2026-05-01', order: 0, fixedTime: '13:00' }),
+        createStop({
+          id: 'a',
+          name: '예약 식당',
+          date: '2026-05-01',
+          order: 0,
+          fixedTime: '13:00',
+        }),
         createStop({ id: 'b', name: '전시', date: '2026-05-01', order: 1, fixedTime: '11:00' }),
         createStop({ id: 'c', name: '카페', date: '2026-05-01', order: 2 }),
       ],
@@ -128,7 +185,14 @@ describe('sortDayByNearest', () => {
       endDate: '2026-05-01',
       stops: [
         createStop({ id: 'a', name: '안목해변', date: '2026-05-01', order: 0, location: anmok }),
-        createStop({ id: 'fixed', name: '예약 식당', date: '2026-05-01', order: 1, fixedTime: '12:00', location: jumunjin }),
+        createStop({
+          id: 'fixed',
+          name: '예약 식당',
+          date: '2026-05-01',
+          order: 1,
+          fixedTime: '12:00',
+          location: jumunjin,
+        }),
         createStop({ id: 'c', name: '주문진', date: '2026-05-01', order: 2, location: jumunjin }),
         createStop({ id: 'b', name: '경포대', date: '2026-05-01', order: 3, location: gyeongpo }),
       ],
@@ -183,7 +247,13 @@ describe('sortDayByNearest', () => {
         createStop({ id: 'a', name: '안목해변', date: '2026-05-01', order: 0, location: anmok }),
         createStop({ id: 'c', name: '주문진', date: '2026-05-01', order: 1, location: jumunjin }),
         createStop({ id: 'b', name: '경포대', date: '2026-05-01', order: 2, location: gyeongpo }),
-        createStop({ id: 'next', name: '둘째날', date: '2026-05-02', order: 0, location: jumunjin }),
+        createStop({
+          id: 'next',
+          name: '둘째날',
+          date: '2026-05-02',
+          order: 0,
+          location: jumunjin,
+        }),
       ],
     });
     const r = sortDayByNearest(t, '2026-05-01');

@@ -1,0 +1,268 @@
+<div
+  class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  @if (isEdit() && store.currentState() === 'loading') {
+    <p class="text-ink-3" role="status">불러오는 중…</p>
+  } @else if (isEdit() && !original()) {
+    <div appNotice class="notice notice--danger" role="alert">
+      <app-icon name="alert" />
+      <div class="notice__body flex-1 min-w-0">
+        <strong class="in-[.notice]:font-bold">여행을 찾을 수 없습니다.</strong>
+        <div class="notice__actions flex gap-2 flex-wrap mt-2">
+          <a appButton routerLink="/trips" class="btn btn--sm">목록으로</a>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <form
+      class="panel flex flex-col gap-3 bg-panel rounded-panel shadow-panel p-4"
+      (submit)="save($event)"
+      novalidate
+    >
+      <app-field inputId="title" label="여행 이름">
+        <input
+          appInput
+          id="title"
+          class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          name="title"
+          placeholder="새 여행"
+          maxlength="60"
+          data-testid="trip-title"
+        />
+        <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+          >비워 두면 ‘새 여행’으로 저장됩니다.</span
+        >
+      </app-field>
+
+      <fieldset class="dates border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
+        <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">여행 기간</legend>
+        <div
+          class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+        >
+          <div class="field flex flex-col gap-1 mb-4">
+            <label
+              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+              for="start"
+              >시작일</label
+            >
+            <input
+              appInput
+              id="start"
+              type="date"
+              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
+              [ngModel]="startDate()"
+              (ngModelChange)="startDate.set($event)"
+              name="start"
+              [attr.aria-invalid]="dateError() ? 'true' : null"
+              data-testid="trip-start"
+            />
+          </div>
+          <div class="field flex flex-col gap-1 mb-4">
+            <label
+              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
+              for="end"
+              >종료일</label
+            >
+            <input
+              appInput
+              id="end"
+              type="date"
+              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
+              [ngModel]="endDate()"
+              (ngModelChange)="endDate.set($event)"
+              name="end"
+              [attr.aria-invalid]="dateError() ? 'true' : null"
+              data-testid="trip-end"
+            />
+          </div>
+        </div>
+        @if (dateError()) {
+          <p
+            class="field__error text-12 text-danger-ink font-medium"
+            role="alert"
+            data-testid="date-error"
+          >
+            {{ dateError() }}
+          </p>
+        } @else if (nightsText()) {
+          <p
+            class="cell cell--accent inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-accent-tint text-accent-deep"
+            data-testid="nights"
+          >
+            {{ nightsText() }}
+          </p>
+        } @else {
+          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
+            날짜를 비워 두면 ‘날짜 미정’ 초안으로 저장됩니다.
+          </p>
+        }
+      </fieldset>
+
+      <fieldset class="border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
+        <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">
+          지역 (순서대로)
+        </legend>
+        <div class="flex flex-wrap items-center gap-2 region-add">
+          <label
+            class="visually-hidden w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
+            for="region-name"
+            >지역 이름</label
+          >
+          <input
+            appInput
+            id="region-name"
+            class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
+            [ngModel]="regionInput()"
+            (ngModelChange)="regionInput.set($event)"
+            name="regionName"
+            placeholder="예: 강릉"
+            maxlength="30"
+            (keydown.enter)="addRegion($event)"
+            data-testid="region-input"
+          />
+          <button
+            appButton
+            type="button"
+            class="btn"
+            (click)="addRegion()"
+            data-testid="region-add"
+          >
+            추가
+          </button>
+        </div>
+        @if (regions().length === 0) {
+          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
+            지역은 선택 사항입니다. 하루에 두 지역을 다닐 수도 있습니다.
+          </p>
+        } @else {
+          <ol class="regions flex flex-col gap-1.5 mt-2" data-testid="region-list">
+            @for (
+              r of regions();
+              track r.id;
+              let i = $index;
+              let first = $first;
+              let last = $last
+            ) {
+              <li
+                class="region flex items-center gap-2 border border-border rounded-control bg-panel pt-1.25 pr-1.5 pb-1.25 pl-2.5"
+              >
+                <span
+                  appBadge
+                  class="cell cell--solid-accent region__no min-w-5.5 h-5.5 justify-center rounded-full p-0"
+                  >{{ i + 1 }}</span
+                >
+                <span class="region__name flex-1 font-bold min-w-0 wrap-anywhere">{{
+                  r.name
+                }}</span>
+                <span class="flex flex-wrap items-center gap-2 region__actions gap-1 flex-none">
+                  <button
+                    appButton
+                    type="button"
+                    class="btn"
+                    [disabled]="first"
+                    (click)="moveRegion(i, -1)"
+                    [attr.aria-label]="r.name + ' 위로'"
+                    variant="icon"
+                  >
+                    <app-icon name="arrow-up" [size]="16" />
+                  </button>
+                  <button
+                    appButton
+                    type="button"
+                    class="btn"
+                    [disabled]="last"
+                    (click)="moveRegion(i, 1)"
+                    [attr.aria-label]="r.name + ' 아래로'"
+                    variant="icon"
+                  >
+                    <app-icon name="arrow-down" [size]="16" />
+                  </button>
+                  <button
+                    appButton
+                    type="button"
+                    class="btn"
+                    (click)="removeRegionDraft(i)"
+                    [attr.aria-label]="r.name + ' 삭제'"
+                    variant="icon"
+                  >
+                    <app-icon name="x" [size]="16" />
+                  </button>
+                </span>
+              </li>
+            }
+          </ol>
+        }
+      </fieldset>
+
+      @if (impactLines().length > 0) {
+        <div appNotice class="notice notice--warn" data-testid="impact-box">
+          <app-icon name="alert" />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold"
+              >저장하면 아래 영향이 생깁니다. 어떤 항목도 삭제되지 않습니다.</strong
+            >
+            <ul class="impact-list mt-1.5 pl-4.5 [list-style:disc]">
+              @for (line of impactLines(); track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+            <label
+              class="check flex items-start gap-2.5 text-14 rounded-control bg-panel border border-border text-ink font-medium p-3"
+              style="margin-top: 8px"
+            >
+              <input
+                class="in-[.check]:w-5 in-[.check]:h-5 in-[.check]:flex-none in-[.check]:mt-px in-[.check]:mx-0 in-[.check]:mb-0 in-[.check]:accent-accent-deep"
+                type="checkbox"
+                [ngModel]="impactConfirmed()"
+                (ngModelChange)="impactConfirmed.set($event)"
+                name="impactConfirmed"
+                data-testid="impact-confirm"
+              />
+              <span>영향을 확인했습니다</span>
+            </label>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() === 'error') {
+        <div appNotice class="notice notice--danger" role="alert">
+          <app-icon name="alert" />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은
+            그대로 남아 있습니다.
+            <div class="text-12 leading-normal">{{ store.saveError() }}</div>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() !== 'idle') {
+        <div class="flex flex-wrap items-center gap-2 form-status justify-end">
+          <app-save-status
+            [state]="store.saveState()"
+            [savedAt]="store.lastSavedAt()"
+            (retry)="store.retrySave()"
+          />
+        </div>
+      }
+
+      <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+      <div appActionBar class="action-bar">
+        <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+          <a appButton class="btn" [routerLink]="backLink()">취소</a>
+          <button
+            appButton
+            type="submit"
+            class="btn"
+            [disabled]="!canSave()"
+            data-testid="trip-save"
+            variant="primary"
+          >
+            {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+</div>

@@ -1,11 +1,19 @@
-import { addDays, diffDays, enumerateDays, isIsoDate, tripNights } from '../../../shared/util/dates';
+import {
+  addDays,
+  diffDays,
+  enumerateDays,
+  isIsoDate,
+  tripNights,
+} from '../../../shared/util/dates';
 import type { AccommodationStay, IsoDate, Trip } from '../model/trip';
 
 export type StayDateValidation = { ok: true } | { ok: false; message: string };
 
 export function validateStayDates(checkIn: string, checkOut: string): StayDateValidation {
-  if (!isIsoDate(checkIn) || !isIsoDate(checkOut)) return { ok: false, message: '체크인·체크아웃 날짜를 입력하세요.' };
-  if (diffDays(checkIn, checkOut) < 1) return { ok: false, message: '체크아웃 날짜는 체크인 다음 날 이후여야 합니다.' };
+  if (!isIsoDate(checkIn) || !isIsoDate(checkOut))
+    return { ok: false, message: '체크인·체크아웃 날짜를 입력하세요.' };
+  if (diffDays(checkIn, checkOut) < 1)
+    return { ok: false, message: '체크아웃 날짜는 체크인 다음 날 이후여야 합니다.' };
   return { ok: true };
 }
 
@@ -18,7 +26,10 @@ export function stayNightCount(stay: Pick<AccommodationStay, 'checkIn' | 'checkO
   return Math.max(0, diffDays(stay.checkIn, stay.checkOut));
 }
 
-export function stayOverlaps(a: Pick<AccommodationStay, 'checkIn' | 'checkOut'>, b: Pick<AccommodationStay, 'checkIn' | 'checkOut'>): boolean {
+export function stayOverlaps(
+  a: Pick<AccommodationStay, 'checkIn' | 'checkOut'>,
+  b: Pick<AccommodationStay, 'checkIn' | 'checkOut'>,
+): boolean {
   return a.checkIn < b.checkOut && b.checkIn < a.checkOut;
 }
 
@@ -42,7 +53,8 @@ export function nightCoverage(trip: Trip): NightCoverage[] {
     const ids = new Set(stays.map((s) => s.id));
     const consecutive = stays.length === 1 && prevIds.has(stays[0].id);
     prevIds = ids;
-    const state: NightState = stays.length === 0 ? 'undecided' : stays.length === 1 ? 'covered' : 'conflict';
+    const state: NightState =
+      stays.length === 0 ? 'undecided' : stays.length === 1 ? 'covered' : 'conflict';
     return { night, nightNumber: i + 1, stays, state, consecutive };
   });
 }
@@ -71,7 +83,15 @@ export function dayStayInfo(trip: Trip, date: IsoDate): DayStayInfo {
   const lastNight = trip.stays.filter((s) => s.checkIn <= yesterday && yesterday < s.checkOut);
   const consecutive = tonight.length === 1 && lastNight.some((s) => s.id === tonight[0].id);
   const lastDay = !!trip.endDate && date === trip.endDate;
-  return { date, checkOuts, checkIns, tonight, consecutive, lastDay, undecidedTrip: !trip.startDate || !trip.endDate };
+  return {
+    date,
+    checkOuts,
+    checkIns,
+    tonight,
+    consecutive,
+    lastDay,
+    undecidedTrip: !trip.startDate || !trip.endDate,
+  };
 }
 
 export const STAY_ISSUE_OUT_OF_RANGE = '여행 기간 밖';
@@ -80,11 +100,14 @@ export const STAY_ISSUE_OVERLAP = '다른 숙박과 중복';
 /** 숙박별 확인 필요 사유. 날짜 미정 여행은 기간 검사를 건너뛴다. */
 export function stayIssues(trip: Trip): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  const nights = trip.startDate && trip.endDate ? new Set(tripNights(trip.startDate, trip.endDate)) : null;
+  const nights =
+    trip.startDate && trip.endDate ? new Set(tripNights(trip.startDate, trip.endDate)) : null;
   for (const stay of trip.stays) {
     const issues: string[] = [];
-    if (nights && stayNights(stay).some((n) => !nights.has(n))) issues.push(STAY_ISSUE_OUT_OF_RANGE);
-    if (trip.stays.some((o) => o.id !== stay.id && stayOverlaps(o, stay))) issues.push(STAY_ISSUE_OVERLAP);
+    if (nights && stayNights(stay).some((n) => !nights.has(n)))
+      issues.push(STAY_ISSUE_OUT_OF_RANGE);
+    if (trip.stays.some((o) => o.id !== stay.id && stayOverlaps(o, stay)))
+      issues.push(STAY_ISSUE_OVERLAP);
     out.set(stay.id, issues);
   }
   return out;
@@ -97,7 +120,10 @@ function md(date: IsoDate): string {
 }
 
 /** 폼에서 저장 전 확인용: 입력 중인 숙박이 기존 숙박과 겹치거나 기간 밖인지 */
-export function stayWarnings(trip: Trip, candidate: Pick<AccommodationStay, 'id' | 'checkIn' | 'checkOut'>): string[] {
+export function stayWarnings(
+  trip: Trip,
+  candidate: Pick<AccommodationStay, 'id' | 'checkIn' | 'checkOut'>,
+): string[] {
   const warnings: string[] = [];
   if (trip.startDate && trip.endDate) {
     const nights = new Set(tripNights(trip.startDate, trip.endDate));
@@ -110,7 +136,9 @@ export function stayWarnings(trip: Trip, candidate: Pick<AccommodationStay, 'id'
     if (stayOverlaps(other, candidate)) {
       const shared = stayNights(other).filter((n) => stayNights(candidate).includes(n));
       const nightsText = shared.map(md).join(', ');
-      warnings.push(`${other.name || '다른 숙소'}(${md(other.checkIn)}–${md(other.checkOut)})와 ${nightsText} 밤이 겹칩니다.`);
+      warnings.push(
+        `${other.name || '다른 숙소'}(${md(other.checkIn)}–${md(other.checkOut)})와 ${nightsText} 밤이 겹칩니다.`,
+      );
     }
   }
   return warnings;

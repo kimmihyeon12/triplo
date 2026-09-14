@@ -14,8 +14,20 @@ function trip() {
       createStop({ id: 'u1', name: '미배치', date: null, order: 0 }),
     ],
     stays: [
-      createStay({ id: 'A', name: 'A', checkIn: '2026-05-01', checkOut: '2026-05-03', regionId: 'r1' }),
-      createStay({ id: 'B', name: 'B', checkIn: '2026-05-03', checkOut: '2026-05-04', regionId: 'r2' }),
+      createStay({
+        id: 'A',
+        name: 'A',
+        checkIn: '2026-05-01',
+        checkOut: '2026-05-03',
+        regionId: 'r1',
+      }),
+      createStay({
+        id: 'B',
+        name: 'B',
+        checkIn: '2026-05-03',
+        checkOut: '2026-05-04',
+        regionId: 'r2',
+      }),
     ],
   });
 }

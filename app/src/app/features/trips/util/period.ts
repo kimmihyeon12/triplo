@@ -10,16 +10,29 @@ export interface PeriodChangeImpact {
   hasImpact: boolean;
 }
 
-export function periodChangeImpact(trip: Trip, start: IsoDate | null, end: IsoDate | null): PeriodChangeImpact {
+export function periodChangeImpact(
+  trip: Trip,
+  start: IsoDate | null,
+  end: IsoDate | null,
+): PeriodChangeImpact {
   const undecided = !start || !end;
   const days = undecided ? new Set<string>() : new Set(enumerateDays(start!, end!));
   const nights = undecided ? null : new Set(tripNights(start!, end!));
   const displacedStops = trip.stops.filter((s) => s.date !== null && !days.has(s.date));
-  const outOfRangeStays = nights ? trip.stays.filter((s) => stayNights(s).some((n) => !nights.has(n))) : [];
+  const outOfRangeStays = nights
+    ? trip.stays.filter((s) => stayNights(s).some((n) => !nights.has(n)))
+    : [];
   // 기간 밖 숙박은 기존에도 기간 밖이었을 수 있으므로 '새로 기간 밖이 된' 숙박만 영향으로 본다.
-  const prevNights = trip.startDate && trip.endDate ? new Set(tripNights(trip.startDate, trip.endDate)) : null;
-  const newlyOut = outOfRangeStays.filter((s) => !prevNights || stayNights(s).every((n) => prevNights.has(n)));
-  return { displacedStops, outOfRangeStays: newlyOut, hasImpact: displacedStops.length > 0 || newlyOut.length > 0 };
+  const prevNights =
+    trip.startDate && trip.endDate ? new Set(tripNights(trip.startDate, trip.endDate)) : null;
+  const newlyOut = outOfRangeStays.filter(
+    (s) => !prevNights || stayNights(s).every((n) => prevNights.has(n)),
+  );
+  return {
+    displacedStops,
+    outOfRangeStays: newlyOut,
+    hasImpact: displacedStops.length > 0 || newlyOut.length > 0,
+  };
 }
 
 /** 기간을 바꾸고 밀려난 장소는 미배치로 보존한다. 숙박은 그대로 둔다. */
@@ -28,7 +41,9 @@ export function applyPeriodChange(trip: Trip, start: IsoDate | null, end: IsoDat
   const displaced = new Set(displacedStops.map((s) => s.id));
   const unassignedCount = trip.stops.filter((s) => s.date === null).length;
   let next = unassignedCount;
-  const stops = trip.stops.map((s) => (displaced.has(s.id) ? { ...s, date: null, order: next++ } : s));
+  const stops = trip.stops.map((s) =>
+    displaced.has(s.id) ? { ...s, date: null, order: next++ } : s,
+  );
   return { ...trip, startDate: start, endDate: end, stops };
 }
 

@@ -11,14 +11,49 @@ function trip() {
     startDate: '2026-05-01',
     endDate: '2026-05-03',
     stops: [
-      createStop({ id: 's1', name: '안목해변', date: '2026-05-01', order: 0, location: anmok, locationStatus: 'verified', stayMinutes: 60 }),
+      createStop({
+        id: 's1',
+        name: '안목해변',
+        date: '2026-05-01',
+        order: 0,
+        location: anmok,
+        locationStatus: 'verified',
+        stayMinutes: 60,
+      }),
       createStop({ id: 's2', name: '점심', kind: 'meal', date: '2026-05-01', order: 1 }),
-      createStop({ id: 's3', name: '오죽헌', date: '2026-05-01', order: 2, location: ojukheon, locationStatus: 'verified' }),
-      createStop({ id: 's4', name: '제외됨', date: '2026-05-01', order: 3, location: ojukheon, locationStatus: 'verified', excluded: true }),
+      createStop({
+        id: 's3',
+        name: '오죽헌',
+        date: '2026-05-01',
+        order: 2,
+        location: ojukheon,
+        locationStatus: 'verified',
+      }),
+      createStop({
+        id: 's4',
+        name: '제외됨',
+        date: '2026-05-01',
+        order: 3,
+        location: ojukheon,
+        locationStatus: 'verified',
+        excluded: true,
+      }),
     ],
     stays: [
-      createStay({ id: 'A', name: 'A 호텔', checkIn: '2026-05-01', checkOut: '2026-05-02', location: gangneungA, locationStatus: 'verified' }),
-      createStay({ id: 'B', name: 'B 게스트하우스', checkIn: '2026-05-02', checkOut: '2026-05-03' }),
+      createStay({
+        id: 'A',
+        name: 'A 호텔',
+        checkIn: '2026-05-01',
+        checkOut: '2026-05-02',
+        location: gangneungA,
+        locationStatus: 'verified',
+      }),
+      createStay({
+        id: 'B',
+        name: 'B 게스트하우스',
+        checkIn: '2026-05-02',
+        checkOut: '2026-05-03',
+      }),
     ],
   });
 }
@@ -73,7 +108,12 @@ describe('buildStaysMap', () => {
     expect(m.markers.map((x) => [x.id, x.kind])).toEqual([['A', 'stay']]);
     expect(m.unverifiedStayCount).toBe(1);
     expect(m.guideLine).toEqual([]);
-    expect(m.bounds).toEqual({ south: gangneungA.lat, north: gangneungA.lat, west: gangneungA.lng, east: gangneungA.lng });
+    expect(m.bounds).toEqual({
+      south: gangneungA.lat,
+      north: gangneungA.lat,
+      west: gangneungA.lng,
+      east: gangneungA.lng,
+    });
   });
 });
 

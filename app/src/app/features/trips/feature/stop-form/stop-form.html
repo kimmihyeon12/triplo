@@ -1,0 +1,358 @@
+<div
+  class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  @if (!trip()) {
+    <p class="text-ink-3" role="status">불러오는 중…</p>
+  } @else {
+    <form
+      class="panel flex flex-col gap-3 bg-panel rounded-panel shadow-panel p-4"
+      (submit)="save($event)"
+      novalidate
+    >
+      <div class="field flex flex-col gap-1 mb-4">
+        <span class="field__label font-medium text-13 text-ink-2" id="kind-label">종류</span>
+        <div
+          class="kinds grid gap-1.5 grid-cols-[repeat(4,1fr)] [@media(max-width:_420px)]:grid-cols-[repeat(2,1fr)]"
+          role="radiogroup"
+          aria-labelledby="kind-label"
+        >
+          @for (k of kinds; track k) {
+            <label
+              class="kind flex items-center justify-center gap-1.25 min-h-10 rounded-control font-medium text-13 cursor-pointer bg-panel text-ink-2 [border:1px_solid_var(--color-border-strong)] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] relative after:pointer-events-none after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-ink-3 hover:text-ink [&.kind--on]:bg-ink [&.kind--on]:border-ink [&.kind--on]:text-white [&.kind--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
+              [class.kind--on]="kind() === k"
+            >
+              <input
+                class="in-[.check]:w-5 in-[.check]:h-5 in-[.check]:flex-none in-[.check]:mt-px in-[.check]:mx-0 in-[.check]:mb-0 in-[.check]:accent-accent-deep in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
+                type="radio"
+                name="kind"
+                [value]="k"
+                [checked]="kind() === k"
+                (change)="setKind(k)"
+              />
+              <app-icon
+                class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+                [name]="k"
+                [size]="16"
+              />
+              <span>{{ kindLabel[k] }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <span class="field__label font-medium text-13 text-ink-2">장소 검색으로 위치 확인</span>
+        <app-place-search-box
+          inputId="stop-place-query"
+          [initialQuery]="kind() === 'place' ? name() : ''"
+          (picked)="onPicked($event)"
+        />
+        @if (location()) {
+          <div class="flex flex-wrap items-center gap-2" data-testid="stop-location-verified">
+            <span appBadge class="cell cell--ok"
+              ><app-icon
+                class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+                name="pin"
+                [size]="14"
+              />
+              위치 확인됨 · {{ providerLabel() }}</span
+            >
+            <span class="text-12 leading-normal text-ink-3"
+              >{{ location()!.lat.toFixed(5) }}, {{ location()!.lng.toFixed(5) }}</span
+            >
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="removeLocation()"
+              data-testid="stop-location-clear"
+              variant="ghost"
+            >
+              위치 지우기
+            </button>
+          </div>
+        }
+      </div>
+
+      <app-field inputId="name" label="{{ kind() === 'place' ? '장소 이름' : '이름' }}">
+        <input
+          appInput
+          id="name"
+          class="input in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          name="name"
+          [placeholder]="kind() === 'place' ? '예: 안목해변' : kindDefault[kind()]"
+          maxlength="80"
+          (blur)="nameTouched.set(true)"
+          [attr.aria-invalid]="nameError() && nameTouched() ? 'true' : null"
+          data-testid="stop-name"
+        />
+        @if (nameError() && nameTouched()) {
+          <p class="field__error text-12 text-danger-ink font-medium" role="alert">
+            {{ nameError() }}
+          </p>
+        }
+      </app-field>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <label class="field__label font-medium text-13 text-ink-2" for="address"
+          >주소 <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
+        >
+        <input
+          appInput
+          id="address"
+          class="input in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
+          [ngModel]="address()"
+          (ngModelChange)="address.set($event)"
+          name="address"
+          placeholder="지도 검색과 주소 복사에 사용"
+          maxlength="200"
+          data-testid="stop-address"
+        />
+        @if (!location()) {
+          <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+            ><app-icon
+              class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+              name="alert"
+              [size]="12"
+            />
+            검색으로 고르지 않은 항목은 ‘위치 미확인’으로 저장됩니다.</span
+          >
+        }
+      </div>
+
+      <div
+        class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+      >
+        @if (trip()!.regions.length > 0) {
+          <app-field inputId="region" label="지역">
+            <select
+              appInput
+              id="region"
+              class="select"
+              [ngModel]="regionId()"
+              (ngModelChange)="regionId.set($event)"
+              name="region"
+              data-testid="stop-region"
+            >
+              <option value="">지역 없음</option>
+              @for (r of trip()!.regions; track r.id) {
+                <option [value]="r.id">{{ r.name }}</option>
+              }
+            </select>
+          </app-field>
+        } @else {
+          <div class="field flex flex-col gap-1 mb-4">
+            <span class="field__label font-medium text-13 text-ink-2">지역</span>
+            <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+              >여행 편집에서 지역을 추가할 수 있습니다.</span
+            >
+          </div>
+        }
+        <app-field inputId="date" label="날짜">
+          <select
+            appInput
+            id="date"
+            class="select"
+            [ngModel]="date()"
+            (ngModelChange)="date.set($event)"
+            name="date"
+            data-testid="stop-date"
+          >
+            <option value="">미배치</option>
+            @for (d of days(); track d.date) {
+              <option [value]="d.date">{{ d.label }}</option>
+            }
+          </select>
+          @if (days().length === 0) {
+            <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+              >여행 날짜를 정하면 날짜에 배치할 수 있습니다.</span
+            >
+          }
+        </app-field>
+      </div>
+
+      <div
+        class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+      >
+        <div class="field flex flex-col gap-1 mb-4">
+          <label class="field__label font-medium text-13 text-ink-2" for="stay"
+            >체류시간(분) <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
+          >
+          <input
+            appInput
+            id="stay"
+            class="input in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            step="5"
+            [ngModel]="stayMinutes()"
+            (ngModelChange)="stayMinutes.set($event)"
+            name="stayMinutes"
+            placeholder="예: 60"
+            [attr.aria-invalid]="stayError() ? 'true' : null"
+            data-testid="stop-stay"
+          />
+          @if (stayError()) {
+            <p class="field__error text-12 text-danger-ink font-medium" role="alert">
+              {{ stayError() }}
+            </p>
+          }
+        </div>
+        <div class="field flex flex-col gap-1 mb-4">
+          <label class="field__label font-medium text-13 text-ink-2" for="fixed"
+            >고정 시각 <span class="text-ink-3 text-12 leading-normal">(예약 등, 선택)</span></label
+          >
+          <input
+            appInput
+            id="fixed"
+            class="input in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
+            type="time"
+            [ngModel]="fixedTime()"
+            (ngModelChange)="fixedTime.set($event)"
+            name="fixedTime"
+            data-testid="stop-fixed"
+          />
+        </div>
+      </div>
+
+      <app-field
+        label="예상 비용"
+        inputId="estimated-cost"
+        hint="선택 · 실제 지출과 별도로 기록해요."
+      >
+        <input
+          appInput
+          id="estimated-cost"
+          name="estimatedCost"
+          type="number"
+          min="0"
+          max="1000000000"
+          step="1"
+          [ngModel]="estimatedCost()"
+          (ngModelChange)="estimatedCost.set($event)"
+          placeholder="아직 모르면 비워 두세요"
+        />
+        @if (!costValid()) {
+          <p class="text-sm text-red-700" role="alert">0 이상 정수 금액을 입력해 주세요.</p>
+        }
+      </app-field>
+
+      <div class="field flex flex-col gap-1 mb-4">
+        <label class="field__label font-medium text-13 text-ink-2" for="memo"
+          >메모 <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
+        >
+        <textarea
+          appInput
+          id="memo"
+          class="textarea"
+          [ngModel]="memo()"
+          (ngModelChange)="memo.set($event)"
+          name="memo"
+          maxlength="500"
+          data-testid="stop-memo"
+        ></textarea>
+      </div>
+
+      @if (store.saveState() === 'error') {
+        <div appNotice class="notice notice--danger" role="alert">
+          <app-icon
+            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+            name="alert"
+          />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은
+            그대로 남아 있습니다.
+            <div class="text-12 leading-normal">{{ store.saveError() }}</div>
+          </div>
+        </div>
+      }
+
+      @if (store.saveState() !== 'idle') {
+        <div class="flex flex-wrap items-center gap-2 form-status justify-end">
+          <app-save-status
+            [state]="store.saveState()"
+            [savedAt]="store.lastSavedAt()"
+            (retry)="store.retrySave()"
+          />
+        </div>
+      }
+
+      <!-- 저장·취소는 하단 고정 바에 둔다(모바일에서 스크롤 없이 닿게) -->
+      <div appActionBar class="action-bar">
+        <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+          <a appButton class="btn" [routerLink]="backLink()" [queryParams]="backQuery()">취소</a>
+          <button
+            appButton
+            type="submit"
+            class="btn"
+            [disabled]="!canSave()"
+            data-testid="stop-save"
+            variant="primary"
+          >
+            {{ store.saveState() === 'error' ? '다시 저장' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    @if (isEdit()) {
+      <section
+        class="panel danger bg-panel rounded-panel shadow-panel p-4 border-[color-mix(in_srgb,var(--color-danger-ink)_35%,transparent)]"
+      >
+        @if (!confirmDelete()) {
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="grow flex-1 min-w-0">
+              <strong class="in-[.notice]:font-bold">이 항목 삭제</strong>
+              <p class="text-12 leading-normal text-ink-3">
+                일정에서만 빼려면 날짜별 보기의 ‘제외’를 사용하세요.
+              </p>
+            </div>
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="confirmDelete.set(true)"
+              data-testid="stop-delete"
+              variant="danger"
+            >
+              <app-icon
+                class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
+                name="trash"
+                [size]="14"
+              />
+              삭제
+            </button>
+          </div>
+        } @else {
+          <div class="flex flex-wrap items-center gap-2">
+            <strong class="grow in-[.notice]:font-bold flex-1 min-w-0"
+              >정말 삭제할까요? 되돌릴 수 없습니다.</strong
+            >
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="remove()"
+              data-testid="stop-delete-confirm"
+              variant="danger"
+            >
+              삭제 확인
+            </button>
+            <button
+              appButton
+              type="button"
+              class="btn btn--sm"
+              (click)="confirmDelete.set(false)"
+              variant="ghost"
+            >
+              취소
+            </button>
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

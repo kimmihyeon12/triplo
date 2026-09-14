@@ -5,13 +5,16 @@ import { LocalStorageTripRepository, type KeyValueStorage } from './local-storag
 class MemoryStorage implements KeyValueStorage {
   data = new Map<string, string>();
   failWrites = false;
+
   getItem(key: string): string | null {
     return this.data.get(key) ?? null;
   }
+
   setItem(key: string, value: string): void {
     if (this.failWrites) throw new Error('QuotaExceededError');
     this.data.set(key, value);
   }
+
   removeItem(key: string): void {
     this.data.delete(key);
   }
@@ -23,7 +26,12 @@ describe('LocalStorageTripRepository', () => {
   it('저장한 여행을 같은 키에서 다시 읽는다', async () => {
     const storage = new MemoryStorage();
     const repo = new LocalStorageTripRepository(storage, KEY);
-    const trip = createTrip({ id: 't1', title: '강릉', startDate: '2026-05-01', endDate: '2026-05-02' });
+    const trip = createTrip({
+      id: 't1',
+      title: '강릉',
+      startDate: '2026-05-01',
+      endDate: '2026-05-02',
+    });
     await repo.save(trip);
     const reopened = new LocalStorageTripRepository(storage, KEY);
     expect(await reopened.get('t1')).toEqual(trip);
@@ -58,7 +66,10 @@ describe('LocalStorageTripRepository', () => {
   it('손상된 항목은 건너뛰고 개수를 보고한다', async () => {
     const storage = new MemoryStorage();
     const good = createTrip({ id: 'good' });
-    storage.setItem(KEY, JSON.stringify({ version: 1, trips: { good, bad: { id: 'bad', title: 42 } } }));
+    storage.setItem(
+      KEY,
+      JSON.stringify({ version: 1, trips: { good, bad: { id: 'bad', title: 42 } } }),
+    );
     const repo = new LocalStorageTripRepository(storage, KEY);
     expect((await repo.list()).map((t) => t.id)).toEqual(['good']);
     expect(repo.lastSkippedCount).toBe(1);

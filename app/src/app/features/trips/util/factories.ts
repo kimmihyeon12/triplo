@@ -1,4 +1,12 @@
-import { STOP_KIND_DEFAULT_NAME, type Trip, type TripStop, type AccommodationStay, type TripRegion, type StopKind, type IsoDate } from '../model/trip';
+import {
+  STOP_KIND_DEFAULT_NAME,
+  type Trip,
+  type TripStop,
+  type AccommodationStay,
+  type TripRegion,
+  type StopKind,
+  type IsoDate,
+} from '../model/trip';
 
 export function newId(): string {
   const c = globalThis.crypto as Crypto | undefined;
@@ -35,6 +43,7 @@ export function createStop(partial: Partial<TripStop> & { kind?: StopKind }): Tr
     order: partial.order ?? 0,
     stayMinutes: partial.stayMinutes ?? null,
     memo: partial.memo ?? '',
+    estimatedCost: partial.estimatedCost ?? null,
     fixedTime: partial.fixedTime ?? null,
     excluded: partial.excluded ?? false,
     location: partial.location ?? null,
@@ -43,7 +52,9 @@ export function createStop(partial: Partial<TripStop> & { kind?: StopKind }): Tr
   };
 }
 
-export function createStay(partial: Partial<AccommodationStay> & { checkIn: IsoDate; checkOut: IsoDate }): AccommodationStay {
+export function createStay(
+  partial: Partial<AccommodationStay> & { checkIn: IsoDate; checkOut: IsoDate },
+): AccommodationStay {
   return {
     id: partial.id ?? newId(),
     name: (partial.name ?? '').trim(),
@@ -55,6 +66,7 @@ export function createStay(partial: Partial<AccommodationStay> & { checkIn: IsoD
     checkOutTime: partial.checkOutTime ?? null,
     reservation: partial.reservation ?? 'unknown',
     memo: partial.memo ?? '',
+    estimatedCost: partial.estimatedCost ?? null,
     location: partial.location ?? null,
     placeRef: partial.placeRef ?? null,
     locationStatus: partial.location ? 'verified' : 'unverified',

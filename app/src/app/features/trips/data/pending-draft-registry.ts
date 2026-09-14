@@ -15,7 +15,9 @@ export interface PendingDraft {
 export class PendingDraftRegistry {
   private readonly repo = inject(TRIP_REPOSITORY);
   private readonly state = signalState({
-    session: 'local', generation: 0, drafts: {} as Record<string, PendingDraft>,
+    session: 'local',
+    generation: 0,
+    drafts: {} as Record<string, PendingDraft>,
   });
   private readonly queues = new Map<string, Promise<boolean>>();
   private version = 0;
@@ -24,8 +26,13 @@ export class PendingDraftRegistry {
   readonly generation = this.state.generation;
   readonly drafts = computed(() => Object.values(this.state.drafts()));
 
-  get(id: string): PendingDraft | undefined { return this.state.drafts()[id]; }
-  savedAt(id: string): Date | null { return this.receipts.get(id) ?? null; }
+  get(id: string): PendingDraft | undefined {
+    return this.state.drafts()[id];
+  }
+
+  savedAt(id: string): Date | null {
+    return this.receipts.get(id) ?? null;
+  }
 
   onSaved(listener: () => void): () => void {
     this.savedListeners.add(listener);
@@ -68,7 +75,9 @@ export class PendingDraftRegistry {
       }
     });
     this.queues.set(id, operation);
-    void operation.then(() => { if (this.queues.get(id) === operation) this.queues.delete(id); });
+    void operation.then(() => {
+      if (this.queues.get(id) === operation) this.queues.delete(id);
+    });
     return operation;
   }
 

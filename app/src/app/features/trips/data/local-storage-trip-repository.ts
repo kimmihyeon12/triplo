@@ -44,7 +44,12 @@ export class LocalStorageTripRepository implements TripRepository {
     this.lastSkippedCount = 0;
     if (!raw) return {};
     const parsed = JSON.parse(raw) as StoreFile;
-    if (!parsed || typeof parsed !== 'object' || typeof parsed.trips !== 'object' || parsed.trips === null) {
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      typeof parsed.trips !== 'object' ||
+      parsed.trips === null
+    ) {
       throw new Error('저장 형식을 읽을 수 없습니다.');
     }
     const out: Record<string, Trip> = {};
@@ -64,7 +69,9 @@ export class LocalStorageTripRepository implements TripRepository {
   }
 
   async list(): Promise<Trip[]> {
-    return Object.values(this.read()).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+    return Object.values(this.read()).sort((a, b) =>
+      a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
+    );
   }
 
   async get(id: string): Promise<Trip | null> {

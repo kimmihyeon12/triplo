@@ -1,0 +1,27 @@
+<header class="head flex items-center justify-between gap-2 flex-wrap" data-testid="trip-header">
+  <h1
+    class="visually-hidden w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
+    data-testid="trip-title"
+  >
+    {{ trip().title }}
+  </h1>
+  <p class="head__line flex flex-wrap min-w-0 text-13 text-ink-2 items-baseline gap-[0_5px]">
+    <span data-testid="trip-period">{{ period() }}</span>
+    @if (trip().regions.length > 0) {
+      <span class="head__dot text-border-strong" aria-hidden="true">·</span>
+      <span class="head__regions font-medium text-ink wrap-anywhere" data-testid="trip-regions">{{
+        regionPath()
+      }}</span>
+    } @else {
+      <span class="head__dot text-border-strong" aria-hidden="true">·</span>
+      <span class="text-ink-3">지역 미지정</span>
+    }
+  </p>
+  <!--
+        idle('기기 저장본')은 늘 떠 있어 주의를 끌므로 숨긴다.
+        저장 중·저장됨·실패만 나타난다(저장됨은 방금 저장한 결과 확인용).
+      -->
+  @if (saveState() !== 'idle') {
+    <app-save-status [state]="saveState()" [savedAt]="savedAt()" (retry)="retry.emit()" />
+  }
+</header>

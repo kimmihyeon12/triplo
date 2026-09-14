@@ -1,0 +1,154 @@
+<section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-stays">
+  @if (trip().stays.length > 0) {
+    <app-trip-map
+      class="stays-map block [@media(min-width:_900px)]:[--map-height:380px]"
+      [model]="staysMap()"
+      [selectedId]="selectedMarkerId()"
+      (markerSelect)="markerSelect.emit($event)"
+    />
+  }
+  @if (overview().undecidedDates) {
+    <div appNotice class="notice notice--warn">
+      <app-icon name="calendar" />
+      <div class="notice__body flex-1 min-w-0">
+        여행 날짜 미정: 등록한 숙박 날짜는 여행 날짜를 정한 뒤 확인 대상이 됩니다.
+      </div>
+    </div>
+  } @else if (nights().length === 0) {
+    <div appNotice class="notice notice--ok" data-testid="no-nights">
+      <app-icon name="check" />
+      <div class="notice__body flex-1 min-w-0">
+        당일 여행은 숙박이 없습니다. 숙소 등록 없이 일정을 작성할 수 있습니다.
+      </div>
+    </div>
+  } @else {
+    <section class="panel bg-panel rounded-panel shadow-panel p-4">
+      <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">밤별 숙소</h3>
+      <ol class="nights flex flex-col" data-testid="nights">
+        @for (n of nights(); track n.night) {
+          <li
+            class="night grid items-center gap-2 grid-cols-[40px_76px_1fr] py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+            [attr.data-testid]="'night-' + n.nightNumber"
+            [attr.data-state]="n.state"
+          >
+            <span class="night__no text-14 font-bold text-stay-ink">{{ n.nightNumber }}박</span>
+            <span class="night__date text-ink-3 text-12 leading-normal"
+              >{{ formatDate(n.night, true) }} 밤</span
+            >
+            <span class="night__stay">
+              @switch (n.state) {
+                @case ('undecided') {
+                  <span appBadge class="cell cell--warn in-[.night__stay]:whitespace-normal"
+                    >미정</span
+                  >
+                }
+                @case ('conflict') {
+                  <span appBadge class="cell cell--danger in-[.night__stay]:whitespace-normal"
+                    >중복: {{ stayNames(n.stays) }}</span
+                  >
+                }
+                @default {
+                  <span appBadge class="cell cell--stay in-[.night__stay]:whitespace-normal"
+                    ><app-icon name="bed" [size]="14" /> {{ n.stays[0].name
+                    }}{{ n.consecutive ? ' (연박)' : '' }}</span
+                  >
+                }
+              }
+            </span>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  @if (trip().stays.length === 0) {
+    <section
+      class="panel empty bg-panel rounded-panel shadow-panel p-4 p-5"
+      data-testid="empty-stays"
+    >
+      <h3 class="in-[.empty]:text-16">등록된 숙소가 없습니다</h3>
+      <p class="text-ink-3 text-12 leading-normal">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
+    </section>
+  } @else {
+    <ul class="flex flex-col gap-3" data-testid="stay-list">
+      @for (s of sortedStays(); track s.id) {
+        <li
+          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid gap-3 grid-cols-[36px_1fr_auto] [border:1px_solid_transparent] [&.item--selected]:border-accent-deep [&.item--selected]:bg-panel"
+          [class.item--selected]="selectedMarkerId() === s.id"
+          [attr.data-testid]="'stay-' + s.id"
+          [id]="'stay-card-' + s.id"
+        >
+          <div
+            class="stay__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-tint text-stay-ink"
+          >
+            <app-icon name="bed" [size]="18" />
+          </div>
+          <div class="stay__main flex flex-col gap-1 min-w-0 wrap-anywhere">
+            <div class="flex flex-wrap items-center gap-2">
+              <strong class="in-[.notice]:font-bold">{{ s.name }}</strong>
+              @for (issue of issuesFor(s.id); track issue) {
+                <span
+                  appBadge
+                  class="cell in-[.night__stay]:whitespace-normal"
+                  [class.cell--danger]="issue === '다른 숙박과 중복'"
+                  [class.cell--warn]="issue !== '다른 숙박과 중복'"
+                  >{{ issue }}</span
+                >
+              }
+            </div>
+            <div class="text-12 leading-normal">
+              {{ formatDate(s.checkIn, true) }} 체크인{{
+                s.checkInTime ? ' ' + s.checkInTime : ' (시각 미정)'
+              }}
+              → {{ formatDate(s.checkOut, true) }} 체크아웃{{
+                s.checkOutTime ? ' ' + s.checkOutTime : ' (시각 미정)'
+              }}
+              · <strong class="in-[.notice]:font-bold">{{ nightCount(s) }}박</strong>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-12 leading-normal">
+              <span appBadge class="cell cell--ghost in-[.night__stay]:whitespace-normal">{{
+                reservationLabel[s.reservation]
+              }}</span>
+              @if (regionName(s.regionId); as rn) {
+                <span appBadge class="cell cell--accent in-[.night__stay]:whitespace-normal">{{
+                  rn
+                }}</span>
+              }
+              @if (s.location) {
+                <span appBadge class="cell cell--ok in-[.night__stay]:whitespace-normal"
+                  ><app-icon name="pin" [size]="12" /> 위치 확인됨</span
+                >
+              } @else {
+                <span appBadge class="cell cell--warn in-[.night__stay]:whitespace-normal"
+                  >위치 미확인</span
+                >
+              }
+            </div>
+            @if (s.address) {
+              <div class="text-12 leading-normal text-ink-3">{{ s.address }}</div>
+            }
+            @if (s.estimatedCost != null) {
+              <p class="text-xs text-accent-deep">
+                예상 {{ s.estimatedCost!.toLocaleString('ko-KR') }}원 · 숙박 전체
+              </p>
+            }
+            @if (s.memo) {
+              <div class="text-12 leading-normal">{{ s.memo }}</div>
+            }
+          </div>
+          <div class="stay__actions">
+            <a
+              appButton
+              class="btn"
+              [routerLink]="['/trips', trip().id, 'stays', s.id]"
+              [attr.aria-label]="s.name + ' 편집'"
+              [attr.data-testid]="'edit-stay-' + s.id"
+              variant="icon"
+              ><app-icon name="edit" [size]="16"
+            /></a>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

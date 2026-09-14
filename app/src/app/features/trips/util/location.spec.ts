@@ -29,7 +29,11 @@ describe('location', () => {
     expect(stop.name).toBe('오죽헌');
     expect(stop.address).toBe('강원 강릉시 율곡로3139번길 24');
     expect(stop.location).toEqual({ lat: 37.7793, lng: 128.878 });
-    expect(stop.placeRef).toEqual({ provider: 'kakao', id: '12345', url: 'https://place.map.kakao.com/12345' });
+    expect(stop.placeRef).toEqual({
+      provider: 'kakao',
+      id: '12345',
+      url: 'https://place.map.kakao.com/12345',
+    });
     expect(stop.locationStatus).toBe('verified');
     expect(isLocationVerified(stop)).toBe(true);
   });
@@ -40,7 +44,10 @@ describe('location', () => {
   });
 
   it('사용자가 이미 입력한 이름은 후보 적용 시 후보 이름으로 바뀐다(선택이 곧 확정)', () => {
-    const stay = applyPlaceCandidate(createStay({ name: '내가 쓴 이름', checkIn: '2026-05-01', checkOut: '2026-05-02' }), candidate);
+    const stay = applyPlaceCandidate(
+      createStay({ name: '내가 쓴 이름', checkIn: '2026-05-01', checkOut: '2026-05-02' }),
+      candidate,
+    );
     expect(stay.name).toBe('오죽헌');
     expect(stay.locationStatus).toBe('verified');
   });

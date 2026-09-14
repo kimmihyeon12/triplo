@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createStay, createTrip } from './factories';
-import { dayStayInfo, nightCoverage, stayIssues, stayNights, stayOverlaps, validateStayDates } from './stays';
+import {
+  dayStayInfo,
+  nightCoverage,
+  stayIssues,
+  stayNights,
+  stayOverlaps,
+  validateStayDates,
+} from './stays';
 
 const A = createStay({ id: 'A', name: 'A 숙소', checkIn: '2026-05-01', checkOut: '2026-05-03' });
 const B = createStay({ id: 'B', name: 'B 숙소', checkIn: '2026-05-03', checkOut: '2026-05-04' });
@@ -45,16 +52,38 @@ describe('stays', () => {
   });
 
   it('nightCoverage: 당일 여행이나 날짜 미정 여행은 밤이 없다', () => {
-    expect(nightCoverage(createTrip({ startDate: '2026-05-01', endDate: '2026-05-01' }))).toEqual([]);
+    expect(nightCoverage(createTrip({ startDate: '2026-05-01', endDate: '2026-05-01' }))).toEqual(
+      [],
+    );
     expect(nightCoverage(createTrip({ stays: [A] }))).toEqual([]);
   });
 
   it('dayStayInfo: 그날의 체크아웃·체크인·연박을 구분한다', () => {
     const trip = createTrip({ startDate: '2026-05-01', endDate: '2026-05-04', stays: [A, B] });
-    expect(dayStayInfo(trip, '2026-05-01')).toMatchObject({ checkOuts: [], checkIns: [A], tonight: [A], consecutive: false });
-    expect(dayStayInfo(trip, '2026-05-02')).toMatchObject({ checkOuts: [], checkIns: [], tonight: [A], consecutive: true });
-    expect(dayStayInfo(trip, '2026-05-03')).toMatchObject({ checkOuts: [A], checkIns: [B], tonight: [B], consecutive: false });
-    expect(dayStayInfo(trip, '2026-05-04')).toMatchObject({ checkOuts: [B], checkIns: [], tonight: [], lastDay: true });
+    expect(dayStayInfo(trip, '2026-05-01')).toMatchObject({
+      checkOuts: [],
+      checkIns: [A],
+      tonight: [A],
+      consecutive: false,
+    });
+    expect(dayStayInfo(trip, '2026-05-02')).toMatchObject({
+      checkOuts: [],
+      checkIns: [],
+      tonight: [A],
+      consecutive: true,
+    });
+    expect(dayStayInfo(trip, '2026-05-03')).toMatchObject({
+      checkOuts: [A],
+      checkIns: [B],
+      tonight: [B],
+      consecutive: false,
+    });
+    expect(dayStayInfo(trip, '2026-05-04')).toMatchObject({
+      checkOuts: [B],
+      checkIns: [],
+      tonight: [],
+      lastDay: true,
+    });
   });
 
   it('stayIssues: 기간 밖·중복을 숙박별로 표시한다', () => {

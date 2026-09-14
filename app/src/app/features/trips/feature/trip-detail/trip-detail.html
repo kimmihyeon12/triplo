@@ -1,0 +1,729 @@
+﻿@if (store.currentState() === 'loading' && !trip()) {
+  <div
+    class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  >
+    <p class="text-ink-3" role="status">불러오는 중…</p>
+  </div>
+} @else if (!trip()) {
+  <div
+    class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  >
+    <div appNotice class="notice notice--danger" role="alert">
+      <app-icon name="alert" />
+      <div class="notice__body flex-1 min-w-0">
+        <strong class="in-[.notice]:font-bold">여행을 찾을 수 없습니다.</strong>
+        <div class="notice__actions flex gap-2 flex-wrap mt-2">
+          <a appButton routerLink="/trips" class="btn btn--sm">목록으로</a>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div
+    class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  >
+    <!--
+      머리글: 제목·편집은 상단 바로 올라갔고 여기에는 기간·지역 한 줄만 남는다.
+      저장 상태는 저장 중·실패일 때만 나타난다(idle 숨김).
+    -->
+    <app-trip-header
+      [trip]="trip()!"
+      [saveState]="store.saveState()"
+      [savedAt]="store.lastSavedAt()"
+      (retry)="store.retrySave()"
+    />
+
+    <!-- 탭 -->
+    <nav
+      class="tabs flex [border-bottom:1px_solid_var(--color-border)] -mt-0.5"
+      role="tablist"
+      aria-label="여행 보기"
+    >
+      @for (t of tabs; track t.id) {
+        <a
+          class="tab flex-1 flex justify-center items-center min-h-10.5 no-underline text-ink-2 text-14 font-medium [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:text-ink [&.tab--on]:font-bold [&.tab--on]:border-b-accent-deep"
+          role="tab"
+          [class.tab--on]="activeTab() === t.id"
+          [attr.aria-selected]="activeTab() === t.id"
+          [routerLink]="[]"
+          [queryParams]="{ tab: t.id, day: selectedDay() }"
+          queryParamsHandling="merge"
+          [attr.data-testid]="'tab-' + t.id"
+        >
+          {{ t.ko }}
+        </a>
+      }
+      <a
+        class="flex min-h-10.5 flex-1 items-center justify-center text-sm font-medium text-ink-2 no-underline hover:text-accent-deep"
+        role="tab"
+        aria-selected="false"
+        [routerLink]="['/trips', id(), 'expenses']"
+        >가계부</a
+      >
+    </nav>
+
+    <!-- 전체 보기 -->
+    @if (activeTab() === 'overview') {
+      <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-overview">
+        @if (overview().undecidedDates) {
+          <div appNotice class="notice notice--warn">
+            <app-icon name="calendar" />
+            <div class="notice__body flex-1 min-w-0">
+              <strong class="in-[.notice]:font-bold">날짜 미정 초안</strong>입니다. 날짜를 정하면
+              날짜별 일정과 숙박 날짜를 확인할 수 있습니다.
+              <div class="notice__actions flex gap-2 flex-wrap mt-2">
+                <a appButton class="btn btn--sm" [routerLink]="['/trips', trip()!.id, 'edit']"
+                  >날짜 정하기</a
+                >
+              </div>
+            </div>
+          </div>
+        } @else if (isEmptyTrip()) {
+          <section
+            class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
+            data-testid="empty-trip"
+          >
+            <h2 class="in-[.empty]:text-16">장소와 숙소를 추가해 보세요</h2>
+            <p class="text-ink-3">
+              날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
+            </p>
+          </section>
+        }
+
+        @if (overview().days.length > 0) {
+          <ol class="ov flex flex-col gap-3" data-testid="overview-days">
+            @for (d of overview().days; track d.date) {
+              <li>
+                <a
+                  class="ov__row grid bg-panel rounded-panel no-underline [box-shadow:var(--shadow-panel)] grid-cols-[40px_1fr] gap-[var(--sp-2)_var(--sp-3)] p-4 [border:1px_solid_transparent] text-inherit [transition:border-color_var(--dur)_var(--ease-out)] hover:border-border-strong [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_1fr_auto]"
+                  [routerLink]="[]"
+                  [queryParams]="{ tab: 'days', day: d.date }"
+                  queryParamsHandling="merge"
+                  [attr.data-testid]="'overview-day-' + d.dayNumber"
+                >
+                  <span
+                    class="ov__no flex items-center justify-center w-8 h-8 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
+                    [attr.aria-label]="d.dayNumber + '일차'"
+                    ><span class="ov__day text-14 font-bold leading-none" aria-hidden="true">{{
+                      d.dayNumber
+                    }}</span></span
+                  >
+                  <span class="ov__main flex flex-col gap-1 min-w-0">
+                    <span class="ov__date flex items-center gap-1.5 flex-wrap font-bold">
+                      {{ formatDate(d.date) }}
+                      @for (r of d.regionNames; track r) {
+                        <span appBadge class="cell cell--accent">{{ r }}</span>
+                      }
+                      @if (d.regionChangeCount > 0) {
+                        <span appBadge class="cell cell--ghost"
+                          >지역 이동 {{ d.regionChangeCount }}회</span
+                        >
+                      }
+                    </span>
+                    <span class="ov__stops text-ink-2 wrap-anywhere">
+                      @if (d.stopNames.length === 0) {
+                        <span class="text-ink-3">일정 없음</span>
+                      } @else {
+                        {{ summarize(d.stopNames) }}
+                      }
+                    </span>
+                    <span
+                      class="ov__meta text-12 leading-normal text-ink-3 flex gap-1 flex-wrap items-center"
+                    >
+                      @if (d.totals.activeCount > 0) {
+                        <span>체류 {{ minutes(d.totals.stayMinutes) }}</span>
+                        @if (d.totals.unknownStayCount > 0) {
+                          <span>· 체류 미정 {{ d.totals.unknownStayCount }}</span>
+                        }
+                        @if (d.totals.legCount > 0) {
+                          <span>· 이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
+                        }
+                      }
+                      @if (d.fixedTimeConflictCount > 0) {
+                        <span appBadge class="cell cell--danger"
+                          >고정 시각 충돌 {{ d.fixedTimeConflictCount }}</span
+                        >
+                      }
+                    </span>
+                  </span>
+                  <span
+                    appBadge
+                    class="ov__night cell text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
+                    [class]="nightCellClass(d.nightState)"
+                    [attr.data-testid]="'overview-night-' + d.dayNumber"
+                  >
+                    <app-icon
+                      [name]="d.nightState === 'none' ? 'arrow-right' : 'bed'"
+                      [size]="14"
+                    />
+                    {{ d.nightLabel }}
+                  </span>
+                </a>
+              </li>
+            }
+          </ol>
+        }
+
+        @if (overview().unassigned.length > 0) {
+          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="unassigned">
+            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
+              미배치 장소
+              <span appBadge class="cell cell--ghost">{{ overview().unassigned.length }}</span>
+            </h3>
+            <ul class="plain-list flex flex-col">
+              @for (s of overview().unassigned; track s.id) {
+                <li
+                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+                >
+                  <span appBadge class="cell cell--place"
+                    ><app-icon [name]="s.kind" [size]="14" /> {{ kindLabel[s.kind] }}</span
+                  >
+                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ s.name }}</span>
+                  <a
+                    appButton
+                    class="btn btn--sm"
+                    [routerLink]="['/trips', trip()!.id, 'stops', s.id]"
+                    [attr.data-testid]="'place-' + s.id"
+                    >날짜 배치</a
+                  >
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (overview().issues.length > 0) {
+          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="issues">
+            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
+              확인 필요
+            </h3>
+            <ul class="plain-list flex flex-col">
+              @for (i of overview().issues; track i.kind) {
+                <li
+                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+                >
+                  <span
+                    appBadge
+                    class="cell"
+                    [class.cell--danger]="i.kind === 'stay-conflict' || i.kind === 'fixed-time'"
+                    [class.cell--warn]="i.kind !== 'stay-conflict' && i.kind !== 'fixed-time'"
+                    >{{ i.count }}</span
+                  >
+                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ i.label }}</span>
+                  <a
+                    appButton
+                    class="btn btn--sm"
+                    [routerLink]="[]"
+                    [queryParams]="{ tab: i.tab }"
+                    queryParamsHandling="merge"
+                    variant="ghost"
+                    >보기</a
+                  >
+                </li>
+              }
+            </ul>
+            <p class="text-12 leading-normal text-ink-3" style="margin-top: 8px">
+              위치 미확인은 장소 검색·경로 연동 전까지 모든 항목에 표시됩니다. 추정 좌표나
+              이동시간은 만들지 않습니다.
+            </p>
+          </section>
+        }
+      </section>
+    }
+
+    <!-- 날짜별 보기 -->
+    @if (activeTab() === 'days') {
+      <section role="tabpanel" data-testid="panel-days">
+        @if (overview().undecidedDates) {
+          <div appNotice class="notice notice--warn">
+            <app-icon name="calendar" />
+            <div class="notice__body flex-1 min-w-0">
+              날짜를 정하면 날짜별 일정을 만들 수 있습니다.
+              <div class="notice__actions flex gap-2 flex-wrap mt-2">
+                <a appButton class="btn btn--sm" [routerLink]="['/trips', trip()!.id, 'edit']"
+                  >날짜 정하기</a
+                >
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div
+            class="days-layout flex flex-col gap-4 [@media(min-width:_900px)]:grid [@media(min-width:_900px)]:grid-cols-[180px_1fr] [@media(min-width:_900px)]:[align-items:start]"
+          >
+            <div
+              class="daytabs flex gap-1.5 overflow-x-auto pt-0.5 pr-8 pb-1.5 pl-0.5 [scroll-snap-type:x_proximity] scrollbar-none mask-[linear-gradient(to_right,#000_calc(100%-32px),transparent)] [&::-webkit-scrollbar]:hidden [@media(min-width:_900px)]:flex-col [@media(min-width:_900px)]:sticky [@media(min-width:_900px)]:top-4 [@media(min-width:_900px)]:pr-0.5 [@media(min-width:_900px)]:overflow-visible [@media(min-width:_900px)]:mask-none"
+              role="tablist"
+              aria-label="날짜 선택"
+              (keydown)="onDayKey($event)"
+            >
+              @for (d of days(); track d; let i = $index) {
+                <a
+                  class="daytab [-webkit-tap-highlight-color:transparent] flex-none flex flex-col items-center gap-px min-w-16 border-0 rounded-control bg-ground-2 text-ink-2 no-underline py-2 px-3 snap-start [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:text-ink hover:[background:color-mix(in_srgb,var(--color-ground-2)_85%,var(--color-ink))] hover:border-border-strong [&.daytab--on]:text-white [&.daytab--on]:[background:var(--selected-fill)] [&.daytab--on:hover]:text-white [&.daytab--on:hover]:[background:var(--selected-fill)] [@media(min-width:_900px)]:items-start [@media(min-width:_900px)]:rounded-control"
+                  role="tab"
+                  [class.daytab--on]="selectedDay() === d"
+                  [attr.aria-selected]="selectedDay() === d"
+                  [attr.tabindex]="selectedDay() === d ? 0 : -1"
+                  [routerLink]="[]"
+                  [queryParams]="{ tab: 'days', day: d }"
+                  queryParamsHandling="merge"
+                  [attr.data-testid]="'daytab-' + (i + 1)"
+                >
+                  <span class="daytab__no text-14 font-bold leading-[1.3]">{{ i + 1 }}일차</span>
+                  <span class="daytab__date text-12 font-normal opacity-[0.85]">{{
+                    formatDate(d, true)
+                  }}</span>
+                </a>
+              }
+            </div>
+
+            <div class="flex flex-col gap-3 day-body" [attr.data-testid]="'day-' + selectedDay()">
+              <app-trip-map
+                class="day-map block [@media(min-width:_900px)]:[--map-height:380px]"
+                [model]="dayMap()"
+                [selectedId]="selectedMarkerId()"
+                (markerSelect)="onMarkerSelect($event)"
+              />
+              <!-- 숙소 정보 -->
+              <div class="stayinfo flex gap-1.5 flex-wrap items-center" data-testid="day-stay-info">
+                @if (stayInfo().checkOuts.length > 0) {
+                  @for (s of stayInfo().checkOuts; track s.id) {
+                    <span appBadge class="cell cell--stay"
+                      ><app-icon name="bed" [size]="14" /> {{ s.name }} 체크아웃{{
+                        s.checkOutTime ? ' ' + s.checkOutTime : ' · 시각 미정'
+                      }}</span
+                    >
+                  }
+                }
+                @if (stayInfo().lastDay) {
+                  <span appBadge class="cell cell--ghost">마지막 날 · 귀가</span>
+                } @else if (stayInfo().tonight.length === 0) {
+                  <span appBadge class="cell cell--warn"
+                    ><app-icon name="alert" [size]="14" /> 이 날 밤 숙소 미정</span
+                  >
+                  <a
+                    appButton
+                    class="btn btn--sm"
+                    [routerLink]="['/trips', trip()!.id, 'stays', 'new']"
+                    >숙소 추가</a
+                  >
+                } @else {
+                  @for (s of stayInfo().tonight; track s.id) {
+                    <span
+                      appBadge
+                      class="cell"
+                      [class.cell--stay]="stayInfo().tonight.length === 1"
+                      [class.cell--danger]="stayInfo().tonight.length > 1"
+                    >
+                      <app-icon name="bed" [size]="14" />
+                      {{ s.name }}
+                      {{
+                        stayInfo().consecutive
+                          ? '연박'
+                          : '체크인' + (s.checkInTime ? ' ' + s.checkInTime : ' · 시각 미정')
+                      }}
+                    </span>
+                  }
+                  @if (stayInfo().tonight.length > 1) {
+                    <span appBadge class="cell cell--danger">숙박 중복</span>
+                  }
+                }
+              </div>
+
+              @if (dayRegions().length > 0) {
+                <p class="flex flex-wrap items-center gap-2">
+                  @for (r of dayRegions(); track r; let last = $last) {
+                    <span appBadge class="cell cell--accent">{{ r }}</span>
+                    @if (!last) {
+                      <app-icon name="arrow-right" [size]="14" class="text-ink-3" />
+                    }
+                  }
+                </p>
+              }
+
+              @if (conflicts().length > 0) {
+                <div
+                  appNotice
+                  class="notice notice--danger"
+                  role="alert"
+                  data-testid="fixed-conflict"
+                >
+                  <app-icon name="alert" />
+                  <div class="notice__body flex-1 min-w-0">
+                    고정 시각 순서가 맞지 않는 항목이 {{ conflicts().length }}건 있습니다. 순서를
+                    바꾸거나 시각을 수정하세요.
+                  </div>
+                </div>
+              }
+
+              <!-- 시간순 항목 -->
+              @if (segments().length === 0) {
+                <section
+                  class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
+                  data-testid="empty-day"
+                >
+                  <h3 class="in-[.empty]:text-16">이 날 일정이 없습니다</h3>
+                  <p class="text-ink-3 text-12 leading-normal">
+                    장소나 식사·휴식을 추가하면 순서대로 정리됩니다.
+                  </p>
+                </section>
+              } @else {
+                <!--
+                  일정 머리말: 왼쪽에 개수, 오른쪽에 정렬. 목록 바로 위에 붙여
+                  무엇을 정렬하는지 분명히 한다.
+                  가까운 순 정렬은 직선 거리 기준 제안이며 도로·대중교통·영업시간을
+                  반영하지 않으므로 사용자가 확인해 조정해야 한다.
+                -->
+                <div class="day-head flex items-center justify-between gap-2 mb-2">
+                  <span class="day-head__label text-15 font-bold">{{ stopCount() }}곳 방문</span>
+                  @if (canSortByNearest()) {
+                    <button
+                      appButton
+                      type="button"
+                      class="btn btn--sm"
+                      (click)="sortByNearest()"
+                      data-testid="sort-nearest"
+                      variant="primary"
+                    >
+                      <app-icon name="pin" [size]="14" /> 가까운 순 정렬
+                    </button>
+                  }
+                </div>
+                @if (sortNotice(); as notice) {
+                  <p
+                    class="text-12 leading-normal sort-notice mb-2 rounded-control bg-ok-tint text-ok-ink leading-[1.6] py-2 px-3"
+                    role="status"
+                    data-testid="sort-nearest-notice"
+                  >
+                    {{ notice }}
+                  </p>
+                }
+                <ol
+                  class="items flex flex-col bg-panel rounded-panel overflow-hidden [box-shadow:var(--shadow-panel)]"
+                  data-testid="day-items"
+                >
+                  @for (seg of segments(); track segKey(seg, $index); let idx = $index) {
+                    @if (seg.type === 'leg') {
+                      <!-- 이동 구간: 자동차 아이콘은 '이동'을 뜻할 뿐 이동시간이 아니다(시간은 계속 미확인). -->
+                      <li
+                        class="leg flex items-center gap-2.5 text-ink-3 text-12 pt-1 pr-3.5 pb-1 pl-6.5 in-[.items]:[border-top:1px_solid_var(--color-border)]"
+                        [class.leg--change]="seg.regionChange"
+                        aria-label="이동 구간"
+                      >
+                        <span
+                          class="leg__line w-0.5 h-4.5 [border-left:2px_dashed_var(--color-border-strong)]"
+                        ></span>
+                        <span class="leg__car inline-flex text-ink-3 flex-none" aria-hidden="true"
+                          ><app-icon name="car" [size]="14"
+                        /></span>
+                        @if (seg.regionChange) {
+                          <span
+                            appBadge
+                            class="cell cell--ghost leg__change text-ink-2! bg-panel-2! border-border"
+                            >{{ seg.fromRegion }} → {{ seg.toRegion }} 이동 · 시간 미확인</span
+                          >
+                        } @else {
+                          <span class="leg__text text-ink-3 text-12">이동 · 시간 미확인</span>
+                        }
+                      </li>
+                    } @else {
+                      <li
+                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[32px_1fr] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--conflict]:[outline:1px_solid_var(--color-danger-ink)] [&.item--conflict]:-outline-offset-1 [&.item--selected]:bg-accent-tint [@media(min-width:_720px)]:grid-cols-[28px_1fr_auto]"
+                        [class.item--excluded]="seg.stop.excluded"
+                        [class.flash]="flashId() === seg.stop.id"
+                        [class.item--conflict]="isConflicted(seg.stop.id)"
+                        [class.item--selected]="selectedMarkerId() === seg.stop.id"
+                        [attr.data-testid]="'stop-' + seg.stop.id"
+                        [id]="'stop-card-' + seg.stop.id"
+                      >
+                        <button
+                          type="button"
+                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 w-8 h-8 flex items-center justify-center rounded-full bg-ground-2 text-ink text-14 font-bold border-0 cursor-pointer p-0 -mt-1.25 [&.item\_\_badge--place]:bg-accent-deep [&.item\_\_badge--place]:text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
+                          [class.item__badge--place]="seg.stop.kind === 'place'"
+                          [class.item__badge--unverified]="!seg.stop.location"
+                          [attr.aria-label]="
+                            stopNumber(idx) +
+                            '번째' +
+                            (seg.stop.location ? ', 지도에서 보기' : ', 위치 미확인')
+                          "
+                          (click)="selectStop(seg.stop.id)"
+                          [attr.data-testid]="'badge-' + seg.stop.id"
+                        >
+                          @if (seg.stop.excluded) {
+                            <app-icon name="eye-off" [size]="16" />
+                          } @else {
+                            {{ stopNumber(idx) }}
+                          }
+                        </button>
+                        <div
+                          class="item__main in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
+                        >
+                          <div
+                            class="item__title flex items-center gap-1.5 flex-wrap text-15 wrap-anywhere"
+                          >
+                            <strong class="item__name in-[.notice]:font-bold min-w-0">{{
+                              seg.stop.name
+                            }}</strong>
+                            @if (seg.stop.excluded) {
+                              <span appBadge class="cell cell--ghost">제외됨</span>
+                            }
+                            @if (seg.stop.fixedTime) {
+                              <span
+                                appBadge
+                                class="cell"
+                                [class.cell--danger]="isConflicted(seg.stop.id)"
+                                [class.cell--ghost]="!isConflicted(seg.stop.id)"
+                                ><app-icon name="lock" [size]="12" />
+                                {{ seg.stop.fixedTime }} 고정</span
+                              >
+                            }
+                            <!-- 지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다 -->
+                            <span class="item__maps inline-flex gap-1 flex-none ml-auto">
+                              <a
+                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                                [href]="naverUrl(seg.stop)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.aria-label]="seg.stop.name + ' 네이버지도에서 검색'"
+                              >
+                                <img
+                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                                  src="brand/navermap.png"
+                                  width="26"
+                                  height="26"
+                                  alt=""
+                                  aria-hidden="true"
+                                />
+                              </a>
+                              <a
+                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                                [href]="kakaoUrl(seg.stop)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [attr.aria-label]="seg.stop.name + ' 카카오맵에서 검색'"
+                              >
+                                <img
+                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                                  src="brand/kakaomap.png"
+                                  width="26"
+                                  height="26"
+                                  alt=""
+                                  aria-hidden="true"
+                                />
+                              </a>
+                            </span>
+                          </div>
+                          <div
+                            class="item__meta text-12 leading-normal flex gap-1 flex-wrap items-center text-ink-3"
+                          >
+                            <span class="text-ink-3">{{ kindLabel[seg.stop.kind] }}</span>
+                            @if (regionName(seg.stop.regionId); as rn) {
+                              <span class="text-ink-3">· {{ rn }}</span>
+                            }
+                            @if (seg.stop.stayMinutes !== null) {
+                              <span class="text-ink-3"
+                                >· 체류 {{ minutes(seg.stop.stayMinutes) }}</span
+                              >
+                            } @else {
+                              <span class="text-ink-3">· 체류 미정</span>
+                            }
+                            @if (seg.stop.location) {
+                              <span appBadge class="cell cell--ok item__unverified ml-0.5"
+                                ><app-icon name="pin" [size]="12" /> 위치 확인됨</span
+                              >
+                            } @else {
+                              <span appBadge class="cell cell--warn item__unverified ml-0.5"
+                                >위치 미확인</span
+                              >
+                            }
+                          </div>
+                          @if (seg.stop.address) {
+                            <!-- 주소 복사는 주소와 같은 행에 아이콘으로 둔다 -->
+                            <div
+                              class="item__addr text-12 leading-normal text-ink-3 flex items-start gap-1"
+                            >
+                              <span class="item__addr-text min-w-0">{{ seg.stop.address }}</span>
+                              <button
+                                type="button"
+                                class="item__copy [-webkit-tap-highlight-color:transparent] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer -mt-0.5 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
+                                (click)="copyAddress(seg.stop)"
+                                [attr.aria-label]="seg.stop.name + ' 주소 복사'"
+                                [attr.data-testid]="'copy-' + seg.stop.id"
+                              >
+                                <app-icon
+                                  [name]="copiedId() === seg.stop.id ? 'check' : 'copy'"
+                                  [size]="14"
+                                />
+                              </button>
+                              @if (copiedId() === seg.stop.id) {
+                                <span
+                                  class="item__copied flex-none text-ok-ink font-medium"
+                                  role="status"
+                                  >복사됨</span
+                                >
+                              }
+                            </div>
+                          }
+                          @if (seg.stop.estimatedCost != null) {
+                            <p class="text-xs text-accent-deep">
+                              예상 {{ seg.stop.estimatedCost!.toLocaleString('ko-KR') }}원
+                            </p>
+                          }
+                          @if (seg.stop.memo) {
+                            <div
+                              class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap"
+                            >
+                              {{ seg.stop.memo }}
+                            </div>
+                          }
+                          @if (copyFallback() && copyFallbackId() === seg.stop.id) {
+                            <p class="text-12 leading-normal copy-fallback text-warn-ink">
+                              클립보드를 사용할 수 없습니다. 아래 주소를 직접 선택해 복사하세요.<br /><output
+                                class="copy-fallback__text inline-block mt-1 bg-ground-2 rounded-cell text-ink py-1 px-2 [user-select:all]"
+                                >{{ seg.stop.address }}</output
+                              >
+                            </p>
+                          }
+                        </div>
+                        <div
+                          class="item__actions flex gap-1.5 justify-end pt-1 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:pt-0 [@media(min-width:_720px)]:[align-self:start]"
+                        >
+                          <button
+                            appButton
+                            type="button"
+                            class="btn"
+                            [disabled]="isFirst(idx)"
+                            (click)="move(seg.stop.id, 'up')"
+                            [attr.aria-label]="seg.stop.name + ' 위로'"
+                            [attr.data-testid]="'up-' + seg.stop.id"
+                            variant="icon"
+                          >
+                            <app-icon name="arrow-up" [size]="16" />
+                          </button>
+                          <button
+                            appButton
+                            type="button"
+                            class="btn"
+                            [disabled]="isLast(idx)"
+                            (click)="move(seg.stop.id, 'down')"
+                            [attr.aria-label]="seg.stop.name + ' 아래로'"
+                            [attr.data-testid]="'down-' + seg.stop.id"
+                            variant="icon"
+                          >
+                            <app-icon name="arrow-down" [size]="16" />
+                          </button>
+                          <a
+                            appButton
+                            class="btn"
+                            [routerLink]="['/trips', trip()!.id, 'stops', seg.stop.id]"
+                            [attr.aria-label]="seg.stop.name + ' 편집'"
+                            [attr.data-testid]="'edit-' + seg.stop.id"
+                            variant="icon"
+                            ><app-icon name="edit" [size]="16"
+                          /></a>
+                          <button
+                            appButton
+                            type="button"
+                            class="btn"
+                            (click)="toggle(seg.stop.id)"
+                            [attr.aria-label]="
+                              seg.stop.name + (seg.stop.excluded ? ' 복원' : ' 제외')
+                            "
+                            [attr.aria-pressed]="seg.stop.excluded"
+                            [attr.data-testid]="'exclude-' + seg.stop.id"
+                            variant="icon"
+                          >
+                            <app-icon [name]="seg.stop.excluded ? 'eye' : 'eye-off'" [size]="16" />
+                          </button>
+                        </div>
+                      </li>
+                    }
+                  }
+                </ol>
+              }
+
+              <!-- 합계 -->
+              <div
+                class="panel totals bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-2"
+                data-testid="day-totals"
+              >
+                <span class="totals__label text-15 font-bold">하루 합계</span>
+                <span class="flex flex-wrap items-center gap-2">
+                  <span appBadge class="cell cell--place"
+                    >체류 {{ minutes(totals().stayMinutes) }}</span
+                  >
+                  @if (totals().unknownStayCount > 0) {
+                    <span appBadge class="cell cell--ghost"
+                      >체류 미정 {{ totals().unknownStayCount }}개</span
+                    >
+                  }
+                  <span appBadge class="cell cell--ghost"
+                    >이동 {{ totals().legCount }}구간 · 시간 미확인</span
+                  >
+                </span>
+                <p class="text-12 leading-normal text-ink-3">
+                  도착 시각은 이동시간이 조회되기 전까지 제시하지 않습니다.
+                </p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <a
+                  appButton
+                  class="btn btn--sm"
+                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
+                  [queryParams]="{ kind: 'meal', date: selectedDay() }"
+                  data-testid="add-meal"
+                  ><app-icon name="meal" [size]="14" /> 식사 추가</a
+                >
+                <a
+                  appButton
+                  class="btn btn--sm"
+                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
+                  [queryParams]="{ kind: 'break', date: selectedDay() }"
+                  data-testid="add-break"
+                  ><app-icon name="break" [size]="14" /> 휴식 추가</a
+                >
+                <a
+                  appButton
+                  class="btn btn--sm"
+                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
+                  [queryParams]="{ kind: 'buffer', date: selectedDay() }"
+                  ><app-icon name="buffer" [size]="14" /> 여유시간 추가</a
+                >
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 숙소 보기 -->
+    @if (activeTab() === 'stays') {
+      <app-trip-stays
+        [trip]="trip()!"
+        [selectedMarkerId]="selectedMarkerId()"
+        (markerSelect)="onMarkerSelect($event)"
+      />
+    }
+
+    <div appActionBar class="action-bar">
+      <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+        <a
+          appButton
+          class="btn"
+          [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
+          [queryParams]="activeTab() === 'days' && selectedDay() ? { date: selectedDay() } : {}"
+          data-testid="add-stop"
+          variant="primary"
+          ><app-icon name="place" [size]="16" /> 장소 추가</a
+        >
+        <a
+          appButton
+          class="btn"
+          [routerLink]="['/trips', trip()!.id, 'stays', 'new']"
+          data-testid="add-stay"
+          ><app-icon name="bed" [size]="16" /> 숙소 추가</a
+        >
+      </div>
+    </div>
+  </div>
+}

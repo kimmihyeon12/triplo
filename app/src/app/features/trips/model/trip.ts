@@ -19,6 +19,8 @@ export interface TripRegion {
 }
 
 export interface TripStop {
+  /** 계획 금액(원). 미입력은 미정이며 실제 지출과 별개다. */
+  estimatedCost?: number | null;
   id: string;
   kind: StopKind;
   name: string;
@@ -41,6 +43,8 @@ export interface TripStop {
 }
 
 export interface AccommodationStay {
+  /** 숙박 전체 예상 금액(원). */
+  estimatedCost?: number | null;
   id: string;
   name: string;
   address: string;
@@ -92,4 +96,3 @@ export const RESERVATION_LABEL: Record<ReservationState, string> = {
   reserved: '예약함',
   not_reserved: '미예약',
 };
-

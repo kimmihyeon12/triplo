@@ -11,7 +11,10 @@ import { TripListStore } from './trip-list-store';
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
   return { promise, resolve, reject };
 }
 
@@ -21,25 +24,47 @@ function setup(overrides: Partial<TripRepository> = {}) {
     lastSkippedCount: 0,
     list: async () => [...records.values()],
     get: async (id) => records.get(id) ?? null,
-    save: async (trip) => { records.set(trip.id, trip); },
-    remove: async (id) => { records.delete(id); },
+    save: async (trip) => {
+      records.set(trip.id, trip);
+    },
+    remove: async (id) => {
+      records.delete(id);
+    },
     ...overrides,
   };
-  const injector = Injector.create({ providers: [TripEditorStore, TripListStore, PendingDraftRegistry, { provide: TRIP_REPOSITORY, useValue: repo }] });
-  return { store: injector.get(TripEditorStore), records, injector, pending: injector.get(PendingDraftRegistry), list: injector.get(TripListStore) };
+  const injector = Injector.create({
+    providers: [
+      TripEditorStore,
+      TripListStore,
+      PendingDraftRegistry,
+      { provide: TRIP_REPOSITORY, useValue: repo },
+    ],
+  });
+  return {
+    store: injector.get(TripEditorStore),
+    records,
+    injector,
+    pending: injector.get(PendingDraftRegistry),
+    list: injector.get(TripListStore),
+  };
 }
 
 describe('trip editing async contract', () => {
   it('refreshes the mounted list when a save completes after navigation', async () => {
     const saving = deferred<void>();
-    const { store, records, list } = setup({ save: async (trip) => { await saving.promise; records.set(trip.id, trip); } });
+    const { store, records, list } = setup({
+      save: async (trip) => {
+        await saving.promise;
+        records.set(trip.id, trip);
+      },
+    });
     const work = store.commit(createTrip({ id: 'a', title: 'new trip' }));
     await list.loadList();
-    expect(list.trips().map(t => t.title)).toEqual(['new trip']);
+    expect(list.trips().map((t) => t.title)).toEqual(['new trip']);
     saving.resolve();
     await work;
     await Promise.resolve();
-    expect(list.trips().map(t => t.title)).toEqual(['new trip']);
+    expect(list.trips().map((t) => t.title)).toEqual(['new trip']);
   });
 
   it('clears private state and rejects commits from a previous session', async () => {
@@ -58,7 +83,11 @@ describe('trip editing async contract', () => {
   });
 
   it('restores failed drafts in a newly created workspace instance', async () => {
-    const { store, injector } = setup({ save: async () => { throw new Error('full'); } });
+    const { store, injector } = setup({
+      save: async () => {
+        throw new Error('full');
+      },
+    });
     await store.commit(createTrip({ id: 'a', title: 'retained' }));
     const nextWorkspace = Injector.create({ providers: [TripEditorStore], parent: injector });
     const next = nextWorkspace.get(TripEditorStore);
@@ -72,19 +101,19 @@ describe('trip editing async contract', () => {
     const first = deferred<Trip[]>();
     const second = deferred<Trip[]>();
     let calls = 0;
-    const { list } = setup({ list: () => ++calls === 1 ? first.promise : second.promise });
+    const { list } = setup({ list: () => (++calls === 1 ? first.promise : second.promise) });
     const old = list.loadList();
     const latest = list.loadList();
     second.resolve([createTrip({ id: 'b' })]);
     await latest;
     first.resolve([createTrip({ id: 'a' })]);
     await old;
-    expect(list.trips().map(t => t.id)).toEqual(['b']);
+    expect(list.trips().map((t) => t.id)).toEqual(['b']);
   });
   it('ignores an earlier trip response after another trip opens', async () => {
     const a = deferred<Trip | null>();
     const b = deferred<Trip | null>();
-    const { store } = setup({ get: (id) => id === 'a' ? a.promise : b.promise });
+    const { store } = setup({ get: (id) => (id === 'a' ? a.promise : b.promise) });
     const first = store.open('a');
     const second = store.open('b');
     b.resolve(createTrip({ id: 'b', title: 'B' }));
@@ -100,11 +129,13 @@ describe('trip editing async contract', () => {
     const secondWrite = deferred<void>();
     let count = 0;
     let persisted = '';
-    const { store } = setup({ save: async (trip) => {
-      const completion = ++count === 1 ? firstWrite : secondWrite;
-      await completion.promise;
-      persisted = trip.title;
-    } });
+    const { store } = setup({
+      save: async (trip) => {
+        const completion = ++count === 1 ? firstWrite : secondWrite;
+        await completion.promise;
+        persisted = trip.title;
+      },
+    });
     const first = store.commit(createTrip({ id: 'a', title: 'older' }));
     const second = store.commit(createTrip({ id: 'a', title: 'newer' }));
     await Promise.resolve();
@@ -122,10 +153,12 @@ describe('trip editing async contract', () => {
 
   it('retains failed drafts for multiple trips when navigating and retrying', async () => {
     let fail = true;
-    const { store, records } = setup({ save: async (trip) => {
-      if (fail) throw new Error('disk full');
-      records.set(trip.id, trip);
-    } });
+    const { store, records } = setup({
+      save: async (trip) => {
+        if (fail) throw new Error('disk full');
+        records.set(trip.id, trip);
+      },
+    });
     await store.commit(createTrip({ id: 'a', title: 'A unsaved' }));
     await store.commit(createTrip({ id: 'b', title: 'B unsaved' }));
     expect((await store.open('a'))?.title).toBe('A unsaved');

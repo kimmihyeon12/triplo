@@ -9,15 +9,41 @@ function trip() {
     endDate: '2026-05-04',
     regions: [createRegion('강릉', 0, 'r1'), createRegion('속초', 1, 'r2')],
     stops: [
-      createStop({ id: 's1', name: '안목해변', date: '2026-05-01', order: 0, regionId: 'r1', stayMinutes: 60 }),
-      createStop({ id: 's2', name: '오죽헌', date: '2026-05-01', order: 1, regionId: 'r1', stayMinutes: 60 }),
+      createStop({
+        id: 's1',
+        name: '안목해변',
+        date: '2026-05-01',
+        order: 0,
+        regionId: 'r1',
+        stayMinutes: 60,
+      }),
+      createStop({
+        id: 's2',
+        name: '오죽헌',
+        date: '2026-05-01',
+        order: 1,
+        regionId: 'r1',
+        stayMinutes: 60,
+      }),
       createStop({ id: 's3', name: '강릉 카페', date: '2026-05-03', order: 0, regionId: 'r1' }),
       createStop({ id: 's4', name: '속초 시장', date: '2026-05-03', order: 1, regionId: 'r2' }),
       createStop({ id: 'u1', name: '미배치', date: null, order: 0 }),
     ],
     stays: [
-      createStay({ id: 'A', name: 'A 숙소', checkIn: '2026-05-01', checkOut: '2026-05-03', regionId: 'r1' }),
-      createStay({ id: 'B', name: 'B 숙소', checkIn: '2026-05-03', checkOut: '2026-05-04', regionId: 'r2' }),
+      createStay({
+        id: 'A',
+        name: 'A 숙소',
+        checkIn: '2026-05-01',
+        checkOut: '2026-05-03',
+        regionId: 'r1',
+      }),
+      createStay({
+        id: 'B',
+        name: 'B 숙소',
+        checkIn: '2026-05-03',
+        checkOut: '2026-05-04',
+        regionId: 'r2',
+      }),
     ],
   });
 }
@@ -27,9 +53,27 @@ describe('overview', () => {
     const ov = buildOverview(trip());
     expect(ov.undecidedDates).toBe(false);
     expect(ov.days).toHaveLength(4);
-    expect(ov.days[0]).toMatchObject({ dayNumber: 1, date: '2026-05-01', regionNames: ['강릉'], stopNames: ['안목해변', '오죽헌'], nightLabel: 'A 숙소 체크인', nightState: 'covered' });
-    expect(ov.days[1]).toMatchObject({ dayNumber: 2, regionNames: [], stopNames: [], nightLabel: 'A 숙소 연박', nightState: 'covered' });
-    expect(ov.days[2]).toMatchObject({ dayNumber: 3, regionNames: ['강릉', '속초'], nightLabel: 'A 숙소 체크아웃 → B 숙소 체크인', regionChangeCount: 1 });
+    expect(ov.days[0]).toMatchObject({
+      dayNumber: 1,
+      date: '2026-05-01',
+      regionNames: ['강릉'],
+      stopNames: ['안목해변', '오죽헌'],
+      nightLabel: 'A 숙소 체크인',
+      nightState: 'covered',
+    });
+    expect(ov.days[1]).toMatchObject({
+      dayNumber: 2,
+      regionNames: [],
+      stopNames: [],
+      nightLabel: 'A 숙소 연박',
+      nightState: 'covered',
+    });
+    expect(ov.days[2]).toMatchObject({
+      dayNumber: 3,
+      regionNames: ['강릉', '속초'],
+      nightLabel: 'A 숙소 체크아웃 → B 숙소 체크인',
+      regionChangeCount: 1,
+    });
     expect(ov.days[3]).toMatchObject({ dayNumber: 4, nightLabel: '귀가일', nightState: 'none' });
   });
 
@@ -42,7 +86,10 @@ describe('overview', () => {
 
   it('숙소 미정인 밤과 충돌을 issues에 넣는다', () => {
     const t = trip();
-    t.stays = [createStay({ id: 'A', name: 'A', checkIn: '2026-05-01', checkOut: '2026-05-02' }), createStay({ id: 'C', name: 'C', checkIn: '2026-05-01', checkOut: '2026-05-03' })];
+    t.stays = [
+      createStay({ id: 'A', name: 'A', checkIn: '2026-05-01', checkOut: '2026-05-02' }),
+      createStay({ id: 'C', name: 'C', checkIn: '2026-05-01', checkOut: '2026-05-03' }),
+    ];
     const ov = buildOverview(t);
     expect(ov.days[0].nightState).toBe('conflict');
     expect(ov.days[2].nightState).toBe('undecided');

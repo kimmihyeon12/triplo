@@ -22,7 +22,9 @@ export function clearLocation<T extends Locatable>(entity: T): T {
   return { ...entity, location: null, placeRef: null, locationStatus: 'unverified' };
 }
 
-export function isLocationVerified(entity: Pick<Locatable, 'location'> | { location?: GeoPoint | null }): boolean {
+export function isLocationVerified(
+  entity: Pick<Locatable, 'location'> | { location?: GeoPoint | null },
+): boolean {
   const loc = entity.location;
   return !!loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
 }

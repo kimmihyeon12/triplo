@@ -1,0 +1,6 @@
+<app-ai-plan-flow
+  [saving]="store.saveState() === 'saving'"
+  [saveFailed]="store.saveState() === 'error'"
+  (apply)="apply($event)"
+  (cancel)="leave()"
+/>
