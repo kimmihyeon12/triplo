@@ -28,4 +28,3 @@ export interface DayMapModel {
   unverifiedStayCount: number;
   excludedCount: number;
 }
-

@@ -1,0 +1,117 @@
+<div class="wrap relative flex flex-col gap-2" data-testid="trip-map" [attr.data-state]="state()">
+  <div
+    #container
+    class="canvas w-full rounded-panel overflow-hidden bg-ground-2 shadow-panel h-(--map-height,180px) [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 [&.canvas--hidden]:invisible"
+    [class.canvas--hidden]="state() !== 'ready'"
+    aria-label="일정 지도"
+  ></div>
+
+  @switch (state()) {
+    @case ('checking') {
+      <div
+        class="overlay [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2"
+      >
+        <p class="text-ink-3 text-12 leading-normal" role="status">지도 제공자 확인 중…</p>
+      </div>
+    }
+    @case ('loading') {
+      <div
+        class="overlay [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2"
+        role="status"
+        data-testid="map-loading"
+      >
+        <span
+          class="spinner size-5.5 rounded-full border-3 border-border border-t-accent-deep animate-spin motion-reduce:animate-none"
+          aria-hidden="true"
+        ></span>
+        <p class="text-ink-3 text-12 leading-normal">
+          {{ availability()?.providerLabel }} 불러오는 중…
+        </p>
+      </div>
+    }
+    @case ('unavailable') {
+      <div
+        class="overlay overlay--notice [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2 bg-panel-2 text-ink"
+        data-testid="map-unavailable"
+      >
+        <app-icon
+          class="in-[.overlay--notice]:text-ink-3 [.wrap[data-state='error']_.overlay--notice_&]:text-danger-ink"
+          name="map"
+          [size]="22"
+        />
+        <strong class="in-[.notice]:font-bold in-[.overlay--notice]:text-15"
+          >지도 키가 아직 없습니다</strong
+        >
+        <p class="text-12 leading-normal">지도 없이도 일정은 계속 편집할 수 있습니다.</p>
+        <p class="text-12 leading-normal text-ink-3">
+          설정 방법: app/public/app-config.json에 카카오 JavaScript 키를 넣고 새로고침 (예시 파일
+          app-config.example.json)
+        </p>
+      </div>
+    }
+    @case ('error') {
+      <div
+        class="overlay overlay--notice [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2 bg-panel-2 text-ink"
+        role="alert"
+        data-testid="map-error"
+      >
+        <app-icon
+          class="in-[.overlay--notice]:text-ink-3 [.wrap[data-state='error']_.overlay--notice_&]:text-danger-ink"
+          name="alert"
+          [size]="22"
+        />
+        <strong class="in-[.notice]:font-bold in-[.overlay--notice]:text-15"
+          >지도를 표시하지 못했습니다</strong
+        >
+        <p class="text-12 leading-normal">{{ errorMessage() }}</p>
+      </div>
+    }
+    @case ('ready') {
+      @if (model().markers.length === 0) {
+        <div
+          class="overlay overlay--notice [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2 bg-panel-2 text-ink"
+          data-testid="map-empty"
+        >
+          <strong class="in-[.notice]:font-bold in-[.overlay--notice]:text-15"
+            >이 날 지도에 표시할 확인된 위치가 없습니다</strong
+          >
+          <p class="text-12 leading-normal text-ink-3">
+            장소·숙소를 검색으로 등록하면 순번 마커로 표시됩니다.
+          </p>
+        </div>
+      }
+    }
+  }
+
+  <div
+    class="legend text-12 leading-normal flex flex-wrap items-center text-ink-2 gap-[6px_14px]"
+    data-testid="map-legend"
+  >
+    <span class="legend__item inline-flex items-center gap-1.5"
+      ><span
+        class="tc-marker tc-marker--stop tc-marker--mini inline-flex items-center justify-center w-7 h-7 rounded-full font-body font-bold leading-none text-white bg-accent-deep cursor-pointer p-0 [border:2px_solid_#ffffff] text-[13px] [box-shadow:0_2px_6px_rgba(28,25,23,0.28)] [transition:transform_var(--dur)_var(--ease-out),box-shadow_var(--dur)_var(--ease-out)] z-2 w-4.5 h-4.5 cursor-default text-[10px] [box-shadow:none] [border-width:1.5px] in-[.tc-fixture-map__layer]:absolute in-[.tc-fixture-map__layer]:transform-[translate(-50%,-50%)]"
+        >1</span
+      >
+      방문 순서</span
+    >
+    <span class="legend__item inline-flex items-center gap-1.5"
+      ><span
+        class="tc-marker tc-marker--stay tc-marker--mini inline-flex items-center justify-center w-7 h-7 rounded-full font-body font-bold leading-none text-white bg-accent-deep cursor-pointer p-0 [border:2px_solid_#ffffff] text-[13px] [box-shadow:0_2px_6px_rgba(28,25,23,0.28)] [transition:transform_var(--dur)_var(--ease-out),box-shadow_var(--dur)_var(--ease-out)] bg-stay-ink text-[12px] z-1 w-4.5 h-4.5 cursor-default text-[10px] [box-shadow:none] [border-width:1.5px] in-[.tc-fixture-map__layer]:absolute in-[.tc-fixture-map__layer]:transform-[translate(-50%,-50%)]"
+        >숙</span
+      >
+      숙소</span
+    >
+    <span class="legend__item inline-flex items-center gap-1.5"
+      ><span
+        class="legend__dash w-5.5 opacity-[0.7] h-0 [border-top:3px_dashed_var(--color-accent-deep)]"
+      ></span>
+      방문 순서 안내선 · 경로 아님</span
+    >
+    @if (model().unverifiedActiveCount + model().unverifiedStayCount > 0) {
+      <span appBadge class="cell cell--warn" data-testid="map-unverified"
+        >지도에 없음 {{ model().unverifiedActiveCount + model().unverifiedStayCount }}개 · 위치
+        미확인</span
+      >
+    }
+  </div>
+</div>

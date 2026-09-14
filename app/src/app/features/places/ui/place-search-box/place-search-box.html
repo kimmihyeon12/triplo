@@ -1,0 +1,114 @@
+<div
+  class="box flex flex-col gap-2 rounded-control bg-panel-2 border border-border p-3"
+  data-testid="place-search"
+>
+  <div class="flex flex-wrap items-center gap-2 search-row">
+    <label
+      class="visually-hidden w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
+      [for]="inputId()"
+      >장소 검색어</label
+    >
+    <input
+      appInput
+      [id]="inputId()"
+      class="input in-[.search-row]:flex-1 in-[.search-row]:min-w-40"
+      type="search"
+      [ngModel]="query()"
+      (ngModelChange)="onQueryChange($event)"
+      name="placeQuery"
+      [placeholder]="placeholder()"
+      [disabled]="state() === 'unavailable' || state() === 'checking'"
+      (keydown.enter)="onEnter($event)"
+      (focus)="selectAll($event)"
+      autocomplete="off"
+      data-testid="place-query"
+    />
+    <button
+      appButton
+      type="button"
+      class="btn"
+      (click)="search()"
+      [disabled]="state() === 'unavailable' || state() === 'checking' || state() === 'searching'"
+      data-testid="place-search-btn"
+    >
+      <app-icon name="search" [size]="16" /> 검색
+    </button>
+  </div>
+
+  @switch (state()) {
+    @case ('checking') {
+      <p class="text-12 leading-normal text-ink-3" role="status">검색 제공자 확인 중…</p>
+    }
+    @case ('unavailable') {
+      <div appNotice class="notice notice--warn" data-testid="place-search-unavailable">
+        <app-icon name="alert" />
+        <div class="notice__body flex-1 min-w-0">
+          <strong class="in-[.notice]:font-bold">장소 검색이 연결되지 않았습니다.</strong>
+          <div class="text-12 leading-normal">{{ availability()?.reason }}</div>
+          <div class="text-12 leading-normal">
+            이름과 주소를 직접 입력하면 ‘위치 미확인’으로 저장됩니다.
+          </div>
+        </div>
+      </div>
+    }
+    @case ('searching') {
+      <p class="text-12 leading-normal text-ink-3" role="status">
+        {{ availability()?.providerLabel }}에서 검색 중…
+      </p>
+    }
+    @case ('empty') {
+      <p class="text-12 leading-normal text-ink-3" role="status" data-testid="place-search-empty">
+        검색 결과가 없습니다. 다른 이름이나 주소로 다시 검색하거나 직접 입력하세요.
+      </p>
+    }
+    @case ('error') {
+      <div appNotice class="notice notice--danger" role="alert" data-testid="place-search-error">
+        <app-icon name="alert" />
+        <div class="notice__body flex-1 min-w-0">
+          <strong class="in-[.notice]:font-bold">검색에 실패했습니다.</strong>
+          <div class="text-12 leading-normal">{{ errorMessage() }}</div>
+          <div class="notice__actions flex gap-2 flex-wrap mt-2">
+            <button appButton type="button" class="btn btn--sm" (click)="search()" variant="danger">
+              다시 검색
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    @case ('results') {
+      <p class="text-12 leading-normal text-ink-3" role="status">
+        {{ availability()?.providerLabel }} 검색 결과 {{ results().length }}개{{
+          total() > results().length ? ' (전체 ' + total() + '개 중)' : ''
+        }}. 고르면 이름·주소·좌표가 채워집니다.
+      </p>
+      <ul
+        class="results flex flex-col max-h-70 overflow-y-auto bg-panel border border-border rounded-control"
+        data-testid="place-results"
+      >
+        @for (c of results(); track c.provider + c.id) {
+          <li>
+            <button
+              type="button"
+              class="result [.results_li+li_&]:[border-top:1px_solid_var(--color-border)] w-full text-left flex flex-col gap-0.5 border-0 bg-panel py-2.5 px-3 [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-panel-2"
+              (click)="pick(c)"
+              [attr.data-testid]="'place-result-' + c.id"
+            >
+              <span class="result__name font-bold">{{ c.name }}</span>
+              <span class="result__meta text-12 leading-normal text-ink-3">
+                @if (c.category) {
+                  <span>{{ c.category }} · </span>
+                }
+                {{ c.roadAddress || c.address }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    @default {
+      <p class="text-12 leading-normal text-ink-3">
+        {{ availability()?.providerLabel }} 검색으로 위치를 확인하거나, 아래에 직접 입력하세요.
+      </p>
+    }
+  }
+</div>

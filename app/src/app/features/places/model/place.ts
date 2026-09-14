@@ -24,4 +24,3 @@ export interface PlaceCandidate {
   category: string;
   url: string | null;
 }
-

@@ -39,7 +39,11 @@ export class KakaoSdkLoader {
       };
       script.onerror = () => {
         this.loading = null;
-        reject(new Error('카카오 지도 SDK 로드 실패. 키와 등록 도메인(예: http://localhost:4200)을 확인하세요.'));
+        reject(
+          new Error(
+            '카카오 지도 SDK 로드 실패. 키와 등록 도메인(예: http://localhost:4200)을 확인하세요.',
+          ),
+        );
       };
       document.head.appendChild(script);
     });

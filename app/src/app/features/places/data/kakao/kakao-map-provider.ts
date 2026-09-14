@@ -1,7 +1,13 @@
+import { MAP_MARKER_CLASSES } from '../../util/map-marker-styles';
 import { inject, Injectable } from '@angular/core';
 import { overlappingStayIds } from '../../util/map-markers';
 import { type DayMapModel, type MapMarker } from '../../model/map';
-import type { MapInstance, MapMountOptions, MapProvider, MapProviderAvailability } from '../map-provider';
+import type {
+  MapInstance,
+  MapMountOptions,
+  MapProvider,
+  MapProviderAvailability,
+} from '../map-provider';
 import { KakaoSdkLoader } from './kakao-loader';
 
 /** 카카오 지도 위에 순번 마커(CustomOverlay)·숙소 마커·방문 순서 안내선(Polyline)을 그린다. */
@@ -11,20 +17,40 @@ export class KakaoMapProvider implements MapProvider {
 
   async availability(): Promise<MapProviderAvailability> {
     if (!this.loader.hasKey) {
-      return { available: false, reason: '카카오 JavaScript 키가 설정되지 않았습니다.', providerLabel: '카카오맵' };
+      return {
+        available: false,
+        reason: '카카오 JavaScript 키가 설정되지 않았습니다.',
+        providerLabel: '카카오맵',
+      };
     }
     try {
       await this.loader.load();
       return { available: true, reason: null, providerLabel: '카카오맵' };
     } catch (e) {
-      return { available: false, reason: e instanceof Error ? e.message : '지도 SDK 로드 실패', providerLabel: '카카오맵' };
+      return {
+        available: false,
+        reason: e instanceof Error ? e.message : '지도 SDK 로드 실패',
+        providerLabel: '카카오맵',
+      };
     }
   }
 
-  async mount(container: HTMLElement, options: MapMountOptions, onMarkerClick: (id: string) => void): Promise<MapInstance> {
+  async mount(
+    container: HTMLElement,
+    options: MapMountOptions,
+    onMarkerClick: (id: string) => void,
+  ): Promise<MapInstance> {
     const maps = await this.loader.load();
-    const map = new maps.Map(container, { center: new maps.LatLng(options.center.lat, options.center.lng), level: 12 });
-    let overlays: { id: string; overlay: any; el: HTMLElement; position: { lat: number; lng: number } }[] = [];
+    const map = new maps.Map(container, {
+      center: new maps.LatLng(options.center.lat, options.center.lng),
+      level: 12,
+    });
+    let overlays: {
+      id: string;
+      overlay: any;
+      el: HTMLElement;
+      position: { lat: number; lng: number };
+    }[] = [];
     let line: any = null;
 
     const clear = () => {
@@ -67,12 +93,17 @@ export class KakaoMapProvider implements MapProvider {
           map.setCenter(new maps.LatLng(p.lat, p.lng));
         } else if (model.markers.length > 1) {
           const bounds = new maps.LatLngBounds();
-          for (const m of model.markers) bounds.extend(new maps.LatLng(m.position.lat, m.position.lng));
+          for (const m of model.markers)
+            bounds.extend(new maps.LatLng(m.position.lat, m.position.lng));
           map.setBounds(bounds, 40, 40, 40, 40);
         }
       },
       highlight(id: string | null) {
-        for (const o of overlays) o.el.classList.toggle('tc-marker--on', o.id === id);
+        for (const o of overlays) {
+          const selected = o.id === id;
+          o.el.classList.toggle('tc-marker--on', selected);
+          o.el.setAttribute('aria-pressed', String(selected));
+        }
         // 고른 항목이 화면 밖에 있을 수 있으므로 그 위치로 지도를 옮긴다.
         // panTo는 부드럽게 이동하며, 배율은 사용자가 맞춰 둔 값을 건드리지 않는다.
         if (id === null) return;
@@ -92,7 +123,11 @@ export class KakaoMapProvider implements MapProvider {
 function markerElement(m: MapMarker, onClick: (id: string) => void, offset = false): HTMLElement {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'tc-marker ' + (m.kind === 'stay' ? 'tc-marker--stay' : 'tc-marker--stop') + (offset ? ' tc-marker--offset' : '');
+  btn.className =
+    MAP_MARKER_CLASSES +
+    ' ' +
+    (m.kind === 'stay' ? 'tc-marker--stay' : 'tc-marker--stop') +
+    (offset ? ' tc-marker--offset' : '');
   btn.setAttribute('aria-label', (m.number ? `${m.number}번 ` : '숙소 ') + m.title);
   btn.dataset['markerId'] = m.id;
   btn.textContent = m.kind === 'stay' ? '숙' : String(m.number);

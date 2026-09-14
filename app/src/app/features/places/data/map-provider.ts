@@ -25,7 +25,11 @@ export interface MapProviderAvailability {
 /** 지도 표시 제공자 어댑터. 지도 표시와 장소 검색은 별개 연동이다. */
 export interface MapProvider {
   availability(): Promise<MapProviderAvailability>;
-  mount(container: HTMLElement, options: MapMountOptions, onMarkerClick: (id: string) => void): Promise<MapInstance>;
+  mount(
+    container: HTMLElement,
+    options: MapMountOptions,
+    onMarkerClick: (id: string) => void,
+  ): Promise<MapInstance>;
 }
 
 export const MAP_PROVIDER = new InjectionToken<MapProvider>('MAP_PROVIDER');

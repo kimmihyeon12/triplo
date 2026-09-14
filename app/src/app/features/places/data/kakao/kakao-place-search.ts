@@ -1,6 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import type { PlaceCandidate } from '../../model/place';
-import type { PlaceSearchAvailability, PlaceSearchOptions, PlaceSearchProvider, PlaceSearchResult } from '../place-search';
+import type {
+  PlaceSearchAvailability,
+  PlaceSearchOptions,
+  PlaceSearchProvider,
+  PlaceSearchResult,
+} from '../place-search';
 import { KakaoSdkLoader } from './kakao-loader';
 
 interface KakaoPlace {
@@ -22,13 +27,22 @@ export class KakaoPlaceSearch implements PlaceSearchProvider {
 
   async availability(): Promise<PlaceSearchAvailability> {
     if (!this.loader.hasKey) {
-      return { available: false, reason: '카카오 JavaScript 키가 설정되지 않았습니다. app/public/app-config.json을 만드세요.', providerLabel: '카카오' };
+      return {
+        available: false,
+        reason:
+          '카카오 JavaScript 키가 설정되지 않았습니다. app/public/app-config.json을 만드세요.',
+        providerLabel: '카카오',
+      };
     }
     try {
       await this.loader.load();
       return { available: true, reason: null, providerLabel: '카카오' };
     } catch (e) {
-      return { available: false, reason: e instanceof Error ? e.message : '지도 SDK 로드 실패', providerLabel: '카카오' };
+      return {
+        available: false,
+        reason: e instanceof Error ? e.message : '지도 SDK 로드 실패',
+        providerLabel: '카카오',
+      };
     }
   }
 
@@ -44,7 +58,10 @@ export class KakaoPlaceSearch implements PlaceSearchProvider {
         query,
         (data: KakaoPlace[], status: string, pagination: { totalCount?: number } | undefined) => {
           if (status === maps.services.Status.OK) {
-            resolve({ candidates: data.map(toCandidate), total: pagination?.totalCount ?? data.length });
+            resolve({
+              candidates: data.map(toCandidate),
+              total: pagination?.totalCount ?? data.length,
+            });
           } else if (status === maps.services.Status.ZERO_RESULT) {
             resolve({ candidates: [], total: 0 });
           } else {
