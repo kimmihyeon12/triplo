@@ -1,0 +1,24 @@
+@keyframes settle {
+  0% {
+    background-color: var(--color-accent-tint);
+  }
+  100% {
+    background-color: var(--color-panel);
+  }
+}
+@keyframes toast-enter {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -10,6 +10,7 @@ app/e2e-report/
 app/test-results/
 .impeccable/review/
 app/public/app-config.json
+app/public/supabase-config.json
 .superpowers/
 .playwright-cli/
 output/

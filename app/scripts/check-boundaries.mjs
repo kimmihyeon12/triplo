@@ -20,8 +20,11 @@ const rel = file => path.relative(root, file).replaceAll('\\', '/');
 for (const file of files) {
   const name = rel(file);
   const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+  if (source.text.includes('@Component(') && path.basename(path.dirname(file)) !== path.basename(file, '.ts')) errors.push(`${name}: component HTML/TS/CSS must share a component folder`);
+  if (source.text.includes('@Component(') && path.basename(file).includes('-page')) errors.push(`${name}: omit the -page filename suffix`);
   const imports = [];
   function visit(node) {
+    if (ts.isPropertyAssignment(node) && ['template', 'styles'].includes(node.name.getText(source))) errors.push(`${name}: inline template/styles must be moved to separate files`);
     if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) imports.push(node.moduleSpecifier.text);
     if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(node.arguments[0])) imports.push(node.arguments[0].text);
     if (/\/(model|util)\//.test(name) && ts.isIdentifier(node) && ['window', 'document', 'navigator', 'localStorage'].includes(node.text)) errors.push(`${name}: browser dependency ${node.text} in pure layer`);

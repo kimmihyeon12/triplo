@@ -49,3 +49,4 @@ Thumbs.db
 
 # 브라우저용 지도 키(커밋 금지)
 /public/app-config.json
+/public/supabase-config.json

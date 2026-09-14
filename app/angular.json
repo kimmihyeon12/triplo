@@ -14,7 +14,10 @@
           "skipTests": true
         },
         "@schematics/angular:component": {
-          "skipTests": true
+          "skipTests": true,
+          "inlineTemplate": false,
+          "inlineStyle": false,
+          "flat": false
         },
         "@schematics/angular:directive": {
           "skipTests": true
@@ -72,6 +75,12 @@
               "outputHashing": "all"
             },
             "development": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+              ],
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
