@@ -1,5 +1,5 @@
 import type { GeoPoint } from '../../places/model/place';
-import type { IsoDate, Trip, TripStop } from '../model/trip';
+import type { AccommodationStay, IsoDate, Trip, TripStop } from '../model/trip';
 
 function byOrder(a: TripStop, b: TripStop): number {
   return a.order - b.order;
@@ -19,23 +19,35 @@ function renumber(stops: TripStop[], date: IsoDate | null): TripStop[] {
   return stops.map((s) => (s.date === date ? { ...s, order: orderById.get(s.id)! } : s));
 }
 
-/** 같은 날짜 안에서 위·아래로 한 칸 이동. 끝이거나 미배치면 그대로. */
+/**
+ * 같은 날짜 안에서 위·아래로 한 칸 이동. 끝이거나 미배치면 그대로.
+ * 중간에 선 숙소도 한 칸으로 세므로 장소가 숙소를 뛰어넘지 않는다.
+ */
 export function moveStop(trip: Trip, stopId: string, direction: 'up' | 'down'): Trip {
   const target = trip.stops.find((s) => s.id === stopId);
-  if (!target || target.date === null) return trip;
-  const group = dayStops(trip, target.date);
-  const idx = group.findIndex((s) => s.id === stopId);
+  if (!target) return trip;
+  if (target.date === null) {
+    const group = unassignedStops(trip);
+    const idx = group.findIndex((s) => s.id === stopId);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= group.length) return trip;
+    const other = group[swapIdx];
+    const stops = trip.stops.map((s) =>
+      s.id === target.id
+        ? { ...s, order: other.order }
+        : s.id === other.id
+          ? { ...s, order: target.order }
+          : s,
+    );
+    return { ...trip, stops: renumber(stops, null) };
+  }
+  const entries = dayEntries(trip, target.date);
+  const idx = entries.findIndex((e) => e.id === stopId);
   const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-  if (swapIdx < 0 || swapIdx >= group.length) return trip;
-  const other = group[swapIdx];
-  const stops = trip.stops.map((s) =>
-    s.id === target.id
-      ? { ...s, order: other.order }
-      : s.id === other.id
-        ? { ...s, order: target.order }
-        : s,
-  );
-  return { ...trip, stops: renumber(stops, target.date) };
+  if (idx < 0 || swapIdx < 0 || swapIdx >= entries.length) return trip;
+  const next = [...entries];
+  [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+  return writeDayOrder(trip, next);
 }
 
 /** 항목을 다른 날짜(또는 미배치)의 마지막 순서로 옮긴다. */
@@ -154,8 +166,16 @@ export function sortDayByNearest(trip: Trip, date: IsoDate): NearestSortResult {
   const stops = trip.stops.map((s) =>
     orderById.has(s.id) ? { ...s, order: orderById.get(s.id)! } : s,
   );
+  // 숙소는 그날의 끝이므로 가까운 순 정렬에 끼우지 않고 맨 뒤로 보낸다.
+  const dayStayIds = new Set(dayStays(trip, date).map((s) => s.id));
+  const stays = trip.stays.map((s) => (dayStayIds.has(s.id) ? { ...s, dayOrder: null } : s));
 
-  return { trip: { ...trip, stops }, sortedCount: movable.length, unlocatedCount, fixedCount };
+  return {
+    trip: { ...trip, stops, stays },
+    sortedCount: movable.length,
+    unlocatedCount,
+    fixedCount,
+  };
 }
 
 export interface DayTotals {
@@ -174,7 +194,8 @@ export function dayTotals(trip: Trip, date: IsoDate): DayTotals {
   const active = dayStops(trip, date).filter((s) => !s.excluded);
   const stayMinutes = active.reduce((sum, s) => sum + (s.stayMinutes ?? 0), 0);
   const unknownStayCount = active.filter((s) => s.stayMinutes === null).length;
-  const legCount = Math.max(0, active.length - 1);
+  // 숙소도 일정의 한 자리이므로 이동 구간 수에 함께 센다.
+  const legCount = Math.max(0, active.length + dayStays(trip, date).length - 1);
   return {
     stayMinutes,
     activeCount: active.length,
@@ -186,25 +207,96 @@ export function dayTotals(trip: Trip, date: IsoDate): DayTotals {
 
 export type DaySegment =
   | { type: 'stop'; stop: TripStop }
+  | { type: 'stay'; stay: AccommodationStay }
   | { type: 'leg'; fromRegion: string | null; toRegion: string | null; regionChange: boolean };
+
+/**
+ * 그날 일정 목록에 서는 숙소. 체크인하는 날에만 들어간다.
+ * 연박 중인 날은 이미 그 숙소에 머무는 중이라 이동이 없다.
+ */
+export function dayStays(trip: Trip, date: IsoDate): AccommodationStay[] {
+  return trip.stays
+    .filter((s) => s.checkIn === date)
+    .sort((a, b) => (a.dayOrder ?? Number.MAX_SAFE_INTEGER) - (b.dayOrder ?? Number.MAX_SAFE_INTEGER));
+}
+
+/**
+ * 그날 항목을 순서대로 늘어놓는다. 장소와 숙소가 같은 축(order/dayOrder)을 공유하고,
+ * 자리를 정하지 않은 숙소는 맨 끝에 선다.
+ */
+function dayEntries(trip: Trip, date: IsoDate): (TripStop | AccommodationStay)[] {
+  const stops = dayStops(trip, date);
+  const stays = dayStays(trip, date);
+  const positioned = stays.filter((s) => s.dayOrder !== null);
+  const trailing = stays.filter((s) => s.dayOrder === null);
+  const out: (TripStop | AccommodationStay)[] = [];
+  let si = 0;
+  stops.forEach((stop, i) => {
+    while (si < positioned.length && positioned[si].dayOrder! <= i) out.push(positioned[si++]);
+    out.push(stop);
+  });
+  while (si < positioned.length) out.push(positioned[si++]);
+  return [...out, ...trailing];
+}
+
+function isStay(entry: TripStop | AccommodationStay): entry is AccommodationStay {
+  return 'checkIn' in entry;
+}
+
+/**
+ * 합쳐진 목록의 자리를 장소 order와 숙소 dayOrder에 다시 새긴다.
+ * 숙소의 dayOrder는 '자기 앞에 선 장소의 수'이므로, 같은 값이어도 장소 뒤에 선다.
+ */
+function writeDayOrder(trip: Trip, entries: (TripStop | AccommodationStay)[]): Trip {
+  const stopOrder = new Map<string, number>();
+  const stayOrder = new Map<string, number>();
+  let stopCount = 0;
+  for (const entry of entries) {
+    if (isStay(entry)) stayOrder.set(entry.id, stopCount);
+    else stopOrder.set(entry.id, stopCount++);
+  }
+  return {
+    ...trip,
+    stops: trip.stops.map((s) =>
+      stopOrder.has(s.id) ? { ...s, order: stopOrder.get(s.id)! } : s,
+    ),
+    stays: trip.stays.map((s) =>
+      stayOrder.has(s.id) ? { ...s, dayOrder: stayOrder.get(s.id)! } : s,
+    ),
+  };
+}
+
+/** 숙소를 체크인 날짜 목록 안에서 위·아래로 한 칸 옮긴다. */
+export function moveStay(trip: Trip, stayId: string, direction: 'up' | 'down'): Trip {
+  const stay = trip.stays.find((s) => s.id === stayId);
+  if (!stay) return trip;
+  const entries = dayEntries(trip, stay.checkIn);
+  const idx = entries.findIndex((e) => e.id === stayId);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (idx < 0 || swapIdx < 0 || swapIdx >= entries.length) return trip;
+  const next = [...entries];
+  [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+  return writeDayOrder(trip, next);
+}
 
 /** 시간순 항목과 그 사이 이동 구간. 제외 항목 앞뒤에는 구간을 두지 않는다. */
 export function daySegments(trip: Trip, date: IsoDate): DaySegment[] {
   const regionName = (id: string | null) => trip.regions.find((r) => r.id === id)?.name ?? null;
   const out: DaySegment[] = [];
-  let prevActive: TripStop | null = null;
-  // 지역이 없는 식사·휴식 항목이 사이에 있어도 지역 이동을 놓치지 않도록 마지막으로 알려진 지역을 기억한다.
+  let hasPrevActive = false;
+  // 지역이 없는 식사·카페 항목이 사이에 있어도 지역 이동을 놓치지 않도록 마지막으로 알려진 지역을 기억한다.
   let lastKnownRegion: string | null = null;
-  for (const stop of dayStops(trip, date)) {
-    if (!stop.excluded && prevActive) {
-      const toRegion = regionName(stop.regionId);
+  for (const entry of dayEntries(trip, date)) {
+    const excluded = !isStay(entry) && entry.excluded;
+    if (!excluded && hasPrevActive) {
+      const toRegion = regionName(entry.regionId);
       const regionChange = !!lastKnownRegion && !!toRegion && lastKnownRegion !== toRegion;
       out.push({ type: 'leg', fromRegion: lastKnownRegion, toRegion, regionChange });
     }
-    out.push({ type: 'stop', stop });
-    if (!stop.excluded) {
-      prevActive = stop;
-      lastKnownRegion = regionName(stop.regionId) ?? lastKnownRegion;
+    out.push(isStay(entry) ? { type: 'stay', stay: entry } : { type: 'stop', stop: entry });
+    if (!excluded) {
+      hasPrevActive = true;
+      lastKnownRegion = regionName(entry.regionId) ?? lastKnownRegion;
     }
   }
   return out;

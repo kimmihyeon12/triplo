@@ -23,7 +23,9 @@ slug: app-src-app-features-trips
 - 현재 앱의 수동 일정 편집과 트리플의 추천 결과는 목적이 다르다. 트리플의 동작 수를 그대로 복제하지 않고 읽기와 편집의 우선순위를 비교한다. AI 단계 질문·선택 담기는 현재 앱에서 아직 구현을 확인하지 못한 후속 화면이다.
 - 검토 시점 실제 CSS 강조색은 파랑 `#2f5fdb`다. 이전 코랄 지침과 일부 문서가 다르므로 이 검토만으로 색상을 되돌리지 않는다. 문서 동기화는 별도 정리 대상이다.
 
-[모바일 나란히 비교](../output/playwright/design-review/comparison.html) · [현재 첫 화면](../output/playwright/design-review/mobile-days-viewport.png) · [트리플 첫 화면](../output/playwright/triple-reference/06-result-day1.png) · [현재 PC](../output/playwright/design-review/desktop-days-viewport.png)
+[현재 첫 화면](../output/playwright/design-review/mobile-days-viewport.png) · [현재 PC](../output/playwright/design-review/desktop-days-viewport.png)
+
+> 2026-09-15 정리: 사용자 결정으로 외부 서비스 참조를 중단했다. 비교 대상 캡처와 나란히 비교 파일은 저장소에서 제거했으므로 이 문서의 비교 서술은 당시 관찰 기록으로만 남는다. 현재 제품 기준은 docs/design/DESIGN.md와 기획안 25절이다.
 
 ## 직접 비교
 

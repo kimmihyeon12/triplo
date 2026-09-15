@@ -126,6 +126,25 @@ function kindLabel(kind: NonNullable<StopInput['kind']>): string {
   return { place: '장소', meal: '식사', break: '휴식', buffer: '여유시간' }[kind];
 }
 
+/**
+ * 여행 정보 수정·삭제 등은 상단 바 더보기 안에 있으므로 메뉴를 먼저 연다.
+ * 여는 장치가 summary라서 button 역할로는 찾히지 않는다.
+ */
+export async function openTripMenu(page: Page): Promise<void> {
+  await page.locator('summary[aria-label="여행 더보기"]').click();
+}
+
+/** 목록 행의 제외·편집·삭제는 행 더보기 안에 있다. 행 이름으로 여는 장치를 찾는다. */
+export async function openRowMenu(page: Page, rowName: string): Promise<void> {
+  await page.locator(`summary[aria-label="${rowName} 더보기"]`).click();
+}
+
+/** 행 더보기를 열고 항목 하나를 고른다. */
+export async function chooseRowMenu(page: Page, rowName: string, item: string): Promise<void> {
+  await openRowMenu(page, rowName);
+  await page.getByRole('menuitem', { name: item }).click();
+}
+
 export async function expectNoHorizontalScroll(page: Page): Promise<void> {
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

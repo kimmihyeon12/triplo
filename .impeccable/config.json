@@ -29,6 +29,15 @@
         "value": "10px",
         "createdAt": "2026-09-10T01:22:45.275Z",
         "reason": "지도 마커 내부 글자 전용: .tc-marker--mini(18px 원)와 .tc-marker--stay.tc-marker--offset(20px 원) 안에 들어가는 순번 숫자·숙소 표시. 본문 타입 스케일과 용도가 다른 지도 오버레이 요소이며 DESIGN.md 갱신 시 예외로 명시 예정."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "app/src/app/features/trips/feature/trip-detail/trip-detail.html"
+        ],
+        "createdAt": "2026-09-15T13:34:37.047Z",
+        "reason": "오탐: 탐지기 정규식이 Tailwind 임의값의 종료 문자 ]를 인식하지 못해, [transition:background-color_...] 이후에 이어지는 [@media(min-width:_720px)] 반응형 유틸리티의 min-width까지 전환 값으로 잘못 읽는다. 탐지값 3건 모두 min-width였고 실제 전환 대상은 background-color(L286,L494)와 border-color(L811)뿐이라 레이아웃을 유발하지 않는다. 같은 class의 settle 애니메이션도 background-color만 변경한다(app/src/styles/effects.css)."
       }
     ]
   }

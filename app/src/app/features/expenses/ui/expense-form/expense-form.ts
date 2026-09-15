@@ -13,9 +13,10 @@ import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
 import type { Expense, ExpensePerson } from '../../model/ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
-import { allocateEvenly } from '../../util/ledger';
+import { allocateEvenly, expenseKey } from '../../util/ledger';
 
 export interface ExpenseLink {
   id: string;
@@ -26,13 +27,17 @@ export interface ExpenseLink {
 @Component({
   selector: 'app-expense-form',
   templateUrl: './expense-form.html',
-  imports: [FormsModule, UiButton, UiInput, UiField, UiCheckbox],
+  imports: [FormsModule, UiButton, UiInput, UiField, UiCheckbox, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpenseForm {
   readonly people = input.required<ExpensePerson[]>();
   readonly links = input<ExpenseLink[]>([]);
   readonly initial = input<Expense | null>(null);
+  /** 일정에서 바로 넘어온 경우 채워 둘 항목 id. 새 지출일 때만 쓴다. */
+  readonly prefillLinkId = input<string | undefined>();
+  /** 중복 확인에 쓸 기존 지출. 저장은 막지 않고 알리기만 한다. */
+  readonly existing = input<Expense[]>([]);
   readonly saved = output<Expense>();
   readonly cancelled = output<void>();
   readonly categories = Object.entries(EXPENSE_CATEGORIES);
@@ -68,8 +73,38 @@ export class ExpenseForm {
       this.shares.set(Object.fromEntries(e?.splits.map((s) => [s.personId, s.amount]) ?? []));
       this.custom.set(!!e && !e.personal);
       this.memo.set(e?.memo ?? '');
+
+    });
+
+    /*
+     * 일정에서 바로 넘어온 경우를 채운다. 여행 자료는 뒤늦게 도착하므로
+     * links를 읽어 두고 항목이 실제로 생긴 뒤 한 번만 채운다.
+     */
+    let prefilled = '';
+    effect(() => {
+      const prefill = this.prefillLinkId();
+      const link = prefill ? this.links().find((l) => l.id === prefill) : undefined;
+      if (!link || prefilled === prefill || untracked(this.initial)) return;
+      prefilled = prefill!;
+      untracked(() => this.chooseLink(link.id));
+      queueMicrotask(() => this.focusAmount());
     });
   }
+
+  private focusAmount(): void {
+    const el = document.getElementById('expense-amount');
+    if (!(el instanceof HTMLInputElement)) return;
+    el.focus();
+    el.select();
+  }
+
+  /** 같은 이름이 이미 있으면 알린다. 저장은 막지 않는다. */
+  readonly duplicateTitle = computed(() => {
+    const key = expenseKey(this.title());
+    if (!key) return false;
+    const selfId = this.initial()?.id;
+    return this.existing().some((e) => e.id !== selfId && expenseKey(e.title) === key);
+  });
 
   chooseLink(id: string): void {
     this.linkId.set(id);

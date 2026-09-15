@@ -83,11 +83,62 @@
             [people]="ledger().people"
             [links]="links()"
             [initial]="editing()"
+            [prefillLinkId]="add()"
+            [existing]="ledger().expenses"
             (saved)="saveExpense($event)"
             (cancelled)="formOpen.set(false)"
           />
         }
-        @for (e of ledger().expenses; track e.id) {
+        @if (ledger().expenses.length > 0) {
+          <!-- 목록이 길어지면 찾기 어려우므로 분류로 거르고 정렬을 고른다. -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button
+                class="cell min-h-8 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
+                [class]="
+                  categoryFilter() === ''
+                    ? 'bg-accent-deep text-white'
+                    : 'bg-panel text-ink-3 border border-border hover:bg-ground-2'
+                "
+                type="button"
+                (click)="categoryFilter.set('')"
+                data-testid="filter-all"
+              >
+                전체
+              </button>
+              @for (c of usedCategories(); track c[0]) {
+                <button
+                  class="cell min-h-8 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
+                  [class]="
+                    categoryFilter() === c[0]
+                      ? 'bg-accent-deep text-white'
+                      : 'bg-panel text-ink-3 border border-border hover:bg-ground-2'
+                  "
+                  type="button"
+                  (click)="categoryFilter.set(c[0])"
+                  [attr.data-testid]="'filter-' + c[0]"
+                >
+                  {{ c[1] }}
+                </button>
+              }
+            </div>
+            <button
+              class="flex min-h-8 items-center gap-1 rounded-cell px-2.5 text-12 font-medium text-ink-2 [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2"
+              type="button"
+              (click)="sortBy.set(sortBy() === 'date' ? 'amount' : 'date')"
+              data-testid="sort-toggle"
+            >
+              {{ sortBy() === 'date' ? '최근순' : '금액순' }}
+              <app-icon name="selector" [size]="14" />
+            </button>
+          </div>
+
+          <p class="flex items-baseline justify-between gap-2 text-13 text-ink-3">
+            <span>{{ categoryFilter() ? '선택한 분류' : '전체' }} {{ visibleExpenses().length }}건</span>
+            <strong class="text-15 tabular-nums text-ink">{{ visibleTotal() | number }}원</strong>
+          </p>
+        }
+        @for (e of visibleExpenses(); track e.id) {
           <article class="panel rounded-panel bg-panel p-4 shadow-panel">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
@@ -111,6 +162,11 @@
                 <span appBadge class="cell cell--place">{{ categoryLabel(e.category) }}</span>
                 @if (e.personal) {
                   <span appBadge class="cell cell--ghost">정산 제외</span>
+                }
+                @if (duplicateIds().has(e.id)) {
+                  <span appBadge class="cell cell--warn" [attr.data-testid]="'dup-' + e.id"
+                    >이름 중복</span
+                  >
                 }
               </span>
             </div>

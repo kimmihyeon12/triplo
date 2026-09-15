@@ -1,12 +1,9 @@
+<!--
+  이 탭이 답하는 질문은 '밤마다 어디서 자는가, 예약은 되었는가'다.
+  위치는 그날 동선을 볼 때 필요하므로 일정 탭 지도에 맡기고 여기서는 빼둔다.
+  각 카드의 지도 링크로 개별 확인은 여전히 가능하다.
+-->
 <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-stays">
-  @if (trip().stays.length > 0) {
-    <app-trip-map
-      class="stays-map block [@media(min-width:_900px)]:[--map-height:380px]"
-      [model]="staysMap()"
-      [selectedId]="selectedMarkerId()"
-      (markerSelect)="markerSelect.emit($event)"
-    />
-  }
   @if (overview().undecidedDates) {
     <div appNotice class="notice notice--warn">
       <app-icon name="calendar" />
@@ -23,34 +20,41 @@
     </div>
   } @else {
     <section class="panel bg-panel rounded-panel shadow-panel p-4">
-      <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">밤별 숙소</h3>
+      <h3 class="section-title mb-2 flex items-center gap-2 text-16 font-bold">
+        밤별 숙소
+        <span appBadge class="cell cell--ghost">{{ nights().length }}박</span>
+      </h3>
       <ol class="nights flex flex-col" data-testid="nights">
         @for (n of nights(); track n.night) {
           <li
-            class="night grid items-center gap-2 grid-cols-[40px_76px_1fr] py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+            class="night grid items-center gap-2 grid-cols-[40px_88px_minmax(0,1fr)] py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
             [attr.data-testid]="'night-' + n.nightNumber"
             [attr.data-state]="n.state"
+            [attr.data-consecutive]="n.consecutive ? 'true' : null"
           >
             <span class="night__no text-14 font-bold text-stay-ink">{{ n.nightNumber }}박</span>
-            <span class="night__date text-ink-3 text-12 leading-normal"
+            <span class="night__date text-14 leading-normal text-ink-3"
               >{{ formatDate(n.night, true) }} 밤</span
             >
-            <span class="night__stay">
+            <!--
+              배지가 열보다 길어지지 않도록 감싸는 칸부터 줄어들 수 있게 하고,
+              넘치는 글자는 말줄임표로 줄인다. 전체 이름은 title로 확인한다.
+            -->
+            <span class="night__stay flex min-w-0">
               @switch (n.state) {
                 @case ('undecided') {
-                  <span appBadge class="cell cell--warn in-[.night__stay]:whitespace-normal"
-                    >미정</span
-                  >
+                  <span appBadge class="cell cell--warn">미정</span>
                 }
                 @case ('conflict') {
-                  <span appBadge class="cell cell--danger in-[.night__stay]:whitespace-normal"
-                    >중복: {{ stayNames(n.stays) }}</span
+                  <span appBadge class="cell cell--danger min-w-0" [title]="stayNames(n.stays)"
+                    ><span class="min-w-0 truncate">중복: {{ stayNames(n.stays) }}</span></span
                   >
                 }
                 @default {
-                  <span appBadge class="cell cell--stay in-[.night__stay]:whitespace-normal"
-                    ><app-icon name="bed" [size]="14" /> {{ n.stays[0].name
-                    }}{{ n.consecutive ? ' (연박)' : '' }}</span
+                  <!-- 같은 숙소가 여러 밤에 이어 나오면 연박임이 표에서 이미 보인다. -->
+                  <span appBadge class="cell cell--stay min-w-0" [title]="n.stays[0].name"
+                    ><app-icon class="shrink-0" name="home" [size]="14" />
+                    <span class="min-w-0 truncate">{{ n.stays[0].name }}</span></span
                   >
                 }
               }
@@ -63,69 +67,99 @@
 
   @if (trip().stays.length === 0) {
     <section
-      class="panel empty bg-panel rounded-panel shadow-panel p-4 p-5"
+      class="panel empty bg-panel rounded-panel shadow-panel p-4"
       data-testid="empty-stays"
     >
-      <h3 class="in-[.empty]:text-16">등록된 숙소가 없습니다</h3>
-      <p class="text-ink-3 text-12 leading-normal">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
+      <h3 class="text-16 font-bold">등록된 숙소가 없습니다</h3>
+      <p class="text-12 leading-normal text-ink-3">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
     </section>
   } @else {
     <ul class="flex flex-col gap-3" data-testid="stay-list">
       @for (s of sortedStays(); track s.id) {
         <li
-          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid gap-3 grid-cols-[36px_1fr_auto] [border:1px_solid_transparent] [&.item--selected]:border-accent-deep [&.item--selected]:bg-panel"
-          [class.item--selected]="selectedMarkerId() === s.id"
+          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)]"
           [attr.data-testid]="'stay-' + s.id"
           [id]="'stay-card-' + s.id"
         >
           <div
-            class="stay__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-tint text-stay-ink"
+            class="stay__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-ink text-white -mt-1.25"
           >
-            <app-icon name="bed" [size]="18" />
+            <app-icon name="home" [size]="18" />
           </div>
-          <div class="stay__main flex flex-col gap-1 min-w-0 wrap-anywhere">
-            <div class="flex flex-wrap items-center gap-2">
-              <strong class="in-[.notice]:font-bold">{{ s.name }}</strong>
-              @for (issue of issuesFor(s.id); track issue) {
-                <span
-                  appBadge
-                  class="cell in-[.night__stay]:whitespace-normal"
-                  [class.cell--danger]="issue === '다른 숙박과 중복'"
-                  [class.cell--warn]="issue !== '다른 숙박과 중복'"
-                  >{{ issue }}</span
-                >
-              }
+          <!-- 일정 카드와 같은 위계다: 제목·지도 / 회색 메타 / 주소 / 라벨. -->
+          <div class="stay__main flex flex-col gap-1 min-w-0">
+            <div class="flex items-center gap-1.5 text-15">
+              <strong class="min-w-0 truncate" [title]="s.name">{{ s.name }}</strong>
+              <span class="inline-flex flex-none gap-1 ml-auto">
+                <a
+                  class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                  [href]="naverUrl(s)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="s.name + ' 네이버지도에서 검색'"
+                  ><img
+                    class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                    src="brand/navermap.png"
+                    width="26"
+                    height="26"
+                    alt=""
+                    aria-hidden="true"
+                /></a>
+                <a
+                  class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                  [href]="kakaoUrl(s)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="s.name + ' 카카오맵에서 검색'"
+                  ><img
+                    class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                    src="brand/kakaomap.png"
+                    width="26"
+                    height="26"
+                    alt=""
+                    aria-hidden="true"
+                /></a>
+              </span>
             </div>
-            <div class="text-12 leading-normal">
-              {{ formatDate(s.checkIn, true) }} 체크인{{
-                s.checkInTime ? ' ' + s.checkInTime : ' (시각 미정)'
-              }}
-              → {{ formatDate(s.checkOut, true) }} 체크아웃{{
-                s.checkOutTime ? ' ' + s.checkOutTime : ' (시각 미정)'
-              }}
-              · <strong class="in-[.notice]:font-bold">{{ nightCount(s) }}박</strong>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-12 leading-normal">
-              <span appBadge class="cell cell--ghost in-[.night__stay]:whitespace-normal">{{
-                reservationLabel[s.reservation]
-              }}</span>
-              @if (regionName(s.regionId); as rn) {
-                <span appBadge class="cell cell--accent in-[.night__stay]:whitespace-normal">{{
-                  rn
-                }}</span>
-              }
+            <!--
+              숙박 기간이 먼저고, 체크인·체크아웃 시각은 그 아래 각자 한 줄이다.
+              한 줄에 몰아 넣으면 날짜와 시각이 뒤섞여 읽기 어렵다.
+            -->
+            <div class="flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3">
+              <span class="text-ink-2"
+                >{{ formatDate(s.checkIn, true) }} ~ {{ formatDate(s.checkOut, true) }}</span
+              >
+              <span class="text-border-strong" aria-hidden="true">·</span>
               @if (s.location) {
-                <span appBadge class="cell cell--ok in-[.night__stay]:whitespace-normal"
-                  ><app-icon name="pin" [size]="12" /> 위치 확인됨</span
+                <span class="inline-flex text-ok-ink" title="위치 확인됨"
+                  ><app-icon name="pin" [size]="12" />
+                  <span class="sr-only">위치 확인됨</span></span
                 >
               } @else {
-                <span appBadge class="cell cell--warn in-[.night__stay]:whitespace-normal"
-                  >위치 미확인</span
-                >
+                <span class="text-warn-ink">위치 미확인</span>
               }
             </div>
+            <dl
+              class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-12 leading-normal text-ink-3"
+            >
+              <dt>체크인</dt>
+              <dd [class.text-warn-ink]="!s.checkInTime">{{ s.checkInTime || '시각 미정' }}</dd>
+              <dt>체크아웃</dt>
+              <dd [class.text-warn-ink]="!s.checkOutTime">{{ s.checkOutTime || '시각 미정' }}</dd>
+            </dl>
             @if (s.address) {
-              <div class="text-12 leading-normal text-ink-3">{{ s.address }}</div>
+              <div class="text-12 leading-normal text-ink-3 flex items-center gap-1">
+                <span class="min-w-0 truncate" [title]="s.address">{{ s.address }}</span>
+                <button
+                  class="relative inline-flex size-6 flex-none items-center justify-center rounded-cell border-0 bg-transparent p-0 text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:transform-[translate(-10px,-10px)] hover:bg-ground-2 hover:text-ink"
+                  type="button"
+                  (click)="copyAddress(s)"
+                  [attr.aria-label]="s.name + ' 주소 복사'"
+                  [attr.data-testid]="'copy-stay-' + s.id"
+                >
+                  <app-icon [name]="copiedId() === s.id ? 'check' : 'copy'" [size]="14" />
+                </button>
+              </div>
             }
             @if (s.estimatedCost != null) {
               <p class="text-12 leading-normal text-accent-deep">
@@ -133,10 +167,31 @@
               </p>
             }
             @if (s.memo) {
-              <div class="text-12 leading-normal">{{ s.memo }}</div>
+              <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ s.memo }}</div>
             }
           </div>
-          <div class="stay__actions">
+          <!-- 라벨과 더보기를 맨 아래 한 줄에 나란히 둔다. -->
+          <div class="stay__actions col-span-full flex items-center gap-1.5">
+            <span class="flex flex-wrap items-center gap-1.5">
+              <span appBadge class="cell cell--stay">{{ nightCount(s) }}박</span>
+              <!-- 예약 여부는 이 화면의 핵심 상태라서 배지로 올린다. -->
+              <span appBadge [class]="'cell ' + reservationCell(s.reservation)">{{
+                reservationLabel[s.reservation]
+              }}</span>
+              @if (regionName(s.regionId); as rn) {
+                <span appBadge class="cell cell--region">{{ rn }}</span>
+              }
+              @for (issue of issuesFor(s.id); track issue) {
+                <span
+                  appBadge
+                  class="cell"
+                  [class.cell--danger]="issue === '다른 숙박과 중복'"
+                  [class.cell--warn]="issue !== '다른 숙박과 중복'"
+                  >{{ issue }}</span
+                >
+              }
+            </span>
+            <span class="flex-1" aria-hidden="true"></span>
             <app-row-menu
               [items]="stayMenu(s)"
               [ariaLabel]="s.name + ' 더보기'"

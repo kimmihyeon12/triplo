@@ -128,9 +128,11 @@ function markerElement(m: MapMarker, onClick: (id: string) => void, offset = fal
     ' ' +
     (m.kind === 'stay' ? 'tc-marker--stay' : 'tc-marker--stop') +
     (offset ? ' tc-marker--offset' : '');
-  btn.setAttribute('aria-label', (m.number ? `${m.number}번 ` : '숙소 ') + m.title);
+  const prefix = m.number ? `${m.number}번 ` : '';
+  btn.setAttribute('aria-label', prefix + (m.kind === 'stay' ? '숙소 ' : '') + m.title);
   btn.dataset['markerId'] = m.id;
-  btn.textContent = m.kind === 'stay' ? '숙' : String(m.number);
+  // 일정에 자리를 잡은 숙소는 번호로, 참고용(체크아웃)만 '숙'으로 표시한다.
+  btn.textContent = m.number !== null ? String(m.number) : '숙';
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     onClick(m.id);

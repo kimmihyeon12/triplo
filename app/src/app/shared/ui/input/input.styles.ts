@@ -57,10 +57,10 @@ export const INPUT_CLASSES = String.raw`
   [&.input::-webkit-calendar-picker-indicator]:hidden
   [&.input::-webkit-calendar-picker-indicator]:opacity-0 [&.input::-webkit-calendar-picker-indicator]:pointer-events-none
   [&.input.range-date]:border-0 [&.input.range-date]:rounded-none [&.input.range-date]:bg-transparent
-  [&.input.range-date[type='date']]:bg-none [&.input.range-date[type='date']]:px-0 [&.input.range-date[type='date']]:pr-0 [&.input.range-date]:text-13
+  [&.input.range-date[type='date']]:bg-none [&.input.range-date[type='date']]:px-0 [&.input.range-date[type='date']]:pr-0 [&.input.range-date]:text-14
   [&.input.range-date[type='date']]:appearance-none [&.input.range-date[type='date']]:[-webkit-appearance:none]
   [&.input.range-date:hover]:bg-transparent [&.input.range-date:focus-visible]:bg-transparent
   [&.input.range-date::-webkit-calendar-picker-indicator]:opacity-0 [&.input.range-date::-webkit-calendar-picker-indicator]:pointer-events-none
   [&.input.range-date:focus-visible]:shadow-none
-  [&.input.range-date]:h-10.5 [&.input.range-date]:min-h-10.5
+  [&.input.range-date]:h-11 [&.input.range-date]:min-h-11
 `;

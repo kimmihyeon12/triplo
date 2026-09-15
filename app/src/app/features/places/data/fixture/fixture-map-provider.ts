@@ -58,8 +58,11 @@ export class FixtureMapProvider implements MapProvider {
           btn.dataset['testid'] = 'map-marker-' + m.id;
           btn.dataset['markerId'] = m.id;
           btn.dataset['kind'] = m.kind;
-          btn.textContent = m.kind === 'stay' ? '숙' : String(m.number);
-          btn.setAttribute('aria-label', (m.number ? `${m.number}번 ` : '숙소 ') + m.title);
+          btn.textContent = m.number !== null ? String(m.number) : '숙';
+          btn.setAttribute(
+            'aria-label',
+            (m.number ? `${m.number}번 ` : '') + (m.kind === 'stay' ? '숙소 ' : '') + m.title,
+          );
           // 경계 상자 안 상대 위치로 배치(시각 확인용, 실제 타일 아님)
           let x =
             b && b.east !== b.west ? ((m.position.lng - b.west) / (b.east - b.west)) * 80 + 10 : 50;

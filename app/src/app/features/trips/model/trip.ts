@@ -54,6 +54,12 @@ export interface AccommodationStay {
   checkOut: IsoDate;
   checkInTime: HHmm | null;
   checkOutTime: HHmm | null;
+  /**
+   * 체크인 날짜의 일정 목록에서 차지하는 자리. 장소의 order와 같은 축을 쓴다.
+   * 숙소가 하루 중간에 들어가는 경우(짐 맡기고 다시 나가는 등)를 표현한다.
+   * null이면 그날 맨 끝에 선다.
+   */
+  dayOrder: number | null;
   reservation: ReservationState;
   memo: string;
   locationStatus: LocationStatus;
@@ -80,14 +86,15 @@ export interface Trip {
 export const STOP_KIND_LABEL: Record<StopKind, string> = {
   place: '장소',
   meal: '식사',
-  break: '휴식',
+  // 저장값은 'break'를 유지한다. 라벨만 바꿔 기존 일정이 깨지지 않게 한다.
+  break: '카페',
   buffer: '여유시간',
 };
 
 export const STOP_KIND_DEFAULT_NAME: Record<StopKind, string> = {
   place: '',
   meal: '식사',
-  break: '휴식',
+  break: '카페',
   buffer: '여유시간',
 };
 

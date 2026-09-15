@@ -152,20 +152,15 @@
 
                 <!-- 메타는 칩을 벗기고 가운뎃점으로 이어 붙인 옅은 한 줄 -->
                 <p class="card__meta flex flex-wrap items-center gap-1.5 mt-3 text-12 text-ink-3">
+<!--
+                    색 규칙은 상세 화면과 같다. 지역은 분류라서 회색,
+                    장소는 place(파랑), 숙소는 stay(보라)다.
+                  -->
                   @if (trip.regions.length > 0) {
-                    <span
-                      class="tag tag--region inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-accent-tint text-accent-deep"
-                      >{{ regionPath(trip) }}</span
-                    >
+                    <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
-                  <span
-                    class="tag tag--place inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-ok-tint text-ok-ink"
-                    >장소 {{ trip.stops.length }}</span
-                  >
-                  <span
-                    class="tag tag--stay inline-flex items-center rounded-cell text-12 font-medium leading-normal whitespace-nowrap py-0.75 px-2 bg-stay-tint text-stay-ink"
-                    >숙소 {{ trip.stays.length }}</span
-                  >
+                  <span appBadge class="cell cell--place">장소 {{ trip.stops.length }}</span>
+                  <span appBadge class="cell cell--stay">숙소 {{ trip.stays.length }}</span>
                   <span
                     class="card__quiet text-ink-3"
                     [attr.data-testid]="'trip-expense-' + trip.id"

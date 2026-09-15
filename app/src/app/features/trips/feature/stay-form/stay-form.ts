@@ -201,12 +201,10 @@ export class StayFormPage {
           trip.startDate !== trip.endDate &&
           !this.checkIn()
         ) {
-          // 기본값 제안: 아직 숙소가 없는 첫 밤부터 1박. 모든 밤에 숙소가 있으면 비워 둔다. 사용자가 바꿀 수 있다.
-          const firstOpen = nightCoverage(trip).find((n) => n.state === 'undecided');
-          if (firstOpen) {
-            this.checkIn.set(firstOpen.night);
-            this.checkOut.set(addDays(firstOpen.night, 1));
-          }
+          // 기본값은 여행 기간 전체다. 한 숙소에 계속 묵는 경우가 가장 많고,
+          // 나눠 묵을 때는 사용자가 줄이는 편이 손이 덜 간다.
+          this.checkIn.set(trip.startDate);
+          this.checkOut.set(trip.endDate);
         }
       });
     });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addStay, addStop, createTrip, resetApp } from './helpers';
+import { addStay, addStop, chooseRowMenu, createTrip, openTripMenu, resetApp } from './helpers';
 
 test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', () => {
   test.beforeEach(async ({ page }) => resetApp(page));
@@ -22,6 +22,7 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
       region: '속초',
     });
 
+    await openTripMenu(page);
     await page.getByTestId('trip-edit').click();
     await page.getByTestId('trip-end').fill('2026-05-02');
     await expect(page.getByTestId('impact-box')).toContainText(
@@ -78,10 +79,10 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
     await expect(page.getByRole('button', { name: '둘째 위로' })).toBeDisabled();
     await expect(page.getByRole('button', { name: '셋째 아래로' })).toBeDisabled();
 
-    await page.getByRole('button', { name: '셋째 제외' }).click();
+    await chooseRowMenu(page, '셋째', '일정에서 제외');
     await expect(page.getByTestId('day-totals')).toContainText('체류 1시간 15분');
     await expect(page.getByTestId('day-items')).toContainText('제외됨');
-    await page.getByRole('button', { name: '셋째 복원' }).click();
+    await chooseRowMenu(page, '셋째', '일정에 되돌리기');
     await expect(page.getByTestId('day-totals')).toContainText('체류 1시간 30분');
 
     await page.reload();

@@ -29,6 +29,9 @@
   --color-stay-ink: #6a4bb5;
   --color-stay-tint: #efe9fb;
   --color-stay-fill: #ddd2f5;
+  /* 지역 전용. ok(완료·확인됨)와 뜻이 겹치지 않도록 올리브 쪽으로 떨어뜨렸다. */
+  --color-region-ink: #3f6212;
+  --color-region-tint: #eaf3dc;
   --color-warn-ink: #7f5400;
   --color-warn-tint: #fff4d1;
   --color-warn-fill: #ffe08a;

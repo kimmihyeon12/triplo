@@ -19,20 +19,21 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TripEditorStore } from '../../data/trip-editor-store';
-import { enumerateDays, formatKoreanDate, formatPeriod } from '../../../../shared/util/dates';
+import { enumerateDays, formatKoreanDate } from '../../../../shared/util/dates';
 import {
+  type DaySegment,
   daySegments,
   dayStops,
   dayTotals,
   fixedTimeConflicts,
   formatMinutes,
+  moveStay,
   moveStop,
   removeStop,
   sortDayByNearest,
   toggleExcluded,
 } from '../../util/itinerary';
 import {
-  RESERVATION_LABEL,
   STOP_KIND_LABEL,
   type AccommodationStay,
   type IsoDate,
@@ -40,22 +41,19 @@ import {
   type TripStop,
 } from '../../model/trip';
 import { buildOverview } from '../../util/overview';
-import {
-  dayStayInfo,
-  nightCoverage,
-  removeStay,
-  stayIssues,
-  stayNightCount,
-} from '../../util/stays';
+import { dayStayInfo, removeStay } from '../../util/stays';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
-import { buildDayMap, buildStaysMap } from '../../util/map-markers';
+import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
+
+/** 지도 검색과 주소 복사에 필요한 최소 정보. 장소와 숙소가 함께 쓴다. */
+type MapTarget = { readonly id: string; readonly name: string; readonly address: string };
 
 @Component({
   selector: 'app-trip-detail',
@@ -141,7 +139,7 @@ export class TripDetailPage {
       stop('buffer', '여유시간', 'buffer', 'add-buffer'),
       {
         label: '숙소',
-        icon: 'bed',
+        icon: 'home',
         testId: 'add-stay',
         link: ['/trips', id, 'stays', 'new'],
         queryParams: {},
@@ -268,33 +266,36 @@ export class TripDetailPage {
     return this.trip()?.regions.find((r) => r.id === id)?.name ?? null;
   }
 
-  segKey(seg: { type: string; stop?: TripStop }, i: number): string {
-    return seg.type === 'stop' && seg.stop ? 'stop:' + seg.stop.id : 'leg:' + i;
+  segKey(seg: DaySegment, i: number): string {
+    if (seg.type === 'stop') return 'stop:' + seg.stop.id;
+    if (seg.type === 'stay') return 'stay:' + seg.stay.id;
+    return 'leg:' + i;
   }
 
   isConflicted(stopId: string): boolean {
     return this.conflicts().some((c) => c.earlierId === stopId || c.laterId === stopId);
   }
 
-  private stopIndexes(): number[] {
+  /** 장소와 숙소가 함께 서는 자리. 이동 버튼의 양 끝 판정에 쓴다. */
+  private entryIndexes(): number[] {
     return this.segments()
-      .map((s, i) => (s.type === 'stop' ? i : -1))
+      .map((s, i) => (s.type === 'leg' ? -1 : i))
       .filter((i) => i >= 0);
   }
 
-  /** 제외되지 않은 항목의 순번(1부터) */
+  /** 제외되지 않은 항목의 순번(1부터). 숙소도 한 자리를 차지한다. */
   stopNumber(idx: number): number {
     return this.segments()
       .slice(0, idx + 1)
-      .filter((s) => s.type === 'stop' && !s.stop.excluded).length;
+      .filter((s) => s.type === 'stay' || (s.type === 'stop' && !s.stop.excluded)).length;
   }
 
   isFirst(idx: number): boolean {
-    return this.stopIndexes()[0] === idx;
+    return this.entryIndexes()[0] === idx;
   }
 
   isLast(idx: number): boolean {
-    const arr = this.stopIndexes();
+    const arr = this.entryIndexes();
     return arr[arr.length - 1] === idx;
   }
 
@@ -311,12 +312,13 @@ export class TripDetailPage {
     this.selectedMarkerId.set(this.selectedMarkerId() === id ? null : id);
   }
 
-  naverUrl(stop: TripStop): string {
-    return naverSearchUrl(mapQuery(stop.name, stop.address));
+  // 장소와 숙소가 같은 목록에 나란히 서므로 지도·복사도 같은 함수를 쓴다.
+  naverUrl(target: MapTarget): string {
+    return naverSearchUrl(mapQuery(target.name, target.address));
   }
 
-  kakaoUrl(stop: TripStop): string {
-    return kakaoSearchUrl(mapQuery(stop.name, stop.address));
+  kakaoUrl(target: MapTarget): string {
+    return kakaoSearchUrl(mapQuery(target.name, target.address));
   }
 
   /**
@@ -328,6 +330,7 @@ export class TripDetailPage {
 
   stopMenu(stop: TripStop): RowMenuItem[] {
     return [
+      { id: 'expense', label: '정산하기', icon: 'wallet', testId: 'expense-' + stop.id },
       {
         id: 'toggle',
         label: stop.excluded ? '일정에 되돌리기' : '일정에서 제외',
@@ -343,6 +346,45 @@ export class TripDetailPage {
     if (action === 'edit') void this.router.navigate(['/trips', this.id(), 'stops', stop.id]);
     else if (action === 'toggle') void this.toggle(stop.id);
     else if (action === 'delete') this.deleteStopId.set(stop.id);
+    else if (action === 'expense') this.goToExpense(stop.id);
+  }
+
+  /** 정산 화면을 지출 기록이 열린 상태로 연다. 항목 이름·예상 금액은 그쪽에서 채운다. */
+  private goToExpense(linkId: string): void {
+    void this.router.navigate(['/trips', this.id(), 'expenses'], {
+      queryParams: { add: linkId },
+    });
+  }
+
+  readonly deleteDayStayId = signal<string | null>(null);
+
+  /** 숙소도 일정의 한 자리이므로 같은 방식으로 위·아래로 옮긴다. */
+  async moveStayRow(stayId: string, dir: 'up' | 'down'): Promise<void> {
+    const t = this.trip();
+    if (!t) return;
+    await this.store.commit(moveStay(t, stayId, dir));
+    this.flashId.set(stayId);
+    setTimeout(() => this.flashId.set(null), 320);
+  }
+
+  stayMenu(stay: AccommodationStay): RowMenuItem[] {
+    return [
+      { id: 'expense', label: '정산하기', icon: 'wallet', testId: 'expense-stay-' + stay.id },
+      { id: 'edit', label: '편집', icon: 'edit', testId: 'edit-stay-' + stay.id },
+      { id: 'delete', label: '삭제', icon: 'trash', danger: true, testId: 'delete-stay-' + stay.id },
+    ];
+  }
+
+  onStayMenu(action: string, stay: AccommodationStay): void {
+    if (action === 'edit') void this.router.navigate(['/trips', this.id(), 'stays', stay.id]);
+    else if (action === 'delete') this.deleteDayStayId.set(stay.id);
+    else if (action === 'expense') this.goToExpense(stay.id);
+  }
+
+  async deleteDayStay(stayId: string): Promise<void> {
+    const t = this.trip();
+    if (!t) return;
+    if (await this.store.commit(removeStay(t, stayId))) this.deleteDayStayId.set(null);
   }
 
   async confirmDeleteTrip(): Promise<void> {
@@ -413,15 +455,15 @@ export class TripDetailPage {
     );
   }
 
-  async copyAddress(stop: TripStop): Promise<void> {
-    const ok = await copyText(stop.address);
+  async copyAddress(target: MapTarget): Promise<void> {
+    const ok = await copyText(target.address);
     if (ok) {
-      this.copiedId.set(stop.id);
+      this.copiedId.set(target.id);
       this.copyFallback.set(false);
       setTimeout(() => this.copiedId.set(null), 1500);
     } else {
       this.copyFallback.set(true);
-      this.copyFallbackId.set(stop.id);
+      this.copyFallbackId.set(target.id);
     }
   }
 
