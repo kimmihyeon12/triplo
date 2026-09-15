@@ -49,7 +49,10 @@ test.describe('키보드만으로 첫 흐름, 가로 스크롤 없음', () => {
     await page.getByTestId('stop-name').focus();
     await page.keyboard.type('안목해변');
     await page.getByTestId('stop-date').focus();
+    await page.keyboard.press('Space'); // 목록 열기
     await page.keyboard.press('ArrowDown'); // 미배치 → 1일차
+    await page.keyboard.press('Enter'); // 선택 확정
+    await expect(page.getByTestId('stop-date')).toHaveValue('2026-05-01');
     await page.getByTestId('stop-save').focus();
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('day-items')).toContainText('안목해변');
