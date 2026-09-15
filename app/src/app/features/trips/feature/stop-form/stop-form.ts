@@ -128,8 +128,9 @@ export class StopFormPage {
   );
 
   readonly backLink = computed(() => ['/trips', this.id()]);
+  // Undated stops land in the itinerary tab's unassigned list.
   readonly backQuery = computed(() =>
-    this.date() ? { tab: 'days', day: this.date() } : { tab: 'overview' },
+    this.date() ? { tab: 'days', day: this.date() } : { tab: 'days' },
   );
 
   constructor() {

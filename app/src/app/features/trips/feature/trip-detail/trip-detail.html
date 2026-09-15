@@ -33,203 +33,34 @@
       (retry)="store.retrySave()"
     />
 
-    <!-- 탭 -->
-    <nav
-      class="tabs flex [border-bottom:1px_solid_var(--color-border)] -mt-0.5"
-      role="tablist"
-      aria-label="여행 보기"
-    >
-      @for (t of tabs; track t.id) {
-        <a
-          class="tab flex-1 flex justify-center items-center min-h-10.5 no-underline text-ink-2 text-14 font-medium [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:text-ink [&.tab--on]:font-bold [&.tab--on]:border-b-accent-deep"
-          role="tab"
-          [class.tab--on]="activeTab() === t.id"
-          [attr.aria-selected]="activeTab() === t.id"
-          [routerLink]="[]"
-          [queryParams]="{ tab: t.id, day: selectedDay() }"
-          queryParamsHandling="merge"
-          [attr.data-testid]="'tab-' + t.id"
-        >
-          {{ t.ko }}
-        </a>
-      }
-      <a
-        class="flex min-h-10.5 flex-1 items-center justify-center text-sm font-medium text-ink-2 no-underline hover:text-accent-deep"
-        role="tab"
-        aria-selected="false"
-        [routerLink]="['/trips', id(), 'expenses']"
-        >가계부</a
-      >
-    </nav>
-
-    <!-- 전체 보기 -->
-    @if (activeTab() === 'overview') {
-      <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-overview">
-        @if (overview().undecidedDates) {
-          <div appNotice class="notice notice--warn">
-            <app-icon name="calendar" />
-            <div class="notice__body flex-1 min-w-0">
-              <strong class="in-[.notice]:font-bold">날짜 미정 초안</strong>입니다. 날짜를 정하면
-              날짜별 일정과 숙박 날짜를 확인할 수 있습니다.
-              <div class="notice__actions flex gap-2 flex-wrap mt-2">
-                <a appButton class="btn btn--sm" [routerLink]="['/trips', trip()!.id, 'edit']"
-                  >날짜 정하기</a
-                >
-              </div>
-            </div>
-          </div>
-        } @else if (isEmptyTrip()) {
-          <section
-            class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
-            data-testid="empty-trip"
+    <!--
+      탭은 이 화면의 패널만 바꾼다. 가계부는 다른 화면이므로 tablist 밖에 두고,
+      아이콘과 구분선으로 "여기서부터는 이동"임을 드러낸다.
+    -->
+    <div class="flex items-center [border-bottom:1px_solid_var(--color-border)] -mt-0.5">
+      <nav class="tabs flex gap-1" role="tablist" aria-label="여행 보기">
+        @for (t of tabs; track t.id) {
+          <a
+            class="tab flex justify-center items-center min-h-10.5 px-4 no-underline text-ink-2 text-14 font-medium [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:text-ink [&.tab--on]:font-bold [&.tab--on]:border-b-accent-deep"
+            role="tab"
+            [class.tab--on]="activeTab() === t.id"
+            [attr.aria-selected]="activeTab() === t.id"
+            [routerLink]="[]"
+            [queryParams]="{ tab: t.id, day: selectedDay() }"
+            queryParamsHandling="merge"
+            [attr.data-testid]="'tab-' + t.id"
           >
-            <h2 class="in-[.empty]:text-16">장소와 숙소를 추가해 보세요</h2>
-            <p class="text-ink-3">
-              날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
-            </p>
-          </section>
+            {{ t.ko }}
+          </a>
         }
-
-        @if (overview().days.length > 0) {
-          <ol class="ov flex flex-col gap-3" data-testid="overview-days">
-            @for (d of overview().days; track d.date) {
-              <li>
-                <a
-                  class="ov__row grid bg-panel rounded-panel no-underline [box-shadow:var(--shadow-panel)] grid-cols-[40px_1fr] gap-[var(--sp-2)_var(--sp-3)] p-4 [border:1px_solid_transparent] text-inherit [transition:border-color_var(--dur)_var(--ease-out)] hover:border-border-strong [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_1fr_auto]"
-                  [routerLink]="[]"
-                  [queryParams]="{ tab: 'days', day: d.date }"
-                  queryParamsHandling="merge"
-                  [attr.data-testid]="'overview-day-' + d.dayNumber"
-                >
-                  <span
-                    class="ov__no flex items-center justify-center w-8 h-8 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
-                    [attr.aria-label]="d.dayNumber + '일차'"
-                    ><span class="ov__day text-14 font-bold leading-none" aria-hidden="true">{{
-                      d.dayNumber
-                    }}</span></span
-                  >
-                  <span class="ov__main flex flex-col gap-1 min-w-0">
-                    <span class="ov__date flex items-center gap-1.5 flex-wrap font-bold">
-                      {{ formatDate(d.date) }}
-                      @for (r of d.regionNames; track r) {
-                        <span appBadge class="cell cell--accent">{{ r }}</span>
-                      }
-                      @if (d.regionChangeCount > 0) {
-                        <span appBadge class="cell cell--ghost"
-                          >지역 이동 {{ d.regionChangeCount }}회</span
-                        >
-                      }
-                    </span>
-                    <span class="ov__stops text-ink-2 wrap-anywhere">
-                      @if (d.stopNames.length === 0) {
-                        <span class="text-ink-3">일정 없음</span>
-                      } @else {
-                        {{ summarize(d.stopNames) }}
-                      }
-                    </span>
-                    <span
-                      class="ov__meta text-12 leading-normal text-ink-3 flex gap-1 flex-wrap items-center"
-                    >
-                      @if (d.totals.activeCount > 0) {
-                        <span>체류 {{ minutes(d.totals.stayMinutes) }}</span>
-                        @if (d.totals.unknownStayCount > 0) {
-                          <span>· 체류 미정 {{ d.totals.unknownStayCount }}</span>
-                        }
-                        @if (d.totals.legCount > 0) {
-                          <span>· 이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
-                        }
-                      }
-                      @if (d.fixedTimeConflictCount > 0) {
-                        <span appBadge class="cell cell--danger"
-                          >고정 시각 충돌 {{ d.fixedTimeConflictCount }}</span
-                        >
-                      }
-                    </span>
-                  </span>
-                  <span
-                    appBadge
-                    class="ov__night cell text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
-                    [class]="nightCellClass(d.nightState)"
-                    [attr.data-testid]="'overview-night-' + d.dayNumber"
-                  >
-                    <app-icon
-                      [name]="d.nightState === 'none' ? 'arrow-right' : 'bed'"
-                      [size]="14"
-                    />
-                    {{ d.nightLabel }}
-                  </span>
-                </a>
-              </li>
-            }
-          </ol>
-        }
-
-        @if (overview().unassigned.length > 0) {
-          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="unassigned">
-            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
-              미배치 장소
-              <span appBadge class="cell cell--ghost">{{ overview().unassigned.length }}</span>
-            </h3>
-            <ul class="plain-list flex flex-col">
-              @for (s of overview().unassigned; track s.id) {
-                <li
-                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
-                >
-                  <span appBadge class="cell cell--place"
-                    ><app-icon [name]="s.kind" [size]="14" /> {{ kindLabel[s.kind] }}</span
-                  >
-                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ s.name }}</span>
-                  <a
-                    appButton
-                    class="btn btn--sm"
-                    [routerLink]="['/trips', trip()!.id, 'stops', s.id]"
-                    [attr.data-testid]="'place-' + s.id"
-                    >날짜 배치</a
-                  >
-                </li>
-              }
-            </ul>
-          </section>
-        }
-
-        @if (overview().issues.length > 0) {
-          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="issues">
-            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
-              확인 필요
-            </h3>
-            <ul class="plain-list flex flex-col">
-              @for (i of overview().issues; track i.kind) {
-                <li
-                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
-                >
-                  <span
-                    appBadge
-                    class="cell"
-                    [class.cell--danger]="i.kind === 'stay-conflict' || i.kind === 'fixed-time'"
-                    [class.cell--warn]="i.kind !== 'stay-conflict' && i.kind !== 'fixed-time'"
-                    >{{ i.count }}</span
-                  >
-                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ i.label }}</span>
-                  <a
-                    appButton
-                    class="btn btn--sm"
-                    [routerLink]="[]"
-                    [queryParams]="{ tab: i.tab }"
-                    queryParamsHandling="merge"
-                    variant="ghost"
-                    >보기</a
-                  >
-                </li>
-              }
-            </ul>
-            <p class="text-12 leading-normal text-ink-3" style="margin-top: 8px">
-              위치 미확인은 장소 검색·경로 연동 전까지 모든 항목에 표시됩니다. 추정 좌표나
-              이동시간은 만들지 않습니다.
-            </p>
-          </section>
-        }
-      </section>
-    }
+      </nav>
+      <a
+        class="ml-auto flex min-h-10.5 shrink-0 items-center gap-1.5 self-center rounded-cell px-2.5 text-14 font-medium text-ink-3 no-underline [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)]"
+        [routerLink]="['/trips', id(), 'expenses']"
+        data-testid="go-expenses"
+        ><app-icon name="wallet" [size]="15" /> 가계부</a
+      >
+    </div>
 
     <!-- 날짜별 보기 -->
     @if (activeTab() === 'days') {
@@ -250,8 +81,9 @@
           <div
             class="days-layout flex flex-col gap-4 [@media(min-width:_900px)]:grid [@media(min-width:_900px)]:grid-cols-[180px_1fr] [@media(min-width:_900px)]:[align-items:start]"
           >
+            <!-- sticky top은 상단 바(약 53px) 아래에서 멈춰야 헤더를 뚫지 않는다. -->
             <div
-              class="daytabs flex gap-1.5 overflow-x-auto pt-0.5 pr-8 pb-1.5 pl-0.5 [scroll-snap-type:x_proximity] scrollbar-none mask-[linear-gradient(to_right,#000_calc(100%-32px),transparent)] [&::-webkit-scrollbar]:hidden [@media(min-width:_900px)]:flex-col [@media(min-width:_900px)]:sticky [@media(min-width:_900px)]:top-4 [@media(min-width:_900px)]:pr-0.5 [@media(min-width:_900px)]:overflow-visible [@media(min-width:_900px)]:mask-none"
+              class="daytabs flex gap-1.5 overflow-x-auto pt-0.5 pr-8 pb-1.5 pl-0.5 [scroll-snap-type:x_proximity] scrollbar-none mask-[linear-gradient(to_right,#000_calc(100%-32px),transparent)] [&::-webkit-scrollbar]:hidden [@media(min-width:_900px)]:flex-col [@media(min-width:_900px)]:sticky [@media(min-width:_900px)]:top-[69px] [@media(min-width:_900px)]:pr-0.5 [@media(min-width:_900px)]:overflow-visible [@media(min-width:_900px)]:mask-none"
               role="tablist"
               aria-label="날짜 선택"
               (keydown)="onDayKey($event)"
@@ -329,10 +161,11 @@
                 }
               </div>
 
+<!-- 지역은 분류 정보다. 파랑은 순번 마커·주 동작에만 남긴다. -->
               @if (dayRegions().length > 0) {
                 <p class="flex flex-wrap items-center gap-2">
                   @for (r of dayRegions(); track r; let last = $last) {
-                    <span appBadge class="cell cell--accent">{{ r }}</span>
+                    <span appBadge class="cell cell--ghost">{{ r }}</span>
                     @if (!last) {
                       <app-icon name="arrow-right" [size]="14" class="text-ink-3" />
                     }
@@ -526,12 +359,19 @@
                             } @else {
                               <span class="text-ink-3">· 체류 미정</span>
                             }
+<!--
+                              Every stop carries this state, so a full badge on each row drowns
+                              the list. The count stays in the map legend.
+                            -->
                             @if (seg.stop.location) {
-                              <span appBadge class="cell cell--ok item__unverified ml-0.5"
-                                ><app-icon name="pin" [size]="12" /> 위치 확인됨</span
+                              <span
+                                class="item__unverified ml-0.5 inline-flex text-ok-ink"
+                                title="위치 확인됨"
+                                ><app-icon name="pin" [size]="12" />
+                                <span class="sr-only">위치 확인됨</span></span
                               >
                             } @else {
-                              <span appBadge class="cell cell--warn item__unverified ml-0.5"
+                              <span class="item__unverified ml-0.5 text-12 text-warn-ink"
                                 >위치 미확인</span
                               >
                             }
@@ -656,45 +496,186 @@
                       >체류 미정 {{ totals().unknownStayCount }}개</span
                     >
                   }
+                  <!-- The badge already states the gap; the sentence repeated it every day. -->
                   <span appBadge class="cell cell--ghost"
                     >이동 {{ totals().legCount }}구간 · 시간 미확인</span
                   >
                 </span>
-                <p class="text-12 leading-normal text-ink-3">
-                  도착 시각은 이동시간이 조회되기 전까지 제시하지 않습니다.
-                </p>
               </div>
 
-              <div class="flex flex-wrap items-center gap-2">
-                <a
-                  appButton
-                  class="btn btn--sm"
-                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
-                  [queryParams]="{ kind: 'meal', date: selectedDay() }"
-                  data-testid="add-meal"
-                  ><app-icon name="meal" [size]="14" /> 식사 추가</a
-                >
-                <a
-                  appButton
-                  class="btn btn--sm"
-                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
-                  [queryParams]="{ kind: 'break', date: selectedDay() }"
-                  data-testid="add-break"
-                  ><app-icon name="break" [size]="14" /> 휴식 추가</a
-                >
-                <a
-                  appButton
-                  class="btn btn--sm"
-                  [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
-                  [queryParams]="{ kind: 'buffer', date: selectedDay() }"
-                  ><app-icon name="buffer" [size]="14" /> 여유시간 추가</a
-                >
-              </div>
             </div>
           </div>
         }
       </section>
     }
+    <!--
+      일정 요약: 날짜 칩이 하루를 고르는 자리라면 여기는 여행 전체를 훑는 자리다.
+      기본은 접어 두고, 미배치·확인 필요는 놓치면 안 되므로 항상 펼쳐 둔다.
+    -->
+    @if (activeTab() === 'days') {
+      <section class="flex flex-col gap-3" data-testid="panel-overview">
+        @if (isEmptyTrip() && !overview().undecidedDates) {
+          <section
+            class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
+            data-testid="empty-trip"
+          >
+            <h2 class="in-[.empty]:text-16">장소와 숙소를 추가해 보세요</h2>
+            <p class="text-ink-3">
+              날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
+            </p>
+          </section>
+        }
+
+        @if (overview().days.length > 0) {
+          <details class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="overview-fold">
+            <summary
+              class="flex cursor-pointer items-center gap-2 text-14 font-bold marker:text-ink-3"
+            >
+              여행 전체 보기
+              <span appBadge class="cell cell--ghost">{{ overview().days.length }}일</span>
+            </summary>
+            <div class="mt-3">
+          <ol class="ov flex flex-col gap-3" data-testid="overview-days">
+            @for (d of overview().days; track d.date) {
+              <li>
+                <a
+                  class="ov__row grid bg-panel rounded-panel no-underline [box-shadow:var(--shadow-panel)] grid-cols-[40px_1fr] gap-[var(--sp-2)_var(--sp-3)] p-4 [border:1px_solid_transparent] text-inherit [transition:border-color_var(--dur)_var(--ease-out)] hover:border-border-strong [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_1fr_auto]"
+                  [routerLink]="[]"
+                  [queryParams]="{ tab: 'days', day: d.date }"
+                  queryParamsHandling="merge"
+                  [attr.data-testid]="'overview-day-' + d.dayNumber"
+                >
+                  <span
+                    class="ov__no flex items-center justify-center w-8 h-8 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
+                    [attr.aria-label]="d.dayNumber + '일차'"
+                    ><span class="ov__day text-14 font-bold leading-none" aria-hidden="true">{{
+                      d.dayNumber
+                    }}</span></span
+                  >
+                  <span class="ov__main flex flex-col gap-1 min-w-0">
+                    <span class="ov__date flex items-center gap-1.5 flex-wrap font-bold">
+                      {{ formatDate(d.date) }}
+                      @for (r of d.regionNames; track r) {
+                        <span appBadge class="cell cell--ghost">{{ r }}</span>
+                      }
+                      @if (d.regionChangeCount > 0) {
+                        <span appBadge class="cell cell--ghost"
+                          >지역 이동 {{ d.regionChangeCount }}회</span
+                        >
+                      }
+                    </span>
+                    <span class="ov__stops text-ink-2 wrap-anywhere">
+                      @if (d.stopNames.length === 0) {
+                        <span class="text-ink-3">일정 없음</span>
+                      } @else {
+                        {{ summarize(d.stopNames) }}
+                      }
+                    </span>
+                    <span
+                      class="ov__meta text-12 leading-normal text-ink-3 flex gap-1 flex-wrap items-center"
+                    >
+                      @if (d.totals.activeCount > 0) {
+                        <span>체류 {{ minutes(d.totals.stayMinutes) }}</span>
+                        @if (d.totals.unknownStayCount > 0) {
+                          <span>· 체류 미정 {{ d.totals.unknownStayCount }}</span>
+                        }
+                        @if (d.totals.legCount > 0) {
+                          <span>· 이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
+                        }
+                      }
+                      @if (d.fixedTimeConflictCount > 0) {
+                        <span appBadge class="cell cell--danger"
+                          >고정 시각 충돌 {{ d.fixedTimeConflictCount }}</span
+                        >
+                      }
+                    </span>
+                  </span>
+                  <span
+                    appBadge
+                    class="ov__night cell text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
+                    [class]="nightCellClass(d.nightState)"
+                    [attr.data-testid]="'overview-night-' + d.dayNumber"
+                  >
+                    <app-icon
+                      [name]="d.nightState === 'none' ? 'arrow-right' : 'bed'"
+                      [size]="14"
+                    />
+                    {{ d.nightLabel }}
+                  </span>
+                </a>
+              </li>
+            }
+          </ol>
+            </div>
+          </details>
+        }
+
+        @if (overview().unassigned.length > 0) {
+          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="unassigned">
+            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
+              미배치 장소
+              <span appBadge class="cell cell--ghost">{{ overview().unassigned.length }}</span>
+            </h3>
+            <ul class="plain-list flex flex-col">
+              @for (s of overview().unassigned; track s.id) {
+                <li
+                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+                >
+                  <span appBadge class="cell cell--place"
+                    ><app-icon [name]="s.kind" [size]="14" /> {{ kindLabel[s.kind] }}</span
+                  >
+                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ s.name }}</span>
+                  <a
+                    appButton
+                    class="btn btn--sm"
+                    [routerLink]="['/trips', trip()!.id, 'stops', s.id]"
+                    [attr.data-testid]="'place-' + s.id"
+                    >날짜 배치</a
+                  >
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (overview().issues.length > 0) {
+          <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="issues">
+            <h3 class="section-title flex items-center gap-2 mb-2 in-[.empty]:text-16">
+              확인 필요
+            </h3>
+            <ul class="plain-list flex flex-col">
+              @for (i of overview().issues; track i.kind) {
+                <li
+                  class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
+                >
+                  <span
+                    appBadge
+                    class="cell"
+                    [class.cell--danger]="i.kind === 'stay-conflict' || i.kind === 'fixed-time'"
+                    [class.cell--warn]="i.kind !== 'stay-conflict' && i.kind !== 'fixed-time'"
+                    >{{ i.count }}</span
+                  >
+                  <span class="grow flex-1 min-w-0 wrap-anywhere">{{ i.label }}</span>
+                  <a
+                    appButton
+                    class="btn btn--sm"
+                    [routerLink]="[]"
+                    [queryParams]="{ tab: i.tab }"
+                    queryParamsHandling="merge"
+                    variant="ghost"
+                    >보기</a
+                  >
+                </li>
+              }
+            </ul>
+            <p class="mt-2 text-12 leading-normal text-ink-3">
+              추정 좌표나 이동시간은 만들지 않습니다.
+            </p>
+          </section>
+        }
+      </section>
+    }
+
 
     <!-- 숙소 보기 -->
     @if (activeTab() === 'stays') {
@@ -705,24 +686,43 @@
       />
     }
 
-    <div appActionBar class="action-bar">
-      <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
-        <a
-          appButton
-          class="btn"
-          [routerLink]="['/trips', trip()!.id, 'stops', 'new']"
-          [queryParams]="activeTab() === 'days' && selectedDay() ? { date: selectedDay() } : {}"
-          data-testid="add-stop"
-          variant="primary"
-          ><app-icon name="place" [size]="16" /> 장소 추가</a
+    <!--
+      한 버튼으로 모든 추가를 받는다. 장소·식사·휴식·여유시간은 같은 폼의 kind만 다르고
+      숙소만 다른 폼이므로, 흩어 두면 규칙이 보이지 않는다.
+    -->
+    <div appActionBar class="action-bar z-[10002]">
+      <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
+        <details
+          #addSheet
+          appDismissible
+          class="menu-sheet relative w-full [@media(min-width:_720px)]:w-auto"
         >
-        <a
-          appButton
-          class="btn"
-          [routerLink]="['/trips', trip()!.id, 'stays', 'new']"
-          data-testid="add-stay"
-          ><app-icon name="bed" [size]="16" /> 숙소 추가</a
-        >
+          <summary
+            class="btn relative z-[10001] flex min-h-11 cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-accent-deep-hover md:w-60 md:min-w-45 [&::-webkit-details-marker]:hidden"
+            data-testid="add-open"
+          >
+            <app-icon name="plus" [size]="16" /> 일정 추가
+          </summary>
+          <button type="button" class="menu-backdrop fixed inset-0 z-[30] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
+          <div
+            class="absolute bottom-full left-0 right-0 z-[10001] mb-2 grid gap-1 rounded-panel border border-border bg-panel p-1.5 shadow-float [@media(min-width:_720px)]:left-auto [@media(min-width:_720px)]:w-56"
+            role="menu"
+          >
+            @for (o of addOptions(); track o.testId) {
+              <a
+                class="flex min-h-11 items-center gap-2.5 rounded-control px-3 text-14 text-ink no-underline hover:bg-ground-2 focus-visible:outline-2"
+                role="menuitem"
+                [routerLink]="o.link"
+                [queryParams]="o.queryParams"
+                [attr.data-testid]="o.testId"
+                (click)="addSheet.open = false"
+              >
+                <app-icon [name]="o.icon" [size]="16" />
+                {{ o.label }}
+              </a>
+            }
+          </div>
+        </details>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiDismissible } from '../../../../shared/ui/dismissible/dismissible';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -44,7 +45,8 @@ import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { buildDayMap, buildStaysMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 
-type Tab = 'overview' | 'days' | 'stays';
+/** `overview` folded into `days`; old links still resolve to the itinerary tab. */
+type Tab = 'days' | 'stays';
 
 @Component({
   selector: 'app-trip-detail',
@@ -53,6 +55,7 @@ type Tab = 'overview' | 'days' | 'stays';
     UiBadge,
     UiNotice,
     UiActionBar,
+    UiDismissible,
     RouterLink,
     IconComponent,
     TripHeader,
@@ -73,8 +76,7 @@ export class TripDetailPage {
   private readonly auth = inject(AuthStore);
 
   readonly tabs: { id: Tab; ko: string }[] = [
-    { id: 'overview', ko: '전체' },
-    { id: 'days', ko: '날짜별' },
+    { id: 'days', ko: '일정' },
     { id: 'stays', ko: '숙소' },
   ];
   readonly kindLabel = STOP_KIND_LABEL;
@@ -91,10 +93,7 @@ export class TripDetailPage {
     () => !!this.trip() && this.trip()!.stops.length === 0 && this.trip()!.stays.length === 0,
   );
 
-  readonly activeTab = computed<Tab>(() => {
-    const t = this.tab();
-    return t === 'days' || t === 'stays' ? t : 'overview';
-  });
+  readonly activeTab = computed<Tab>(() => (this.tab() === 'stays' ? 'stays' : 'days'));
   readonly days = computed<IsoDate[]>(() => {
     const t = this.trip();
     return t?.startDate && t.endDate ? enumerateDays(t.startDate, t.endDate) : [];
@@ -104,6 +103,32 @@ export class TripDetailPage {
     const days = this.days();
     if (d && days.includes(d)) return d;
     return days[0] ?? null;
+  });
+
+  /** One add sheet for every kind; the date rides along only when a day is in view. */
+  readonly addOptions = computed(() => {
+    const id = this.id();
+    const date = this.activeTab() === 'days' ? this.selectedDay() : null;
+    const stop = (kind: string | null, label: string, icon: string, testId: string) => ({
+      label,
+      icon,
+      testId,
+      link: ['/trips', id, 'stops', 'new'],
+      queryParams: { ...(kind ? { kind } : {}), ...(date ? { date } : {}) },
+    });
+    return [
+      stop(null, '장소', 'place', 'add-stop'),
+      stop('meal', '식사', 'meal', 'add-meal'),
+      stop('break', '휴식', 'break', 'add-break'),
+      stop('buffer', '여유시간', 'buffer', 'add-buffer'),
+      {
+        label: '숙소',
+        icon: 'bed',
+        testId: 'add-stay',
+        link: ['/trips', id, 'stays', 'new'],
+        queryParams: {},
+      },
+    ];
   });
 
   readonly stayInfo = computed(() => dayStayInfo(this.trip()!, this.selectedDay() ?? ''));
@@ -143,21 +168,30 @@ export class TripDetailPage {
   /** 지역을 칩 대신 본문 텍스트 경로로 표시한다(예: 강릉 → 속초). */
 
   constructor() {
-    // 상단 바: ‹ 뒤로, 가운데 여행 제목(길면 말줄임), 오른쪽 편집
+    // 상단 바: ‹ 뒤로, 가운데 여행 제목(길면 말줄임), 오른쪽 사람·더보기.
+    // 편집은 더보기 안으로 옮겨 상단 바에 아이콘이 쌓이지 않게 한다.
     effect(() => {
       const t = this.trip();
       this.pageBar.set({
         title: t?.title ?? '여행',
         back: ['/trips'],
-        action: t ? { label: '편집', link: ['/trips', t.id, 'edit'], testId: 'trip-edit' } : null,
+        action: null,
         tools: t
           ? {
               people:
                 this.auth.user() && this.auth.nickname()
-                ? [{ id: this.auth.user()!.id, name: this.auth.nickname()! }]
+                  ? [{ id: this.auth.user()!.id, name: this.auth.nickname()! }]
                   : [],
               inviteLink: ['/trips', t.id, 'invite'],
-              menu: [{ label: '이미지로 저장', link: ['/trips', t.id, 'export'] }],
+              menu: [
+                {
+                  label: '여행 정보 수정',
+                  icon: 'edit',
+                  link: ['/trips', t.id, 'edit'],
+                  testId: 'trip-edit',
+                },
+                { label: '이미지로 저장', icon: 'save', link: ['/trips', t.id, 'export'] },
+              ],
             }
           : undefined,
       });

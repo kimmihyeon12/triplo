@@ -1,10 +1,10 @@
+<!-- The top bar already carries the title; repeating it here only costs vertical space. -->
 <header class="head flex items-center justify-between gap-2 flex-wrap" data-testid="trip-header">
-  <h1
-    class="visually-hidden w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
+  <span
+    class="w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
     data-testid="trip-title"
+    >{{ trip().title }}</span
   >
-    {{ trip().title }}
-  </h1>
   <p class="head__line flex flex-wrap min-w-0 text-13 text-ink-2 items-baseline gap-[0_5px]">
     <span data-testid="trip-period">{{ period() }}</span>
     @if (trip().regions.length > 0) {
