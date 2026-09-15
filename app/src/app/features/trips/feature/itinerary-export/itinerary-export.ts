@@ -14,6 +14,7 @@ import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import { TripEditorStore } from '../../data/trip-editor-store';
 import { ItinerarySnapshot } from '../../ui/itinerary-snapshot/itinerary-snapshot';
 import { itineraryFilename, itinerarySections } from '../../util/itinerary-image';
@@ -22,7 +23,16 @@ import { renderItineraryPng } from '../../data/itinerary-png';
 @Component({
   selector: 'app-itinerary-export',
   templateUrl: './itinerary-export.html',
-  imports: [FormsModule, UiButton, UiInput, UiField, ErrorToast, ItinerarySnapshot, UiActionBar],
+  imports: [
+    FormsModule,
+    UiButton,
+    UiInput,
+    UiField,
+    UiCheckbox,
+    ErrorToast,
+    ItinerarySnapshot,
+    UiActionBar,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ItineraryExport {

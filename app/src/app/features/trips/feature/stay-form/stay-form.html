@@ -312,20 +312,15 @@
                 <li>{{ w }}</li>
               }
             </ul>
-            <label
-              class="check flex items-start gap-2.5 text-14 rounded-control bg-panel border border-border text-ink font-medium p-3"
-              style="margin-top: 8px"
-            >
-              <input
-                class="in-[.check]:w-5 in-[.check]:h-5 in-[.check]:flex-none in-[.check]:mt-px in-[.check]:mx-0 in-[.check]:mb-0 in-[.check]:accent-accent-deep"
-                type="checkbox"
-                [ngModel]="warningsConfirmed()"
-                (ngModelChange)="warningsConfirmed.set($event)"
+            <div class="mt-2 rounded-control border border-border bg-panel px-3">
+              <app-checkbox
+                label="확인하고 저장합니다"
+                inputId="stay-warning-confirm"
                 name="warningsConfirmed"
-                data-testid="stay-warning-confirm"
+                testId="stay-warning-confirm"
+                [(checked)]="warningsConfirmed"
               />
-              <span>확인하고 저장합니다</span>
-            </label>
+            </div>
           </div>
         </div>
       }

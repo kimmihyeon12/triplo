@@ -80,8 +80,9 @@
           </ol>
         }
 
+        <p class="field__label mt-2 mb-1.25 font-medium text-13 text-ink-2">여행 기간</p>
         <div
-          class="mt-4 flex min-w-0 items-center gap-2 rounded-control border border-border bg-panel px-3 focus-within:border-accent-deep focus-within:ring-3 focus-within:ring-accent-tint"
+          class="mt-0 flex min-w-0 items-center gap-2 rounded-control border border-border bg-panel px-3 focus-within:border-accent-deep focus-within:ring-3 focus-within:ring-accent-tint"
           data-testid="ai-period-input"
         >
           <label class="sr-only" for="ai-start">시작일</label>
@@ -91,6 +92,9 @@
           <input appInput id="ai-end" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" [ngModel]="endDate()" (ngModelChange)="draft.set('endDate', $event)" name="aiEnd" data-testid="ai-end" />
           <button type="button" class="flex h-10.5 w-4.5 shrink-0 items-center justify-center text-hint" aria-label="여행 기간 달력 열기" (click)="aiStartInput.click()"><app-icon name="calendar" [size]="16" /></button>
         </div>
+        <p class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
+          시작일과 종료일을 차례로 선택하세요. 비워 두면 날짜 미정으로 저장돼요.
+        </p>
         @if (dateError()) {
           <p
             class="field__error text-12 text-danger-ink font-medium"
@@ -111,7 +115,7 @@
           모두 선택 사항입니다. 그대로 두고 건너뛰어도 됩니다.
         </p>
 
-        <div class="field flex flex-col gap-1 mb-4">
+        <div class="field flex flex-col gap-0 mb-4">
           <span class="field__label font-medium text-13 text-ink-2" id="ai-companion-label"
             >동행</span
           >
@@ -319,8 +323,9 @@
               <label
                 class="pickrow__label flex items-start gap-3 min-h-11 cursor-pointer py-3 px-0"
               >
+<!-- 라벨이 제목·배지로 이뤄져 app-checkbox로 감쌀 수 없다. 모양만 같은 규칙으로 맞춘다. -->
                 <input
-                  class="in-[.check]:w-5 in-[.check]:h-5 in-[.check]:flex-none in-[.check]:mt-px in-[.check]:mx-0 in-[.check]:mb-0 in-[.check]:accent-accent-deep in-[.pick]:absolute in-[.pick]:w-full in-[.pick]:h-full in-[.pick]:m-0 in-[.pick]:opacity-[0] in-[.pick]:cursor-pointer in-[.pick]:inset-0 in-[.pick]:z-1 in-[.pickrow__label]:w-5 in-[.pickrow__label]:h-5 in-[.pickrow__label]:flex-none in-[.pickrow__label]:mt-0.5 in-[.pickrow__label]:mx-0 in-[.pickrow__label]:mb-0 in-[.pickrow__label]:accent-accent-deep"
+                  class="checkbox mt-0.5 size-5 flex-none cursor-pointer appearance-none rounded-[7px] border-2 border-border-strong bg-panel bg-center bg-no-repeat [background-size:13px_13px] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] checked:border-accent-deep checked:bg-accent-deep checked:[background-image:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3.5%208.4l3%203%206-6.4%22%2F%3E%3C%2Fsvg%3E')] hover:border-accent-deep focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] forced-colors:appearance-auto"
                   type="checkbox"
                   [checked]="selected().has(item.id)"
                   (change)="toggle(item.id)"

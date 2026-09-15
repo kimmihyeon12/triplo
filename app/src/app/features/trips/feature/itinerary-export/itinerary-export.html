@@ -11,17 +11,12 @@
           }
         </select></app-field
       >
-      <label class="flex min-h-11 cursor-pointer items-center gap-3 text-14"
-        ><input
-          type="checkbox"
-          class="size-4 accent-accent-deep"
-          [ngModel]="includeCosts()"
-          (ngModelChange)="includeCosts.set($event)"
-        />예상 비용 포함</label
-      >
-      <p class="mt-2 text-12 text-ink-3">
-        개인 메모·예약정보·가계부·지도는 이미지에 포함하지 않습니다.
-      </p>
+      <app-checkbox
+        label="예상 비용 포함"
+        inputId="export-costs"
+        hint="개인 메모·예약정보·가계부·지도는 이미지에 포함하지 않습니다."
+        [(checked)]="includeCosts"
+      />
     </section>
     <app-itinerary-snapshot
       [title]="trip.title"

@@ -60,7 +60,21 @@ export const appConfig: ApplicationConfig = {
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
       // 화면 전환을 앱처럼 잇는다. 테스트 앱은 전환 중 조회가 흔들리지 않도록 제외한다.
-      ...(environment.isTest ? [] : [withViewTransitions({ skipInitialTransition: true })]),
+      ...(environment.isTest
+        ? []
+        : [
+            withViewTransitions({
+              skipInitialTransition: true,
+              // 날짜 칩처럼 같은 화면에서 쿼리만 바뀌는 이동은 깜빡임만 남기므로 건너뛴다.
+              onViewTransitionCreated: ({ transition, from, to }) => {
+                const path = (segments: { toString(): string }[]) =>
+                  segments.map((s) => s.toString()).join('/');
+                if (path(from.url) === path(to.url)) {
+                  transition.skipTransition();
+                }
+              },
+            }),
+          ]),
     ),
     // 브라우저용 지도 키를 먼저 읽는다. 파일이 없어도 앱은 뜬다.
     provideAppInitializer(() => inject(MapConfig).load()),

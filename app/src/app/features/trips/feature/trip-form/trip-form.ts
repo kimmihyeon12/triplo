@@ -1,4 +1,5 @@
 import { UiField } from '../../../../shared/ui/field/field';
+import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
@@ -45,6 +46,7 @@ interface RegionDraft {
     UiNotice,
     UiActionBar,
     UiField,
+    UiCheckbox,
     FormsModule,
     RouterLink,
     IconComponent,
