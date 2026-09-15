@@ -1,15 +1,18 @@
 import {
   ApplicationConfig,
   inject,
+  isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { provideServiceWorker } from '@angular/service-worker';
 import {
   provideRouter,
   withComponentInputBinding,
   withInMemoryScrolling,
   withRouterConfig,
+  withViewTransitions,
 } from '@angular/router';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -56,6 +59,8 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
+      // 화면 전환을 앱처럼 잇는다. 테스트 앱은 전환 중 조회가 흔들리지 않도록 제외한다.
+      ...(environment.isTest ? [] : [withViewTransitions({ skipInitialTransition: true })]),
     ),
     // 브라우저용 지도 키를 먼저 읽는다. 파일이 없어도 앱은 뜬다.
     provideAppInitializer(() => inject(MapConfig).load()),
@@ -71,5 +76,10 @@ export const appConfig: ApplicationConfig = {
     // 지도 표시와 장소 검색은 별개 어댑터다. 테스트 앱은 외부 호출 없는 픽스처를 쓴다.
     { provide: MAP_PROVIDER, useExisting: useFixture ? FixtureMapProvider : KakaoMapProvider },
     { provide: PLACE_SEARCH, useExisting: useFixture ? FixturePlaceSearch : KakaoPlaceSearch },
+    // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode() && !environment.isTest,
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ],
 };

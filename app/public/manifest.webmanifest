@@ -1,0 +1,28 @@
+{
+  "name": "트립플로 · 국내 여행 비서",
+  "short_name": "트립플로",
+  "description": "국내 자유여행 일정을 만들고 같은 기기에서 이어서 편집합니다.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "/trips",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbfbfa",
+  "theme_color": "#ffffff",
+  "categories": ["travel", "productivity"],
+  "icons": [
+    {
+      "src": "brand/triplo-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "brand/triplo-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

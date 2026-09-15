@@ -7,6 +7,8 @@
   html {
     @apply h-full;
     -webkit-text-size-adjust: 100%;
+    /* 설치형 앱에서 화면 끝을 당겼을 때 페이지 전체가 튕기지 않게 한다. */
+    overscroll-behavior-y: none;
   }
   body {
     @apply m-0 bg-ground text-ink font-body text-15 leading-[1.55];
@@ -16,6 +18,24 @@
     -webkit-font-smoothing: antialiased;
     letter-spacing: 0;
     word-break: keep-all;
+    overscroll-behavior-y: none;
+    /* 길게 눌렀을 때 뜨는 선택 핸들·콜아웃은 앱에서 어색하다. 입력과 본문은 아래에서 되살린다. */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* 읽고 복사해야 하는 영역은 선택을 유지한다. */
+  p,
+  h1,
+  h2,
+  h3,
+  li,
+  input,
+  textarea,
+  [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   ::selection {
     @apply bg-accent-fill text-ink;

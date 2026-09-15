@@ -14,11 +14,47 @@
     transform: translateY(0);
   }
 }
+/*
+  화면 전환: 새 화면이 오른쪽에서 밀려 들어오고 이전 화면은 살짝 물러난다.
+  안드로이드 기본 전환의 문법이며, 상단 바는 제자리에 두어 앱 골격이 유지된다.
+*/
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes route-leave {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+::view-transition-old(root) {
+  animation: route-leave 180ms var(--ease-out) both;
+}
+::view-transition-new(root) {
+  animation: route-enter 220ms var(--ease-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+  /* 전환은 흐림만 남기고 이동을 없앤다(위 규칙은 ::view-transition에 닿지 않는다). */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
