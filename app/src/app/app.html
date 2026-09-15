@@ -3,7 +3,7 @@
   href="#main"
   >본문으로 건너뛰기</a
 >
-<header class="topbar sticky bg-panel top-0 z-9 [border-bottom:1px_solid_var(--color-border)]">
+<header class="topbar sticky bg-panel top-0 z-[10002] [border-bottom:1px_solid_var(--color-border)]">
   <div
     class="topbar__inner mx-auto my-0 min-h-13 grid items-center gap-1 max-w-(--content-max) py-0 px-2 grid-cols-[44px_minmax(0,1fr)_auto]"
   >
@@ -89,24 +89,41 @@
         {{ bar().title }}
       </h1>
       @if (bar().action; as act) {
-        <a
-          class="topbar__action inline-flex items-center justify-center gap-1 min-w-11 min-h-11 text-accent-deep text-15 font-bold no-underline rounded-cell whitespace-nowrap py-0 px-2.5 hover:bg-accent-tint focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
-          [routerLink]="act.link"
-          [queryParams]="act.queryParams ?? {}"
-          [attr.aria-label]="act.ariaLabel ?? act.label"
-          [attr.data-testid]="act.testId"
-        >
-          @if (act.icon) {
-            <app-icon [name]="act.icon" [size]="18" />
-          }
-          @if (act.label) {
+        @if (act.avatar) {
+          <!-- 아바타는 라벨을 대신하므로 이름은 aria-label로만 전한다. -->
+          <a
+            class="flex min-h-11 min-w-11 items-center justify-center rounded-full no-underline focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+            [routerLink]="act.link"
+            [queryParams]="act.queryParams ?? {}"
+            [attr.aria-label]="act.ariaLabel ?? act.label"
+            [attr.data-testid]="act.testId"
+          >
             <span
-              class="[&.visually-hidden]:w-px [&.visually-hidden]:h-px [&.visually-hidden]:overflow-hidden [&.visually-hidden]:whitespace-nowrap [&.visually-hidden]:absolute! [&.visually-hidden]:[clip:rect(0_0_0_0)]"
-              [class.visually-hidden]="!!act.icon && !act.label"
-              >{{ act.label }}</span
+              class="flex size-8 items-center justify-center rounded-full bg-accent-tint text-12 font-semibold text-accent-deep [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-accent-fill"
+              aria-hidden="true"
+              >{{ act.avatar }}</span
             >
-          }
-        </a>
+          </a>
+        } @else {
+          <a
+            class="topbar__action inline-flex items-center justify-center gap-1 min-w-11 min-h-11 text-accent-deep text-15 font-bold no-underline rounded-cell whitespace-nowrap py-0 px-2.5 hover:bg-accent-tint focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+            [routerLink]="act.link"
+            [queryParams]="act.queryParams ?? {}"
+            [attr.aria-label]="act.ariaLabel ?? act.label"
+            [attr.data-testid]="act.testId"
+          >
+            @if (act.icon) {
+              <app-icon [name]="act.icon" [size]="18" />
+            }
+            @if (act.label) {
+              <span
+                class="[&.visually-hidden]:w-px [&.visually-hidden]:h-px [&.visually-hidden]:overflow-hidden [&.visually-hidden]:whitespace-nowrap [&.visually-hidden]:absolute! [&.visually-hidden]:[clip:rect(0_0_0_0)]"
+                [class.visually-hidden]="!!act.icon && !act.label"
+                >{{ act.label }}</span
+              >
+            }
+          </a>
+        }
       } @else {
         <span class="topbar__spacer block w-11 h-11" aria-hidden="true"></span>
       }
@@ -117,7 +134,16 @@
   <router-outlet />
 </main>
 @if (showNavigationLoading()) {
-  <div class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center" role="status" aria-label="페이지 불러오는 중" data-testid="navigation-loading">
-    <div class="flex size-14 items-center justify-center rounded-2xl border border-border bg-panel text-2xl text-accent-deep shadow-lg"><app-spinner /></div>
+  <div
+    class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+    role="status"
+    aria-label="페이지 불러오는 중"
+    data-testid="navigation-loading"
+  >
+    <div
+      class="flex size-14 items-center justify-center rounded-2xl border border-border bg-panel text-2xl text-accent-deep shadow-lg"
+    >
+      <app-spinner />
+    </div>
   </div>
 }

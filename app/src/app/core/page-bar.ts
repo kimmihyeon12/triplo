@@ -12,6 +12,8 @@ export interface PageBarAction {
   readonly queryParams?: Record<string, unknown>;
   /** 아이콘 이름(app-icon). 라벨만 쓸 경우 생략 */
   readonly icon?: string;
+  /** 지정하면 라벨 대신 이 글자를 담은 원형 아바타로 그린다(닉네임 첫 글자 등). */
+  readonly avatar?: string;
   readonly testId?: string;
   readonly ariaLabel?: string;
 }

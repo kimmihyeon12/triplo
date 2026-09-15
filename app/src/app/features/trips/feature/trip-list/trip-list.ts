@@ -1,12 +1,13 @@
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiButton } from '../../../../shared/ui/button/button';
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TripListStore } from '../../data/trip-list-store';
 import { formatPeriod, todayIso, tripTimelineStatus } from '../../../../shared/util/dates';
 import type { Trip } from '../../model/trip';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
+import { AuthStore } from '../../../auth/data/auth-store';
 
 @Component({
   selector: 'app-trip-list',
@@ -20,11 +21,21 @@ export class TripListPage implements OnInit {
   private readonly pageBar = inject(PageBar);
 
   constructor() {
-    // 상단 바: 왼쪽 T 심볼(홈), 가운데 '내 여행'. 새 여행은 우하단 FAB에 있다.
-    this.pageBar.set({
-      title: '내 여행',
-      back: null,
-      action: { label: '내 정보', link: ['/account'] },
+    // 상단 바: 왼쪽 T 심볼(홈), 가운데 '내 여행', 오른쪽 닉네임 아바타.
+    // 닉네임은 세션 복원 뒤에 채워지므로 effect로 따라간다.
+    const auth = inject(AuthStore);
+    effect(() => {
+      const nickname = auth.nickname();
+      this.pageBar.set({
+        title: '내 여행',
+        back: null,
+        action: {
+          label: '내 정보',
+          link: ['/account'],
+          avatar: nickname ? nickname.slice(0, 1) : '나',
+          testId: 'go-account',
+        },
+      });
     });
   }
 
