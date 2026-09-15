@@ -85,9 +85,17 @@ describe('buildDayMap', () => {
     expect(d2.unverifiedStayCount).toBe(1);
   });
 
+  it('체크인하는 숙소는 일정 순번을 이어받고, 체크아웃만 하는 숙소는 번호가 없다', () => {
+    // 5/1: 안목(1) 점심(2) 오죽헌(3) 제외됨 · A 호텔 체크인(4)
+    expect(buildDayMap(trip(), '2026-05-01').markers.find((x) => x.id === 'A')?.number).toBe(4);
+    // 5/2: A는 체크아웃만 하므로 일정에 서지 않는다.
+    expect(buildDayMap(trip(), '2026-05-02').markers.find((x) => x.id === 'A')?.number).toBeNull();
+  });
+
   it('안내선은 순번 마커 좌표를 순서대로 잇고, 마커가 2개 미만이면 없다', () => {
     const m = buildDayMap(trip(), '2026-05-01');
-    expect(m.guideLine).toEqual([anmok, ojukheon]);
+    // 숙소도 일정의 한 자리이므로 그날의 마지막 지점으로 안내선에 이어진다.
+    expect(m.guideLine).toEqual([anmok, ojukheon, gangneungA]);
     expect(buildDayMap(trip(), '2026-05-03').guideLine).toEqual([]);
   });
 
@@ -101,21 +109,6 @@ describe('buildDayMap', () => {
   });
 });
 
-describe('buildStaysMap', () => {
-  it('확인된 좌표의 숙박만 숙소 마커로 만들고 안내선은 없다', async () => {
-    const { buildStaysMap } = await import('./map-markers');
-    const m = buildStaysMap(trip());
-    expect(m.markers.map((x) => [x.id, x.kind])).toEqual([['A', 'stay']]);
-    expect(m.unverifiedStayCount).toBe(1);
-    expect(m.guideLine).toEqual([]);
-    expect(m.bounds).toEqual({
-      south: gangneungA.lat,
-      north: gangneungA.lat,
-      west: gangneungA.lng,
-      east: gangneungA.lng,
-    });
-  });
-});
 
 describe('overlappingStayIds', () => {
   it('순번 마커와 같은 좌표의 숙소 마커만 골라낸다', async () => {

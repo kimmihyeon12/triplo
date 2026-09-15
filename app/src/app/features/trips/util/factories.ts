@@ -64,6 +64,7 @@ export function createStay(
     checkOut: partial.checkOut,
     checkInTime: partial.checkInTime ?? null,
     checkOutTime: partial.checkOutTime ?? null,
+    dayOrder: partial.dayOrder ?? null,
     reservation: partial.reservation ?? 'unknown',
     memo: partial.memo ?? '',
     estimatedCost: partial.estimatedCost ?? null,
