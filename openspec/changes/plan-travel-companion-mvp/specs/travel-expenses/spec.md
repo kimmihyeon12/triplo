@@ -1,5 +1,5 @@
 ## Purpose
-여행별 예산과 지출을 기록하고 일정·숙소와 연결해 여행 비용을 한눈에 확인하도록 한다. 트리플의 여행 가계부를 참고하되 실제 결제·송금·은행 연동은 범위 밖이다. 후속 범위이며 내부 알파에는 포함하지 않는다.
+여행별 예산과 지출을 기록하고 일정·숙소와 연결해 여행 비용을 한눈에 확인하도록 한다. 실제 결제·송금·은행 연동은 범위 밖이다. 후속 범위이며 내부 알파에는 포함하지 않는다.
 
 ## ADDED Requirements
 ### Requirement: Record trip expenses
@@ -28,6 +28,24 @@
 #### Scenario: Trip shortened
 - **WHEN** 여행 기간을 줄여 일부 지출 날짜가 기간 밖이 된다
 - **THEN** 해당 지출을 삭제하지 않고 날짜 미지정 또는 기간 밖으로 표시한다
+
+### Requirement: Record an expense from the itinerary
+시스템은 일정의 장소 또는 숙소에서 곧바로 지출 기록을 시작하도록 SHALL 지원하고, 연결 항목과 지출명을 미리 채운다.
+#### Scenario: Estimated cost present
+- **WHEN** 사용자가 예상 금액이 입력된 항목에서 정산하기를 선택한다
+- **THEN** 지출 입력을 펼친 상태로 열고 연결 항목·지출명·예상 금액을 채우며 실제 금액을 바로 고칠 수 있도록 금액 입력에 초점을 둔다
+#### Scenario: Estimated cost absent
+- **WHEN** 사용자가 예상 금액이 없는 항목에서 정산하기를 선택한다
+- **THEN** 연결 항목과 지출명만 채우고 금액을 비운 채 금액 입력에 초점을 둔다
+
+### Requirement: Duplicate expense title notice
+시스템은 이미 기록된 지출과 이름이 겹칠 때 사용자에게 알리되 저장을 SHALL 막지 않는다. 앞뒤 공백과 대소문자 차이는 같은 이름으로 본다.
+#### Scenario: Same title while editing
+- **WHEN** 사용자가 이미 있는 지출명을 입력한다
+- **THEN** 중복 안내를 표시하고 그대로 저장할 수 있음을 알린다
+#### Scenario: Duplicates in the list
+- **WHEN** 같은 이름의 지출이 둘 이상 저장되어 있다
+- **THEN** 해당 지출마다 이름 중복 표시를 붙이고 금액과 정산 계산은 그대로 유지한다
 
 ### Requirement: Participant based expense allocation
 시스템은 공동 지출마다 결제자 1명과 부담 대상들을 지정하고 균등 분배 또는 직접 입력한 원화 부담액을 SHALL 저장한다. 양수 지출액과 0 이상 부담액의 합계 일치를 검증하고 개인 지출은 정산에서 제외한다.

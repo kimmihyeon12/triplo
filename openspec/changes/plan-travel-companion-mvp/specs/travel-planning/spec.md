@@ -176,6 +176,33 @@
 - **WHEN** 숙박 날짜가 중복되거나 여행 기간을 벗어난다
 - **THEN** 영향을 표시하고 사용자 확인을 요청한다
 
+### Requirement: Stays as itinerary entries
+시스템은 체크인하는 날의 일정 목록에 숙소를 한 자리로 배치하고, 장소와 같은 방식으로 순서를 변경하도록 SHALL 지원한다. 숙소는 하루의 마지막에 고정되지 않으며 중간 순서에도 놓을 수 있다.
+#### Scenario: Stay in the middle of a day
+- **WHEN** 사용자가 체크인 후 다시 외출하는 일정을 만들기 위해 숙소를 장소들 사이로 옮긴다
+- **THEN** 숙소가 해당 위치의 순번을 받고 앞뒤 장소와의 이동 구간을 함께 표시한다
+#### Scenario: Ordering across places and stays
+- **WHEN** 사용자가 숙소 바로 위에 있는 장소를 아래로 한 칸 옮긴다
+- **THEN** 장소가 숙소를 건너뛰지 않고 숙소와 자리를 맞바꾼다
+#### Scenario: Consecutive night
+- **WHEN** 같은 숙소에 연박하는 날의 일정을 연다
+- **THEN** 이미 그 숙소에 머무르는 중이므로 해당 날짜의 일정 목록에는 숙소를 추가하지 않는다
+#### Scenario: Sort by proximity
+- **WHEN** 사용자가 가까운 순 정렬을 실행한다
+- **THEN** 숙소를 정렬 대상에 넣지 않고 그날의 마지막 자리로 보낸다
+
+### Requirement: Stays on the day map
+시스템은 일정 지도에 숙소를 장소와 구별되는 색으로 표시하고, 일정에 자리를 잡은 숙소는 방문 순번과 이동 안내선에 SHALL 포함한다.
+#### Scenario: Checked-in stay
+- **WHEN** 해당 날짜에 체크인하는 숙소에 확인된 좌표가 있다
+- **THEN** 일정 순번을 부여한 숙소 마커를 표시하고 안내선을 그 지점까지 잇는다
+#### Scenario: Checkout only
+- **WHEN** 해당 날짜에 체크아웃만 하는 숙소가 있다
+- **THEN** 그날 일정에 자리를 차지하지 않으므로 순번 없이 참고용 마커로만 표시한다
+#### Scenario: Unverified stay location
+- **WHEN** 숙소에 확인된 좌표가 없다
+- **THEN** 마커를 만들지 않고 지도에 표시하지 못한 숙소 수를 알린다
+
 ### Requirement: AI accommodation registration drafts
 시스템은 자연어 요청으로 숙소 등록 초안을 제시하고 사용자 검토와 명시적 적용 후에만 숙박을 저장하도록 SHALL 지원한다.
 #### Scenario: Draft multiple stays
