@@ -1,5 +1,43 @@
 import { describe, expect, it } from 'vitest';
-import { allocateEvenly, balances, transferSuggestions, validateLedger, newLedger } from './ledger';
+import {
+  allocateEvenly,
+  balances,
+  duplicateTitleIds,
+  transferSuggestions,
+  validateLedger,
+  newLedger,
+} from './ledger';
+import type { Expense } from '../model/ledger';
+
+function expense(id: string, title: string): Expense {
+  return {
+    id,
+    title,
+    amount: 1000,
+    date: '2026-09-15',
+    category: 'other',
+    paidBy: 'p1',
+    splits: [],
+    memo: '',
+    linkId: null,
+    personal: true,
+  };
+}
+
+describe('지출명 중복', () => {
+  it('같은 이름의 지출을 모두 표시하고, 앞뒤 공백·대소문자 차이는 같게 본다', () => {
+    const ids = duplicateTitleIds([
+      expense('a', '점심'),
+      expense('b', ' 점심 '),
+      expense('c', '저녁'),
+    ]);
+    expect([...ids].sort()).toEqual(['a', 'b']);
+  });
+
+  it('빈 이름은 중복으로 세지 않는다', () => {
+    expect(duplicateTitleIds([expense('a', ''), expense('b', '  ')]).size).toBe(0);
+  });
+});
 
 describe('공동 가계부', () => {
   it('원화 나머지를 안정된 대상 순서로 나누고 합계를 보존한다', () => {

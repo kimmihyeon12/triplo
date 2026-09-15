@@ -28,6 +28,17 @@
       (ngModelChange)="title.set($event)"
       placeholder="예: 첫날 저녁 식사"
   /></app-field>
+  @if (duplicateTitle()) {
+    <!-- 같은 이름을 두 번 적는 일은 대개 실수지만 정당할 수도 있어 막지 않고 알리기만 한다. -->
+    <p
+      class="-mt-2 mb-4 flex items-start gap-1.5 text-12 leading-normal text-warn-ink"
+      role="status"
+      data-testid="duplicate-title-warning"
+    >
+      <app-icon class="mt-0.5 shrink-0" name="alert" [size]="14" />
+      <span>같은 이름의 지출이 이미 있습니다. 그대로 저장할 수 있습니다.</span>
+    </p>
+  }
   <app-field label="실제 금액 (원)" inputId="expense-amount"
     ><input
       appInput

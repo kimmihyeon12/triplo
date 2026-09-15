@@ -24,7 +24,7 @@ import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LocalLedger } from '../../data/local-ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import type { Expense, Ledger } from '../../model/ledger';
-import { newLedger, transferSuggestions } from '../../util/ledger';
+import { duplicateTitleIds, newLedger, transferSuggestions } from '../../util/ledger';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 
 @Component({
@@ -48,6 +48,8 @@ import { ExpenseForm } from '../../ui/expense-form/expense-form';
 })
 export class Expenses {
   readonly id = input.required<string>();
+  /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
+  readonly add = input<string | undefined>();
   readonly store = inject(TripEditorStore);
   private readonly repository = inject(LocalLedger);
   readonly ledger = signal<Ledger>(newLedger());
@@ -71,13 +73,17 @@ export class Expenses {
     ...(this.store.current()?.stays ?? []),
   ]);
   readonly transfers = computed(() => transferSuggestions(this.ledger()));
+  /** 이름이 겹치는 지출. 목록에서 라벨로 알린다. */
+  readonly duplicateIds = computed(() => duplicateTitleIds(this.ledger().expenses));
 
   constructor() {
     const bar = inject(PageBar);
     effect(() => {
       bar.set({ title: '여행 정산', back: ['/trips', this.id()], action: null });
       void this.store.open(this.id());
-      this.formOpen.set(false);
+      // 일정 더보기의 '정산하기'로 들어오면 지출 기록을 펼친 채로 시작한다.
+      this.formOpen.set(!!this.add());
+      this.editing.set(null);
       this.blocked.set(false);
       this.error.set('');
       try {
@@ -119,6 +125,29 @@ export class Expenses {
   }
 
   /** 행마다 버튼을 늘어놓지 않고 더보기 한 곳에 모은다. */
+  /** 목록이 쌓이기만 하면 찾기 어렵다. 최근 지출을 위에 두고 분류로 거른다. */
+  readonly sortBy = signal<'date' | 'amount'>('date');
+  readonly categoryFilter = signal('');
+
+  readonly visibleExpenses = computed(() => {
+    const filter = this.categoryFilter();
+    const rows = this.ledger().expenses.filter((e) => !filter || e.category === filter);
+    return [...rows].sort((a, b) =>
+      this.sortBy() === 'amount' ? b.amount - a.amount : b.date.localeCompare(a.date),
+    );
+  });
+
+  /** 걸러진 목록의 합계. 전체 합계와 다를 수 있어 따로 보여 준다. */
+  readonly visibleTotal = computed(() =>
+    this.visibleExpenses().reduce((n, e) => n + e.amount, 0),
+  );
+
+  /** 분류 필터에 쓸 목록. 실제로 기록된 분류만 담는다. */
+  readonly usedCategories = computed(() => {
+    const seen = new Set(this.ledger().expenses.map((e) => e.category));
+    return Object.entries(EXPENSE_CATEGORIES).filter(([key]) => seen.has(key));
+  });
+
   readonly tabItems: readonly TabItem[] = [
     { id: 'expenses', label: '지출 내역' },
     { id: 'settlement', label: '정산 현황' },

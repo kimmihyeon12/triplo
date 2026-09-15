@@ -1,7 +1,28 @@
-import type { ExpenseSplit, Ledger } from '../model/ledger';
+import type { Expense, ExpenseSplit, Ledger } from '../model/ledger';
 
 export const validMoney = (value: number): boolean =>
   Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000_000;
+
+/** 지출명 비교 기준. 앞뒤 공백과 대소문자 차이는 같은 이름으로 본다. */
+export function expenseKey(title: string): string {
+  return title.trim().toLowerCase();
+}
+
+/**
+ * 이름이 겹치는 지출의 id.
+ * 같은 이름을 두 번 적는 일은 대개 실수지만 정당한 경우도 있어 막지 않고 알리기만 한다.
+ */
+export function duplicateTitleIds(expenses: readonly Expense[]): Set<string> {
+  const byKey = new Map<string, string[]>();
+  for (const e of expenses) {
+    const key = expenseKey(e.title);
+    if (!key) continue;
+    byKey.set(key, [...(byKey.get(key) ?? []), e.id]);
+  }
+  const out = new Set<string>();
+  for (const ids of byKey.values()) if (ids.length > 1) for (const id of ids) out.add(id);
+  return out;
+}
 
 export function newLedger(): Ledger {
   return { people: [], expenses: [], receipts: [], budget: null };
