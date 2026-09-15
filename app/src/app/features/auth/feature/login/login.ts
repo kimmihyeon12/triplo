@@ -22,6 +22,7 @@ import { AuthStore } from '../../data/auth-store';
 })
 export class LoginPage {
   readonly auth = inject(AuthStore);
+  readonly router = inject(Router);
   readonly previewAccount = this.auth.designPreview && inject(Router).url.startsWith('/account');
   readonly displayedUser = computed(
     () =>
@@ -38,9 +39,14 @@ export class LoginPage {
     location.reload();
   }
 
+  enterPreview(): void {
+    sessionStorage.setItem('tc.preview.v1', '1');
+    void this.router.navigateByUrl('/trips');
+  }
+
   constructor() {
     const bar = inject(PageBar);
-    const router = inject(Router);
+    const router = this.router;
     effect(() => {
       const user = this.auth.user();
       const resolving = this.auth.resolvingCallback();
