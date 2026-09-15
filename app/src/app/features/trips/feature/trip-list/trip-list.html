@@ -124,16 +124,26 @@
                 목록의 목적은 '어느 여행인지 빠르게 찾기'이므로 칩을 벗기고 덜어낸다.
                 평상시 칩은 0개이고, 확인이 필요한 상태일 때만 하나 나타난다.
               -->
-              <a
-                class="panel card bg-panel rounded-panel shadow-panel p-4 block no-underline text-inherit [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:bg-ground-2"
-                [routerLink]="['/trips', trip.id]"
-                [attr.data-testid]="'trip-card-' + trip.id"
-              >
-                <h2
-                  class="card__title text-17 font-bold leading-[1.4] text-ink overflow-hidden whitespace-nowrap text-ellipsis"
+              <!-- 카드 전체가 링크라 더보기는 위에 겹쳐 둔다. -->
+              <div class="relative">
+<!-- z-index를 주면 쌓임 맥락이 생겨 메뉴가 배경 아래 갇힌다. -->
+                <app-row-menu
+                  class="absolute right-3 top-3"
+                  [items]="tripMenu"
+                  [ariaLabel]="trip.title + ' 더보기'"
+                  [testId]="'trip-menu-' + trip.id"
+                  (selected)="onTripMenu($event, trip)"
+                />
+                <a
+                  class="panel card bg-panel rounded-panel shadow-panel p-4 block no-underline text-inherit [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:bg-ground-2"
+                  [routerLink]="['/trips', trip.id]"
+                  [attr.data-testid]="'trip-card-' + trip.id"
                 >
-                  {{ trip.title }}
-                </h2>
+                  <h2
+                    class="card__title pr-10 text-17 font-bold leading-[1.4] text-ink overflow-hidden whitespace-nowrap text-ellipsis"
+                  >
+                    {{ trip.title }}
+                  </h2>
 
                 <!-- 제목과 가깝게 붙여 한 덩어리로 읽힌다 -->
                 <p class="card__when flex items-center gap-1 mt-1 text-14 text-ink-2">
@@ -168,7 +178,36 @@
                     >동행 준비 중</span
                   >
                 </p>
-              </a>
+                </a>
+                @if (deleteTripId() === trip.id) {
+                  <div
+                    class="panel mt-2 flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel"
+                  >
+                    <p class="text-13">
+                      ‘{{ trip.title }}’을 삭제할까요? 일정·숙소가 함께 사라지며 되돌릴 수 없습니다.
+                    </p>
+                    <div class="flex justify-end gap-2">
+                      <button
+                        appButton
+                        class="btn btn--sm"
+                        type="button"
+                        (click)="deleteTripId.set(null)"
+                      >
+                        취소</button
+                      ><button
+                        appButton
+                        class="btn btn--sm"
+                        type="button"
+                        variant="danger"
+                        (click)="confirmDeleteTrip(trip.id)"
+                        [attr.data-testid]="'confirm-delete-trip-' + trip.id"
+                      >
+                        <app-icon name="trash" [size]="14" /> 삭제
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
             </li>
           }
         </ul>

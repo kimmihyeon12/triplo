@@ -128,7 +128,7 @@
               <div class="text-12 leading-normal text-ink-3">{{ s.address }}</div>
             }
             @if (s.estimatedCost != null) {
-              <p class="text-xs text-accent-deep">
+              <p class="text-12 leading-normal text-accent-deep">
                 예상 {{ s.estimatedCost!.toLocaleString('ko-KR') }}원 · 숙박 전체
               </p>
             }
@@ -137,16 +137,32 @@
             }
           </div>
           <div class="stay__actions">
-            <a
-              appButton
-              class="btn"
-              [routerLink]="['/trips', trip().id, 'stays', s.id]"
-              [attr.aria-label]="s.name + ' 편집'"
-              [attr.data-testid]="'edit-stay-' + s.id"
-              variant="icon"
-              ><app-icon name="edit" [size]="16"
-            /></a>
+            <app-row-menu
+              [items]="stayMenu(s)"
+              [ariaLabel]="s.name + ' 더보기'"
+              [testId]="'stay-menu-' + s.id"
+              (selected)="onStayMenu($event, s)"
+            />
           </div>
+          @if (deleteStayId() === s.id) {
+            <div class="col-span-full flex flex-col gap-2 border-t border-border pt-3">
+              <p class="text-13">‘{{ s.name }}’을 삭제할까요? 되돌릴 수 없습니다.</p>
+              <div class="flex justify-end gap-2">
+                <button appButton class="btn btn--sm" type="button" (click)="deleteStayId.set(null)">
+                  취소</button
+                ><button
+                  appButton
+                  class="btn btn--sm"
+                  type="button"
+                  variant="danger"
+                  (click)="confirmDeleteStay(s.id)"
+                  [attr.data-testid]="'confirm-delete-stay-' + s.id"
+                >
+                  <app-icon name="trash" [size]="14" /> 삭제
+                </button>
+              </div>
+            </div>
+          }
         </li>
       }
     </ul>

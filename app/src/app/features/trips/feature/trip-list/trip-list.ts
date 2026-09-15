@@ -1,18 +1,26 @@
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiButton } from '../../../../shared/ui/button/button';
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { TripListStore } from '../../data/trip-list-store';
 import { formatPeriod, todayIso, tripTimelineStatus } from '../../../../shared/util/dates';
 import type { Trip } from '../../model/trip';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../../auth/data/auth-store';
+import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 
 @Component({
   selector: 'app-trip-list',
   providers: [TripListStore],
-  imports: [UiButton, UiNotice, RouterLink, IconComponent],
+  imports: [UiButton, UiNotice, RouterLink, IconComponent, UiRowMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-list.html',
 })
@@ -37,6 +45,22 @@ export class TripListPage implements OnInit {
         },
       });
     });
+  }
+
+  private readonly router = inject(Router);
+  readonly tripMenu: readonly RowMenuItem[] = [
+    { id: 'edit', label: '여행 정보 수정', icon: 'edit' },
+    { id: 'delete', label: '삭제', icon: 'trash', danger: true },
+  ];
+  readonly deleteTripId = signal<string | null>(null);
+
+  onTripMenu(action: string, trip: Trip): void {
+    if (action === 'edit') void this.router.navigate(['/trips', trip.id, 'edit']);
+    else if (action === 'delete') this.deleteTripId.set(trip.id);
+  }
+
+  async confirmDeleteTrip(id: string): Promise<void> {
+    if (await this.store.removeTrip(id)) this.deleteTripId.set(null);
   }
 
   ngOnInit(): void {

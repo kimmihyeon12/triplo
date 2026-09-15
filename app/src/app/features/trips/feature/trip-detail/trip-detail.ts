@@ -1,4 +1,6 @@
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { UiDismissible } from '../../../../shared/ui/dismissible/dismissible';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
@@ -25,6 +27,7 @@ import {
   fixedTimeConflicts,
   formatMinutes,
   moveStop,
+  removeStop,
   sortDayByNearest,
   toggleExcluded,
 } from '../../util/itinerary';
@@ -37,7 +40,13 @@ import {
   type TripStop,
 } from '../../model/trip';
 import { buildOverview } from '../../util/overview';
-import { dayStayInfo, nightCoverage, stayIssues, stayNightCount } from '../../util/stays';
+import {
+  dayStayInfo,
+  nightCoverage,
+  removeStay,
+  stayIssues,
+  stayNightCount,
+} from '../../util/stays';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
@@ -56,6 +65,8 @@ type Tab = 'days' | 'stays';
     UiNotice,
     UiActionBar,
     UiDismissible,
+    UiRowMenu,
+    UiTabs,
     RouterLink,
     IconComponent,
     TripHeader,
@@ -79,6 +90,13 @@ export class TripDetailPage {
     { id: 'days', ko: '일정' },
     { id: 'stays', ko: '숙소' },
   ];
+  readonly tabItems = computed<TabItem[]>(() =>
+    this.tabs.map((t) => ({
+      id: t.id,
+      label: t.ko,
+      queryParams: { tab: t.id, day: this.selectedDay() },
+    })),
+  );
   readonly kindLabel = STOP_KIND_LABEL;
 
   readonly trip = computed<Trip | null>(() =>
@@ -191,7 +209,17 @@ export class TripDetailPage {
                   testId: 'trip-edit',
                 },
                 { label: '이미지로 저장', icon: 'save', link: ['/trips', t.id, 'export'] },
+                {
+                  label: '여행 삭제',
+                  icon: 'trash',
+                  action: 'delete-trip',
+                  testId: 'trip-delete',
+                  danger: true,
+                },
               ],
+              onAction: (action) => {
+                if (action === 'delete-trip') this.deleteTripOpen.set(true);
+              },
             }
           : undefined,
       });
@@ -289,6 +317,50 @@ export class TripDetailPage {
 
   kakaoUrl(stop: TripStop): string {
     return kakaoSearchUrl(mapQuery(stop.name, stop.address));
+  }
+
+  /**
+   * 행마다 아이콘을 늘어놓지 않고 더보기에 모은다.
+   * 순서 변경은 연속으로 누르는 동작이라 메뉴 밖에 남긴다.
+   */
+  readonly deleteStopId = signal<string | null>(null);
+  readonly deleteTripOpen = signal(false);
+
+  stopMenu(stop: TripStop): RowMenuItem[] {
+    return [
+      {
+        id: 'toggle',
+        label: stop.excluded ? '일정에 되돌리기' : '일정에서 제외',
+        icon: stop.excluded ? 'eye' : 'eye-off',
+        testId: 'exclude-' + stop.id,
+      },
+      { id: 'edit', label: '편집', icon: 'edit', testId: 'edit-' + stop.id },
+      { id: 'delete', label: '삭제', icon: 'trash', danger: true, testId: 'delete-' + stop.id },
+    ];
+  }
+
+  onStopMenu(action: string, stop: TripStop): void {
+    if (action === 'edit') void this.router.navigate(['/trips', this.id(), 'stops', stop.id]);
+    else if (action === 'toggle') void this.toggle(stop.id);
+    else if (action === 'delete') this.deleteStopId.set(stop.id);
+  }
+
+  async confirmDeleteTrip(): Promise<void> {
+    if (await this.store.removeCurrent()) {
+      this.deleteTripOpen.set(false);
+      await this.router.navigate(['/trips']);
+    }
+  }
+
+  async onStayDelete(stayId: string): Promise<void> {
+    const t = this.trip();
+    if (t) await this.store.commit(removeStay(t, stayId));
+  }
+
+  async deleteStop(stopId: string): Promise<void> {
+    const t = this.trip();
+    if (!t) return;
+    if (await this.store.commit(removeStop(t, stopId))) this.deleteStopId.set(null);
   }
 
   async move(stopId: string, dir: 'up' | 'down'): Promise<void> {

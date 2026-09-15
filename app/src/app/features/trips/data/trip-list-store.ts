@@ -42,6 +42,18 @@ export class TripListStore {
     return untracked(() => this.load());
   }
 
+  /** 여행 하나를 지운다. 성공하면 목록을 다시 읽는다. */
+  async removeTrip(id: string): Promise<boolean> {
+    try {
+      await this.repo.remove(id);
+      await this.loadList();
+      return true;
+    } catch (error) {
+      patchState(this.state, { listError: errorMessage(error) });
+      return false;
+    }
+  }
+
   private async load(): Promise<void> {
     const request = ++this.request;
     const generation = this.pending.generation();

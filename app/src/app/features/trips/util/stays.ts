@@ -9,6 +9,11 @@ import type { AccommodationStay, IsoDate, Trip } from '../model/trip';
 
 export type StayDateValidation = { ok: true } | { ok: false; message: string };
 
+/** 숙소 하나를 뺀 여행을 만든다. 장소·일정은 건드리지 않는다. */
+export function removeStay(trip: Trip, stayId: string): Trip {
+  return { ...trip, stays: trip.stays.filter((s) => s.id !== stayId) };
+}
+
 export function validateStayDates(checkIn: string, checkOut: string): StayDateValidation {
   if (!isIsoDate(checkIn) || !isIsoDate(checkOut))
     return { ok: false, message: '체크인·체크아웃 날짜를 입력하세요.' };

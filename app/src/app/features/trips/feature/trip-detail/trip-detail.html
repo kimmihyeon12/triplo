@@ -33,34 +33,43 @@
       (retry)="store.retrySave()"
     />
 
+    @if (deleteTripOpen()) {
+      <div appNotice class="notice notice--danger" role="alert">
+        <app-icon name="alert" />
+        <div class="notice__body min-w-0 flex-1">
+          <strong class="in-[.notice]:font-bold">‘{{ trip()!.title }}’을 삭제할까요?</strong>
+          일정·숙소가 함께 사라지며 되돌릴 수 없습니다.
+          <div class="notice__actions mt-2 flex flex-wrap gap-2">
+            <button appButton class="btn btn--sm" type="button" (click)="deleteTripOpen.set(false)">
+              취소</button
+            ><button
+              appButton
+              class="btn btn--sm"
+              type="button"
+              variant="danger"
+              (click)="confirmDeleteTrip()"
+              data-testid="confirm-delete-trip"
+            >
+              <app-icon name="trash" [size]="14" /> 삭제
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!--
       탭은 이 화면의 패널만 바꾼다. 가계부는 다른 화면이므로 tablist 밖에 두고,
       아이콘과 구분선으로 "여기서부터는 이동"임을 드러낸다.
     -->
-    <div class="flex items-center [border-bottom:1px_solid_var(--color-border)] -mt-0.5">
-      <nav class="tabs flex gap-1" role="tablist" aria-label="여행 보기">
-        @for (t of tabs; track t.id) {
-          <a
-            class="tab flex justify-center items-center min-h-10.5 px-4 no-underline text-ink-2 text-14 font-medium [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:text-ink [&.tab--on]:font-bold [&.tab--on]:border-b-accent-deep"
-            role="tab"
-            [class.tab--on]="activeTab() === t.id"
-            [attr.aria-selected]="activeTab() === t.id"
-            [routerLink]="[]"
-            [queryParams]="{ tab: t.id, day: selectedDay() }"
-            queryParamsHandling="merge"
-            [attr.data-testid]="'tab-' + t.id"
-          >
-            {{ t.ko }}
-          </a>
-        }
-      </nav>
+    <app-tabs [items]="tabItems()" [active]="activeTab()" ariaLabel="여행 보기">
       <a
-        class="ml-auto flex min-h-10.5 shrink-0 items-center gap-1.5 self-center rounded-cell px-2.5 text-14 font-medium text-ink-3 no-underline [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)]"
+        appButton
+        class="btn btn--sm ml-auto shrink-0 self-center"
         [routerLink]="['/trips', id(), 'expenses']"
         data-testid="go-expenses"
-        ><app-icon name="wallet" [size]="15" /> 가계부</a
+        ><app-icon name="wallet" [size]="15" /> 정산</a
       >
-    </div>
+    </app-tabs>
 
     <!-- 날짜별 보기 -->
     @if (activeTab() === 'days') {
@@ -90,7 +99,7 @@
             >
               @for (d of days(); track d; let i = $index) {
                 <a
-                  class="daytab [-webkit-tap-highlight-color:transparent] flex-none flex flex-col items-center gap-px min-w-16 border-0 rounded-control bg-ground-2 text-ink-2 no-underline py-2 px-3 snap-start [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:text-ink hover:[background:color-mix(in_srgb,var(--color-ground-2)_85%,var(--color-ink))] hover:border-border-strong [&.daytab--on]:text-white [&.daytab--on]:[background:var(--selected-fill)] [&.daytab--on:hover]:text-white [&.daytab--on:hover]:[background:var(--selected-fill)] [@media(min-width:_900px)]:items-start [@media(min-width:_900px)]:rounded-control"
+                  class="daytab [-webkit-tap-highlight-color:transparent] flex-none flex flex-col items-center gap-px min-w-16 border-0 rounded-control bg-ground-2 text-ink-2 no-underline py-2 px-3 snap-start hover:text-ink hover:[background:color-mix(in_srgb,var(--color-ground-2)_85%,var(--color-ink))] hover:border-border-strong [&.daytab--on]:text-white [&.daytab--on]:[background:var(--selected-fill)] [&.daytab--on:hover]:text-white [&.daytab--on:hover]:[background:var(--selected-fill)] [@media(min-width:_900px)]:items-start [@media(min-width:_900px)]:rounded-control"
                   role="tab"
                   [class.daytab--on]="selectedDay() === d"
                   [attr.aria-selected]="selectedDay() === d"
@@ -451,30 +460,41 @@
                           >
                             <app-icon name="arrow-down" [size]="16" />
                           </button>
-                          <a
-                            appButton
-                            class="btn"
-                            [routerLink]="['/trips', trip()!.id, 'stops', seg.stop.id]"
-                            [attr.aria-label]="seg.stop.name + ' 편집'"
-                            [attr.data-testid]="'edit-' + seg.stop.id"
-                            variant="icon"
-                            ><app-icon name="edit" [size]="16"
-                          /></a>
-                          <button
-                            appButton
-                            type="button"
-                            class="btn"
-                            (click)="toggle(seg.stop.id)"
-                            [attr.aria-label]="
-                              seg.stop.name + (seg.stop.excluded ? ' 복원' : ' 제외')
-                            "
-                            [attr.aria-pressed]="seg.stop.excluded"
-                            [attr.data-testid]="'exclude-' + seg.stop.id"
-                            variant="icon"
-                          >
-                            <app-icon [name]="seg.stop.excluded ? 'eye' : 'eye-off'" [size]="16" />
-                          </button>
+                          <app-row-menu
+                            [items]="stopMenu(seg.stop)"
+                            [ariaLabel]="seg.stop.name + ' 더보기'"
+                            [testId]="'stop-menu-' + seg.stop.id"
+                            (selected)="onStopMenu($event, seg.stop)"
+                          />
                         </div>
+                        @if (deleteStopId() === seg.stop.id) {
+                          <div
+                            class="col-span-full mt-2 flex flex-col gap-2 border-t border-border pt-3"
+                          >
+                            <p class="text-13">
+                              ‘{{ seg.stop.name }}’을 일정에서 삭제할까요? 되돌릴 수 없습니다.
+                            </p>
+                            <div class="flex justify-end gap-2">
+                              <button
+                                appButton
+                                class="btn btn--sm"
+                                type="button"
+                                (click)="deleteStopId.set(null)"
+                              >
+                                취소</button
+                              ><button
+                                appButton
+                                class="btn btn--sm"
+                                type="button"
+                                variant="danger"
+                                (click)="deleteStop(seg.stop.id)"
+                                [attr.data-testid]="'confirm-delete-' + seg.stop.id"
+                              >
+                                <app-icon name="trash" [size]="14" /> 삭제
+                              </button>
+                            </div>
+                          </div>
+                        }
                       </li>
                     }
                   }
@@ -520,7 +540,7 @@
             data-testid="empty-trip"
           >
             <h2 class="in-[.empty]:text-16">장소와 숙소를 추가해 보세요</h2>
-            <p class="text-ink-3">
+            <p class="text-12 leading-normal text-ink-3">
               날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
             </p>
           </section>
@@ -683,6 +703,7 @@
         [trip]="trip()!"
         [selectedMarkerId]="selectedMarkerId()"
         (markerSelect)="onMarkerSelect($event)"
+        (stayDelete)="onStayDelete($event)"
       />
     }
 
@@ -701,7 +722,7 @@
             class="btn relative z-[10001] flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
             data-testid="add-open"
           >
-            <app-icon name="plus" [size]="16" /> 일정 추가
+            일정 추가
           </summary>
           <button type="button" class="menu-backdrop fixed inset-0 z-[30] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
           <div

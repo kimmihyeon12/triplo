@@ -83,6 +83,19 @@ export class TripEditorStore {
     }
   }
 
+  /** 지금 열려 있는 여행을 지운다. 성공하면 화면이 목록으로 이동한다. */
+  async removeCurrent(): Promise<boolean> {
+    const id = this.state.id();
+    if (!id) return false;
+    try {
+      await this.repo.remove(id);
+      return true;
+    } catch (error) {
+      patchState(this.state, { currentError: errorMessage(error) });
+      return false;
+    }
+  }
+
   async commit(next: Trip): Promise<boolean> {
     if (!this.sessionMatches()) return false;
     ++this.request;
