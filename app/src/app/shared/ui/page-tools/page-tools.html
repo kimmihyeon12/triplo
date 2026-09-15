@@ -32,10 +32,10 @@
         <path d="M12 6v12M6 12h12" /></svg
     ></span>
   </a>
-  <details #menu appDismissible class="menu-sheet relative">
+  <details #menu appDismissible class="menu-sheet page-tools-sheet relative">
     <summary
       aria-label="여행 더보기"
-      class="relative z-20 flex size-11 cursor-pointer list-none items-center justify-center rounded-lg text-ink-2 hover:bg-ground-2 focus-visible:outline-2 [&::-webkit-details-marker]:hidden"
+      class="relative z-[10005] flex size-11 cursor-pointer list-none items-center justify-center rounded-lg text-ink-2 hover:bg-ground-2 focus-visible:outline-2 [&::-webkit-details-marker]:hidden"
     >
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="5" cy="12" r="1.7" />
@@ -45,13 +45,13 @@
     </summary>
     <button
       type="button"
-      class="menu-backdrop fixed inset-0 z-[10000] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]"
+      class="menu-backdrop fixed inset-0 z-[10003] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]"
       style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)"
       aria-label="메뉴 닫기"
       (click)="menu.open = false"
     ></button>
     <div
-      class="absolute right-0 z-[10001] mt-1 w-44 rounded-xl border border-border bg-panel p-1 shadow-lg"
+      class="absolute right-0 z-[10005] mt-1 w-44 rounded-xl border border-border bg-panel p-1 shadow-lg"
     >
       @for (item of tools().menu; track item.label) {
         <a

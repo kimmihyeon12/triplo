@@ -31,7 +31,7 @@
           maxlength="60"
           data-testid="trip-title"
         />
-        <span class="field__hint text-12 text-ink-3 leading-[1.45]"
+        <span class="field__hint mt-2 block text-12 text-hint leading-[1.45]"
           >비워 두면 ‘새 여행’으로 저장됩니다.</span
         >
       </app-field>
@@ -39,48 +39,51 @@
       <fieldset class="dates border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
         <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">여행 기간</legend>
         <div
-          class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+          class="flex min-w-0 items-center gap-2 rounded-control border border-border bg-panel px-3 focus-within:border-accent-deep focus-within:ring-3 focus-within:ring-accent-tint"
+          data-testid="trip-period-input"
         >
-          <div class="field flex flex-col gap-1 mb-4">
-            <label
-              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
-              for="start"
-              >시작일</label
-            >
-            <input
-              appInput
-              id="start"
-              type="date"
-              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
-              [ngModel]="startDate()"
-              (ngModelChange)="startDate.set($event)"
-              name="start"
-              [attr.aria-invalid]="dateError() ? 'true' : null"
-              data-testid="trip-start"
-            />
-          </div>
-          <div class="field flex flex-col gap-1 mb-4">
-            <label
-              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
-              for="end"
-              >종료일</label
-            >
-            <input
-              appInput
-              id="end"
-              type="date"
-              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
-              [ngModel]="endDate()"
-              (ngModelChange)="endDate.set($event)"
-              name="end"
-              [attr.aria-invalid]="dateError() ? 'true' : null"
-              data-testid="trip-end"
-            />
-          </div>
+          <label class="sr-only" for="start">시작일</label>
+          <input
+            #startInput
+            appInput
+            id="start"
+            type="date"
+            class="range-date min-w-0 flex-1"
+            data-range-start="start"
+            data-range-end="end"
+            [ngModel]="startDate()"
+            (ngModelChange)="startDate.set($event)"
+            name="start"
+            [attr.aria-invalid]="dateError() ? 'true' : null"
+            data-testid="trip-start"
+          />
+          <span class="shrink-0 text-hint" aria-hidden="true">~</span>
+          <label class="sr-only" for="end">종료일</label>
+          <input
+            appInput
+            id="end"
+            type="date"
+            class="range-date min-w-0 flex-1"
+            data-range-start="start"
+            data-range-end="end"
+            [ngModel]="endDate()"
+            (ngModelChange)="endDate.set($event)"
+            name="end"
+            [attr.aria-invalid]="dateError() ? 'true' : null"
+            data-testid="trip-end"
+          />
+          <button
+            type="button"
+            class="flex h-10.5 w-4.5 shrink-0 items-center justify-center rounded-control text-hint focus-visible:outline-2 focus-visible:outline-accent-deep"
+            aria-label="여행 기간 달력 열기"
+            (click)="startInput.click()"
+          >
+            <app-icon name="calendar" [size]="16" />
+          </button>
         </div>
         @if (dateError()) {
           <p
-            class="field__error text-12 text-danger-ink font-medium"
+            class="field__error mt-2 text-12 text-danger-ink font-medium"
             role="alert"
             data-testid="date-error"
           >
@@ -88,14 +91,14 @@
           </p>
         } @else if (nightsText()) {
           <p
-            class="cell cell--accent inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-accent-tint text-accent-deep"
+            class="cell cell--accent mt-2 inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-accent-tint text-accent-deep"
             data-testid="nights"
           >
             {{ nightsText() }}
           </p>
         } @else {
-          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
-            날짜를 비워 두면 ‘날짜 미정’ 초안으로 저장됩니다.
+          <p class="field__hint mt-2 block text-12 text-hint leading-[1.45]" id="trip-period-hint">
+            시작일과 종료일을 차례로 선택하세요. 비워 두면 날짜 미정으로 저장돼요.
           </p>
         }
       </fieldset>
@@ -133,7 +136,7 @@
           </button>
         </div>
         @if (regions().length === 0) {
-          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
+          <p class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
             지역은 선택 사항입니다. 하루에 두 지역을 다닐 수도 있습니다.
           </p>
         } @else {

@@ -81,33 +81,15 @@
         }
 
         <div
-          class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
-          style="margin-top: 16px"
+          class="mt-4 flex min-w-0 items-center gap-2 rounded-control border border-border bg-panel px-3 focus-within:border-accent-deep focus-within:ring-3 focus-within:ring-accent-tint"
+          data-testid="ai-period-input"
         >
-          <app-field inputId="ai-start" label="시작일">
-            <input
-              appInput
-              id="ai-start"
-              type="date"
-              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35 in-[.pick]:absolute in-[.pick]:w-full in-[.pick]:h-full in-[.pick]:m-0 in-[.pick]:opacity-[0] in-[.pick]:cursor-pointer in-[.pick]:inset-0 in-[.pick]:z-1 in-[.pickrow__label]:w-5 in-[.pickrow__label]:h-5 in-[.pickrow__label]:flex-none in-[.pickrow__label]:mt-0.5 in-[.pickrow__label]:mx-0 in-[.pickrow__label]:mb-0 in-[.pickrow__label]:accent-accent-deep"
-              [ngModel]="startDate()"
-              (ngModelChange)="draft.set('startDate', $event)"
-              name="aiStart"
-              data-testid="ai-start"
-            />
-          </app-field>
-          <app-field inputId="ai-end" label="종료일">
-            <input
-              appInput
-              id="ai-end"
-              type="date"
-              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35 in-[.pick]:absolute in-[.pick]:w-full in-[.pick]:h-full in-[.pick]:m-0 in-[.pick]:opacity-[0] in-[.pick]:cursor-pointer in-[.pick]:inset-0 in-[.pick]:z-1 in-[.pickrow__label]:w-5 in-[.pickrow__label]:h-5 in-[.pickrow__label]:flex-none in-[.pickrow__label]:mt-0.5 in-[.pickrow__label]:mx-0 in-[.pickrow__label]:mb-0 in-[.pickrow__label]:accent-accent-deep"
-              [ngModel]="endDate()"
-              (ngModelChange)="draft.set('endDate', $event)"
-              name="aiEnd"
-              data-testid="ai-end"
-            />
-          </app-field>
+          <label class="sr-only" for="ai-start">시작일</label>
+          <input #aiStartInput appInput id="ai-start" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" [ngModel]="startDate()" (ngModelChange)="draft.set('startDate', $event)" name="aiStart" data-testid="ai-start" />
+          <span class="shrink-0 text-hint" aria-hidden="true">~</span>
+          <label class="sr-only" for="ai-end">종료일</label>
+          <input appInput id="ai-end" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" [ngModel]="endDate()" (ngModelChange)="draft.set('endDate', $event)" name="aiEnd" data-testid="ai-end" />
+          <button type="button" class="flex h-10.5 w-4.5 shrink-0 items-center justify-center text-hint" aria-label="여행 기간 달력 열기" (click)="aiStartInput.click()"><app-icon name="calendar" [size]="16" /></button>
         </div>
         @if (dateError()) {
           <p
@@ -370,7 +352,7 @@
 
   <!-- 하단 고정 바: 단계별 다음 동작 -->
   <div appActionBar class="action-bar">
-    <div class="action-bar__inner mx-auto my-0 flex gap-2 max-w-(--content-max)">
+    <div class="action-bar__inner mx-auto my-0 flex min-w-0 gap-2 max-w-(--content-max)">
       @switch (phase()) {
         @case ('step1') {
           <a appButton class="btn" href="/trips" (click)="leave($event)">그만두기</a>
