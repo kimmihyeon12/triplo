@@ -1,7 +1,9 @@
-<label class="field__label font-medium text-13 text-ink-2" [for]="inputId()">{{ label() }}</label>
+<label class="field__label mb-1 font-medium text-13 text-ink-2" [for]="inputId()">{{
+  label()
+}}</label>
 <ng-content />
 @if (hint()) {
-  <p class="field__hint text-12 text-ink-3 leading-[1.45]" [id]="inputId() + '-hint'">
+  <p class="field__hint block mt-2 text-12 text-hint leading-[1.45]" [id]="inputId() + '-hint'">
     {{ hint() }}
   </p>
 }

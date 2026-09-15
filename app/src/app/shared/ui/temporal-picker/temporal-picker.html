@@ -1,0 +1,161 @@
+<div
+  #panel
+  popover="auto"
+  role="dialog"
+  [attr.aria-label]="
+    isRange() ? '여행 기간 선택' : isDateTarget() ? '날짜 선택' : '시간 선택'
+  "
+  (toggle)="onToggle()"
+  (keydown.escape)="close()"
+  class="fixed m-0 w-80 max-w-[calc(100vw-16px)] max-h-[calc(100dvh-16px)] overflow-y-auto rounded-control border border-border bg-panel p-3 font-body text-14 text-ink shadow-float [&::backdrop]:bg-black/30 [&::backdrop]:backdrop-blur-[4px]"
+  [style.left.px]="left()"
+  [style.top.px]="top()"
+>
+  @if (isDateTarget()) {
+    @if (isRange()) {
+      <div class="mb-4 grid grid-cols-[1fr_16px_1fr] items-center gap-3 px-1">
+        <button
+          type="button"
+          class="min-w-0 border-b-2 border-transparent py-3 text-left focus-visible:rounded-cell focus-visible:outline-2 focus-visible:outline-accent-deep aria-pressed:border-accent-deep"
+          [attr.aria-pressed]="!pickingEnd()"
+          (click)="pickingEnd.set(false)"
+        >
+          <span
+            class="mb-1 block text-xs"
+            [class.text-hint]="pickingEnd()"
+            [class.text-accent-deep]="!pickingEnd()"
+            >시작일</span
+          >
+          <span
+            class="block whitespace-nowrap text-16 font-semibold tracking-tight"
+            [class.text-hint]="!draftStart()"
+            >{{ rangeDateLabel(draftStart()) }}</span
+          >
+        </button>
+        <span class="text-center text-border-strong" aria-hidden="true">→</span>
+        <button
+          type="button"
+          class="min-w-0 border-b-2 border-transparent py-3 text-left focus-visible:rounded-cell focus-visible:outline-2 focus-visible:outline-accent-deep aria-pressed:border-accent-deep disabled:cursor-default"
+          [attr.aria-pressed]="pickingEnd()"
+          [disabled]="!draftStart()"
+          (click)="pickingEnd.set(true)"
+        >
+          <span
+            class="mb-1 block text-xs"
+            [class.text-hint]="!pickingEnd()"
+            [class.text-accent-deep]="pickingEnd()"
+            >종료일</span
+          >
+          <span
+            class="block whitespace-nowrap text-16 font-semibold tracking-tight"
+            [class.text-hint]="!draftEnd()"
+            >{{ rangeDateLabel(draftEnd()) }}</span
+          >
+        </button>
+      </div>
+      <p class="sr-only" aria-live="polite">
+        {{ pickingEnd() ? '종료일을 선택하세요.' : '시작일을 선택하세요.' }}
+      </p>
+    }
+    <div class="mb-3 flex items-center justify-between">
+      <button appButton variant="icon" type="button" aria-label="이전 달" (click)="moveMonth(-1)">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <h2 class="font-semibold" aria-live="polite">{{ monthLabel() }}</h2>
+      <button appButton variant="icon" type="button" aria-label="다음 달" (click)="moveMonth(1)">
+        <span aria-hidden="true">›</span>
+      </button>
+    </div>
+    <div class="grid grid-cols-7 text-center">
+      @for (day of weekdays; track day) {
+        <span class="py-2 text-xs text-ink-3">{{ day }}</span>
+      }
+    </div>
+    <div class="grid grid-cols-7 gap-y-1" role="group" aria-label="날짜">
+      @for (day of days(); track day.date; let index = $index) {
+        <button
+          type="button"
+          [attr.data-date]="day.date"
+          [attr.aria-label]="day.date"
+          [attr.aria-pressed]="isSelected(day.date)"
+          [attr.tabindex]="focused() === day.date ? 0 : -1"
+          [disabled]="!available(day.date)"
+          (click)="chooseDate(day.date)"
+          (mouseenter)="hovered.set(day.date)"
+          (keydown)="onDayKey($event, day.date)"
+          class="group flex h-10 items-center justify-center text-14 focus-visible:relative focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-accent-deep disabled:opacity-30 disabled:cursor-not-allowed"
+          [class.text-ink-3]="!day.current"
+          [class.bg-accent-tint]="inRange(day.date)"
+          [class.rounded-l-full]="
+            inRange(day.date) && (day.date === draftStart() || index % 7 === 0)
+          "
+          [class.rounded-r-full]="inRange(day.date) && (day.date === highlightedEnd() || index % 7 === 6)"
+        >
+          <span
+            class="flex size-10 items-center justify-center rounded-full group-hover:bg-accent-tint"
+            [class.bg-accent-deep]="isSelected(day.date)"
+            [class.text-white]="isSelected(day.date)"
+            [class.group-hover:bg-accent-deep]="isSelected(day.date)"
+            >{{ day.day }}</span
+          >
+        </button>
+      }
+    </div>
+  } @else {
+    <h2 class="mb-4 font-semibold">시간 선택</h2>
+    <div class="flex gap-2">
+      <label class="min-w-0 flex-1 text-xs text-ink-3"
+        >시<select
+          [class]="selectClasses"
+          aria-label="시"
+          [value]="hour()"
+          (change)="hour.set($any($event.target).value)"
+        >
+          @for (h of hours; track h) {
+            <option [value]="h">{{ h }}시</option>
+          }
+        </select></label
+      >
+      <label class="min-w-0 flex-1 text-xs text-ink-3"
+        >분<select
+          [class]="selectClasses"
+          aria-label="분"
+          [value]="minute()"
+          (change)="minute.set($any($event.target).value)"
+        >
+          @for (m of minutes; track m) {
+            <option [value]="m">{{ m }}분</option>
+          }
+        </select></label
+      >
+      @if (withSeconds()) {
+        <label class="min-w-0 flex-1 text-xs text-ink-3"
+          >초<select
+            [class]="selectClasses"
+            aria-label="초"
+            [value]="second()"
+            (change)="second.set($any($event.target).value)"
+          >
+            @for (s of minutes; track s) {
+              <option [value]="s">{{ s }}초</option>
+            }
+          </select></label
+        >
+      }
+    </div>
+    <button appButton variant="primary" type="button" class="mt-4 w-full" (click)="chooseTime()">
+      시간 적용
+    </button>
+  }
+  @if (error()) {
+    <p role="alert" class="mt-2 text-xs text-danger-ink">{{ error() }}</p>
+  }
+  <div class="mt-3 flex items-center justify-end gap-2 border-t border-border pt-2">
+    @if (!target().required) {
+      <button appButton variant="ghost" type="button" (click)="clear()">
+        {{ isRange() ? '기간 비우기' : '비우기' }}
+      </button>
+    }
+    <button appButton variant="ghost" type="button" (click)="close()">닫기</button>
+  </div>
+</div>
