@@ -224,6 +224,21 @@
 - **WHEN** 사용자가 지역 순서·이동일을 바꾸거나 지역을 제거한다
 - **THEN** 영향받는 방문지·숙소·예약을 보여주고 확인 후 반영하며 기존 일정·방문 기록·사진을 자동 삭제하지 않는다
 
+### Requirement: Delete trips, places, and stays with confirmation
+시스템은 여행·방문지·숙소를 사용자가 직접 삭제하도록 SHALL 지원하며 되돌릴 수 없는 동작임을 알리고 확인을 받은 뒤에만 반영한다.
+#### Scenario: Delete a place from the itinerary
+- **WHEN** 사용자가 일정 항목의 더보기에서 삭제를 고른다
+- **THEN** 같은 화면에서 대상 이름과 되돌릴 수 없음을 알리고 확인한 뒤에만 해당 방문지를 제거하며 다른 날짜와 숙소는 그대로 둔다
+#### Scenario: Delete a stay
+- **WHEN** 사용자가 숙소 목록의 더보기에서 삭제를 고른다
+- **THEN** 확인 후 해당 숙소만 제거하고 방문지·일정은 유지하며 숙소가 없어진 밤은 미정으로 표시한다
+#### Scenario: Delete a trip
+- **WHEN** 사용자가 여행 목록 또는 여행 상세의 더보기에서 삭제를 고른다
+- **THEN** 일정·숙소가 함께 사라진다는 점을 알리고 확인한 뒤에만 여행을 제거하며 상세에서 삭제한 경우 목록으로 이동한다
+#### Scenario: Cancel a deletion
+- **WHEN** 사용자가 삭제 확인에서 취소한다
+- **THEN** 아무것도 제거하지 않고 원래 화면 상태를 유지한다
+
 ### Requirement: Account for inter-region travel
 시스템은 실제 일정 지점 사이의 지역 간 이동시간을 일별 시간 계산에 중복 없이 포함하고 확인되지 않은 정보와 사용자 입력을 구분하도록 SHALL 지원한다.
 #### Scenario: Inter-region route is available
