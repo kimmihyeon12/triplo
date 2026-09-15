@@ -124,51 +124,55 @@
 
       <fieldset class="border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
         <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">숙박 날짜</legend>
+<!-- 여행 기간 입력과 같은 범위 선택 형태를 쓴다. -->
         <div
-          class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
+          class="flex min-w-0 items-center gap-2 rounded-control border border-border bg-panel px-3 focus-within:border-accent-deep focus-within:ring-3 focus-within:ring-accent-tint"
+          data-testid="stay-period-input"
         >
-          <div class="field flex flex-col gap-1 mb-4">
-            <label
-              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
-              for="checkin"
-              >체크인</label
-            >
-            <input
-              appInput
-              id="checkin"
-              type="date"
-              class="input"
-              [ngModel]="checkIn()"
-              (ngModelChange)="checkIn.set($event)"
-              name="checkIn"
-              (blur)="datesTouched.set(true)"
-              [attr.aria-invalid]="showDateError() ? 'true' : null"
-              data-testid="stay-checkin"
-            />
-          </div>
-          <div class="field flex flex-col gap-1 mb-4">
-            <label
-              class="field__label text-12 leading-normal font-medium text-13 text-ink-2"
-              for="checkout"
-              >체크아웃</label
-            >
-            <input
-              appInput
-              id="checkout"
-              type="date"
-              class="input"
-              [ngModel]="checkOut()"
-              (ngModelChange)="checkOut.set($event)"
-              name="checkOut"
-              (blur)="datesTouched.set(true)"
-              [attr.aria-invalid]="showDateError() ? 'true' : null"
-              data-testid="stay-checkout"
-            />
-          </div>
+          <label class="sr-only" for="checkin">체크인</label>
+          <input
+            #checkInInput
+            appInput
+            id="checkin"
+            type="date"
+            class="range-date min-w-0 flex-1"
+            data-range-start="checkin"
+            data-range-end="checkout"
+            [ngModel]="checkIn()"
+            (ngModelChange)="checkIn.set($event)"
+            name="checkIn"
+            (blur)="datesTouched.set(true)"
+            [attr.aria-invalid]="showDateError() ? 'true' : null"
+            data-testid="stay-checkin"
+          />
+          <span class="shrink-0 text-hint" aria-hidden="true">~</span>
+          <label class="sr-only" for="checkout">체크아웃</label>
+          <input
+            appInput
+            id="checkout"
+            type="date"
+            class="range-date min-w-0 flex-1"
+            data-range-start="checkin"
+            data-range-end="checkout"
+            [ngModel]="checkOut()"
+            (ngModelChange)="checkOut.set($event)"
+            name="checkOut"
+            (blur)="datesTouched.set(true)"
+            [attr.aria-invalid]="showDateError() ? 'true' : null"
+            data-testid="stay-checkout"
+          />
+          <button
+            type="button"
+            class="flex h-11 w-4.5 shrink-0 items-center justify-center text-hint"
+            aria-label="숙박 날짜 달력 열기"
+            (click)="checkInInput.click()"
+          >
+            <app-icon name="calendar" [size]="16" />
+          </button>
         </div>
         @if (showDateError()) {
           <p
-            class="field__error text-12 text-danger-ink font-medium"
+            class="field__error mt-2 text-12 text-danger-ink font-medium"
             role="alert"
             data-testid="stay-date-error"
           >
@@ -176,13 +180,13 @@
           </p>
         } @else if (!dateError()) {
           <p
-            class="cell cell--stay inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-stay-tint text-stay-ink"
+            class="cell cell--stay mt-2 inline-flex items-center gap-1 min-h-5.5 rounded-cell text-12 font-medium whitespace-nowrap leading-normal py-0.5 px-2 [border:1px_solid_transparent] bg-stay-tint text-stay-ink"
             data-testid="stay-nights"
           >
             {{ nightsText() }}
           </p>
         } @else {
-          <p class="field__hint text-12 text-ink-3 leading-[1.45]">
+          <p class="field__hint mt-2 text-12 text-ink-3 leading-[1.45]">
             체크인 날짜와 체크아웃 날짜를 입력하면 몇 박인지 표시됩니다.
           </p>
         }

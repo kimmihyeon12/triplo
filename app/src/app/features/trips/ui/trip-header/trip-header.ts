@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { SaveStatusComponent } from '../../../../shared/ui/save-status/save-status';
+import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { formatPeriod } from '../../../../shared/util/dates';
 import type { Trip } from '../../model/trip';
 
 @Component({
   host: { class: 'block [margin-bottom:-4px]' },
   selector: 'app-trip-header',
-  imports: [SaveStatusComponent],
+  imports: [SaveStatusComponent, UiBadge],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-header.html',
 })

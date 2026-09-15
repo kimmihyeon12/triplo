@@ -1,4 +1,4 @@
-<nav class="tabs flex gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
+<nav class="tabs flex min-w-0 flex-1 gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
   @for (t of items(); track t.id) {
     @if (t.queryParams) {
       <a

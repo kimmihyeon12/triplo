@@ -8,6 +8,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   host: {
     '[class]': 'classes',
     '[class.cell--accent]': "tone() === 'accent'",
+    '[class.cell--place]': "tone() === 'place'",
+    '[class.cell--region]': "tone() === 'region'",
     '[class.cell--stay]': "tone() === 'stay'",
     '[class.cell--warn]': "tone() === 'warn'",
     '[class.cell--danger]': "tone() === 'danger'",
@@ -17,5 +19,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 })
 export class UiBadge {
   readonly classes = BADGE_CLASSES;
-  readonly tone = input<'accent' | 'stay' | 'warn' | 'danger' | 'ok' | 'neutral' | null>(null);
+  readonly tone = input<
+    'accent' | 'place' | 'region' | 'stay' | 'warn' | 'danger' | 'ok' | 'neutral' | null
+  >(null);
 }

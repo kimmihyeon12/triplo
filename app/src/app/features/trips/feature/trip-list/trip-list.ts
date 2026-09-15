@@ -16,11 +16,12 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../../auth/data/auth-store';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiBadge } from '../../../../shared/ui/badge/badge';
 
 @Component({
   selector: 'app-trip-list',
   providers: [TripListStore],
-  imports: [UiButton, UiNotice, RouterLink, IconComponent, UiRowMenu],
+  imports: [UiButton, UiNotice, UiBadge, RouterLink, IconComponent, UiRowMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-list.html',
 })
