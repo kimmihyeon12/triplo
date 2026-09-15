@@ -41,15 +41,20 @@ export class UiRowMenu {
   /**
    * 화면 기준 좌표를 직접 잡는다. 아래에 자리가 없으면 위로 열고,
    * 오른쪽으로 넘치면 왼쪽으로 당긴다.
+   * 폭·높이는 그려진 패널에서 직접 재야 테두리·안쪽 여백까지 맞는다.
    */
   onToggle(open: boolean): void {
     if (!open) return;
     const rect = this.host.nativeElement.getBoundingClientRect();
-    const height = this.items().length * 44 + 8;
-    const width = 176;
-    const below = window.innerHeight - rect.bottom;
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('[role="menu"]');
+    const width = panel?.offsetWidth || 186;
+    const height = panel?.offsetHeight || this.items().length * 44 + 8;
+    // 화면 폭은 스크롤바를 뺀 값이라야 오른쪽 끝이 잘리지 않는다.
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const below = vh - rect.bottom;
     const top = below < height + 8 ? rect.top - height - 4 : rect.bottom + 4;
-    const left = Math.min(Math.max(8, rect.right - width), window.innerWidth - width - 8);
-    this.position.set({ top: Math.max(8, top), left });
+    const left = Math.min(Math.max(8, rect.right - width), vw - width - 8);
+    this.position.set({ top: Math.max(8, top), left: Math.max(8, left) });
   }
 }
