@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addStop, createTrip, resetApp } from './helpers';
+import { addStop, createTrip, openTripMenu, resetApp } from './helpers';
 
 test.describe('여행 날짜: 당일, 날짜 미정 → 확정, 날짜 오류', () => {
   test.beforeEach(async ({ page }) => resetApp(page));
@@ -33,6 +33,7 @@ test.describe('여행 날짜: 당일, 날짜 미정 → 확정, 날짜 오류', 
     await page.getByTestId('tab-days').click();
     await expect(page.getByText('날짜를 정하면 날짜별 일정을 만들 수 있습니다.')).toBeVisible();
 
+    await openTripMenu(page);
     await page.getByTestId('trip-edit').click();
     await page.getByTestId('trip-start').fill('2026-06-01');
     await page.getByTestId('trip-end').fill('2026-06-02');
@@ -44,8 +45,7 @@ test.describe('여행 날짜: 당일, 날짜 미정 → 확정, 날짜 오류', 
     await expect(page.getByTestId('daytab-1')).toBeVisible();
     await expect(page.getByTestId('empty-day')).toBeVisible();
 
-    // 미배치 장소를 날짜에 배치
-    await page.getByTestId('tab-overview').click();
+    // 미배치 장소를 날짜에 배치. 전체 보기와 미배치는 일정 탭 안에 함께 있다.
     await page.getByTestId('unassigned').getByRole('link', { name: '날짜 배치' }).first().click();
     await page.getByTestId('stop-date').selectOption('2026-06-02');
     await page.getByTestId('stop-save').click();

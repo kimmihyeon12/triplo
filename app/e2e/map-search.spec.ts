@@ -112,9 +112,10 @@ test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () =
     await page.getByTestId('stay-checkout').fill('2026-05-03');
     await page.getByTestId('stay-save').click();
 
+    // 숙소 탭에는 지도를 두지 않는다. 위치는 일정 탭 지도와 카드의 지도 링크가 맡는다.
     await expect(page.getByTestId('panel-stays')).toBeVisible();
     await expect(page.getByTestId('stay-list')).toContainText('위치 확인됨');
-    await expect(page.getByTestId('fixture-map').locator('[data-kind="stay"]')).toHaveCount(1);
+    await expect(page.getByTestId('fixture-map')).toHaveCount(0);
 
     await page.getByTestId('tab-days').click();
     await expect(page.getByTestId('fixture-map').locator('[data-kind="stay"]')).toHaveCount(1);
@@ -150,7 +151,8 @@ test.describe('지도 상태: 로딩·오류', () => {
     await page.reload();
     await expect(page.getByTestId('map-error')).toContainText('지도를 표시하지 못했습니다');
     await expect(page.getByTestId('trip-map')).toHaveAttribute('data-state', 'error');
-    // 지도 오류와 무관하게 장소 추가는 가능
+    // 지도 오류와 무관하게 장소 추가는 가능. 추가 항목은 일정 추가 시트 안에 있다.
+    await page.getByTestId('add-open').click();
     await page.getByTestId('add-stop').click();
     await expect(page.getByTestId('stop-name')).toBeVisible();
     await page.evaluate(() => localStorage.removeItem('tc.test.mapFail'));

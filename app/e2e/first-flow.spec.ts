@@ -37,10 +37,13 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
     });
     await expect(page.getByTestId('panel-stays')).toBeVisible();
     await expect(page.getByTestId('night-1')).toHaveAttribute('data-state', 'covered');
-    await expect(page.getByTestId('night-2')).toContainText('연박');
+    // 연박은 같은 숙소가 이어 나오는 것으로 드러난다. 배지 글자 대신 상태 속성으로 확인한다.
+    await expect(page.getByTestId('night-2')).toHaveAttribute('data-consecutive', 'true');
+    await expect(page.getByTestId('night-2')).toContainText('A 호텔');
     await expect(page.getByTestId('stay-list')).toContainText('2박');
 
-    await page.getByTestId('tab-overview').click();
+    // 전체 보기는 일정 탭 안에 있다.
+    await page.getByTestId('tab-days').click();
     await expect(page.getByTestId('overview-day-1')).toContainText('안목해변');
     await expect(page.getByTestId('overview-night-1')).toContainText('A 호텔 체크인');
     await expect(page.getByTestId('overview-night-2')).toContainText('A 호텔 연박');

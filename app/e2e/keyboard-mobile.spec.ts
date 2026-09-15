@@ -44,14 +44,23 @@ test.describe('키보드만으로 첫 흐름, 가로 스크롤 없음', () => {
     await expect(page.getByTestId('trip-title')).toHaveText('키보드 여행');
     await expectNoHorizontalScroll(page);
 
+    await page.getByTestId('add-open').focus();
+    await page.keyboard.press('Enter');
     await page.getByTestId('add-stop').focus();
     await page.keyboard.press('Enter');
     await page.getByTestId('stop-name').focus();
     await page.keyboard.type('안목해변');
+    // 일정 추가 시트로 들어오면 보고 있던 날짜가 이미 선택되어 있다.
+    await expect(page.getByTestId('stop-date')).toHaveValue('2026-05-01');
+    // 키보드만으로 날짜를 바꿀 수 있는지 확인한 뒤 원래 날짜로 되돌린다.
     await page.getByTestId('stop-date').focus();
     await page.keyboard.press('Space'); // 목록 열기
-    await page.keyboard.press('ArrowDown'); // 미배치 → 1일차
+    await page.keyboard.press('ArrowDown'); // 1일차 → 2일차
     await page.keyboard.press('Enter'); // 선택 확정
+    await expect(page.getByTestId('stop-date')).toHaveValue('2026-05-02');
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowUp'); // 2일차 → 1일차
+    await page.keyboard.press('Enter');
     await expect(page.getByTestId('stop-date')).toHaveValue('2026-05-01');
     await page.getByTestId('stop-save').focus();
     await page.keyboard.press('Enter');
