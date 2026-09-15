@@ -14,6 +14,10 @@ export interface PageBarAction {
   readonly icon?: string;
   /** 지정하면 라벨 대신 이 글자를 담은 원형 아바타로 그린다(닉네임 첫 글자 등). */
   readonly avatar?: string;
+  /** 링크 없이 화면이 직접 처리하는 항목의 식별자(예: 삭제). */
+  readonly action?: string;
+  /** 파괴적 동작이면 true. 메뉴에서 로즈 계열로 그린다. */
+  readonly danger?: boolean;
   readonly testId?: string;
   readonly ariaLabel?: string;
 }
@@ -24,6 +28,8 @@ export interface PageBarState {
     people: { id: string; name: string }[];
     inviteLink: unknown[];
     menu: PageBarAction[];
+    /** 링크 없는 메뉴 항목을 화면이 받아 처리한다. */
+    onAction?: (action: string) => void;
   };
   /** 뒤로가기가 있으면 왼쪽 정렬. 비우면 제목 없이 심볼만 보인다. */
   readonly title: string;

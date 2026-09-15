@@ -1,0 +1,32 @@
+<nav class="tabs flex gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
+  @for (t of items(); track t.id) {
+    @if (t.queryParams) {
+      <a
+        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 no-underline [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
+        role="tab"
+        [class.tab--on]="active() === t.id"
+        [attr.aria-selected]="active() === t.id"
+        [routerLink]="[]"
+        [queryParams]="t.queryParams"
+        queryParamsHandling="merge"
+        [attr.data-testid]="t.testId || 'tab-' + t.id"
+      >
+        {{ t.label }}
+      </a>
+    } @else {
+      <button
+        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
+        type="button"
+        role="tab"
+        [class.tab--on]="active() === t.id"
+        [attr.aria-selected]="active() === t.id"
+        [attr.data-testid]="t.testId || 'tab-' + t.id"
+        (click)="selected.emit(t.id)"
+      >
+        {{ t.label }}
+      </button>
+    }
+  }
+</nav>
+<!-- 탭 줄 오른쪽에 두는 보조 동작(예: 정산으로 이동). -->
+<ng-content />

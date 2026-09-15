@@ -54,18 +54,36 @@
       class="absolute right-0 z-[10005] mt-1 w-44 rounded-xl border border-border bg-panel p-1 shadow-lg"
     >
       @for (item of tools().menu; track item.label) {
-        <a
-          [routerLink]="item.link"
-          [queryParams]="item.queryParams ?? {}"
-          [attr.data-testid]="item.testId"
-          (click)="menu.open = false"
-          class="flex min-h-11 items-center gap-2.5 rounded-control px-3 text-14 text-ink no-underline hover:bg-ground-2 focus-visible:outline-2"
-        >
-          @if (item.icon) {
-            <app-icon class="text-ink-3" [name]="item.icon" [size]="16" />
-          }
-          {{ item.label }}
-        </a>
+        @if (item.link) {
+          <a
+            [routerLink]="item.link"
+            [queryParams]="item.queryParams ?? {}"
+            [attr.data-testid]="item.testId"
+            (click)="menu.open = false"
+            class="flex min-h-11 items-center gap-2.5 rounded-control px-3 text-14 text-ink no-underline hover:bg-ground-2 focus-visible:outline-2"
+          >
+            @if (item.icon) {
+              <app-icon class="text-ink-3" [name]="item.icon" [size]="16" />
+            }
+            {{ item.label }}
+          </a>
+        } @else {
+          <!-- 링크가 없는 항목은 화면이 직접 처리한다(예: 삭제). -->
+          <button
+            type="button"
+            [attr.data-testid]="item.testId"
+            (click)="menu.open = false; tools().onAction?.(item.action ?? item.label)"
+            class="flex min-h-11 items-center gap-2.5 rounded-control px-3 text-14 focus-visible:outline-2"
+            [class]="
+              item.danger ? 'text-danger-ink hover:bg-danger-tint' : 'text-ink hover:bg-ground-2'
+            "
+          >
+            @if (item.icon) {
+              <app-icon [name]="item.icon" [size]="16" />
+            }
+            {{ item.label }}
+          </button>
+        }
       }
     </div>
   </details>

@@ -1,0 +1,25 @@
+<label
+  class="flex min-h-11 cursor-pointer items-center gap-2.5 py-0.5 has-[:disabled]:cursor-not-allowed"
+  [attr.for]="inputId()"
+>
+  <!--
+    기본 체크박스는 모서리를 다듬을 수 없어 appearance를 지우고 직접 그린다.
+    원이 아니라 둥근 사각형이어야 라디오와 구분된다.
+  -->
+  <input
+    class="checkbox size-5 flex-none cursor-pointer appearance-none rounded-[7px] border-2 border-border-strong bg-panel bg-center bg-no-repeat [background-size:13px_13px] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] checked:border-accent-deep checked:bg-accent-deep checked:[background-image:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3.5%208.4l3%203%206-6.4%22%2F%3E%3C%2Fsvg%3E')] hover:border-accent-deep focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] disabled:cursor-not-allowed disabled:opacity-[0.45] forced-colors:appearance-auto"
+    type="checkbox"
+    [id]="inputId()"
+    [checked]="checked()"
+    [disabled]="disabled()"
+    [attr.name]="name() || null"
+    [attr.data-testid]="testId() || null"
+    (change)="onToggle($event)"
+  />
+  <span class="flex min-w-0 flex-col gap-0.5">
+    <span class="text-14 leading-[1.5]">{{ label() }}</span>
+    @if (hint()) {
+      <span class="text-12 leading-[1.45] text-hint">{{ hint() }}</span>
+    }
+  </span>
+</label>

@@ -85,9 +85,14 @@ details.menu-sheet > .menu-backdrop {
   transition: opacity 180ms var(--ease-out);
 }
 
-body:has(details.page-tools-sheet[open])::before {
+/*
+  팝오버가 열리면 뒤를 덮는다. 새 팝오버를 만들면 이 선택자에 추가한다.
+  상단 바(10006)와 하단 바(10002)까지 덮어야 하므로 그보다 높은 값을 쓰고,
+  메뉴 자신은 다시 그 위(10011)에 올린다.
+*/
+body:has(app-row-menu details[open])::before {
   position: fixed;
-  z-index: 10000;
+  z-index: 10010;
   inset: 0;
   content: '';
   background: rgba(15, 23, 42, 0.28);
@@ -95,6 +100,13 @@ body:has(details.page-tools-sheet[open])::before {
   -webkit-backdrop-filter: blur(4px);
   pointer-events: auto;
   touch-action: none;
+}
+
+/* 팝오버가 열린 동안에는 뒤 화면이 움직이지 않아야 한다. */
+body:has(details.page-tools-sheet[open]),
+body:has(app-row-menu details[open]),
+body:has(details.menu-sheet[open]) {
+  overflow: hidden;
 }
 
 details.menu-sheet[open] > .menu-backdrop {
