@@ -1,5 +1,5 @@
-<form (ngSubmit)="submit()" class="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
-  <h2 class="text-lg font-bold">{{ initial() ? '지출 수정' : '실제 지출 기록' }}</h2>
+<form (ngSubmit)="submit()" class="flex flex-col gap-4 rounded-panel bg-panel p-5 shadow-panel">
+  <h2 class="text-18 font-bold">{{ initial() ? '지출 수정' : '실제 지출 기록' }}</h2>
   <app-field
     label="일정에서 가져오기"
     inputId="expense-link"
@@ -79,34 +79,40 @@
       }
     </select></app-field
   >
-  <label class="flex min-h-11 items-center gap-2 text-sm"
-    ><input
-      type="checkbox"
-      name="personal"
-      [ngModel]="personal()"
-      (ngModelChange)="personal.set($event)"
-    />개인 지출 · 함께 정산하지 않아요</label
-  >
+  <app-checkbox
+    label="개인 지출 · 함께 정산하지 않아요"
+    inputId="expense-personal"
+    name="personal"
+    [(checked)]="personal"
+  />
   @if (!personal()) {
-    <fieldset class="space-y-2 border-t border-gray-100 pt-3">
-      <legend class="font-semibold">함께 나눌 사람</legend>
-      <label class="flex min-h-11 items-center gap-2 text-sm"
-        ><input
-          type="checkbox"
-          name="custom"
-          [ngModel]="custom()"
-          (ngModelChange)="custom.set($event)"
-        />분담 금액 직접 입력</label
-      >
+    <fieldset class="flex flex-col gap-2 border-t border-border pt-3">
+      <legend class="text-14 font-semibold">함께 나눌 사람</legend>
+      <app-checkbox
+        label="분담 금액 직접 입력"
+        inputId="expense-custom"
+        name="custom"
+        [(checked)]="custom"
+      />
+      @if (people().length > 1) {
+        <div class="border-t border-border pt-1">
+          <app-checkbox
+            label="전체 선택"
+            inputId="expense-select-all"
+            testId="expense-select-all"
+            [checked]="allSelected()"
+            (checkedChange)="toggleAll()"
+          />
+        </div>
+      }
       @for (p of people(); track p.id) {
         <div class="flex min-h-11 items-center justify-between gap-3">
-          <label class="flex items-center gap-2"
-            ><input
-              type="checkbox"
-              [checked]="selected().includes(p.id)"
-              (change)="toggle(p.id)"
-            />{{ p.name }}</label
-          >
+          <app-checkbox
+            [label]="p.name"
+            [inputId]="'expense-share-' + p.id"
+            [checked]="selected().includes(p.id)"
+            (checkedChange)="toggle(p.id)"
+          />
           @if (custom() && selected().includes(p.id)) {
             <input
               appInput
@@ -122,7 +128,9 @@
           }
         </div>
       }
-      <p class="text-xs text-ink-3">균등 분담 시 나머지 1원은 선택한 순서대로 배분해요.</p>
+      <p class="text-12 leading-[1.45] text-hint">
+        균등 분담 시 나머지 1원은 선택한 순서대로 배분해요.
+      </p>
     </fieldset>
   }
   <app-field label="메모" inputId="expense-memo">
@@ -136,7 +144,7 @@
     ></textarea>
   </app-field>
   @if (error()) {
-    <p role="alert" class="text-sm text-red-700">{{ error() }}</p>
+    <p role="alert" class="text-13 font-medium text-danger-ink">{{ error() }}</p>
   }
   <div class="grid grid-cols-2 gap-2">
     <button appButton type="button" (click)="cancelled.emit()">취소</button

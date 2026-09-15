@@ -1,47 +1,64 @@
-<div class="mx-auto max-w-2xl space-y-5 px-4 py-6">
-  <header>
-    <p class="text-sm text-ink-3">{{ store.current()?.title }}</p>
-    <h1 class="mt-1 text-2xl font-bold tracking-tight">여행에 쓴 돈, 한눈에</h1>
-    <p class="mt-2 text-xs text-ink-3">이 기기에 저장 · 친구와 실시간으로 공유되지 않아요</p>
-  </header>
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  <!-- 머리글: 제목은 상단 바에 있으므로 여기에는 여행 이름과 저장 범위만 둔다. -->
+  <p class="flex flex-wrap items-baseline gap-[0_5px] text-13 text-ink-2">
+    <span>{{ store.current()?.title }}</span>
+    <span class="text-border-strong" aria-hidden="true">·</span>
+    <span class="text-ink-3">이 기기에 저장 · 친구와 실시간으로 공유되지 않습니다</span>
+  </p>
+
   <section
-    class="grid grid-cols-2 gap-4 rounded-2xl bg-white p-5 shadow-sm"
+    class="panel grid grid-cols-2 gap-4 rounded-panel bg-panel p-4 shadow-panel"
     aria-label="여행 비용 요약"
   >
     <div>
-      <p class="text-sm text-ink-3">일정 예상 비용</p>
-      <p class="mt-2 text-xl font-bold tabular-nums">
-        {{ estimate().total | number }}<span class="ml-1 text-sm font-normal">원</span>
+      <p class="text-13 text-ink-3">일정 예상 비용</p>
+      <p class="mt-1.5 text-22 font-bold tabular-nums">
+        {{ estimate().total | number }}<span class="ml-1 text-14 font-normal">원</span>
       </p>
-      <p class="mt-1 text-xs text-ink-3">
+      <p class="mt-1 text-12 leading-[1.45] text-hint">
         {{ estimate().unknown ? '미입력 ' + estimate().unknown + '건 제외' : '입력된 일정 기준' }}
       </p>
     </div>
-    <div class="border-l border-gray-100 pl-4">
-      <p class="text-sm text-ink-3">실제 지출</p>
-      <p class="mt-2 text-xl font-bold text-accent-deep tabular-nums">
-        {{ actual() | number }}<span class="ml-1 text-sm font-normal">원</span>
+    <div class="border-l border-border pl-4">
+      <p class="text-13 text-ink-3">실제 지출</p>
+      <p class="mt-1.5 text-22 font-bold tabular-nums text-accent-deep">
+        {{ actual() | number }}<span class="ml-1 text-14 font-normal">원</span>
       </p>
-      <p class="mt-1 text-xs text-ink-3">기록한 지출 {{ ledger().expenses.length }}건</p>
+      <p class="mt-1 text-12 leading-[1.45] text-hint">
+        기록한 지출 {{ ledger().expenses.length }}건
+      </p>
     </div>
   </section>
+
   @if (!blocked()) {
-    <details class="rounded-2xl bg-white p-4 shadow-sm">
-      <summary class="min-h-8 cursor-pointer font-semibold">
+    <!-- 접혔을 때는 제목 줄만 남도록 아래 여백을 없앤다. -->
+    <details class="panel rounded-panel bg-panel px-4 py-3 shadow-panel [&[open]]:pb-4">
+      <summary
+        class="flex min-h-8 cursor-pointer list-none items-center gap-2 text-14 font-bold [&::-webkit-details-marker]:hidden"
+      >
+        <span
+          class="flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
+        >
+          <app-icon name="chevron-right" [size]="16" />
+        </span>
         정산할 사람 · {{ ledger().people.length }}명
       </summary>
-      <div class="mt-3 flex flex-wrap gap-2">
+      <div class="mt-3 flex flex-wrap items-center gap-2">
         @for (p of ledger().people; track p.id) {
-          <span class="rounded-full bg-gray-100 px-3 py-1 text-sm">{{ p.name }}</span>
+          <span appBadge class="cell cell--ghost min-h-8 items-center justify-center px-3">{{
+            p.name
+          }}</span>
         }
       </div>
-      <p class="my-3 text-xs text-ink-3">
-        가계부에 사용할 이름이에요. 친구 초대와는 별도로 관리돼요.
+      <p class="mt-3 mb-3 text-12 leading-[1.45] text-hint">
+        가계부에 사용할 이름입니다. 친구 초대와는 별도로 관리됩니다.
       </p>
-      <form (ngSubmit)="addPerson()" class="flex gap-2">
+      <form (ngSubmit)="addPerson()" class="flex items-center gap-2">
         <input
           appInput
-          class="min-w-0 flex-1"
+          class="input min-w-0 flex-1"
           aria-label="정산할 사람 이름"
           name="person"
           maxlength="40"
@@ -51,144 +68,213 @@
         /><button appButton type="submit">추가</button>
       </form>
     </details>
-    <nav class="flex border-b border-gray-200" aria-label="가계부 보기">
-      <button
-        appButton
-        variant="ghost"
-        class="flex-1"
-        [attr.aria-pressed]="tab() === 'expenses'"
-        [class.text-accent-deep]="tab() === 'expenses'"
-        (click)="tab.set('expenses')"
-      >
-        실제 지출</button
-      ><button
-        appButton
-        variant="ghost"
-        class="flex-1"
-        [attr.aria-pressed]="tab() === 'settlement'"
-        [class.text-accent-deep]="tab() === 'settlement'"
-        (click)="tab.set('settlement')"
-      >
-        정산
-      </button>
-    </nav>
+
+    <app-tabs
+      [items]="tabItems"
+      [active]="tab()"
+      ariaLabel="정산 보기"
+      (selected)="tab.set($any($event))"
+    />
+
     @if (tab() === 'expenses') {
-      @if (formOpen()) {
-        <app-expense-form
-          [people]="ledger().people"
-          [links]="links()"
-          [initial]="editing()"
-          (saved)="saveExpense($event)"
-          (cancelled)="formOpen.set(false)"
-        />
-      } @else {
-        <button appButton variant="primary" class="w-full" (click)="openExpense()">
-          지출 기록하기
-        </button>
-      }
-      @for (e of ledger().expenses; track e.id) {
-        <article class="rounded-2xl bg-white p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h2 class="font-semibold wrap-anywhere">{{ e.title }}</h2>
-              <p class="mt-1 text-xs text-ink-3">{{ e.date }} · {{ person(e.paidBy) }} 결제</p>
-            </div>
-            <strong class="shrink-0 tabular-nums">{{ e.amount | number }}원</strong>
-          </div>
-          <p class="mt-3 text-xs text-ink-3">
-            {{ e.personal ? '개인 지출 · 정산 제외' : e.splits.length + '명 분담' }}
-          </p>
-          <div class="mt-3 flex justify-end gap-2">
-            <button appButton variant="ghost" (click)="openExpense(e)">수정</button
-            ><button appButton variant="ghost" (click)="deleteId.set(e.id)">삭제</button>
-          </div>
-          @if (deleteId() === e.id) {
-            <div class="mt-3 space-y-2 border-t border-gray-100 pt-3">
-              <p class="text-sm">이 지출을 삭제할까요? 정산 금액도 다시 계산돼요.</p>
-              <button appButton (click)="deleteId.set('')">취소</button
-              ><button appButton variant="danger" (click)="removeExpense(e.id)">지출 삭제</button>
-            </div>
-          }
-        </article>
-      } @empty {
-        @if (!formOpen()) {
-          <div class="py-10 text-center">
-            <h2 class="font-semibold">첫 지출을 기록해 보세요</h2>
-            <p class="mt-2 text-sm text-ink-3">
-              예상 비용은 지출로 자동 기록되지 않아요.<br />실제로 결제한 금액을 남겨주세요.
-            </p>
-          </div>
-        }
-      }
-    } @else {
-      <p class="text-sm text-ink-3">공동 지출만 나눠 계산해요. 실제 송금은 직접 진행해 주세요.</p>
-      @for (t of transfers(); track t.from + t.to) {
-        <article class="rounded-2xl bg-white p-5 shadow-sm">
-          <p class="font-semibold">{{ person(t.from) }} → {{ person(t.to) }}</p>
-          <div class="mt-2 flex items-center justify-between gap-2">
-            <strong class="text-xl tabular-nums">{{ t.amount | number }}원</strong
-            ><button appButton (click)="receiving.set(t); receiptAmount.set(t.amount)">
-              수령 기록
-            </button>
-          </div>
-        </article>
-      } @empty {
-        <p class="rounded-2xl bg-white p-8 text-center text-ink-3">남은 정산 금액이 없어요.</p>
-      }
-      @if (receiving(); as t) {
-        <form
-          class="space-y-3 rounded-2xl border border-blue-200 bg-white p-5"
-          (ngSubmit)="recordReceipt()"
-        >
-          <h2 class="font-semibold">{{ person(t.from) }}에게 받은 금액</h2>
-          <input
-            appInput
-            aria-label="수령 금액"
-            name="receiptAmount"
-            type="number"
-            min="1"
-            [max]="t.amount"
-            step="1"
-            [ngModel]="receiptAmount()"
-            (ngModelChange)="receiptAmount.set($event)"
+      <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-expenses">
+        @if (formOpen()) {
+          <app-expense-form
+            [people]="ledger().people"
+            [links]="links()"
+            [initial]="editing()"
+            (saved)="saveExpense($event)"
+            (cancelled)="formOpen.set(false)"
           />
-          <div class="flex gap-2">
-            <button appButton type="button" (click)="receiving.set(null)">취소</button
-            ><button appButton variant="primary" type="submit">수령 확인</button>
-          </div>
-        </form>
-      }
-      @if (ledger().receipts.length) {
-        <h2 class="font-semibold">수령 내역</h2>
-      }
-      @for (r of ledger().receipts; track r.id) {
-        <article class="rounded-xl border border-gray-200 p-4 text-sm">
-          <p>{{ person(r.from) }} → {{ person(r.to) }} · {{ r.amount | number }}원</p>
-          @if (r.cancelledReason) {
-            <p class="mt-2 text-ink-3">취소됨 · {{ r.cancelledReason }}</p>
-          } @else {
-            <button appButton variant="ghost" (click)="cancelling.set(r.id)">기록 취소</button>
+        }
+        @for (e of ledger().expenses; track e.id) {
+          <article class="panel rounded-panel bg-panel p-4 shadow-panel">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-14 font-bold wrap-anywhere">{{ e.title }}</p>
+                <p class="mt-1 text-12 leading-[1.45] text-hint">
+                  {{ e.date }} · {{ person(e.paidBy) }} 결제 ·
+                  {{ e.personal ? '개인 지출' : e.splits.length + '명 분담' }}
+                </p>
+              </div>
+              <app-row-menu
+                class="-mt-1.5 -mr-1.5"
+                [items]="expenseMenu"
+                [ariaLabel]="e.title + ' 더보기'"
+                [testId]="'expense-menu-' + e.id"
+                (selected)="onExpenseMenu($event, e)"
+              />
+            </div>
+            <div class="mt-2 flex items-center justify-between gap-2">
+              <strong class="text-18 tabular-nums">{{ e.amount | number }}원</strong>
+              <span class="flex flex-wrap items-center justify-end gap-1.5">
+                <span appBadge class="cell cell--place">{{ categoryLabel(e.category) }}</span>
+                @if (e.personal) {
+                  <span appBadge class="cell cell--ghost">정산 제외</span>
+                }
+              </span>
+            </div>
+            @if (deleteId() === e.id) {
+              <div class="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+                <p class="text-13">이 지출을 삭제할까요? 정산 금액도 다시 계산됩니다.</p>
+                <div class="flex justify-end gap-2">
+                  <button appButton class="btn btn--sm" (click)="deleteId.set('')">취소</button
+                  ><button appButton class="btn btn--sm" variant="danger" (click)="removeExpense(e.id)">
+                    지출 삭제
+                  </button>
+                </div>
+              </div>
+            }
+          </article>
+        } @empty {
+          @if (!formOpen()) {
+            <section
+              class="panel flex flex-col gap-1 rounded-panel bg-panel p-5 shadow-panel"
+              data-testid="empty-expenses"
+            >
+              <h2 class="text-16">첫 지출을 기록해 보세요</h2>
+              <p class="text-12 leading-normal text-ink-3">
+                예상 비용은 지출로 자동 기록되지 않습니다. 실제로 결제한 금액을 남겨주세요.
+              </p>
+            </section>
           }
-          @if (cancelling() === r.id) {
-            <form (ngSubmit)="cancelReceipt()" class="mt-2 space-y-2">
-              <input
-                appInput
-                name="reason"
-                aria-label="수령 취소 이유"
-                placeholder="취소 이유"
-                [ngModel]="cancelReason()"
-                (ngModelChange)="cancelReason.set($event)"
-              /><button appButton type="button" (click)="cancelling.set('')">닫기</button
-              ><button appButton type="submit">취소 확인</button>
-            </form>
+        }
+      </section>
+    } @else {
+      <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-settlement">
+        <div class="flex items-center justify-between gap-3">
+          <p class="min-w-0 text-13 text-ink-3">
+            공동 지출만 나눠 계산합니다. 실제 송금은 직접 진행해 주세요.
+          </p>
+          @if (transfers().length > 1) {
+            <button
+              appButton
+              class="btn btn--sm shrink-0"
+              (click)="receiveAll()"
+              data-testid="receive-all"
+            >
+              전체 수령
+            </button>
           }
-        </article>
-      }
+        </div>
+        @for (t of transfers(); track t.from + t.to) {
+          <article class="panel rounded-panel bg-panel p-4 shadow-panel">
+            <p class="text-14 font-bold">{{ person(t.from) }} → {{ person(t.to) }}</p>
+            <div class="mt-2 flex items-center justify-between gap-2">
+              <strong class="text-18 tabular-nums">{{ t.amount | number }}원</strong
+              ><button
+                appButton
+                class="btn btn--sm"
+                (click)="receiving.set(t); receiptAmount.set(t.amount)"
+              >
+                수령 기록
+              </button>
+            </div>
+          </article>
+        } @empty {
+          <section
+            class="panel flex flex-col gap-1 rounded-panel bg-panel p-5 shadow-panel"
+            data-testid="empty-settlement"
+          >
+            <h2 class="text-16">남은 정산 금액이 없습니다</h2>
+            <p class="text-12 leading-normal text-ink-3">
+              공동 지출을 기록하면 여기에서 정산 금액을 볼 수 있습니다.
+            </p>
+          </section>
+        }
+        @if (receiving(); as t) {
+          <form
+            class="panel flex flex-col gap-3 rounded-panel border border-accent-fill bg-panel p-4 shadow-panel"
+            (ngSubmit)="recordReceipt()"
+          >
+            <h2 class="text-16">{{ person(t.from) }}에게 받은 금액</h2>
+            <input
+              appInput
+              class="input"
+              aria-label="수령 금액"
+              name="receiptAmount"
+              type="number"
+              min="1"
+              [max]="t.amount"
+              step="1"
+              [ngModel]="receiptAmount()"
+              (ngModelChange)="receiptAmount.set($event)"
+            />
+            <div class="flex justify-end gap-2">
+              <button appButton type="button" (click)="receiving.set(null)">취소</button
+              ><button appButton variant="primary" type="submit">수령 확인</button>
+            </div>
+          </form>
+        }
+        @if (ledger().receipts.length) {
+          <h2 class="text-16">수령 내역</h2>
+        }
+        @for (r of ledger().receipts; track r.id) {
+          <article class="rounded-control border border-border p-4 text-13">
+            <div class="flex items-start justify-between gap-2">
+              <p class="min-w-0">
+                {{ person(r.from) }} → {{ person(r.to) }} · {{ r.amount | number }}원
+              </p>
+              @if (!r.cancelledReason) {
+                <app-row-menu
+                  class="-mt-1.5 -mr-1.5"
+                  [items]="receiptMenu"
+                  ariaLabel="수령 기록 더보기"
+                  [testId]="'receipt-menu-' + r.id"
+                  (selected)="cancelling.set(r.id)"
+                />
+              }
+            </div>
+            @if (r.cancelledReason) {
+              <p class="mt-2 text-12 leading-[1.45] text-hint">취소됨 · {{ r.cancelledReason }}</p>
+            }
+            @if (cancelling() === r.id) {
+              <form (ngSubmit)="cancelReceipt()" class="mt-2 flex flex-col gap-2">
+                <input
+                  appInput
+                  class="input"
+                  name="reason"
+                  aria-label="수령 취소 이유"
+                  placeholder="취소 이유"
+                  [ngModel]="cancelReason()"
+                  (ngModelChange)="cancelReason.set($event)"
+                />
+                <div class="flex justify-end gap-2">
+                  <button appButton class="btn btn--sm" type="button" (click)="cancelling.set('')">
+                    닫기</button
+                  ><button appButton class="btn btn--sm" type="submit">취소 확인</button>
+                </div>
+              </form>
+            }
+          </article>
+        }
+      </section>
     }
   } @else {
-    <p role="alert" class="text-sm text-red-700">{{ error() }}</p>
+    <div appNotice class="notice notice--danger" role="alert">
+      <app-icon name="alert" />
+      <div class="notice__body min-w-0 flex-1">{{ error() }}</div>
+    </div>
   }
 </div>
+
+<!-- 지출 기록은 여행 상세의 [일정 추가]와 같은 자리에 둔다. -->
+@if (!blocked() && tab() === 'expenses' && !formOpen()) {
+  <div appActionBar class="action-bar">
+    <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
+      <button
+        appButton
+        variant="primary"
+        class="w-full [@media(min-width:_720px)]:w-auto [@media(min-width:_720px)]:px-8"
+        (click)="openExpense()"
+        data-testid="add-expense"
+      >
+        지출 기록
+      </button>
+    </div>
+  </div>
+}
+
 @if (error()) {
   <app-error-toast [message]="error()" (dismissed)="error.set('')" />
 }

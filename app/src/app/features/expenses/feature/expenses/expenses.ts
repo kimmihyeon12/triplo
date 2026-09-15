@@ -12,10 +12,17 @@ import { FormsModule } from '@angular/forms';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
+import { UiBadge } from '../../../../shared/ui/badge/badge';
+import { UiNotice } from '../../../../shared/ui/notice/notice';
+import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LocalLedger } from '../../data/local-ledger';
+import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import type { Expense, Ledger } from '../../model/ledger';
 import { newLedger, transferSuggestions } from '../../util/ledger';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
@@ -23,7 +30,20 @@ import { ExpenseForm } from '../../ui/expense-form/expense-form';
 @Component({
   selector: 'app-expenses',
   templateUrl: './expenses.html',
-  imports: [DecimalPipe, FormsModule, UiButton, UiInput, ErrorToast, ExpenseForm],
+  imports: [
+    DecimalPipe,
+    FormsModule,
+    UiButton,
+    UiInput,
+    UiBadge,
+    UiNotice,
+    UiActionBar,
+    IconComponent,
+    UiRowMenu,
+    UiTabs,
+    ErrorToast,
+    ExpenseForm,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Expenses {
@@ -55,7 +75,7 @@ export class Expenses {
   constructor() {
     const bar = inject(PageBar);
     effect(() => {
-      bar.set({ title: '여행 가계부', back: ['/trips', this.id()], action: null });
+      bar.set({ title: '여행 정산', back: ['/trips', this.id()], action: null });
       void this.store.open(this.id());
       this.formOpen.set(false);
       this.blocked.set(false);
@@ -96,6 +116,28 @@ export class Expenses {
       })
     )
       this.personName.set('');
+  }
+
+  /** 행마다 버튼을 늘어놓지 않고 더보기 한 곳에 모은다. */
+  readonly tabItems: readonly TabItem[] = [
+    { id: 'expenses', label: '지출 내역' },
+    { id: 'settlement', label: '정산 현황' },
+  ];
+  readonly expenseMenu: readonly RowMenuItem[] = [
+    { id: 'edit', label: '수정', icon: 'edit' },
+    { id: 'delete', label: '삭제', icon: 'trash', danger: true },
+  ];
+  readonly receiptMenu: readonly RowMenuItem[] = [
+    { id: 'cancel', label: '기록 취소', icon: 'x', danger: true },
+  ];
+
+  categoryLabel(key: string): string {
+    return (EXPENSE_CATEGORIES as Record<string, string>)[key] ?? '기타';
+  }
+
+  onExpenseMenu(action: string, expense: Expense): void {
+    if (action === 'edit') this.openExpense(expense);
+    else if (action === 'delete') this.deleteId.set(expense.id);
   }
 
   openExpense(expense: Expense | null = null): void {
@@ -141,6 +183,19 @@ export class Expenses {
       })
     )
       this.receiving.set(null);
+  }
+
+  /** 남은 정산을 한 번에 전액 수령으로 남긴다. 부분 수령은 개별 기록을 쓴다. */
+  receiveAll(): void {
+    const pending = this.transfers();
+    if (pending.length === 0) return;
+    this.persist({
+      ...this.ledger(),
+      receipts: [
+        ...this.ledger().receipts,
+        ...pending.map((t) => ({ ...t, id: crypto.randomUUID(), cancelledReason: null })),
+      ],
+    });
   }
 
   cancelReceipt(): void {

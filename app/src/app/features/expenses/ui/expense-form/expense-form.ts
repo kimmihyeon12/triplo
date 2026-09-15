@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   input,
   output,
@@ -11,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
+import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import type { Expense, ExpensePerson } from '../../model/ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { allocateEvenly } from '../../util/ledger';
@@ -24,7 +26,7 @@ export interface ExpenseLink {
 @Component({
   selector: 'app-expense-form',
   templateUrl: './expense-form.html',
-  imports: [FormsModule, UiButton, UiInput, UiField],
+  imports: [FormsModule, UiButton, UiInput, UiField, UiCheckbox],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpenseForm {
@@ -80,6 +82,16 @@ export class ExpenseForm {
 
   toggle(id: string): void {
     this.selected.update((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
+
+  /** 사람이 많을 때 하나씩 누르지 않도록 전체 선택을 둔다. */
+  readonly allSelected = computed(() => {
+    const people = this.people();
+    return people.length > 0 && people.every((p) => this.selected().includes(p.id));
+  });
+
+  toggleAll(): void {
+    this.selected.set(this.allSelected() ? [] : this.people().map((p) => p.id));
   }
 
   setShare(id: string, value: number): void {
