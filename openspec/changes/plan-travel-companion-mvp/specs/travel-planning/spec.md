@@ -422,3 +422,18 @@
 #### Scenario: Preview before database connection
 - **WHEN** DB 연결 전 초대 화면에서 공유 미리보기를 연다
 - **THEN** 같은 기기의 일정으로 비로그인/참여자 화면을 보여주고 실제 초대·공동 편집 미연결 상태를 명시한다. 프로필·개인 메모·예약정보·가계부는 미리보기 일정에 포함하지 않는다.
+
+
+### Requirement: Unified trip period selection
+시스템은 여행 기간을 하나의 달력에서 시작일·종료일 순서로 SHALL 선택하게 하고 종료일 선택 시 양쪽 입력에 함께 적용한다.
+#### Scenario: Choose dates across months
+- **WHEN** 시작일을 고른 뒤 다음 달의 종료일을 선택한다
+- **THEN** 시작일부터 종료일까지 범위를 표시하고 선택 완료 후 기간과 박수를 갱신한다.
+#### Scenario: Cancel an unfinished range
+- **WHEN** 시작일만 고른 상태에서 선택창을 닫는다
+- **THEN** 기존 저장 전 입력 기간을 변경하지 않는다. 기간 비우기는 양쪽 날짜를 함께 지운다.
+### Requirement: Consistent field hints
+시스템은 입력 하단의 일반 설명을 6px 간격·공통 hint 색상으로 SHALL 표시한다.
+#### Scenario: Compare title and region hints
+- **WHEN** 여행 만들기 화면의 여행 이름·기간·지역 입력을 본다
+- **THEN** 각 설명은 입력 박스 아래에서 같은 간격과 글자색으로 시작한다.
