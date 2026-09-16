@@ -1,43 +1,211 @@
-<div class="mx-auto max-w-2xl space-y-6 px-4 py-6">
-  <header class="space-y-2">
-    <p class="text-sm font-semibold text-accent-deep">함께 만드는 여행</p>
-    <h1 class="text-2xl font-bold tracking-tight">같이 보고, 같이 계획해요</h1>
-    <p class="text-sm leading-relaxed text-ink-3">
-      친구에게 일정을 보여주고, 마음에 드는 장소를 함께 채워보세요.
+<div
+  class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 pb-[calc(var(--sp-6)+80px)]"
+  data-testid="invite-page"
+>
+  <!-- 설명은 티켓 위에 짧게 둔다. 화면의 주인공은 티켓이다. -->
+  <header class="flex flex-col gap-2 text-center">
+    <p class="text-13 font-semibold text-accent-deep">함께 만드는 여행</p>
+    <h1 class="text-22 font-bold tracking-tight">초대장을 건네보세요</h1>
+    <p class="text-13 leading-relaxed text-ink-3">
+      링크를 받은 친구는 로그인 없이 일정을 볼 수 있고, 참여하면 장소를 함께 채울 수 있어요.
     </p>
   </header>
-  <section class="rounded-2xl bg-white p-5 shadow-sm">
-    <h2 class="font-bold">링크 하나로 함께</h2>
-    <ol class="mt-5 space-y-5">
-      <li class="flex gap-3">
-        <span class="text-accent-deep font-bold">01</span>
-        <div>
-          <h3 class="font-semibold">로그인 없이 일정 보기</h3>
-          <p class="mt-1 text-sm text-ink-3">공유받은 친구는 여행 날짜와 장소를 볼 수 있어요.</p>
+
+  @if (loading()) {
+    <p class="py-10 text-center text-ink-3" role="status">불러오는 중…</p>
+  } @else {
+    <!--
+      원근은 바깥 상자가 잡고 카드만 기울인다. 카드 자신에게 perspective를 주면
+      회전축이 카드와 함께 돌아 기울기가 어긋난다.
+    -->
+    <div
+      class="ticket-stage flex justify-center [perspective:1100px] py-2"
+      (pointermove)="onPointerMove($event)"
+      (pointerdown)="onPointerDown($event)"
+      (pointerup)="onPointerLeave()"
+      (pointerleave)="onPointerLeave()"
+      (pointercancel)="onPointerLeave()"
+    >
+      <article
+        class="ticket relative w-full max-w-sm [transform-style:preserve-3d] [transition:transform_260ms_var(--ease-out)] motion-reduce:[transition:none]"
+        [style.transform]="ticketTransform()"
+        data-testid="invite-ticket"
+      >
+        <!--
+          본권: 파랑에서 숙소 보라로 흐르는 그라데이션. 두 색 모두 기존
+          토큰이라 나머지 화면과 따로 놀지 않는다.
+        -->
+        <div
+          class="relative overflow-hidden rounded-t-panel px-5 pt-5 pb-6 text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_48%,var(--color-stay-ink)_100%)]"
+        >
+          <!-- 기울인 반대쪽에서 빛이 드는 것처럼 보이게 하는 층 -->
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute -inset-1/4 [background:radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.32),transparent_62%)] [transition:transform_260ms_var(--ease-out)] motion-reduce:hidden"
+            [style.transform]="sheenTransform()"
+          ></span>
+          <!-- 위쪽 가장자리를 밝게 걷어올려 종이에 빛이 닿은 것처럼 보이게 한다. -->
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-x-0 top-0 h-24 [background:linear-gradient(to_bottom,rgba(255,255,255,0.18),transparent)]"
+          ></span>
+
+          <div class="relative flex items-center justify-between">
+            <span class="flex items-center gap-1.5 text-13 font-bold tracking-wide">
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 28 28"
+                fill="none"
+                class="text-white"
+              >
+                <path
+                  d="M6.5 7.5C9.8 6.6 14.6 6.2 19.5 6.6M13.2 6.9C12.6 12.4 12.3 16.6 12.6 19.2C12.8 21.1 13.6 21.9 15.1 21.6C16.4 21.3 17.7 20.3 19 18.6"
+                  stroke="currentColor"
+                  stroke-width="2.1"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              트립플로
+            </span>
+            <span class="text-12 font-medium tracking-[0.18em] opacity-80">INVITATION</span>
+          </div>
+
+          <!-- 출발지 → 도착지 -->
+          <div class="relative mt-5 flex items-end gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-12 tracking-wide opacity-75">FROM</p>
+              <p class="truncate text-18 font-bold leading-tight" [title]="fromLabel()">
+                {{ fromLabel() }}
+              </p>
+            </div>
+            <span class="mb-1.5 flex-none opacity-80" aria-hidden="true">
+              <app-icon name="arrow-right" [size]="18" />
+            </span>
+            <div class="min-w-0 flex-1 text-right">
+              <p class="text-12 tracking-wide opacity-75">TO</p>
+              <p class="truncate text-18 font-bold leading-tight" [title]="toLabel()">
+                {{ toLabel() }}
+              </p>
+            </div>
+          </div>
+
+          <p class="relative mt-4 truncate text-14 font-medium opacity-90" [title]="title()">
+            {{ title() }}
+          </p>
         </div>
-      </li>
-      <li class="flex gap-3">
-        <span class="text-accent-deep font-bold">02</span>
-        <div>
-          <h3 class="font-semibold">로그인하고 함께 편집</h3>
-          <p class="mt-1 text-sm text-ink-3">참여 후 장소를 추가하고 일정을 함께 수정해요.</p>
+
+        <!--
+          절취선: 양옆 홈과 점선으로 티켓이 두 장임을 드러낸다.
+          홈을 카드 밖으로 빼면 좁은 화면에서 가장자리에 묻히므로 안쪽으로 물린다.
+        -->
+        <div class="relative z-1 h-0" aria-hidden="true">
+          <span
+            class="absolute -left-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.12)]"
+          ></span>
+          <span
+            class="absolute -right-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.12)]"
+          ></span>
+          <!-- 점선만으로는 약해서 아래에 옅은 그림자를 깔아 접힌 자국처럼 보이게 한다. -->
+          <span
+            class="absolute inset-x-0 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)]"
+          ></span>
+          <span
+            class="absolute inset-x-5 top-1/2 border-t-2 border-dashed border-border-strong"
+          ></span>
         </div>
-      </li>
-    </ol>
-  </section>
-  <section class="rounded-2xl border border-dashed border-gray-300 p-5 space-y-4">
+
+        <!-- 반권: 본권의 파랑 끝자락을 아주 옅게 받아 한 장으로 이어 보이게 한다. -->
+        <div
+          class="rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
+        >
+          <!-- 날짜가 가장 길어서 다른 두 칸보다 넓은 자리를 준다. -->
+          <dl class="grid grid-cols-[1.5fr_1fr_1fr] gap-3">
+            <div class="min-w-0">
+              <dt class="text-12 tracking-wide text-ink-3">DATE</dt>
+              <dd class="mt-0.5 truncate text-13 font-bold" [title]="dateLine()">
+                {{ dateLine() }}
+              </dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-12 tracking-wide text-ink-3">PERIOD</dt>
+              <dd class="mt-0.5 truncate text-13 font-bold">{{ nights() }}</dd>
+            </div>
+            <div class="min-w-0 text-right">
+              <dt class="text-12 tracking-wide text-ink-3">STAY</dt>
+              <dd class="mt-0.5 truncate text-13 font-bold">{{ stayLabel() }}</dd>
+            </div>
+          </dl>
+
+          <div class="mt-4 flex items-end justify-between gap-3 border-t border-border pt-4">
+            <div class="min-w-0">
+              <p class="text-12 tracking-wide text-ink-3">SCHEDULE</p>
+              <p class="mt-0.5 flex items-baseline gap-1">
+                <span class="text-22 font-bold tabular-nums">{{ departLabel().value }}</span>
+                @if (departLabel().unit) {
+                  <span class="text-12 text-ink-3">{{ departLabel().unit }}</span>
+                }
+              </p>
+            </div>
+            <div class="min-w-0 text-right">
+              <p class="text-12 tracking-wide text-ink-3">REGION</p>
+              <p class="mt-0.5 truncate text-13 font-medium text-ink-2" [title]="regionPath()">
+                {{ regionPath() }}
+              </p>
+            </div>
+          </div>
+
+          <p class="mt-4 text-12 tracking-[0.22em] text-ink-3 tabular-nums">
+            NO. {{ ticketNo() }}
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <!-- 마우스가 있는 기기에서만 안내한다. 터치에서는 눌러야 반응한다. -->
+    <p class="hidden text-center text-12 text-ink-3 [@media(hover:_hover)]:block">
+      티켓 위에 마우스를 올려 보세요.
+    </p>
+  }
+
+  <!-- 하단: 링크 공유 -->
+  <section class="flex flex-col gap-3">
     <div>
-      <h2 class="font-semibold">공유 화면 미리보기</h2>
-      <p class="mt-2 text-sm leading-relaxed text-ink-3">
-        현재는 디자인을 확인하는 단계예요. 미리보기는 이 기기의 일정으로 열리며, 실제 초대와 공동
-        편집은 아직 연결되지 않았어요.
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        class="btn w-full"
+        disabled
+        data-testid="invite-share"
+      >
+        <app-icon name="share" [size]="16" /> 초대 링크 공유
+      </button>
+      <p class="mt-1.5 text-center text-12 leading-relaxed text-ink-3">
+        링크 공유는 서버 연결 후에 열려요. 지금 만들 수 있는 주소는 이 기기의 일정만 가리켜서
+        친구에게 보내면 빈 화면이 열립니다.
       </p>
     </div>
-    <div class="grid gap-2 sm:grid-cols-2">
-      <a appButton [routerLink]="['/share-preview', id()]">비로그인 화면 보기</a
-      ><a appButton [routerLink]="['/share-preview', id()]" [queryParams]="{ view: 'editor' }"
-        >참여자 화면 보기</a
-      >
+
+    <!-- 링크를 보낼 수 없는 동안에도 어떻게 보일지는 확인할 수 있다. -->
+    <div class="flex flex-col gap-2 border-t border-border pt-3">
+      <h2 class="text-14 font-bold">친구에게 어떻게 보일까요</h2>
+      <div class="grid gap-2 [@media(min-width:_520px)]:grid-cols-2">
+        <a appButton class="btn" [routerLink]="['/share-preview', id()]"
+          >로그인 전 · 보기만 가능</a
+        ><a
+          appButton
+          class="btn"
+          [routerLink]="['/share-preview', id()]"
+          [queryParams]="{ view: 'editor' }"
+          >로그인 후 · 함께 편집</a
+        >
+      </div>
+      <p class="text-12 leading-relaxed text-ink-3">
+        미리보기는 이 기기의 일정으로 열립니다.
+      </p>
     </div>
   </section>
 </div>
