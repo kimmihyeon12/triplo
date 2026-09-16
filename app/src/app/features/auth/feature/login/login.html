@@ -4,21 +4,33 @@
 -->
 <div
   class="page login mx-auto my-0 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)] flex flex-col gap-4 max-w-105"
-  [class.min-h-dvh]="!displayedUser()"
+  [class.min-h-dvh]="!accountView()"
   [attr.aria-busy]="auth.loading() || auth.busy()"
 >
-  <!-- 로그인은 가운데로 모으고, 내 정보는 본문 성격이라 왼쪽 정렬을 유지한다. -->
+  <!--
+    로그인은 가운데로 모으고, 내 정보는 본문 성격이라 왼쪽 정렬을 유지한다.
+    확인 중에는 스피너만 보이므로 내 정보가 아니라 로그인 쪽 정렬을 따른다.
+  -->
   <section
     class="intro flex flex-col gap-2 px-0 pb-2"
-    [class.flex-1]="!displayedUser()"
-    [class.justify-center]="!displayedUser()"
-    [class.items-center]="!displayedUser()"
-    [class.text-center]="!displayedUser()"
-    [class.items-start]="!!displayedUser()"
-    [class.pt-6]="!!displayedUser()"
-    [class.pt-10]="!displayedUser()"
+    [class.flex-1]="!accountView()"
+    [class.justify-center]="!accountView()"
+    [class.items-center]="!accountView()"
+    [class.text-center]="!accountView()"
+    [class.items-start]="accountView()"
+    [class.pt-6]="accountView()"
+    [class.pt-10]="!accountView()"
   >
-    @if (displayedUser()) {
+    <!--
+      확인 중을 가장 먼저 본다. 로그인을 마치고 떠나는 순간에는
+      displayedUser()도 참이라, 뒤에 두면 '내 정보'의 로고가 스쳐 보인다.
+    -->
+    @if (settling()) {
+      <!-- intro 안에 두어야 가운데에 온다. 바깥에 두면 왼쪽 아래로 떨어진다. -->
+      <div role="status" aria-label="로그인 상태 확인 중" data-testid="login-settling">
+        <app-spinner />
+      </div>
+    } @else if (displayedUser()) {
       <img
         class="intro__mark text-accent-deep"
         src="brand/triplo-symbol.svg"
@@ -27,16 +39,28 @@
         alt=""
         aria-hidden="true"
       />
-    } @else if (!settling()) {
+    } @else {
       <!--
         로그인은 여행을 시작하는 자리라 탑승권을 앞세운다. 로고는 티켓 안에 있다.
         상태를 확인하는 동안에는 숨긴다. 이미 로그인한 사람에게 버튼을 보여주면
         눌러버릴 수 있다.
       -->
-      <article class="ticket mb-2 w-full max-w-sm text-left" data-testid="login-ticket">
+      <!-- 초대 화면 티켓과 같은 기울기·빛 반응을 공유한다. -->
+      <app-ticket-tilt class="mb-2 w-full" #tilt="ticketTilt">
+        <!--
+          모서리는 본권 위쪽과 반권 아래쪽이 각각 맡는다. 여기에 rounded를 더 주면
+          반경이 겹쳐 반권이 깎여 좁아 보인다.
+        -->
+        <article class="ticket relative w-full text-left" data-testid="login-ticket">
         <div
           class="relative overflow-hidden rounded-t-panel px-5 pt-5 pb-6 text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_48%,var(--color-stay-ink)_100%)]"
         >
+          <!-- 기울인 반대쪽에서 빛이 드는 것처럼 보이게 하는 층 -->
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute -inset-1/4 [background:radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.32),transparent_62%)] [transition:transform_260ms_var(--ease-out)] motion-reduce:hidden"
+            [style.transform]="tilt.sheenTransform()"
+          ></span>
           <span
             aria-hidden="true"
             class="pointer-events-none absolute inset-x-0 top-0 h-20 [background:linear-gradient(to_bottom,rgba(255,255,255,0.18),transparent)]"
@@ -55,7 +79,7 @@
               </svg>
               트립플로
             </span>
-            <span class="text-12 font-medium tracking-[0.18em] opacity-80">TRAVEL PASS</span>
+            <span class="text-12 font-medium tracking-[0.18em] opacity-80">여행 준비</span>
           </div>
 
           <!-- 설치 화면과 같은 밀도로 맞춘다. 탑승권은 정보가 있어야 티켓답다. -->
@@ -79,15 +103,21 @@
           </p>
         </div>
 
+        <!--
+          홈은 티켓 몸통을 파낸 자리라 반원만 티켓 안에 남기고 바깥은 비운다.
+          원을 카드 밖까지 내밀고 안쪽 그림자를 주면, 배경 위에 그 그림자만
+          떠서 파인 홈이 아니라 동그라미가 얹힌 것처럼 보인다.
+        -->
         <div class="relative z-1 h-0" aria-hidden="true">
           <span
-            class="absolute -left-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.12)]"
+            class="absolute left-0 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_0_0_50%)]"
           ></span>
           <span
-            class="absolute -right-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.12)]"
+            class="absolute right-0 top-1/2 size-4 translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_50%_0_0)]"
           ></span>
+          <!-- 홈까지 덮으면 파인 자리에 그림자가 비치므로 점선과 같은 폭으로 줄인다. -->
           <span
-            class="absolute inset-x-0 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)]"
+            class="absolute inset-x-5 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)] mask-[linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
           ></span>
           <span
             class="absolute inset-x-5 top-1/2 border-t-2 border-dashed border-ink-3/45"
@@ -95,10 +125,18 @@
         </div>
 
         <div
-          class="rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
+          class="rounded-b-panel px-5 pt-6 pb-5 [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
         >
+          <!-- 소인은 목록 위에 겹쳐 앉는다. 자리를 차지하면 좁은 화면에서 줄이 눌린다. -->
+          <div class="relative">
+            <app-postmark
+              class="pointer-events-none absolute right-0 top-1"
+              aria-hidden="true"
+              [size]="70"
+            />
+          </div>
           <!-- 반권은 무엇을 하는 앱인지 알려준다. 탑승권의 안내문 자리와 같다. -->
-          <ul class="flex flex-col gap-3">
+          <ul class="relative flex flex-col gap-3">
             <li class="flex gap-3">
               <span
                 class="flex size-8 flex-none items-center justify-center rounded-control bg-accent-tint text-accent-deep"
@@ -133,8 +171,15 @@
               </div>
             </li>
           </ul>
+
+          <!-- 초대장·일정 이미지의 티켓과 같은 자리에 같은 줄무늬를 둔다. -->
+          <div class="mt-5 flex items-center justify-between gap-4 border-t border-border pt-4">
+            <app-barcode class="min-w-0 flex-1" [height]="20" />
+            <p class="flex-none text-12 tracking-[0.22em] text-ink-3">TRIPLO</p>
+          </div>
         </div>
-      </article>
+        </article>
+      </app-ticket-tilt>
 
       <!-- 버튼은 티켓 밖에서 제 폭을 쓰고, 남는 공간을 밀어 화면 아래에 붙는다. -->
       <nav class="providers mt-3 flex w-full max-w-sm flex-col gap-2" aria-label="소셜 로그인">
@@ -192,10 +237,10 @@
           </p>
       </nav>
     }
-    @if (displayedUser()) {
+    @if (accountView()) {
       <h1 class="intro__title text-22 font-bold leading-[1.4]">내 정보</h1>
     }
-    @if (displayedUser()) {
+    @if (accountView()) {
       <p
         class="intro__sub text-14 leading-[1.6] text-ink-2 [.account_details_&]:block [.account_details_&]:mb-3"
         data-testid="login-storage-notice"
@@ -204,9 +249,6 @@
       </p>
     }
   </section>
-  @if (settling()) {
-    <div role="status" aria-label="로그인 상태 확인 중"><app-spinner /></div>
-  }
   @if (auth.deleted()) {
     <p
       class="[.account_details_&]:block [.account_details_&]:mb-3"
@@ -306,7 +348,8 @@
       여행은 아직 이 기기에만 저장돼요. 계정별 저장과 다른 기기 동기화는 준비 중입니다.
     </p>
   }
-  @if (auth.user()) {
+  <!-- 떠나는 도중에는 감춘다. 목록으로 가는 길에 버튼이 스쳐 보이면 안 된다. -->
+  @if (!settling() && auth.user()) {
     <a appButton routerLink="/trips" class="btn">여행으로 돌아가기</a>
   }
   <!--
