@@ -20,7 +20,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TripEditorStore } from '../../data/trip-editor-store';
 import { formatNights, validateTripDates } from '../../../../shared/util/dates';
 import { createRegion, createTrip } from '../../util/factories';
-import { type KoreaRegion, searchRegions } from '../../util/korea-regions';
+import { type KoreaRegion, searchRegions } from '../../../../shared/util/korea-regions';
 import { type Trip, type TripRegion } from '../../model/trip';
 import {
   applyPeriodChange,
