@@ -1,42 +1,37 @@
 <div
   class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
 >
-  <!-- 여행 만들기 두 갈래: AI가 초안을 짜거나, 직접 채우거나 -->
-  <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
-    <a
-      appButton
-      class="btn btn--ai min-w-0 border-transparent text-white [background:var(--ai-fill)] hover:[background:var(--ai-fill-hover)] in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
-      routerLink="/trips/ai"
-      data-testid="new-trip-ai"
-    >
-      <app-icon
-        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
-        name="sparkle"
-        [size]="16"
-      />
-      AI 일정 만들기
-    </a>
-    <a
-      appButton
-      class="btn in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
-      routerLink="/trips/new"
-      data-testid="new-trip"
-    >
-      <app-icon
-        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
-        name="plus"
-        [size]="16"
-      />
-      직접 만들기
-    </a>
-  </nav>
+  <!--
+    여행 만들기 두 갈래: AI가 초안을 짜거나, 직접 채우거나.
+    여행이 하나라도 있으면 목록이 주인공이라 작은 버튼으로 줄인다.
+    첫 화면에서는 아래 빈 상태에서 같은 두 갈래를 카드로 크게 보여준다.
+  -->
+  @if (!isFirstTime()) {
+    <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
+      <a
+        appButton
+        class="btn btn--ai min-w-0 border-transparent text-white [background:var(--ai-fill)] hover:[background:var(--ai-fill-hover)] in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+        routerLink="/trips/ai"
+        data-testid="new-trip-ai"
+      >
+        <app-icon name="sparkle" [size]="16" />
+        AI 일정 만들기
+      </a>
+      <a
+        appButton
+        class="btn in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+        routerLink="/trips/new"
+        data-testid="new-trip"
+      >
+        <app-icon name="plus" [size]="16" />
+        직접 만들기
+      </a>
+    </nav>
+  }
 
   @if (store.skippedCount() > 0) {
     <div appNotice class="notice notice--warn" role="status">
-      <app-icon
-        class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
-        name="alert"
-      />
+      <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         읽을 수 없는 항목 {{ store.skippedCount() }}개를 건너뛰었습니다.
       </div>
@@ -49,10 +44,7 @@
     }
     @case ('error') {
       <div appNotice class="notice notice--danger" role="alert">
-        <app-icon
-          class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
-          name="alert"
-        />
+        <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           <strong class="in-[.notice]:font-bold">기기 저장소를 읽지 못했습니다.</strong>
           <div class="text-12 leading-normal">{{ store.listError() }}</div>
@@ -60,7 +52,7 @@
             <button
               appButton
               type="button"
-              class="btn btn--sm in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+              class="btn btn--sm"
               (click)="store.loadList()"
               variant="danger"
             >
@@ -73,33 +65,62 @@
     @case ('ready') {
       @if (store.trips().length === 0) {
         <!--
-          첫 화면이라 여백을 넉넉히 두고 가운데로 모은다. 로그인·설치 화면과
-          같은 결로 맞춰 앱 전체가 한 덩어리로 읽히게 한다.
+          첫 화면에서는 두 갈래를 카드로 크게 세운다. 작은 버튼 두 개로는
+          AI가 무엇을 해 주는지 알 수 없어 처음 온 사람이 망설인다.
         -->
-        <section
-          class="empty flex flex-col items-center gap-4 px-6 py-14 text-center"
-          data-testid="empty-trips"
-        >
-          <span
-            class="flex size-16 items-center justify-center rounded-panel text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_55%,var(--color-stay-ink)_100%)]"
-          >
-            <app-icon name="luggage" [size]="30" />
-          </span>
-          <div class="flex flex-col gap-1.5">
-            <h2 class="text-18 font-bold">첫 여행을 만들어 볼까요</h2>
-            <p class="text-13 leading-relaxed text-ink-3">
-              날짜를 정하지 않아도 시작할 수 있어요.<br />
-              장소와 숙소는 나중에 채워도 됩니다.
-            </p>
+        <section class="empty flex flex-col gap-3" data-testid="empty-trips">
+          <header class="flex flex-col gap-2 pt-8 pb-1 text-center">
+            <p class="text-13 font-semibold text-accent-deep">첫 여행</p>
+            <h2 class="text-22 font-bold tracking-tight">어떻게 시작할까요</h2>
+          </header>
+
+          <div class="mx-auto flex w-full max-w-105 flex-col gap-2.5">
+            <a
+              class="panel relative block overflow-hidden rounded-panel p-5 text-white no-underline shadow-panel [background:var(--ai-fill)] [transition:transform_var(--dur)_var(--ease-out)] hover:[background:var(--ai-fill-hover)] active:scale-[0.99]"
+              routerLink="/trips/ai"
+              data-testid="empty-ai"
+            >
+              <span
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-x-0 top-0 h-16 [background:linear-gradient(to_bottom,rgba(255,255,255,0.16),transparent)]"
+              ></span>
+              <span class="relative flex items-start gap-3">
+                <span
+                  class="flex size-10 flex-none items-center justify-center rounded-control bg-white/20"
+                >
+                  <app-icon name="sparkle" [size]="20" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-16 font-bold">AI가 초안을 짜 드려요</span>
+                  <span class="mt-1 block text-13 leading-relaxed opacity-90">
+                    지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다
+                  </span>
+                </span>
+                <app-icon class="mt-1 flex-none opacity-80" name="chevron-right" [size]="18" />
+              </span>
+            </a>
+
+            <a
+              class="panel block rounded-panel bg-panel p-5 text-inherit no-underline shadow-panel [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:scale-[0.99]"
+              routerLink="/trips/new"
+              data-testid="empty-create"
+            >
+              <span class="flex items-start gap-3">
+                <span
+                  class="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent-deep"
+                >
+                  <app-icon name="plus" [size]="20" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-16 font-bold">직접 만들래요</span>
+                  <span class="mt-1 block text-13 leading-relaxed text-ink-3">
+                    이름만 적고 빈 일정부터 시작합니다
+                  </span>
+                </span>
+                <app-icon class="mt-1 flex-none text-ink-3" name="chevron-right" [size]="18" />
+              </span>
+            </a>
           </div>
-          <a
-            appButton
-            routerLink="/trips/new"
-            class="btn mt-1 w-full max-w-64"
-            variant="primary"
-            data-testid="empty-create"
-            ><app-icon name="plus" [size]="16" /> 여행 만들기</a
-          >
         </section>
       } @else {
         <ul class="trips flex flex-col" data-testid="trip-list">
