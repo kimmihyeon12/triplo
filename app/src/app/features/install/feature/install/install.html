@@ -82,40 +82,8 @@
       <div
         class="flex flex-col gap-3 rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
       >
-        @if (runningAsApp()) {
-          <p class="flex items-center gap-1.5 text-14 font-bold text-ok-ink">
-            <app-icon name="check" [size]="16" /> 앱으로 열려 있어요
-          </p>
-          <p class="text-12 leading-relaxed text-ink-3">더 설치할 것이 없습니다.</p>
-        } @else if (installed()) {
-          <p class="flex items-center gap-1.5 text-14 font-bold text-ok-ink">
-            <app-icon name="check" [size]="16" /> 설치를 마쳤어요
-          </p>
-          <p class="text-12 leading-relaxed text-ink-3">홈 화면 아이콘으로 열어 보세요.</p>
-        } @else if (canPrompt()) {
-          <button
-            appButton
-            type="button"
-            variant="primary"
-            class="btn w-full"
-            (click)="install()"
-            data-testid="install-now"
-          >
-            <app-icon name="save" [size]="16" /> 지금 설치하기
-          </button>
-          @if (dismissed()) {
-            <p class="text-12 leading-relaxed text-ink-3" role="status">
-              설치를 취소했어요. 아래 방법으로도 할 수 있습니다.
-            </p>
-          }
-        } @else {
-          <p class="text-13 leading-relaxed text-ink-2">
-            아래 순서를 따라가면 홈 화면에 추가할 수 있어요.
-          </p>
-        }
-
-        <!-- 설치하면 달라지는 점. 티켓의 탑승 정보처럼 읽히게 세 칸으로 나눈다. -->
-        <dl class="grid grid-cols-3 gap-3 border-t border-border pt-4">
+        <!-- 반권은 탑승 정보만 담는다. 설치 버튼은 티켓 밖에서 제 폭을 쓴다. -->
+        <dl class="grid grid-cols-3 gap-3">
           <div class="min-w-0">
             <dt class="text-12 tracking-wide text-ink-3">DEPARTURE</dt>
             <dd class="mt-0.5 truncate text-13 font-bold">마음 먹는 날</dd>
@@ -134,6 +102,41 @@
       </div>
     </article>
   </div>
+
+  <!-- 설치 상태와 버튼. 티켓 아래에서 화면 폭을 그대로 쓴다. -->
+  @if (runningAsApp()) {
+    <div appNotice class="notice notice--ok" data-testid="install-already">
+      <app-icon name="check" />
+      <div class="notice__body min-w-0 flex-1">
+        홈 화면에서 연 앱으로 보고 있어요. 더 설치할 것이 없습니다.
+      </div>
+    </div>
+  } @else if (installed()) {
+    <div appNotice class="notice notice--ok" data-testid="install-done">
+      <app-icon name="check" />
+      <div class="notice__body min-w-0 flex-1">
+        설치를 마쳤어요. 홈 화면 아이콘으로 열어 보세요.
+      </div>
+    </div>
+  } @else if (canPrompt()) {
+    <div class="flex flex-col gap-2">
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        class="btn w-full"
+        (click)="install()"
+        data-testid="install-now"
+      >
+        <app-icon name="save" [size]="16" /> 지금 설치하기
+      </button>
+      @if (dismissed()) {
+        <p class="text-center text-12 leading-relaxed text-ink-3" role="status">
+          설치를 취소했어요. 아래 방법으로도 할 수 있습니다.
+        </p>
+      }
+    </div>
+  }
 
   <!-- 기기별 수동 방법. 설치 버튼이 있어도 함께 둔다. 신호가 사라질 수 있다. -->
   @if (!runningAsApp() && !installed()) {
