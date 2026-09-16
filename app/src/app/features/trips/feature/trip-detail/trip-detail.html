@@ -180,8 +180,11 @@
                 }
               </div>
 
-<!-- 지역은 분류 정보다. 파랑은 순번 마커·주 동작에만 남긴다. -->
-              @if (dayRegions().length > 0) {
+              <!--
+                지역이 둘 이상일 때만 흐름을 보여준다. 하나뿐이면 머리글과 각
+                카드에 이미 같은 이름이 있어 세 번 겹쳐 보인다.
+              -->
+              @if (dayRegions().length > 1) {
                 <p class="flex flex-wrap items-center gap-2">
                   @for (r of dayRegions(); track r; let last = $last) {
                     <span appBadge class="cell cell--region">{{ r }}</span>
