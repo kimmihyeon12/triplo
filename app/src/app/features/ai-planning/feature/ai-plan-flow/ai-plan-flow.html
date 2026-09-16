@@ -59,9 +59,10 @@
               <li
                 class="region flex items-center gap-2 border border-border rounded-control pt-1.25 pr-1.5 pb-1.25 pl-2.5"
               >
+                <!-- 공통 cell의 px-2가 뒤에 적용돼 원이 타원이 된다. 크기·패딩을 강제한다. -->
                 <span
                   appBadge
-                  class="cell cell--solid-accent region__no min-w-5.5 h-5.5 justify-center rounded-full p-0"
+                  class="cell cell--solid-accent region__no size-5.5! shrink-0 justify-center rounded-full p-0!"
                   >{{ i + 1 }}</span
                 >
                 <span class="region__name flex-1 font-bold min-w-0 wrap-anywhere">{{ r }}</span>
