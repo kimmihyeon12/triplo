@@ -4,7 +4,15 @@
   <meta charset="utf-8">
   <title>트립플로 · 국내 여행 비서 (알파)</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!--
+    iOS는 글꼴이 16px보다 작은 입력란에 초점이 가면 화면을 확대하고, 초점이
+    빠져도 배율을 되돌리지 않는다. 지역 검색과 여행 기간에서 한 번 커진 화면이
+    그대로 남아 확대를 막는다. 손가락 확대도 함께 닫히는 점은 감수한다.
+  -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+  >
   <meta name="color-scheme" content="light">
   <!-- 상단 바와 같은 흰색이라 상태 표시줄이 앱 화면으로 이어져 보인다. -->
   <meta name="theme-color" content="#ffffff">
