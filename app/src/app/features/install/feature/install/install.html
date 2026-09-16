@@ -16,12 +16,23 @@
     티켓이 이 화면의 주인공이다. 탑승권을 받아 드는 것처럼 보이도록
     설치 버튼을 반권 안에 둔다.
   -->
-  <div class="flex justify-center py-1">
-    <article class="ticket relative w-full max-w-sm" data-testid="install-ticket">
+  <!-- 로그인·초대 화면 티켓과 같은 기울기·빛 반응을 공유한다. -->
+  <app-ticket-tilt class="w-full" #tilt="ticketTilt">
+    <!--
+      모서리는 본권 위쪽과 반권 아래쪽이 각각 맡는다. 여기에 rounded를 더 주면
+      반경이 겹쳐 반권이 깎여 좁아 보인다.
+    -->
+    <article class="ticket relative w-full" data-testid="install-ticket">
       <!-- 본권 -->
       <div
         class="relative overflow-hidden rounded-t-panel px-5 pt-5 pb-6 text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_48%,var(--color-stay-ink)_100%)]"
       >
+        <!-- 기울인 반대쪽에서 빛이 드는 것처럼 보이게 하는 층 -->
+        <span
+          aria-hidden="true"
+          class="pointer-events-none absolute -inset-1/4 [background:radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.32),transparent_62%)] [transition:transform_260ms_var(--ease-out)] motion-reduce:hidden"
+          [style.transform]="tilt.sheenTransform()"
+        ></span>
         <span
           aria-hidden="true"
           class="pointer-events-none absolute inset-x-0 top-0 h-24 [background:linear-gradient(to_bottom,rgba(255,255,255,0.18),transparent)]"
@@ -40,7 +51,7 @@
             </svg>
             트립플로
           </span>
-          <span class="text-12 font-medium tracking-[0.18em] opacity-80">TRAVEL PASS</span>
+          <span class="text-12 font-medium tracking-[0.18em] opacity-80">앱 설치</span>
         </div>
 
         <div class="relative mt-5 flex items-end gap-3">
@@ -62,16 +73,16 @@
         </p>
       </div>
 
-      <!-- 절취선 -->
+      <!-- 절취선: 홈은 반원만 티켓 안에 남기고 바깥은 비운다. -->
       <div class="relative z-1 h-0" aria-hidden="true">
         <span
-          class="absolute -left-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.12)]"
+          class="absolute left-0 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_0_0_50%)]"
         ></span>
         <span
-          class="absolute -right-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.12)]"
+          class="absolute right-0 top-1/2 size-4 translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_50%_0_0)]"
         ></span>
         <span
-          class="absolute inset-x-0 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)]"
+          class="absolute inset-x-5 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)] mask-[linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]"
         ></span>
         <span
           class="absolute inset-x-5 top-1/2 border-t-2 border-dashed border-ink-3/45"
@@ -80,28 +91,40 @@
 
       <!-- 반권: 상태에 따라 설치 버튼 또는 완료 표시가 들어간다. -->
       <div
-        class="flex flex-col gap-3 rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
+        class="flex flex-col gap-3 rounded-b-panel px-5 pt-6 pb-5 [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
       >
+        <!-- 소인은 칸 위에 겹쳐 앉는다. 자리를 차지하면 좁은 화면에서 칸이 눌린다. -->
+        <div class="relative">
+          <app-postmark
+            class="pointer-events-none absolute right-0 top-1"
+            aria-hidden="true"
+            [size]="70"
+          />
+        </div>
         <!-- 반권은 탑승 정보만 담는다. 설치 버튼은 티켓 밖에서 제 폭을 쓴다. -->
-        <dl class="grid grid-cols-3 gap-3">
+        <dl class="relative grid grid-cols-2 gap-x-4 gap-y-4">
           <div class="min-w-0">
             <dt class="text-12 tracking-wide text-ink-3">DEPARTURE</dt>
             <dd class="mt-0.5 truncate text-13 font-bold">마음 먹는 날</dd>
           </div>
-          <div class="min-w-0">
+          <div class="min-w-0 pr-16">
             <dt class="text-12 tracking-wide text-ink-3">ROUTE</dt>
             <dd class="mt-0.5 truncate text-13 font-bold">가고 싶은 길</dd>
           </div>
-          <div class="min-w-0 text-right">
+          <div class="min-w-0">
             <dt class="text-12 tracking-wide text-ink-3">BAGGAGE</dt>
             <dd class="mt-0.5 truncate text-13 font-bold">설렘 1개</dd>
           </div>
         </dl>
 
-        <p class="text-12 tracking-[0.22em] text-ink-3 tabular-nums">NO. 0000 0001</p>
+        <!-- 초대장·일정 이미지의 티켓과 같은 자리에 같은 줄무늬를 둔다. -->
+        <div class="mt-2 flex items-center justify-between gap-4 border-t border-border pt-4">
+          <app-barcode class="min-w-0 flex-1" [height]="22" />
+          <p class="flex-none text-12 tracking-[0.22em] text-ink-3">NO. TR-0000-0001</p>
+        </div>
       </div>
     </article>
-  </div>
+  </app-ticket-tilt>
 
   <!-- 설치 상태. 버튼은 하단 고정 바에 둔다. -->
   @if (runningAsApp()) {

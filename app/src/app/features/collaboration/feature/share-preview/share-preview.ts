@@ -14,7 +14,7 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { TRIP_REPOSITORY } from '../../../trips/data/trip-repository';
 import type { Trip } from '../../../trips/model/trip';
-import { itinerarySections } from '../../../trips/util/itinerary-image';
+import { itinerarySections, itineraryTicket } from '../../../trips/util/itinerary-image';
 import { ItinerarySnapshot } from '../../../trips/ui/itinerary-snapshot/itinerary-snapshot';
 
 @Component({
@@ -29,6 +29,10 @@ export class SharePreview {
   readonly trip = signal<Trip | null>(null);
   readonly loading = signal(true);
   readonly sections = computed(() => (this.trip() ? itinerarySections(this.trip()!) : []));
+  readonly ticket = computed(() => {
+    const trip = this.trip();
+    return trip ? itineraryTicket(trip) : null;
+  });
 
   constructor() {
     const repo = inject(TRIP_REPOSITORY);

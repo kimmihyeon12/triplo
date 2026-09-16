@@ -12,6 +12,9 @@ import { UiButton } from '../../../../shared/ui/button/button';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiBarcode } from '../../../../shared/ui/barcode/barcode';
+import { UiPostmark } from '../../../../shared/ui/postmark/postmark';
+import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
 
 /** 브라우저가 설치 가능 시점에 주는 이벤트. 표준 타입에 아직 없어 직접 좁힌다. */
 interface InstallPromptEvent extends Event {
@@ -24,7 +27,15 @@ type Platform = 'android' | 'ios' | 'desktop';
 @Component({
   selector: 'app-install',
   templateUrl: './install.html',
-  imports: [UiButton, UiNotice, UiActionBar, IconComponent],
+  imports: [
+    UiButton,
+    UiNotice,
+    UiActionBar,
+    IconComponent,
+    UiBarcode,
+    UiPostmark,
+    UiTicketTilt,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Install {
