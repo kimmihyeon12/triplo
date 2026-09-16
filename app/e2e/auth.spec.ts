@@ -225,6 +225,51 @@ test('로그인 상태 확인 중 로딩 표시와 버튼 중복 실행 방지',
   await expect(page.getByTestId('login-google')).toBeEnabled();
 });
 
+/*
+  확인 중 스피너의 자리를 지킨다. 이동이 끝나기 전 잠깐 나타나는 '내 정보'는
+  구간이 너무 짧아 이 검사로는 붙잡지 못하므로, 여기서는 확인 중 화면만 본다.
+*/
+test('세션이 남아 있어도 확인 중에는 스피너만 가운데에 보임', async ({ page }) => {
+  /*
+    세션이 이미 있는 채로 로그인 화면에 들어오는 상황이다. 로그인 경로에는
+    가드가 없어 화면이 먼저 뜨고, 그동안 확인 중 표시만 보여야 한다.
+  */
+  await page.addInitScript(
+    (session) => localStorage.setItem('tc.test.auth.v1', JSON.stringify(session)),
+    sessionFor(user),
+  );
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/supabase-config.test.json', async (route) => {
+    await pending;
+    await route.fulfill({ json: { url: authUrl, publishableKey: 'sb_publishable_test-only' } });
+  });
+  await page.route(`${authUrl}/auth/v1/**`, (route) => route.fulfill({ json: user }));
+  await page.goto('/login');
+
+  const settling = page.getByTestId('login-settling');
+  await expect(settling).toBeVisible();
+  // 확인 중에는 내 정보 본문도 로고도 나타나지 않아야 한다.
+  await expect(page.getByRole('heading', { name: '내 정보' })).toHaveCount(0);
+  await expect(page.locator('img.intro__mark')).toHaveCount(0);
+  await expect(page.getByTestId('login-account')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: '여행으로 돌아가기' })).toHaveCount(0);
+
+  // 스피너가 화면 가운데에 온다. 왼쪽 위나 왼쪽 아래로 떨어지면 이 검사가 걸린다.
+  const box = (await settling.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  expect(Math.abs(centerX - viewport.width / 2)).toBeLessThan(viewport.width * 0.12);
+  expect(Math.abs(centerY - viewport.height / 2)).toBeLessThan(viewport.height * 0.25);
+
+  release();
+  // 세션이 살아 있으므로 로그인 화면에 머무르지 않고 여행 목록으로 넘어간다.
+  await expect(page).toHaveURL('http://localhost:4300/trips');
+});
+
 test('세션 갱신 실패 시 여행을 노출하지 않고 재로그인 가능', async ({ page }) => {
   const session = sessionFor(user, Math.floor(Date.now() / 1000) - 120);
   await page.addInitScript((session) => {
@@ -255,7 +300,7 @@ test('다른 탭에서 로그아웃하면 열려 있는 여행 화면도 로그�
     sessionFor(user),
   );
   await page.goto('/trips');
-  await expect(page.getByTestId('new-trip')).toBeVisible();
+  await expect(page.getByTestId('empty-trips')).toBeVisible();
   const accountTab = await context.newPage();
   await accountTab.route('**/supabase-config.test.json', (route) =>
     route.fulfill({ json: { url: authUrl, publishableKey: 'sb_publishable_test-only' } }),
@@ -265,7 +310,7 @@ test('다른 탭에서 로그아웃하면 열려 있는 여행 화면도 로그�
   await accountTab.getByTestId('logout').click();
   await expect(accountTab).toHaveURL('http://localhost:4300/login');
   await expect(page).toHaveURL('http://localhost:4300/login');
-  await expect(page.getByTestId('new-trip')).toHaveCount(0);
+  await expect(page.getByTestId('empty-trips')).toHaveCount(0);
 });
 
 for (const fails of [false, true])

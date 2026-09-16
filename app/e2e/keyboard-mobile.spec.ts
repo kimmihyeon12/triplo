@@ -20,7 +20,8 @@ test.describe('키보드만으로 첫 흐름, 가로 스크롤 없음', () => {
 
   test('Tab·Enter·화살표만으로 여행 생성과 장소 추가, 날짜 탭 이동', async ({ page }) => {
     // 목록 → 새 여행 (링크에 포커스 후 Enter)
-    await page.getByTestId('new-trip').focus();
+    // 여행이 없을 때는 상단 버튼 대신 빈 상태의 두 갈래 카드가 나온다.
+    await page.getByTestId('empty-create').focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/trips\/new$/);
 

@@ -47,7 +47,7 @@ test('처음 인증한 회원은 닉네임만 저장한 후 여행 목록으로 
   await expect(page).toHaveURL('http://localhost:4300/trips');
   expect(saved).toBe('바다여행');
   await page.reload();
-  await expect(page.getByTestId('new-trip')).toBeVisible();
+  await expect(page.getByTestId('empty-trips')).toBeVisible();
   await page.getByRole('link', { name: '내 정보', exact: true }).click();
   await expect(page.getByTestId('login-account')).toContainText('바다여행');
 });
