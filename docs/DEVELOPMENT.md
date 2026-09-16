@@ -34,6 +34,22 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 - production도 인증 가드를 유지한다. development 설정을 변경했다면 서버를 재시작한다.
 - 디자인 원본은 [DESIGN.md](design/DESIGN.md), 실행 토큰은 `app/src/styles/theme.css`, 실제 예제는 `/lab`이다.
 
+## 브랜치와 배포
+
+`master`는 배포 브랜치다. 여기에 푸시하면 Netlify가 자동으로 빌드·배포한다. 개발은 `develop`에서 진행하고, 배포할 준비가 된 뒤에만 `master`로 병합한다. 기능 작업은 `develop`에서 브랜치를 떠서 다시 `develop`으로 합친다.
+
+호스팅은 Netlify 무료 플랜이며 설정 원본은 저장소 루트의 `netlify.toml`이다. 앱이 `app/` 아래에 있어 `base`로 작업 위치를 옮기고 `dist/travel-companion-app/browser`를 배포한다. 서비스 워커와 런타임 설정 파일은 캐시하지 않는다. 캐시되면 새 버전을 내보내도 기기에 옛 앱이 남는다.
+
+키는 저장소에 두지 않는다. `app/public/app-config.json`과 `supabase-config.json`은 `.gitignore`에 있고 로컬 개발용이다. 배포에서는 `npm run build:deploy`가 아래 환경 변수를 읽어 같은 파일을 만든다. 값이 없으면 파일을 만들지 않으며 앱은 ‘키 없음’ 상태로 정상 동작한다.
+
+| 환경 변수 | 쓰임 |
+| --- | --- |
+| `KAKAO_JS_KEY` | 카카오 지도·장소 검색 |
+| `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | 구글·카카오 로그인(Auth) |
+| `SUPABASE_DELETION_ENABLED` | 회원탈퇴 노출 여부. 함수 배포 전에는 넣지 않는다 |
+
+배포 도메인이 정해지면 카카오 개발자센터의 Web 플랫폼 도메인과 Supabase의 리디렉트 URL에 그 주소를 등록해야 로그인·지도가 동작한다. 등록 전에는 화면만 뜨고 두 기능이 막힌다.
+
 ## 검증 기준
 
 단위 테스트는 날짜·숙박·기간 변경·저장 실패·상태 경쟁을 검증한다. 브라우저에서는 여행 편집·재열기, 인증·닉네임·로그아웃, 키보드 조작, 360px 화면, 공통 UI·스피너를 확인한다. 런타임 앱과 테스트 앱의 포트·저장소를 분리하고 캡처는 Git에서 제외된 `output/playwright/`에 둔다.
