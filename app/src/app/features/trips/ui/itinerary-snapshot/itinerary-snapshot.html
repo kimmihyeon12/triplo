@@ -1,38 +1,174 @@
-<article class="rounded-panel bg-panel p-5 shadow-panel md:p-8" aria-label="일정 미리보기">
-  <p class="mb-2 text-12 font-bold tracking-widest text-accent-deep">TRIPLO · 여행 일정</p>
-  <h2 class="mb-7 wrap-anywhere text-22">{{ title() }}</h2>
-  <div class="flex flex-col gap-7">
-    @for (section of sections(); track section.key) {
-      <section>
-        <h3 class="border-b border-border pb-3 text-15 text-accent-deep">{{ section.title }}</h3>
-        <ol class="divide-y divide-border">
-          @for (row of section.rows; track $index) {
-            <li class="flex gap-3 py-4">
-              <span
-                class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-tint text-12 font-bold text-accent-deep"
-                >{{ $index + 1 }}</span
-              >
-              <div class="min-w-0 flex-1">
-                <p class="wrap-anywhere font-semibold">{{ row.name }}</p>
-                @if (row.detail) {
-                  <p class="mt-1 wrap-anywhere text-13 text-ink-2">{{ row.detail }}</p>
-                }
-                @if (includeCosts()) {
-                  <p class="mt-1 text-12 text-ink-3">
-                    {{
-                      row.cost == null
-                        ? '예상 비용 미정'
-                        : '예상 ' + row.cost.toLocaleString('ko-KR') + '원'
-                    }}{{ row.name.startsWith('숙소 ·') && row.cost != null ? ' · 숙박 전체' : '' }}
-                  </p>
-                }
-              </div>
-            </li>
-          } @empty {
-            <li class="py-5 text-13 text-ink-3">아직 등록한 일정이 없습니다.</li>
-          }
-        </ol>
-      </section>
-    }
+<article class="rounded-panel bg-panel shadow-panel" aria-label="일정 미리보기">
+  <!--
+    티켓 머리글. 저장한 이미지에도 같은 정보가 같은 자리에 들어간다.
+    다만 여기는 일정을 읽고 고르는 작업 화면이라 본권의 그라데이션은 쓰지 않는다.
+    색을 깔면 정작 읽어야 할 일정 목록이 뒤로 밀린다. 색은 저장본에서만 쓴다.
+  -->
+  <header class="px-5 pt-5 md:px-8 md:pt-6" data-testid="export-ticket">
+    <div class="flex items-center justify-between gap-3">
+      <span class="flex items-center gap-1.5 text-13 font-bold tracking-wide text-accent-deep">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 28 28" fill="none">
+          <path
+            d="M6.5 7.5C9.8 6.6 14.6 6.2 19.5 6.6M13.2 6.9C12.6 12.4 12.3 16.6 12.6 19.2C12.8 21.1 13.6 21.9 15.1 21.6C16.4 21.3 17.7 20.3 19 18.6"
+            stroke="currentColor"
+            stroke-width="2.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        트립플로
+      </span>
+      <span class="text-12 font-medium tracking-[0.18em] text-ink-3">여행 일정</span>
+    </div>
+
+    <!-- 출발지 → 도착지. 저장한 이미지에도 같은 자리에 들어간다. -->
+    <div class="mt-5 flex items-end gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-12 tracking-wide text-ink-3">FROM</p>
+        <p class="truncate text-18 font-bold leading-tight" [title]="ticket().from">
+          {{ ticket().from }}
+        </p>
+      </div>
+      <span class="mb-1.5 flex-none text-ink-3" aria-hidden="true">
+        <app-icon name="arrow-right" [size]="18" />
+      </span>
+      <div class="min-w-0 flex-1 text-right">
+        <p class="text-12 tracking-wide text-ink-3">TO</p>
+        <p class="truncate text-18 font-bold leading-tight" [title]="ticket().to">
+          {{ ticket().to }}
+        </p>
+      </div>
+    </div>
+
+    <h2 class="mt-5 wrap-anywhere text-22">{{ ticket().title }}</h2>
+  </header>
+
+  <!-- 절취선: 양옆 홈과 점선으로 본권과 반권을 나눈다. -->
+  <div class="relative z-1 mt-5 h-0" aria-hidden="true">
+    <span
+      class="absolute left-0 top-0 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_0_0_50%)]"
+    ></span>
+    <span
+      class="absolute right-0 top-0 size-4 translate-x-1/2 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.16)] [clip-path:inset(0_50%_0_0)]"
+    ></span>
+    <span
+      class="absolute inset-x-5 top-0 -translate-y-px border-t-2 border-dashed border-ink-3/45"
+    ></span>
   </div>
+
+  <!-- 칸 순서는 초대 화면 티켓, 저장 이미지와 같다. 소인은 칸 위에 겹쳐 앉는다. -->
+  <div class="relative px-5 pt-7 md:px-8">
+    <!-- 저장 이미지와 같이 첫 칸 줄 오른쪽에 앉는다. 더 올리면 절취선을 침범한다. -->
+    <app-postmark
+      class="pointer-events-none absolute right-5 top-8 md:right-8"
+      aria-hidden="true"
+      [size]="76"
+    />
+    <dl class="relative grid grid-cols-2 gap-x-4 gap-y-4">
+      <div class="min-w-0">
+        <dt class="text-12 tracking-wide text-ink-3">DATE</dt>
+        <dd class="mt-0.5 truncate text-15 font-bold" [title]="ticket().date">
+          {{ ticket().date }}
+        </dd>
+        @if (ticket().dateEnd) {
+          <!-- 종료일은 시작일과 같은 크기·굵기로 적어 한 쌍으로 읽히게 한다. -->
+          <dd class="truncate text-15 font-bold">~ {{ ticket().dateEnd }}</dd>
+        }
+      </div>
+      <div class="min-w-0 pr-20">
+        <dt class="text-12 tracking-wide text-ink-3">PERIOD</dt>
+        <dd class="mt-0.5 truncate text-15 font-bold">{{ ticket().period }}</dd>
+      </div>
+      <div class="min-w-0">
+        <dt class="text-12 tracking-wide text-ink-3">SCHEDULE</dt>
+        <dd class="mt-0.5 truncate text-15 font-bold" [title]="ticket().schedule">
+          {{ ticket().schedule }}
+        </dd>
+      </div>
+      <div class="min-w-0">
+        <dt class="text-12 tracking-wide text-ink-3">REGION</dt>
+        <dd class="mt-0.5 truncate text-15 font-bold" [title]="ticket().region">
+          {{ ticket().region }}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="mt-7 flex items-center justify-between gap-4 border-t border-border pt-4">
+      <app-barcode class="min-w-0 flex-1" [height]="22" />
+      <p class="flex-none text-12 tracking-[0.22em] text-ink-3">NO. {{ ticket().no }}</p>
+    </div>
+  </div>
+
+  @if (!allFolded()) {
+    <div class="mt-6 flex flex-col gap-7 border-t border-border px-5 pt-7 pb-5 md:px-8 md:pb-8">
+      @for (section of sections(); track section.key) {
+        @let folded = collapsed().has(section.key);
+        <section>
+          <!-- 날짜 제목을 눌러 접고 편다. 접은 날짜는 이미지에도 요약 한 줄만 들어간다. -->
+          <h3 class="text-15 text-accent-deep">
+            @if (foldable()) {
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 border-b border-border pb-3 text-left"
+                [attr.aria-expanded]="!folded"
+                [attr.data-testid]="'toggle-section-' + section.key"
+                (click)="toggled.emit(section.key)"
+              >
+                <span
+                  class="flex-none text-ink-3 [transition:transform_160ms_var(--ease-out)] motion-reduce:[transition:none]"
+                  [class.rotate-90]="!folded"
+                  aria-hidden="true"
+                >
+                  <app-icon name="chevron-right" [size]="16" />
+                </span>
+                <span class="min-w-0 flex-1 wrap-anywhere">{{ section.title }}</span>
+                @if (folded) {
+                  <span class="flex-none text-13 font-normal text-ink-2">{{ summary(section) }}</span>
+                }
+              </button>
+            } @else {
+              <span class="block border-b border-border pb-3">{{ section.title }}</span>
+            }
+          </h3>
+          @if (!folded) {
+            <ol class="divide-y divide-border">
+              @for (row of section.rows; track $index) {
+                <li class="flex gap-3 py-4">
+                  <span
+                    class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-tint text-12 font-bold text-accent-deep"
+                    >{{ $index + 1 }}</span
+                  >
+                  <div class="min-w-0 flex-1">
+                    <p class="wrap-anywhere font-semibold">{{ row.name }}</p>
+                    @if (row.detail) {
+                      <p class="mt-1 wrap-anywhere text-13 text-ink-2">{{ row.detail }}</p>
+                    }
+                    @if (includeCosts()) {
+                      <p class="mt-1 text-12 text-ink-3">
+                        {{
+                          row.cost == null
+                            ? '예상 비용 미정'
+                            : '예상 ' + row.cost.toLocaleString('ko-KR') + '원'
+                        }}{{
+                          row.name.startsWith('숙소 ·') && row.cost != null ? ' · 숙박 전체' : ''
+                        }}
+                      </p>
+                    }
+                  </div>
+                </li>
+              } @empty {
+                <li class="py-5 text-13 text-ink-3">아직 등록한 일정이 없습니다.</li>
+              }
+            </ol>
+          }
+        </section>
+      }
+    </div>
+  } @else {
+    <!--
+      전부 접으면 티켓 한 장만 남고 저장한 이미지도 이 상태 그대로다. 안내는
+      설정 카드에 이미 있으므로 여기서는 티켓 아래 여백만 남긴다.
+    -->
+    <div class="h-5 md:h-7"></div>
+  }
 </article>

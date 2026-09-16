@@ -17,12 +17,37 @@
         hint="개인 메모·예약정보·가계부·지도는 이미지에 포함하지 않습니다."
         [(checked)]="includeCosts"
       />
+      <!-- 접은 날짜는 이미지에도 요약 한 줄로 들어간다. 미리보기가 곧 결과다. -->
+      <div class="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">
+        <p class="text-13 text-ink-2">
+          {{
+            allCollapsed()
+              ? '티켓 한 장만 저장됩니다.'
+              : '접은 날짜는 요약 한 줄로 저장됩니다.'
+          }}
+        </p>
+        <button
+          appButton
+          type="button"
+          variant="ghost"
+          class="flex-none"
+          (click)="toggleAll()"
+          data-testid="toggle-all-sections"
+        >
+          {{ allCollapsed() ? '모두 펼치기' : '모두 접기' }}
+        </button>
+      </div>
     </section>
-    <app-itinerary-snapshot
-      [title]="trip.title"
-      [sections]="sections()"
-      [includeCosts]="includeCosts()"
-    />
+    @if (ticket(); as ticket) {
+      <app-itinerary-snapshot
+        [ticket]="ticket"
+        [sections]="sections()"
+        [includeCosts]="includeCosts()"
+        [collapsed]="collapsed()"
+        [foldable]="true"
+        (toggled)="toggleSection($event)"
+      />
+    }
     <div appActionBar class="action-bar">
       <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
         <button
