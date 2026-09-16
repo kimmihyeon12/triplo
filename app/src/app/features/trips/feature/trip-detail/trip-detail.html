@@ -210,7 +210,7 @@
               <!-- 시간순 항목 -->
               @if (segments().length === 0) {
                 <section
-                  class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
+                  class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
                   data-testid="empty-day"
                 >
                   <h3 class="text-16 font-bold">이 날 일정이 없습니다</h3>
@@ -780,7 +780,7 @@
       <section class="flex flex-col gap-3" data-testid="panel-overview">
         @if (isEmptyTrip() && !overview().undecidedDates) {
           <section
-            class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col gap-1 p-5"
+            class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
             data-testid="empty-trip"
           >
             <h2 class="text-16 font-bold">장소와 숙소를 추가해 보세요</h2>
