@@ -3,7 +3,9 @@
   href="#main"
   >본문으로 건너뛰기</a
 >
-<header class="topbar sticky bg-panel top-0 z-[10006] [border-bottom:1px_solid_var(--color-border)]">
+<!-- 로그인처럼 상단 바가 필요 없는 화면은 bar().hidden으로 숨긴다. -->
+@if (!bar().hidden) {
+  <header class="topbar sticky bg-panel top-0 z-[10006] [border-bottom:1px_solid_var(--color-border)]">
   <div
     class="topbar__inner mx-auto my-0 min-h-13 grid items-center gap-1 max-w-(--content-max) py-0 px-2 grid-cols-[44px_minmax(0,1fr)_auto]"
   >
@@ -129,7 +131,8 @@
       }
     }
   </div>
-</header>
+  </header>
+}
 <main class="focus:[outline:none]" id="main" tabindex="-1" [attr.aria-busy]="!!navigating()">
   <router-outlet />
 </main>

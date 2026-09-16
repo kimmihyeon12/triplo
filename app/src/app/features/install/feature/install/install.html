@@ -1,0 +1,231 @@
+<div
+  class="mx-auto flex max-w-105 flex-col gap-5 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  data-testid="install-page"
+>
+  <header class="flex flex-col gap-2 pt-4 text-center">
+    <p class="text-13 font-semibold text-accent-deep">주머니 속 여행 비서</p>
+    <h1 class="text-22 font-bold tracking-tight">{{ heading() }}</h1>
+    @if (!runningAsApp() && !installed()) {
+      <p class="text-13 leading-relaxed text-ink-3">
+        스토어를 거치지 않고 홈 화면에 추가합니다. 아이콘을 누르면 주소창 없이 앱처럼 열려요.
+      </p>
+    }
+  </header>
+
+  <!--
+    티켓이 이 화면의 주인공이다. 탑승권을 받아 드는 것처럼 보이도록
+    설치 버튼을 반권 안에 둔다.
+  -->
+  <div class="flex justify-center py-1">
+    <article class="ticket relative w-full max-w-sm" data-testid="install-ticket">
+      <!-- 본권 -->
+      <div
+        class="relative overflow-hidden rounded-t-panel px-5 pt-5 pb-6 text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_48%,var(--color-stay-ink)_100%)]"
+      >
+        <span
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-x-0 top-0 h-24 [background:linear-gradient(to_bottom,rgba(255,255,255,0.18),transparent)]"
+        ></span>
+
+        <div class="relative flex items-center justify-between">
+          <span class="flex items-center gap-1.5 text-13 font-bold tracking-wide">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 28 28" fill="none">
+              <path
+                d="M6.5 7.5C9.8 6.6 14.6 6.2 19.5 6.6M13.2 6.9C12.6 12.4 12.3 16.6 12.6 19.2C12.8 21.1 13.6 21.9 15.1 21.6C16.4 21.3 17.7 20.3 19 18.6"
+                stroke="currentColor"
+                stroke-width="2.1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            트립플로
+          </span>
+          <span class="text-12 font-medium tracking-[0.18em] opacity-80">BOARDING PASS</span>
+        </div>
+
+        <div class="relative mt-5 flex items-end gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-12 tracking-wide opacity-75">FROM</p>
+            <p class="truncate text-18 font-bold leading-tight">방구석</p>
+          </div>
+          <span class="mb-1.5 flex-none opacity-80" aria-hidden="true">
+            <app-icon name="arrow-right" [size]="18" />
+          </span>
+          <div class="min-w-0 flex-[1.4] text-right">
+            <p class="text-12 tracking-wide opacity-75">TO</p>
+            <p class="truncate text-18 font-bold leading-tight">대한민국 어디든지</p>
+          </div>
+        </div>
+
+        <p class="relative mt-4 text-14 font-medium opacity-90">
+          편도 · 돌아오는 날짜는 직접 정하세요
+        </p>
+      </div>
+
+      <!-- 절취선 -->
+      <div class="relative z-1 h-0" aria-hidden="true">
+        <span
+          class="absolute -left-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_-1px_0_2px_rgba(28,25,23,0.12)]"
+        ></span>
+        <span
+          class="absolute -right-2 top-1/2 size-4 -translate-y-1/2 rounded-full bg-ground shadow-[inset_1px_0_2px_rgba(28,25,23,0.12)]"
+        ></span>
+        <span
+          class="absolute inset-x-0 top-1/2 h-2 -translate-y-px [background:linear-gradient(to_bottom,rgba(28,25,23,0.07),transparent)]"
+        ></span>
+        <span
+          class="absolute inset-x-5 top-1/2 border-t-2 border-dashed border-ink-3/45"
+        ></span>
+      </div>
+
+      <!-- 반권: 상태에 따라 설치 버튼 또는 완료 표시가 들어간다. -->
+      <div
+        class="flex flex-col gap-3 rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
+      >
+        <!-- 반권은 탑승 정보만 담는다. 설치 버튼은 티켓 밖에서 제 폭을 쓴다. -->
+        <dl class="grid grid-cols-3 gap-3">
+          <div class="min-w-0">
+            <dt class="text-12 tracking-wide text-ink-3">DEPARTURE</dt>
+            <dd class="mt-0.5 truncate text-13 font-bold">마음 먹는 날</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-12 tracking-wide text-ink-3">SEAT</dt>
+            <dd class="mt-0.5 truncate text-13 font-bold">창가 자리</dd>
+          </div>
+          <div class="min-w-0 text-right">
+            <dt class="text-12 tracking-wide text-ink-3">BAGGAGE</dt>
+            <dd class="mt-0.5 truncate text-13 font-bold">설렘 1개</dd>
+          </div>
+        </dl>
+
+        <p class="text-12 tracking-[0.22em] text-ink-3 tabular-nums">NO. 0000 0001</p>
+      </div>
+    </article>
+  </div>
+
+  <!-- 설치 상태. 버튼은 하단 고정 바에 둔다. -->
+  @if (runningAsApp()) {
+    <div appNotice class="notice notice--ok" data-testid="install-already">
+      <app-icon name="check" />
+      <div class="notice__body min-w-0 flex-1">
+        홈 화면에서 연 앱으로 보고 있어요. 더 설치할 것이 없습니다.
+      </div>
+    </div>
+  } @else if (installed()) {
+    <div appNotice class="notice notice--ok" data-testid="install-done">
+      <app-icon name="check" />
+      <div class="notice__body min-w-0 flex-1">
+        설치를 마쳤어요. 홈 화면 아이콘으로 열어 보세요.
+      </div>
+    </div>
+  } @else if (!canPrompt()) {
+    <!--
+      브라우저가 설치 신호를 주는 시점은 우리가 정할 수 없다. 이미 설치했거나
+      사파리처럼 신호를 주지 않는 브라우저면 버튼이 나오지 않는다.
+      버튼 자리를 비워두면 왜 없는지 알 수 없어 이유를 적는다.
+    -->
+    <p class="text-center text-12 leading-relaxed text-ink-3" data-testid="install-no-prompt">
+      이 브라우저에서는 설치 버튼이 뜨지 않아요. 이미 설치했거나 브라우저가 지원하지 않는
+      경우입니다. 아래 방법으로 추가할 수 있어요.
+    </p>
+  }
+
+  <!-- 기기별 수동 방법. 설치 버튼이 있어도 함께 둔다. 신호가 사라질 수 있다. -->
+  @if (!runningAsApp() && !installed()) {
+    <section class="panel flex flex-col gap-3 rounded-panel bg-panel p-4 shadow-panel">
+      @switch (platform()) {
+        @case ('ios') {
+          <h2 class="text-15 font-bold">아이폰 · 아이패드</h2>
+          <p class="text-12 leading-relaxed text-warn-ink">
+            사파리에서 열어야 합니다. 다른 브라우저에서는 홈 화면에 추가해도 앱으로 열리지 않아요.
+          </p>
+          <ol class="flex flex-col gap-3">
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">1</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                화면 아래 가운데 <strong>공유 버튼</strong>을 누릅니다. 네모에서 화살표가 위로
+                나가는 모양이에요.
+              </p>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">2</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                목록을 내려 <strong>‘홈 화면에 추가’</strong>를 고릅니다.
+              </p>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">3</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                오른쪽 위 <strong>추가</strong>를 누르면 끝입니다.
+              </p>
+            </li>
+          </ol>
+        }
+        @case ('android') {
+          <h2 class="text-15 font-bold">안드로이드</h2>
+          <ol class="flex flex-col gap-3">
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">1</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                오른쪽 위 <strong>⋮</strong> 메뉴를 누릅니다.
+              </p>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">2</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                <strong>‘앱 설치’</strong> 또는 <strong>‘홈 화면에 추가’</strong>를 고릅니다.
+              </p>
+            </li>
+          </ol>
+        }
+        @default {
+          <h2 class="text-15 font-bold">컴퓨터</h2>
+          <ol class="flex flex-col gap-3">
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">1</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                주소창 오른쪽 끝의 <strong>설치 아이콘</strong>을 누릅니다.
+              </p>
+            </li>
+            <li class="flex gap-3">
+              <span class="flex-none font-bold text-accent-deep">2</span>
+              <p class="min-w-0 text-13 leading-relaxed">
+                아이콘이 없으면 <strong>⋮ 메뉴 → 저장 및 공유 → 페이지를 앱으로 설치</strong>를
+                따라갑니다.
+              </p>
+            </li>
+          </ol>
+          <p class="text-12 leading-relaxed text-ink-3">
+            휴대폰에서 열면 그 기기에 맞는 방법을 보여드려요.
+          </p>
+        }
+      }
+    </section>
+  }
+</div>
+
+<!--
+  설치 버튼은 화면을 내려도 계속 보이도록 하단에 고정한다.
+  설치할 수 있을 때만 나타나므로 이미 앱이거나 신호가 없으면 자리를 차지하지 않는다.
+-->
+@if (canPrompt() && !runningAsApp() && !installed()) {
+  <div appActionBar>
+    <div class="mx-auto flex max-w-105 flex-col gap-1.5">
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        class="btn w-full"
+        (click)="install()"
+        data-testid="install-now"
+      >
+        <app-icon name="save" [size]="16" /> 지금 설치하기
+      </button>
+      @if (dismissed()) {
+        <p class="text-center text-12 leading-relaxed text-ink-3" role="status">
+          설치를 취소했어요. 위 방법으로도 할 수 있습니다.
+        </p>
+      }
+    </div>
+  </div>
+}

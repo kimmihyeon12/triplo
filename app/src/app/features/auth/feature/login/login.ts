@@ -13,10 +13,11 @@ import { Router, RouterLink } from '@angular/router';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
 
 @Component({
   selector: 'app-login',
-  imports: [UiButton, UiInput, UiSpinner, ErrorToast, RouterLink],
+  imports: [UiButton, UiInput, UiSpinner, ErrorToast, RouterLink, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
 })
@@ -55,6 +56,8 @@ export class LoginPage {
         title: account ? '내 정보' : '로그인',
         back: account ? ['/trips'] : null,
         action: null,
+        // 로그인은 첫 화면이라 상단 바가 필요 없다. 내 정보는 본문이라 남긴다.
+        hidden: !account,
       });
       this.confirmation.set('');
       if (this.auth.designPreview && !router.url.startsWith('/auth/callback')) return;

@@ -19,6 +19,13 @@ export const routes: Routes = [
   },
   { path: '', pathMatch: 'full', redirectTo: 'trips' },
   {
+    // 시안 비교용 임시 화면. 고른 뒤 지운다.
+    path: 'lab/login-variants',
+    loadComponent: () =>
+      import('./features/lab/feature/login-variants/login-variants').then((m) => m.LoginVariants),
+    title: '로그인 시안',
+  },
+  {
     path: 'lab',
     loadComponent: () => import('./features/lab/feature/lab/lab').then((m) => m.LabPage),
     title: '실험실 · 디자인 시스템',
@@ -27,6 +34,12 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./features/auth/feature/login/login').then((m) => m.LoginPage),
     title: '로그인',
+  },
+  {
+    // 설치 방법은 기기마다 달라 안내 화면을 따로 둔다. 로그인 없이 열 수 있다.
+    path: 'install',
+    loadComponent: () => import('./features/install/feature/install/install').then((m) => m.Install),
+    title: '앱 설치',
   },
   {
     path: 'auth/callback',
