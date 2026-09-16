@@ -10,6 +10,8 @@ import {
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiNotice } from '../../../../shared/ui/notice/notice';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { TRIP_REPOSITORY } from '../../../trips/data/trip-repository';
 import type { Trip } from '../../../trips/model/trip';
 import { itinerarySections } from '../../../trips/util/itinerary-image';
@@ -18,7 +20,7 @@ import { ItinerarySnapshot } from '../../../trips/ui/itinerary-snapshot/itinerar
 @Component({
   selector: 'app-share-preview',
   templateUrl: './share-preview.html',
-  imports: [RouterLink, UiButton, ItinerarySnapshot],
+  imports: [RouterLink, UiButton, UiNotice, IconComponent, ItinerarySnapshot],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SharePreview {
