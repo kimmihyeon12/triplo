@@ -13,13 +13,15 @@
   <!--
     티켓은 눌러 보는 장식이라 글자를 끌어 선택할 일이 없다. 선택을 막지 않으면
     손가락으로 누르는 순간 텍스트가 잡혀 끌리는 것처럼 보인다. 스크롤은 그대로 둔다.
+    base.css가 p·li의 선택을 요소 선택자로 되살리므로, 상자에만 걸면 안쪽 글자가
+    그 규칙을 따라 다시 잡힌다. 자손까지 함께 막아야 실제로 끌리지 않는다.
   -->
   <!--
     안쪽 티켓이 절취선 홈을 자기 가장자리에 붙일 수 있도록 이 상자가 폭과
     위치 기준을 잡는다. display:contents로 넘기면 홈이 기준을 잃고 밖으로 나간다.
   -->
   <div
-    class="relative w-full max-w-sm select-none transform-3d [transition:transform_260ms_var(--ease-out)] [-webkit-touch-callout:none] motion-reduce:[transition:none]"
+    class="relative w-full max-w-sm select-none **:select-none transform-3d [transition:transform_260ms_var(--ease-out)] [-webkit-touch-callout:none] **:[-webkit-touch-callout:none] motion-reduce:[transition:none]"
     [style.transform]="ticketTransform()"
   >
     <!--
