@@ -60,9 +60,10 @@ export async function createTrip(page: Page, input: TripInput): Promise<string> 
   if (input.title) await page.getByTestId('trip-title').fill(input.title);
   if (input.start) await page.getByTestId('trip-start').fill(input.start);
   if (input.end) await page.getByTestId('trip-end').fill(input.end);
+  // 지역은 고정 목록에서 고른다. 검색어를 넣고 나온 후보를 누른다.
   for (const r of input.regions ?? []) {
     await page.getByTestId('region-input').fill(r);
-    await page.getByTestId('region-add').click();
+    await page.getByTestId(`region-match-${r}`).click();
   }
   await page.getByTestId('trip-save').click();
   await expect(page).toHaveURL(/\/trips\/[^/]+$/);

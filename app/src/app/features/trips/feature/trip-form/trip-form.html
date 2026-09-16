@@ -107,11 +107,11 @@
         <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">
           지역 (순서대로)
         </legend>
-        <div class="flex flex-wrap items-center gap-2 region-add">
+        <div class="region-add flex flex-wrap items-center gap-2">
           <label
             class="visually-hidden w-px h-px overflow-hidden whitespace-nowrap absolute! [clip:rect(0_0_0_0)]"
             for="region-name"
-            >지역 이름</label
+            >지역 검색</label
           >
           <input
             appInput
@@ -120,26 +120,54 @@
             [ngModel]="regionInput()"
             (ngModelChange)="regionInput.set($event)"
             name="regionName"
-            placeholder="예: 강릉"
+            placeholder="지역 검색 (예: 강릉, 강원)"
             maxlength="30"
-            (keydown.enter)="addRegion($event)"
+            autocomplete="off"
+            role="combobox"
+            [attr.aria-expanded]="regionMatches().length > 0"
+            aria-controls="region-matches"
+            aria-describedby="region-search-hint"
+            (keydown.enter)="submitRegionSearch($event)"
             data-testid="region-input"
           />
-          <button
-            appButton
-            type="button"
-            class="btn"
-            (click)="addRegion()"
-            data-testid="region-add"
-          >
-            추가
-          </button>
         </div>
-        @if (regions().length === 0) {
-          <p class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
-            지역은 선택 사항입니다. 하루에 두 지역을 다닐 수도 있습니다.
+
+        <!-- 목록에서 고르게 해 지명 표기를 한 가지로 맞춘다. -->
+        @if (!regionInput().trim()) {
+          <p id="region-search-hint" class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
+            시·군 이름을 검색해 고르세요. 지역은 선택 사항입니다.
+          </p>
+        } @else if (regionMatches().length === 0) {
+          <p id="region-search-hint" class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
+            찾는 지역이 없습니다. 시·군 이름이나 도 이름으로 다시 검색해 보세요.
           </p>
         } @else {
+          <ul
+            id="region-matches"
+            class="mt-2 flex flex-wrap gap-1.5"
+            role="listbox"
+            aria-label="지역 검색 결과"
+            data-testid="region-matches"
+          >
+            @for (m of regionMatches(); track m.province + m.name) {
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  class="flex items-center gap-1 rounded-full border border-border bg-panel py-1 pr-3 pl-2.5 text-13 hover:border-accent-deep hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep"
+                  (click)="pickRegion(m)"
+                  [attr.data-testid]="'region-match-' + m.name"
+                >
+                  <app-icon name="plus" [size]="14" />
+                  <span class="font-medium">{{ m.name }}</span>
+                  <span class="text-11 text-hint">{{ m.short }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (regions().length > 0) {
           <ol class="regions flex flex-col gap-1.5 mt-2" data-testid="region-list">
             @for (
               r of regions();
@@ -159,7 +187,7 @@
                 <span class="region__name flex-1 font-bold min-w-0 wrap-anywhere">{{
                   r.name
                 }}</span>
-                <span class="flex flex-wrap items-center gap-2 region__actions gap-1 flex-none">
+                <span class="region__actions flex flex-none flex-wrap items-center gap-1">
                   <button
                     appButton
                     type="button"

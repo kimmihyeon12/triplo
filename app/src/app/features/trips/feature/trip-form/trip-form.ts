@@ -20,6 +20,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TripEditorStore } from '../../data/trip-editor-store';
 import { formatNights, validateTripDates } from '../../../../shared/util/dates';
 import { createRegion, createTrip } from '../../util/factories';
+import { type KoreaRegion, searchRegions } from '../../util/korea-regions';
 import { type Trip, type TripRegion } from '../../model/trip';
 import {
   applyPeriodChange,
@@ -82,6 +83,15 @@ export class TripFormPage {
   });
 
   readonly backLink = computed(() => (this.id() ? ['/trips', this.id()!] : ['/trips']));
+
+  /**
+   * 입력한 글자로 찾은 지역 후보. 이미 담은 지역은 빼서 같은 곳을
+   * 두 번 넣지 않게 한다.
+   */
+  readonly regionMatches = computed<readonly KoreaRegion[]>(() => {
+    const picked = new Set(this.regions().map((r) => r.name));
+    return searchRegions(this.regionInput(), 8).filter((r) => !picked.has(r.name));
+  });
 
   /** 편집 시 기간 변경·지역 삭제 영향 설명 */
   readonly impactLines = computed(() => {
@@ -160,15 +170,23 @@ export class TripFormPage {
     });
   }
 
-  addRegion(event?: Event): void {
-    event?.preventDefault();
-    const name = this.regionInput().trim();
-    if (!name) return;
+  /** 후보 목록에서 고른 지역을 담는다. 지명은 목록의 표기를 그대로 쓴다. */
+  pickRegion(region: KoreaRegion): void {
     this.regions.update((list) => [
       ...list,
-      { id: createRegion(name, list.length).id, name, isNew: true },
+      { id: createRegion(region.name, list.length).id, name: region.name, isNew: true },
     ]);
     this.regionInput.set('');
+  }
+
+  /**
+   * 엔터로는 후보가 하나로 좁혀졌을 때만 담는다. 여럿이면 어느 곳인지
+   * 알 수 없으므로 사용자가 직접 고르게 둔다.
+   */
+  submitRegionSearch(event: Event): void {
+    event.preventDefault();
+    const matches = this.regionMatches();
+    if (matches.length === 1) this.pickRegion(matches[0]);
   }
 
   moveRegion(index: number, delta: number): void {

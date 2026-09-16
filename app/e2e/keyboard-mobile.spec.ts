@@ -37,7 +37,7 @@ test.describe('키보드만으로 첫 흐름, 가로 스크롤 없음', () => {
     await page.getByTestId('trip-end').focus();
     await tabUntil(page, 'region-input');
     await page.keyboard.type('강릉');
-    await page.keyboard.press('Enter'); // 지역 추가
+    await page.keyboard.press('Enter'); // 후보가 하나면 엔터로 담긴다
     await expect(page.getByTestId('region-list')).toContainText('강릉');
     await page.getByTestId('trip-save').focus();
     await page.keyboard.press('Enter');
