@@ -37,6 +37,8 @@ export interface PageBarState {
   readonly back: unknown[] | null;
   readonly backQueryParams?: Record<string, unknown>;
   readonly action?: PageBarAction | null;
+  /** 로그인처럼 상단 바가 필요 없는 첫 화면에서 쓴다. */
+  readonly hidden?: boolean;
 }
 
 const EMPTY: PageBarState = { title: '', back: null, action: null };

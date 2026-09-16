@@ -1,10 +1,17 @@
+<!--
+  로그인은 화면 높이를 채우고 버튼을 아래에 붙인다. 내용이 짧아도 누를 곳이
+  엄지 닿는 자리에 온다. 내 정보는 본문이라 그대로 위에서부터 흐른다.
+-->
 <div
   class="page login mx-auto my-0 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)] flex flex-col gap-4 max-w-105"
+  [class.min-h-dvh]="!displayedUser()"
   [attr.aria-busy]="auth.loading() || auth.busy()"
 >
   <!-- 로그인은 가운데로 모으고, 내 정보는 본문 성격이라 왼쪽 정렬을 유지한다. -->
   <section
     class="intro flex flex-col gap-2 px-0 pb-2"
+    [class.flex-1]="!displayedUser()"
+    [class.justify-center]="!displayedUser()"
     [class.items-center]="!displayedUser()"
     [class.text-center]="!displayedUser()"
     [class.items-start]="!!displayedUser()"
@@ -66,8 +73,9 @@
             </div>
           </div>
 
+          <!-- 반권이 기능을 설명하므로 여기서는 같은 말을 되풀이하지 않는다. -->
           <p class="relative mt-4 text-14 font-medium opacity-90">
-            일정 · 숙소 · 정산을 한곳에서
+            계정만 있으면 바로 탑승
           </p>
         </div>
 
@@ -86,26 +94,51 @@
           ></span>
         </div>
 
-        <!-- 반권이 체크인 창구다. 티켓 한 장으로 로그인까지 끝난다. -->
-        <nav
-          class="providers flex flex-col gap-2 rounded-b-panel px-5 pt-5 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
-          aria-label="소셜 로그인"
+        <div
+          class="rounded-b-panel px-5 pt-6 pb-5 shadow-panel [background:linear-gradient(to_bottom,var(--color-panel-2),var(--color-panel)_40%)]"
         >
-          <dl class="mb-2 grid grid-cols-3 gap-3">
-            <div class="min-w-0">
-              <dt class="text-12 tracking-wide text-ink-3">PASSENGER</dt>
-              <dd class="mt-0.5 truncate text-13 font-bold">당신</dd>
-            </div>
-            <div class="min-w-0">
-              <dt class="text-12 tracking-wide text-ink-3">SEAT</dt>
-              <dd class="mt-0.5 truncate text-13 font-bold">창가 자리</dd>
-            </div>
-            <div class="min-w-0 text-right">
-              <dt class="text-12 tracking-wide text-ink-3">CLASS</dt>
-              <dd class="mt-0.5 truncate text-13 font-bold">여행 비서</dd>
-            </div>
-          </dl>
-          <button
+          <!-- 반권은 무엇을 하는 앱인지 알려준다. 탑승권의 안내문 자리와 같다. -->
+          <ul class="flex flex-col gap-3">
+            <li class="flex gap-3">
+              <span
+                class="flex size-8 flex-none items-center justify-center rounded-control bg-accent-tint text-accent-deep"
+              >
+                <app-icon name="map" [size]="16" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-13 font-bold">날짜별 일정</p>
+                <p class="text-12 leading-normal text-ink-3">장소·숙소를 하루 흐름으로</p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span
+                class="flex size-8 flex-none items-center justify-center rounded-control bg-stay-tint text-stay-ink"
+              >
+                <app-icon name="home" [size]="16" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-13 font-bold">숙소 관리</p>
+                <p class="text-12 leading-normal text-ink-3">밤마다 어디서 자는지 한눈에</p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span
+                class="flex size-8 flex-none items-center justify-center rounded-control bg-ok-tint text-ok-ink"
+              >
+                <app-icon name="wallet" [size]="16" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-13 font-bold">함께 정산</p>
+                <p class="text-12 leading-normal text-ink-3">누가 얼마 냈는지 계산 없이</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 버튼은 티켓 밖에서 제 폭을 쓰고, 남는 공간을 밀어 화면 아래에 붙는다. -->
+      <nav class="providers mt-3 flex w-full max-w-sm flex-col gap-2" aria-label="소셜 로그인">
+        <button
             type="button"
             class="sns sns--google grid items-center w-full h-12 p-0 border-0 rounded-control-lg text-15 font-medium cursor-pointer grid-cols-[44px_1fr_44px] [transition:opacity_var(--dur)_var(--ease-out)] bg-panel text-google-login-ink [box-shadow:inset_0_0_0_1px_var(--color-border-strong)] hover:opacity-[0.9] active:opacity-[0.82] disabled:cursor-not-allowed disabled:opacity-[0.55]"
             (click)="auth.signIn('google')"
@@ -157,8 +190,7 @@
             로그인하면 <span class="font-medium text-ink-2">이용약관</span>과
             <span class="font-medium text-ink-2">개인정보 처리방침</span>에 동의하는 것으로 봅니다.
           </p>
-        </nav>
-      </article>
+      </nav>
     }
     @if (displayedUser()) {
       <h1 class="intro__title text-22 font-bold leading-[1.4]">내 정보</h1>
