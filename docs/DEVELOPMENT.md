@@ -38,7 +38,9 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 
 `master`는 배포 브랜치다. 여기에 푸시하면 호스팅이 자동으로 빌드·배포한다. 개발은 `develop`에서 진행하고, 배포할 준비가 된 뒤에만 `master`로 병합한다. 기능 작업은 `develop`에서 브랜치를 떠서 다시 `develop`으로 합친다.
 
-호스팅은 Cloudflare Pages 무료 플랜이다(2026-09-16 결정). Netlify를 먼저 붙였다가 무료 플랜에서 지울 수 없는 ‘Powered by Netlify’ 배지 때문에 옮겼다. Cloudflare는 배지가 없고 전송량 제한도 없으며 `_redirects` 형식을 그대로 쓴다.
+호스팅은 Cloudflare Pages 무료 플랜이고 배포 주소는 `https://triplo.pages.dev`다(2026-09-16). Netlify를 먼저 붙였다가 무료 플랜에서 지울 수 없는 ‘Powered by Netlify’ 배지 때문에 옮겼다. Cloudflare는 배지가 없고 전송량 제한도 없으며 `_redirects` 형식을 그대로 쓴다.
+
+2026-09-16 배포 검증: 사이트 200 응답, 환경 변수로 `app-config.json`·`supabase-config.json` 생성 확인, 구글·카카오 로그인 버튼 활성, 카카오 지도 SDK 로드 성공, 매니페스트(`display: standalone`)와 서비스 워커 등록 확인, `/trips`·`/onboarding` 등 하위 경로 새로고침 정상. 실제 로그인 계정으로 세션을 만드는 검증과 서버 저장은 아직 하지 않았다.
 
 대시보드에 넣을 빌드 설정이다. 저장소 루트에 설정 파일을 두지 않고 대시보드가 값을 갖는다.
 
@@ -63,15 +65,17 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 
 환경 변수는 빌드 시점에 읽는다. 값을 넣거나 고친 뒤에는 재배포해야 반영되며, 이미 올라간 배포에는 설정 파일이 들어 있지 않다. 배포된 사이트에서 `/supabase-config.json`을 열었을 때 JSON이 아니라 `index.html`이 오면 이 경우다.
 
-배포 도메인이 정해지면 아래를 등록해야 로그인·지도가 동작한다. 등록 전에는 화면만 뜨고 두 기능이 막힌다.
+아래 세 곳을 등록해야 로그인·지도가 동작한다. 등록 전에는 화면만 뜨고 두 기능이 막힌다. 2026-09-16에 모두 등록했다.
 
-| 등록 위치 | 넣을 값 |
+| 등록 위치 | 넣은 값 |
 | --- | --- |
-| 카카오 개발자센터 · 앱 설정 > 플랫폼 > Web | 배포 도메인 |
+| 카카오 개발자센터 · 앱 설정 > 플랫폼 > Web | `https://triplo.pages.dev` |
 | 카카오 개발자센터 · 제품 설정 > 카카오 로그인 > Redirect URI | `https://wslqgfetdwcmqeztixvs.supabase.co/auth/v1/callback` |
-| Supabase · Authentication > URL Configuration | Site URL에 배포 도메인, Redirect URLs에 `<배포 도메인>/**` |
+| Supabase · Authentication > URL Configuration | Site URL `https://triplo.pages.dev`, Redirect URLs에 `https://triplo.pages.dev/**` |
 
-카카오 로그인의 Redirect URI에는 우리 도메인이 아니라 Supabase 콜백 주소를 넣는다. 로그인이 ‘우리 사이트 → 카카오 → Supabase 콜백 → 우리 사이트’ 순으로 흐르기 때문이다.
+카카오 로그인의 Redirect URI에는 우리 도메인이 아니라 Supabase 콜백 주소를 넣는다. 로그인이 ‘우리 사이트 → 카카오 → Supabase 콜백 → 우리 사이트’ 순으로 흐르기 때문이다. 도메인과 Redirect URI는 키가 아니라 앱 단위로 붙으므로 JavaScript 키·REST API 키를 따로 등록하지 않는다. 카카오 REST API 키와 Client Secret은 Supabase의 카카오 제공자 설정에 넣는다.
+
+Redirect URLs에서 기존 `localhost` 항목은 지우지 않는다. 로컬 개발에 계속 쓴다.
 
 ## 검증 기준
 
