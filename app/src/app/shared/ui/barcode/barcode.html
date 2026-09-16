@@ -1,0 +1,10 @@
+<!-- 줄무늬를 반복해 주어진 폭을 채운다. 폭이 좁으면 잘라내 넘치지 않게 한다. -->
+<span
+  class="flex items-end gap-0.5 overflow-hidden"
+  aria-hidden="true"
+  [style.height.px]="height()"
+>
+  @for (w of bars; track $index) {
+    <i class="block h-full flex-none bg-current" [style.width.px]="w"></i>
+  }
+</span>
