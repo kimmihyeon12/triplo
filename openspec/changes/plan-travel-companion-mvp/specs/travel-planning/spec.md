@@ -455,6 +455,42 @@
 - **WHEN** 사용자가 날짜 범위와 예상 비용 포함 여부를 선택해 내보낸다
 - **THEN** 긴 이름을 줄바꿈한 일정 이미지를 다운로드하며 실패 시 오류와 재시도를 제공한다.
 
+### Requirement: Ticket header on saved itinerary image
+시스템은 저장하는 일정 이미지 위쪽에 탑승권 형태의 머리글을 SHALL 넣는다. 머리글은 여행 이름, 출발·도착 지역, 시작일과 종료일, 기간, 담은 장소 규모, 지역, 티켓 번호를 담는다. 날짜는 `2026.10.02(금)`처럼 연도와 요일을 함께 적는다.
+#### Scenario: Ticket number stays the same for a trip
+- **WHEN** 같은 여행의 일정 이미지와 초대 화면을 각각 연다
+- **THEN** 두 화면이 여행 id에서 결정적으로 뽑아낸 같은 `TR-XXXX-XXXX` 번호를 보여주며, 저장 스키마를 늘리지 않는다.
+#### Scenario: Ticket number is not a reservation code
+- **WHEN** 티켓 번호를 화면이나 이미지에 표시한다
+- **THEN** 실제 예약번호나 외부에서 조회할 수 있는 값으로 표시하지 않는다.
+
+### Requirement: Collapsible days control the saved image
+시스템은 일정 이미지 저장 화면에서 날짜별 접기와 전체 접기를 SHALL 제공하고, 미리보기에서 보이는 범위를 그대로 이미지에 담는다.
+#### Scenario: Save a folded day as one summary line
+- **WHEN** 사용자가 특정 날짜를 접고 이미지를 저장한다
+- **THEN** 그날은 제목과 `장소 4곳 · 예상 82,000원` 형태의 요약 한 줄만 담기고, 예상 비용 합계는 비용 포함을 켠 경우에만 적는다. 비용을 하나도 적지 않은 날은 0원이 아니라 미정으로 둔다.
+#### Scenario: Save the ticket alone
+- **WHEN** 사용자가 모든 날짜를 접고 이미지를 저장한다
+- **THEN** 일정 목록 없이 티켓 한 장만 저장하고 파일 이름으로 구분한다.
+#### Scenario: Folding is not persisted
+- **WHEN** 사용자가 날짜를 접은 뒤 화면을 떠났다가 다시 연다
+- **THEN** 접힘 상태를 저장하지 않고 전부 펼친 상태로 시작한다.
+
+### Requirement: Shared ticket appearance
+시스템은 티켓을 쓰는 화면(로그인·앱 설치·초대장·저장한 일정 이미지)에서 같은 그라데이션·절취선·칸 순서·소인·줄무늬를 SHALL 사용한다.
+#### Scenario: Reading the same trip on two screens
+- **WHEN** 같은 여행의 초대 화면과 저장한 일정 이미지를 견준다
+- **THEN** 날짜·기간·일정 규모·지역·티켓 번호가 같은 표기와 같은 차례로 놓인다.
+#### Scenario: Editing surface stays quiet
+- **WHEN** 일정을 접고 펴며 고르는 미리보기 화면을 연다
+- **THEN** 본권의 그라데이션을 쓰지 않고 흰 바탕에 절취선만 두어 일정 목록이 뒤로 밀리지 않게 한다.
+#### Scenario: Pressing a ticket on a touch device
+- **WHEN** 손가락으로 티켓을 누른다
+- **THEN** 글자가 선택되어 끌리지 않고 기울기만 반응하며 화면 스크롤은 그대로 동작한다.
+#### Scenario: Perforation notch reads as a cut-out
+- **WHEN** 티켓의 절취선 양옆 홈을 본다
+- **THEN** 홈은 티켓 가장자리를 파낸 반원으로 보이고, 배경 위에 동그라미가 얹힌 것처럼 보이지 않는다.
+
 
 ### Requirement: Companion entry within trip detail
 시스템은 개별 여행 상세 상단에 뒤로·여행 이름·편집 연필·참여자 이니셜·초대 +·더보기를 SHALL 배치한다. 가계부 진입은 일정 옆 탭, PNG 저장은 더보기 메뉴에서 제공한다.
