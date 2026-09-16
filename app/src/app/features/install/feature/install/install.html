@@ -103,7 +103,7 @@
     </article>
   </div>
 
-  <!-- 설치 상태와 버튼. 티켓 아래에서 화면 폭을 그대로 쓴다. -->
+  <!-- 설치 상태. 버튼은 하단 고정 바에 둔다. -->
   @if (runningAsApp()) {
     <div appNotice class="notice notice--ok" data-testid="install-already">
       <app-icon name="check" />
@@ -118,25 +118,7 @@
         설치를 마쳤어요. 홈 화면 아이콘으로 열어 보세요.
       </div>
     </div>
-  } @else if (canPrompt()) {
-    <div class="flex flex-col gap-2">
-      <button
-        appButton
-        type="button"
-        variant="primary"
-        class="btn w-full"
-        (click)="install()"
-        data-testid="install-now"
-      >
-        <app-icon name="save" [size]="16" /> 지금 설치하기
-      </button>
-      @if (dismissed()) {
-        <p class="text-center text-12 leading-relaxed text-ink-3" role="status">
-          설치를 취소했어요. 아래 방법으로도 할 수 있습니다.
-        </p>
-      }
-    </div>
-  } @else {
+  } @else if (!canPrompt()) {
     <!--
       브라우저가 설치 신호를 주는 시점은 우리가 정할 수 없다. 이미 설치했거나
       사파리처럼 신호를 주지 않는 브라우저면 버튼이 나오지 않는다.
@@ -221,3 +203,29 @@
     </section>
   }
 </div>
+
+<!--
+  설치 버튼은 화면을 내려도 계속 보이도록 하단에 고정한다.
+  설치할 수 있을 때만 나타나므로 이미 앱이거나 신호가 없으면 자리를 차지하지 않는다.
+-->
+@if (canPrompt() && !runningAsApp() && !installed()) {
+  <div appActionBar>
+    <div class="mx-auto flex max-w-105 flex-col gap-1.5">
+      <button
+        appButton
+        type="button"
+        variant="primary"
+        class="btn w-full"
+        (click)="install()"
+        data-testid="install-now"
+      >
+        <app-icon name="save" [size]="16" /> 지금 설치하기
+      </button>
+      @if (dismissed()) {
+        <p class="text-center text-12 leading-relaxed text-ink-3" role="status">
+          설치를 취소했어요. 위 방법으로도 할 수 있습니다.
+        </p>
+      }
+    </div>
+  </div>
+}
