@@ -1,6 +1,7 @@
 import { Injectable, computed } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
+import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regions';
 import { SAMPLE_ITEMS, type Phase, type AiPlanSelection, type SampleItem } from '../model/ai-plan';
 
 @Injectable()
@@ -85,9 +86,27 @@ export class AiPlanStore {
     patchState(this.state, { [key]: value });
   }
 
-  addRegion(): void {
-    const name = this.regionInput().trim();
-    if (name) patchState(this.state, { regions: [...this.regions(), name], regionInput: '' });
+  /**
+   * 입력한 글자로 찾은 지역 후보. 이미 담은 지역은 빼서 같은 곳을
+   * 두 번 넣지 않게 한다. 여행 만들기와 같은 고정 목록을 쓴다.
+   */
+  readonly regionMatches = computed<readonly KoreaRegion[]>(() => {
+    const picked = new Set(this.regions());
+    return searchRegions(this.regionInput(), 8).filter((r) => !picked.has(r.name));
+  });
+
+  /** 후보 목록에서 고른 지역을 담는다. 지명은 목록의 표기를 그대로 쓴다. */
+  pickRegion(region: KoreaRegion): void {
+    patchState(this.state, { regions: [...this.regions(), region.name], regionInput: '' });
+  }
+
+  /**
+   * 엔터로는 후보가 하나로 좁혀졌을 때만 담는다. 여럿이면 어느 곳인지
+   * 알 수 없으므로 사용자가 직접 고르게 둔다.
+   */
+  submitRegionSearch(): void {
+    const matches = this.regionMatches();
+    if (matches.length === 1) this.pickRegion(matches[0]);
   }
 
   removeRegion(index: number): void {

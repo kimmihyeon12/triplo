@@ -28,29 +28,60 @@
           <label class="field__label font-medium text-13 text-ink-2" for="ai-region"
             >지역 (순서대로)</label
           >
-          <div class="flex flex-wrap items-center gap-2 region-add">
+          <div class="region-add flex flex-wrap items-center gap-2">
             <input
               appInput
               id="ai-region"
-              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35 in-[.pick]:absolute in-[.pick]:w-full in-[.pick]:h-full in-[.pick]:m-0 in-[.pick]:opacity-[0] in-[.pick]:cursor-pointer in-[.pick]:inset-0 in-[.pick]:z-1 in-[.pickrow__label]:w-5 in-[.pickrow__label]:h-5 in-[.pickrow__label]:flex-none in-[.pickrow__label]:mt-0.5 in-[.pickrow__label]:mx-0 in-[.pickrow__label]:mb-0 in-[.pickrow__label]:accent-accent-deep"
+              class="input in-[.region-add]:flex-1 in-[.region-add]:min-w-35"
               [ngModel]="regionInput()"
               (ngModelChange)="draft.set('regionInput', $event)"
               name="aiRegion"
-              placeholder="예: 강릉"
+              placeholder="지역 검색 (예: 강릉, 강원)"
               maxlength="30"
-              (keydown.enter)="addRegion($event)"
+              autocomplete="off"
+              role="combobox"
+              [attr.aria-expanded]="regionMatches().length > 0"
+              aria-controls="ai-region-matches"
+              (keydown.enter)="submitRegionSearch($event)"
               data-testid="ai-region-input"
             />
-            <button
-              appButton
-              type="button"
-              class="btn"
-              (click)="addRegion()"
-              data-testid="ai-region-add"
-            >
-              추가
-            </button>
           </div>
+
+          <!-- 목록에서 고르게 해 지명 표기를 한 가지로 맞춘다. -->
+          @if (!regionInput().trim()) {
+            <p class="field__hint block text-12 leading-[1.45] text-hint">
+              시·군 이름을 검색해 순서대로 고르세요.
+            </p>
+          } @else if (regionMatches().length === 0) {
+            <p class="field__hint block text-12 leading-[1.45] text-hint">
+              찾는 지역이 없습니다. 시·군 이름이나 도 이름으로 다시 검색해 보세요.
+            </p>
+          } @else {
+            <ul
+              id="ai-region-matches"
+              class="flex flex-wrap gap-1.5"
+              role="listbox"
+              aria-label="지역 검색 결과"
+              data-testid="ai-region-matches"
+            >
+              @for (m of regionMatches(); track m.province + m.name) {
+                <li>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected="false"
+                    class="flex items-center gap-1 rounded-full border border-border bg-panel py-1 pr-3 pl-2.5 text-13 hover:border-accent-deep hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep"
+                    (click)="pickRegion(m)"
+                    [attr.data-testid]="'ai-region-match-' + m.name"
+                  >
+                    <app-icon name="plus" [size]="14" />
+                    <span class="font-medium">{{ m.name }}</span>
+                    <span class="text-11 text-hint">{{ m.short }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
         </div>
 
         @if (regions().length > 0) {

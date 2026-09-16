@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiPlanStore } from '../../data/ai-plan-store';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import type { KoreaRegion } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 
 @Component({
@@ -69,9 +70,15 @@ export class AiPlanFlow {
     { label: '추가 요청', value: this.extraNote(), phase: 'step3' as Phase },
   ]);
 
-  addRegion(event?: Event): void {
-    event?.preventDefault();
-    this.draft.addRegion();
+  readonly regionMatches = this.draft.regionMatches;
+
+  pickRegion(region: KoreaRegion): void {
+    this.draft.pickRegion(region);
+  }
+
+  submitRegionSearch(event: Event): void {
+    event.preventDefault();
+    this.draft.submitRegionSearch();
   }
 
   removeRegion(index: number): void {

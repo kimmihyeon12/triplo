@@ -5,7 +5,7 @@ test('AI 샘플 조건과 선택을 유지하고 저장 실패 후 한 여행에
   await resetApp(page);
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-add').click();
+  await page.getByTestId('ai-region-match-강릉').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-01');
   await page.getByTestId('ai-next-1').click();
@@ -42,7 +42,7 @@ test('추천 일차를 바꾸면 그 날짜로 담기고 지도 링크가 붙는
   await resetApp(page);
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-add').click();
+  await page.getByTestId('ai-region-match-강릉').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-03');
   await page.getByTestId('ai-next-1').click();
@@ -80,7 +80,7 @@ test('고를 일차가 하나뿐인 당일 여행에서는 일차 선택을 감�
   await resetApp(page);
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-add').click();
+  await page.getByTestId('ai-region-match-강릉').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-01');
   await page.getByTestId('ai-next-1').click();
