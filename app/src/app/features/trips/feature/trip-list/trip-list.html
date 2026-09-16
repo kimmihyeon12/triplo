@@ -72,25 +72,33 @@
     }
     @case ('ready') {
       @if (store.trips().length === 0) {
+        <!--
+          첫 화면이라 여백을 넉넉히 두고 가운데로 모은다. 로그인·설치 화면과
+          같은 결로 맞춰 앱 전체가 한 덩어리로 읽히게 한다.
+        -->
         <section
-          class="panel empty bg-panel rounded-panel shadow-panel p-4 flex flex-col items-start gap-2 p-5"
+          class="empty flex flex-col items-center gap-4 px-6 py-14 text-center"
           data-testid="empty-trips"
         >
-          <app-icon
-            class="in-[.empty]:text-accent-deep in-[.empty]:bg-accent-tint in-[.empty]:rounded-full in-[.empty]:mb-0.5 in-[.empty]:p-2.5"
-            name="luggage"
-            [size]="36"
-          />
-          <h2>아직 만든 여행이 없습니다</h2>
-          <p class="text-ink-3">
-            날짜를 정하지 않아도 시작할 수 있습니다. 장소와 숙소는 나중에 채워도 됩니다.
-          </p>
+          <span
+            class="flex size-16 items-center justify-center rounded-panel text-white [background:linear-gradient(135deg,var(--color-accent)_0%,var(--color-accent-deep)_55%,var(--color-stay-ink)_100%)]"
+          >
+            <app-icon name="luggage" [size]="30" />
+          </span>
+          <div class="flex flex-col gap-1.5">
+            <h2 class="text-18 font-bold">첫 여행을 만들어 볼까요</h2>
+            <p class="text-13 leading-relaxed text-ink-3">
+              날짜를 정하지 않아도 시작할 수 있어요.<br />
+              장소와 숙소는 나중에 채워도 됩니다.
+            </p>
+          </div>
           <a
             appButton
             routerLink="/trips/new"
-            class="btn in-[.empty]:mt-2 in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+            class="btn mt-1 w-full max-w-64"
             variant="primary"
-            >첫 여행 만들기</a
+            data-testid="empty-create"
+            ><app-icon name="plus" [size]="16" /> 여행 만들기</a
           >
         </section>
       } @else {
