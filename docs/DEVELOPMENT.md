@@ -34,6 +34,45 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 - production도 인증 가드를 유지한다. development 설정을 변경했다면 서버를 재시작한다.
 - 디자인 원본은 [DESIGN.md](design/DESIGN.md), 실행 토큰은 `app/src/styles/theme.css`, 실제 예제는 `/lab`이다.
 
+## 브랜치와 배포
+
+`master`는 배포 브랜치다. 여기에 푸시하면 호스팅이 자동으로 빌드·배포한다. 개발은 `develop`에서 진행하고, 배포할 준비가 된 뒤에만 `master`로 병합한다. 기능 작업은 `develop`에서 브랜치를 떠서 다시 `develop`으로 합친다.
+
+호스팅은 Cloudflare Pages 무료 플랜이다(2026-09-16 결정). Netlify를 먼저 붙였다가 무료 플랜에서 지울 수 없는 ‘Powered by Netlify’ 배지 때문에 옮겼다. Cloudflare는 배지가 없고 전송량 제한도 없으며 `_redirects` 형식을 그대로 쓴다.
+
+대시보드에 넣을 빌드 설정이다. 저장소 루트에 설정 파일을 두지 않고 대시보드가 값을 갖는다.
+
+| 항목 | 값 |
+| --- | --- |
+| 빌드 명령 | `npm run build:deploy` |
+| 출력 디렉터리 | `dist/travel-companion-app/browser` |
+| 루트 디렉터리 | `app` |
+| `NODE_VERSION` | `22` |
+
+경로 규칙은 `app/public/`의 두 파일이 원본이며 빌드 산출물로 함께 복사된다. `_redirects`는 모든 경로를 `index.html`로 넘겨 Angular 라우터가 처리하게 하고, `_headers`는 서비스 워커와 런타임 설정 파일의 캐시를 막는다. 캐시되면 새 버전을 내보내도 기기에 옛 앱이 남는다.
+
+키는 저장소에 두지 않는다. `app/public/app-config.json`과 `supabase-config.json`은 `.gitignore`에 있고 로컬 개발용이다. 배포에서는 `npm run build:deploy`가 아래 환경 변수를 읽어 같은 파일을 만든다. 값이 없으면 파일을 만들지 않으며 앱은 ‘키 없음’ 상태로 정상 동작한다.
+
+| 환경 변수 | 쓰임 |
+| --- | --- |
+| `KAKAO_JS_KEY` | 카카오 지도·장소 검색 |
+| `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | 구글·카카오 로그인(Auth) |
+| `SUPABASE_DELETION_ENABLED` | 회원탈퇴 노출 여부. 함수 배포 전에는 넣지 않는다 |
+
+세 변수를 호스팅의 암호화·비밀 표시 기능으로 감추지 않는다. 감추면 빌드 중 값이 가려져 `write-runtime-config.mjs`가 읽지 못할 수 있고, 두 키는 원래 브라우저로 내려가는 공개 값이라 숨길 수 있는 대상이 아니다. 실제 보호는 카카오의 도메인 제한과 Supabase의 RLS가 맡는다. 반면 `SUPABASE_SERVICE_ROLE_KEY`는 서버 전용이므로 이 목록에 넣지 않는다.
+
+환경 변수는 빌드 시점에 읽는다. 값을 넣거나 고친 뒤에는 재배포해야 반영되며, 이미 올라간 배포에는 설정 파일이 들어 있지 않다. 배포된 사이트에서 `/supabase-config.json`을 열었을 때 JSON이 아니라 `index.html`이 오면 이 경우다.
+
+배포 도메인이 정해지면 아래를 등록해야 로그인·지도가 동작한다. 등록 전에는 화면만 뜨고 두 기능이 막힌다.
+
+| 등록 위치 | 넣을 값 |
+| --- | --- |
+| 카카오 개발자센터 · 앱 설정 > 플랫폼 > Web | 배포 도메인 |
+| 카카오 개발자센터 · 제품 설정 > 카카오 로그인 > Redirect URI | `https://wslqgfetdwcmqeztixvs.supabase.co/auth/v1/callback` |
+| Supabase · Authentication > URL Configuration | Site URL에 배포 도메인, Redirect URLs에 `<배포 도메인>/**` |
+
+카카오 로그인의 Redirect URI에는 우리 도메인이 아니라 Supabase 콜백 주소를 넣는다. 로그인이 ‘우리 사이트 → 카카오 → Supabase 콜백 → 우리 사이트’ 순으로 흐르기 때문이다.
+
 ## 검증 기준
 
 단위 테스트는 날짜·숙박·기간 변경·저장 실패·상태 경쟁을 검증한다. 브라우저에서는 여행 편집·재열기, 인증·닉네임·로그아웃, 키보드 조작, 360px 화면, 공통 UI·스피너를 확인한다. 런타임 앱과 테스트 앱의 포트·저장소를 분리하고 캡처는 Git에서 제외된 `output/playwright/`에 둔다.

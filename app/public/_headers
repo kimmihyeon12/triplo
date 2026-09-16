@@ -1,0 +1,17 @@
+# 서비스 워커와 런타임 설정 파일은 캐시하지 않는다.
+# 캐시되면 새 버전을 내보내도 기기에 옛 앱이 남는다.
+
+/ngsw-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/ngsw.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/app-config.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/supabase-config.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache
