@@ -8,14 +8,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiPlanStore } from '../../data/ai-plan-store';
-import {
-  COMPANION,
-  PACE,
-  TRANSPORT,
-  SAMPLE_ITEMS,
-  type Phase,
-  type AiPlanSelection,
-} from '../../model/ai-plan';
+import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 
 @Component({
   selector: 'app-ai-plan-flow',
@@ -33,7 +27,8 @@ export class AiPlanFlow {
   readonly companions = COMPANION;
   readonly paces = PACE;
   readonly transports = TRANSPORT;
-  readonly sampleItems = SAMPLE_ITEMS;
+  /** 사용자가 고친 일차가 반영된 목록. 고정 SAMPLE_ITEMS를 직접 쓰지 않는다. */
+  readonly sampleItems = this.draft.items;
   readonly phase = this.draft.phase;
   readonly regions = this.draft.regions;
   readonly regionInput = this.draft.regionInput;
@@ -47,6 +42,10 @@ export class AiPlanFlow {
   readonly bookedStay = this.draft.bookedStay;
   readonly extraNote = this.draft.extraNote;
   readonly selected = this.draft.selected;
+  readonly dayChoices = this.draft.dayChoices;
+  readonly useDayChips = this.draft.useDayChips;
+  /** 당일 여행처럼 고를 일차가 하나뿐이면 바꿀 것이 없어 감춘다. */
+  readonly canChangeDay = computed(() => this.dayChoices().length > 1);
   readonly stepNumber = this.draft.stepNumber;
   readonly dateValidation = this.draft.dateValidation;
   readonly dateError = this.draft.dateError;
@@ -81,6 +80,29 @@ export class AiPlanFlow {
 
   toggle(id: string): void {
     this.draft.toggle(id);
+  }
+
+  /** select의 값은 문자열이므로 숫자로 바꿔 넘긴다. */
+  changeDay(id: string, value: string): void {
+    const day = Number(value);
+    if (Number.isInteger(day)) this.draft.setDay(id, day);
+  }
+
+  /**
+   * 장소를 네이버 지도에서 찾는 주소. 추천에는 좌표가 없으므로 이름과
+   * 지역으로 검색한다. 리뷰·위치·영업시간은 그 화면에서 확인한다.
+   */
+  naverLink(name: string): string {
+    return naverSearchUrl(this.mapSearch(name));
+  }
+
+  kakaoLink(name: string): string {
+    return kakaoSearchUrl(this.mapSearch(name));
+  }
+
+  /** 지역을 앞에 붙여야 동명 장소가 섞이지 않는다. 예: '강릉 안목해변 카페거리' */
+  private mapSearch(name: string): string {
+    return mapQuery(this.regions()[0] ?? '', name);
   }
 
   generate(): void {

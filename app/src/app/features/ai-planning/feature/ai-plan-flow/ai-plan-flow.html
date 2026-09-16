@@ -316,7 +316,7 @@
           확인된 항목이 모두 선택되어 있습니다. 원치 않는 항목을 해제한 뒤 아래 버튼으로 담으세요.
         </p>
         <ul class="picks flex flex-col">
-          @for (item of sampleItems; track item.id) {
+          @for (item of sampleItems(); track item.id) {
             <li
               class="pickrow [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
               [class.pickrow--on]="selected().has(item.id)"
@@ -344,11 +344,99 @@
                       <span appBadge class="cell cell--warn">위치 미확인</span>
                     }
                   </span>
-                  <span class="pickrow__meta text-12 leading-normal text-ink-3"
-                    >{{ item.day }}일차 · {{ item.note }}</span
-                  >
+                  <span class="pickrow__meta text-12 leading-normal text-ink-3">{{
+                    item.note
+                  }}</span>
                 </span>
               </label>
+
+              <!--
+                일차 변경과 지도 링크는 라벨 밖에 둔다. 안에 넣으면 누를 때마다
+                체크 상태가 함께 바뀐다.
+              -->
+              <div class="flex flex-wrap items-center gap-2 pb-3 pl-8">
+                @if (canChangeDay()) {
+                  @if (useDayChips()) {
+                    <div
+                      class="flex flex-wrap gap-1"
+                      role="radiogroup"
+                      [attr.aria-label]="item.name + ' 일차'"
+                    >
+                      @for (d of dayChoices(); track d) {
+                        <button
+                          type="button"
+                          role="radio"
+                          [attr.aria-checked]="d === item.day"
+                          class="min-h-8 rounded-full border px-3 text-12 font-medium focus-visible:outline-2 focus-visible:outline-accent-deep"
+                          [class.border-accent-deep]="d === item.day"
+                          [class.bg-accent-deep]="d === item.day"
+                          [class.text-white]="d === item.day"
+                          [class.border-border]="d !== item.day"
+                          [class.bg-panel]="d !== item.day"
+                          [class.text-ink-3]="d !== item.day"
+                          (click)="changeDay(item.id, d + '')"
+                          [attr.data-testid]="'ai-day-' + item.id + '-' + d"
+                        >
+                          {{ d }}일차
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <label class="sr-only" [attr.for]="'ai-day-' + item.id"
+                      >{{ item.name }} 일차</label
+                    >
+                    <select
+                      appInput
+                      class="select w-auto!"
+                      [id]="'ai-day-' + item.id"
+                      [value]="item.day"
+                      (change)="changeDay(item.id, $any($event.target).value)"
+                      [attr.data-testid]="'ai-day-' + item.id"
+                    >
+                      @for (d of dayChoices(); track d) {
+                        <option [value]="d">{{ d }}일차</option>
+                      }
+                    </select>
+                  }
+                }
+                <!-- 지도 앱 열기: 여행 상세와 같은 공식 서비스 아이콘·크기로 맞춘다. -->
+                <span class="item__maps ml-auto inline-flex flex-none gap-1">
+                  <a
+                    class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                    [href]="naverLink(item.name)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="item.name + ' 네이버지도에서 검색'"
+                    [attr.data-testid]="'ai-naver-' + item.id"
+                  >
+                    <img
+                      class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                      src="brand/navermap.png"
+                      width="26"
+                      height="26"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </a>
+                  <a
+                    class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                    [href]="kakaoLink(item.name)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    [attr.aria-label]="item.name + ' 카카오맵에서 검색'"
+                    [attr.data-testid]="'ai-kakao-' + item.id"
+                  >
+                    <img
+                      class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                      src="brand/kakaomap.png"
+                      width="26"
+                      height="26"
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </a>
+                </span>
+              </div>
             </li>
           }
         </ul>
@@ -438,7 +526,8 @@
             data-testid="ai-commit"
             variant="primary"
           >
-            선택한 장소 {{ selected().size }}개 일정에 담기
+            <!-- 좁은 화면에서 줄바꿈되면 옆 버튼과 높이가 어긋난다. 짧게 쓴다. -->
+            {{ selected().size }}개 담기
           </button>
         }
       }
