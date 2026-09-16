@@ -29,6 +29,12 @@ export const routes: Routes = [
     title: '로그인',
   },
   {
+    // 설치 방법은 기기마다 달라 안내 화면을 따로 둔다. 로그인 없이 열 수 있다.
+    path: 'install',
+    loadComponent: () => import('./features/install/feature/install/install').then((m) => m.Install),
+    title: '앱 설치',
+  },
+  {
     path: 'auth/callback',
     loadComponent: () => import('./features/auth/feature/login/login').then((m) => m.LoginPage),
     title: '로그인 확인',

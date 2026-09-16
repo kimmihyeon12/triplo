@@ -180,7 +180,14 @@
       로그인 없이 둘러보기
     </button>
   }
-  <a routerLink="/lab" class="self-center mt-4 py-2 text-13 text-ink-3 underline underline-offset-4"
+  <!-- 설치는 사용자용, 실험실은 개발용이라 무게를 다르게 둔다. -->
+  <a
+    routerLink="/install"
+    class="self-center mt-4 inline-flex items-center gap-1.5 py-2 text-13 font-medium text-accent-deep"
+    data-testid="go-install"
+    ><app-icon name="save" [size]="14" /> 앱으로 설치하기</a
+  >
+  <a routerLink="/lab" class="self-center py-2 text-12 text-ink-3 underline underline-offset-4"
     >실험실</a
   >
 </div>

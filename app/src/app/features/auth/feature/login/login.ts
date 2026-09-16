@@ -13,10 +13,11 @@ import { Router, RouterLink } from '@angular/router';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
 
 @Component({
   selector: 'app-login',
-  imports: [UiButton, UiInput, UiSpinner, ErrorToast, RouterLink],
+  imports: [UiButton, UiInput, UiSpinner, ErrorToast, RouterLink, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
 })
