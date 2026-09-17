@@ -100,28 +100,10 @@
         }
       </div>
 
-      @if (trip()!.regions.length > 0) {
-        <div class="field flex flex-col gap-1 mb-4">
-          <label class="field__label font-medium text-13 text-ink-2" for="region"
-            >지역 <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
-          >
-          <select
-            appInput
-            id="region"
-            class="select"
-            [ngModel]="regionId()"
-            (ngModelChange)="regionId.set($event)"
-            name="region"
-            data-testid="stay-region"
-          >
-            <option value="">지역 없음</option>
-            @for (r of trip()!.regions; track r.id) {
-              <option [value]="r.id">{{ r.name }}</option>
-            }
-          </select>
-        </div>
-      }
-
+      <!--
+        지역은 고르게 하지 않는다. 여행에 담긴 지역 안에서 고르는 일이라 대개 답이
+        하나뿐이고, 여러 지역 여행에서도 주소를 보면 알 수 있다.
+      -->
       <fieldset class="border-0 p-0 min-w-0 mt-0 mx-0 mb-3.5">
         <legend class="field__label font-medium text-13 text-ink-2 p-0 mb-1.25">숙박 날짜</legend>
 <!-- 여행 기간 입력과 같은 범위 선택 형태를 쓴다. -->

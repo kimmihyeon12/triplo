@@ -32,6 +32,7 @@ import { PageBar } from '../../../../core/page-bar';
 import { PlaceSearchBoxComponent } from '../../../places/ui/place-search-box/place-search-box';
 import { SaveStatusComponent } from '../../../../shared/ui/save-status/save-status';
 import { applyPlaceCandidate, clearLocation } from '../../util/location';
+import { regionIdForAddress } from '../../util/region-match';
 import { type PlaceCandidate } from '../../../places/model/place';
 import type { GeoPoint, PlaceRef } from '../../../places/model/place';
 
@@ -252,7 +253,8 @@ export class StayFormPage {
       id: base?.id,
       name: this.name(),
       address: this.address().trim(),
-      regionId: this.regionId() || null,
+      // 지역은 고르게 하지 않고 주소에서 찾는다. 대개 답이 하나뿐이다.
+      regionId: regionIdForAddress(this.address().trim(), trip.regions),
       checkIn: this.checkIn(),
       checkOut: this.checkOut(),
       checkInTime: this.checkInTime() || null,

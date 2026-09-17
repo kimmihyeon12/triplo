@@ -125,28 +125,10 @@
               숙박 기간이 먼저고, 체크인·체크아웃 시각은 그 아래 각자 한 줄이다.
               한 줄에 몰아 넣으면 날짜와 시각이 뒤섞여 읽기 어렵다.
             -->
-            <div class="flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3">
-              <span class="text-ink-2"
-                >{{ formatDate(s.checkIn, true) }} ~ {{ formatDate(s.checkOut, true) }}</span
-              >
-              <span class="text-border-strong" aria-hidden="true">·</span>
-              @if (s.location) {
-                <span class="inline-flex text-ok-ink" title="위치 확인됨"
-                  ><app-icon name="pin" [size]="12" />
-                  <span class="sr-only">위치 확인됨</span></span
-                >
-              } @else {
-                <span class="text-warn-ink">위치 미확인</span>
-              }
-            </div>
-            <dl
-              class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-12 leading-normal text-ink-3"
-            >
-              <dt>체크인</dt>
-              <dd [class.text-warn-ink]="!s.checkInTime">{{ s.checkInTime || '시각 미정' }}</dd>
-              <dt>체크아웃</dt>
-              <dd [class.text-warn-ink]="!s.checkOutTime">{{ s.checkOutTime || '시각 미정' }}</dd>
-            </dl>
+            <!--
+              장소 카드와 같은 순서로 둔다. 이름 다음에 어디인지(주소)를 보고,
+              그다음에 언제 묵는지(기간·시각)를 읽는다.
+            -->
             @if (s.address) {
               <div class="text-12 leading-normal text-ink-3 flex items-center gap-1">
                 <span class="min-w-0 truncate" [title]="s.address">{{ s.address }}</span>
@@ -161,6 +143,19 @@
                 </button>
               </div>
             }
+            <div class="flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3">
+              <span class="text-ink-2"
+                >{{ formatDate(s.checkIn, true) }} ~ {{ formatDate(s.checkOut, true) }}</span
+              >
+            </div>
+            <dl
+              class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-12 leading-normal text-ink-3"
+            >
+              <dt>체크인</dt>
+              <dd [class.text-warn-ink]="!s.checkInTime">{{ s.checkInTime || '시각 미정' }}</dd>
+              <dt>체크아웃</dt>
+              <dd [class.text-warn-ink]="!s.checkOutTime">{{ s.checkOutTime || '시각 미정' }}</dd>
+            </dl>
             @if (s.estimatedCost != null) {
               <p class="text-12 leading-normal text-accent-deep">
                 예상 {{ s.estimatedCost!.toLocaleString('ko-KR') }}원 · 숙박 전체

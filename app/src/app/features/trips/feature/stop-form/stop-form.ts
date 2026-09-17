@@ -32,6 +32,7 @@ import { PageBar } from '../../../../core/page-bar';
 import { PlaceSearchBoxComponent } from '../../../places/ui/place-search-box/place-search-box';
 import { SaveStatusComponent } from '../../../../shared/ui/save-status/save-status';
 import { applyPlaceCandidate, clearLocation } from '../../util/location';
+import { regionIdForAddress } from '../../util/region-match';
 import { type PlaceCandidate } from '../../../places/model/place';
 import type { GeoPoint, PlaceRef } from '../../../places/model/place';
 
@@ -238,13 +239,15 @@ export class StopFormPage {
     const raw = this.stayMinutes();
     const stayMinutes = raw === null || raw === '' ? null : Number(raw);
     const base = this.editing();
+    const address = this.address().trim();
     const stop = createStop({
       ...(base ?? {}),
       id: base?.id,
       kind: this.kind(),
       name: this.name(),
-      address: this.address().trim(),
-      regionId: this.regionId() || null,
+      address,
+      // 지역은 고르게 하지 않고 주소에서 찾는다. 대개 답이 하나뿐이다.
+      regionId: regionIdForAddress(address, trip.regions),
       date: this.date() || null,
       stayMinutes,
       fixedTime: this.fixedTime() || null,
