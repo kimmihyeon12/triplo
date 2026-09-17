@@ -116,6 +116,51 @@
 - **WHEN** AI 요청이 실패한다
 - **THEN** 기존 일정은 유지되고 수동 검색과 편집은 계속 가능하다
 
+### Requirement: Model access goes through the server
+시스템은 언어 모델을 서버에서만 SHALL 호출하고 모델 키를 브라우저에 두지 않는다. 지시문과 모델 이름도 서버가 갖는다.
+#### Scenario: Request without a session
+- **WHEN** 로그인하지 않은 요청이 AI 일정 생성을 부른다
+- **THEN** 서버가 401로 거절하고 모델을 부르지 않는다
+#### Scenario: Client sends only conditions
+- **WHEN** 브라우저가 생성을 요청한다
+- **THEN** 사용자가 고른 조건만 보내고 지시문·모델 이름은 보내지 않는다. 요청을 바꿔 모델에게 다른 일을 시킬 수 없다
+#### Scenario: Invalid input reaches the server
+- **WHEN** 지역이 비었거나 여행 일수가 허용 범위를 벗어난 요청이 온다
+- **THEN** 모델을 부르지 않고 거절하며, 지나치게 긴 입력은 잘라 보낸다
+
+### Requirement: Model supplies names only
+시스템은 언어 모델에게 장소 이름·일차·분류만 SHALL 받고 좌표·주소·영업시간·설명은 받지 않는다. 모델이 쓴 문장을 장소 정보로 저장하거나 화면에 표시하지 않는다.
+#### Scenario: Model writes an inaccurate description
+- **WHEN** 모델이 장소 설명에 사실과 다른 내용을 적는다
+- **THEN** 그 설명을 화면에 표시하지 않고 장소 검색에서 얻은 분류와 주소만 보여준다
+#### Scenario: Response breaks the agreed shape
+- **WHEN** 응답이 JSON이 아니거나 여행 기간을 벗어난 일차, 빈 이름, 같은 장소를 여러 번 담아 온다
+- **THEN** 해당 항목을 버리고 남은 항목으로 결과를 만들며 잘못된 값을 저장하지 않는다
+
+### Requirement: Verify model output against place search
+시스템은 모델이 낸 장소 이름을 실제 장소 검색으로 SHALL 대조하고, 찾은 항목만 확인된 장소로 처리한다.
+#### Scenario: Place is found
+- **WHEN** 검색이 그 이름의 장소를 찾는다
+- **THEN** 검색 결과의 좌표·주소·분류를 붙여 확인된 장소로 두고 기본 선택하며, 담을 때 좌표를 함께 저장해 지도에 표시한다
+#### Scenario: Place is not found
+- **WHEN** 검색이 그 이름을 찾지 못하거나 검색이 실패한다
+- **THEN** 좌표를 만들지 않고 '직접 확인 필요'로 표시하며 선택할 수 없게 하고 담기에서 제외한다. 이름은 목록에 남겨 사용자가 직접 확인할 수 있게 한다
+#### Scenario: Nothing is verified
+- **WHEN** 확인된 장소가 하나도 없다
+- **THEN** 조건을 바꿔 다시 만들도록 안내하고 담기를 막는다
+
+### Requirement: Waiting and failure during generation
+시스템은 생성하는 동안 진행 상태를 SHALL 표시하고 중단할 수 있게 한다. 실패하면 입력한 조건을 보존하고 고정 샘플로 대체하지 않는다.
+#### Scenario: First call loads the model
+- **WHEN** 모델을 처음 불러 응답이 오래 걸린다
+- **THEN** 기다리는 중임과 예상 소요를 알리고 그만두기를 제공하며, 그만두면 조건 화면으로 돌아가되 오류로 표시하지 않는다
+#### Scenario: Connection fails or times out
+- **WHEN** AI 서버에 닿지 못하거나 응답이 시간 안에 오지 않는다
+- **THEN** 연결 실패와 시간 초과를 구분해 알리고 입력 조건과 기존 여행을 그대로 두며 다시 시도할 수 있게 한다
+#### Scenario: AI endpoint is not configured
+- **WHEN** 접속 주소나 모델이 설정되지 않았다
+- **THEN** 생성 버튼을 비활성으로 두고 이유를 표시하며 수동 일정 작성은 그대로 제공한다
+
 ### Requirement: Constrained route comparison
 시스템은 하루별 차량 또는 도보 이동과 고정 장소 순서를 반영한 경로 변경안을 적용 전 비교하도록 SHALL 제공한다.
 #### Scenario: Fixed appointment
@@ -186,7 +231,10 @@
 - **THEN** 장소가 숙소를 건너뛰지 않고 숙소와 자리를 맞바꾼다
 #### Scenario: Consecutive night
 - **WHEN** 같은 숙소에 연박하는 날의 일정을 연다
-- **THEN** 이미 그 숙소에 머무르는 중이므로 해당 날짜의 일정 목록에는 숙소를 추가하지 않는다
+- **THEN** 그날 밤을 보내는 숙소를 목록 맨 끝에 표시하고 이어서 묵는 날임을 알린다. 체크아웃하는 날에는 표시하지 않는다.
+#### Scenario: Reordering on a consecutive night
+- **WHEN** 이어서 묵는 날에서 숙소의 자리를 옮기려 한다
+- **THEN** 숙소 자리는 체크인한 날에만 정하므로 그 날짜에서는 순서 이동을 제공하지 않고, 같은 날의 장소 순서를 바꿔도 체크인한 날에 잡아 둔 숙소 자리는 그대로 둔다
 #### Scenario: Sort by proximity
 - **WHEN** 사용자가 가까운 순 정렬을 실행한다
 - **THEN** 숙소를 정렬 대상에 넣지 않고 그날의 마지막 자리로 보낸다

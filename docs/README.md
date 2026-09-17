@@ -27,7 +27,7 @@
 | [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Angular 21·NgRx Signals·Zoneless 구현과 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 개발 순서·연동 범위·검증 안내 |
 | [HARNESS.md](HARNESS.md) | MCP·지도·Supabase 인증 설정과 개발 도구 안내 |
-| [LOCAL-LLM.md](LOCAL-LLM.md) | RTX 3090 PC의 Ollama 설치·연결 절차, 모델 후보, 실제 검증 상태 |
+| [AI-PLANNING.md](AI-PLANNING.md) | AI 일정 만들기의 모델 선택 근거, 키 설정, 무료 한도, 실제 검증 기록 |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
 

@@ -24,12 +24,13 @@ description: Pretendard·딥 블루·중성 배경을 사용하는 모바일 우
 | 미확인·주의 | `warn-ink`, `warn-tint` |
 | 오류·충돌 | `danger-ink`, `danger-tint` |
 | 완료 | `ok-ink`, `ok-tint` |
+| 일정 분류 | 장소 `place-ink`·`place-tint`, 식사 `meal-ink`·`meal-tint`, 카페 `cafe-ink`·`cafe-tint`, 지역 `region-ink`·`region-tint` |
 | 간격 | 기본 단위 4px. 화면 여백 16px, 넓은 화면 24px |
 | 모서리 | panel 16px, control-lg 12px, control 10px, cell 8px |
 | 서체 | `font-body`, `text-12`~`text-34`. 기본 본문 15px, 필드 라벨·안내 13px, 주요 화면 제목 22px |
 | 반응형 | sm 420px, md 720px, lg 960px. 일반 콘텐츠 최대 960px, 인증 폼 최대 420px |
 
-색만으로 상태를 구분하지 않고 텍스트·아이콘을 함께 사용한다. 숙소색·주의색·완료색을 일반 강조색으로 돌려 쓰지 않는다. 소셜 로그인은 해당 제공자의 브랜드 토큰을 사용한다.
+색만으로 상태를 구분하지 않고 텍스트·아이콘을 함께 사용한다. 숙소색·주의색·완료색을 일반 강조색으로 돌려 쓰지 않는다. 같은 이유로 일정 분류에도 완료색·숙소색을 빌려 쓰지 않고 분류 전용 색을 쓴다. 소셜 로그인은 해당 제공자의 브랜드 토큰을 사용한다.
 
 그라데이션은 선택 날짜의 `--selected-fill`과 AI 만들기 진입의 `--ai-fill`에 한정한다. 일반 저장·추가 버튼은 단색이다. 광범위한 헤더·카드·브랜드 배경에 그라데이션을 확대하지 않는다.
 
@@ -59,7 +60,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 | 버튼 | `button[appButton]`, `a[appButton]` | default/primary/ghost/danger/icon. disabled/loading이면 실행과 라우팅을 차단. 네이티브 폼·링크 의미 유지 |
 | 입력 | `input[appInput]`, `select[appInput]`, `textarea[appInput]` | 네이티브 Forms·label 유지. 입력·선택 높이 44px, 모서리 10px. textarea는 여러 줄 높이 |
 | 필드 | `app-field` | label/inputId/hint. 입력 id를 inputId와 맞추고 힌트가 있으면 aria-describedby를 `<inputId>-hint`에 연결 |
-| 배지 | `span[appBadge]` | accent/stay/warn/danger/ok/neutral. 상태 텍스트 필수 |
+| 배지 | `span[appBadge]` | accent/place/region/stay/warn/danger/ok/meal/cafe/neutral. 상태 텍스트 필수. meal·cafe는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
 | 안내 | `div[appNotice]` | warn/danger/ok. 동적 오류 등 필요한 경우에만 소비자가 live region 지정 |
 | 로딩 | `app-spinner` | 장식용. 독립 로딩은 부모 role=status와 접근성 이름, 버튼은 aria-busy 제공 |
 | 오류 토스트 | `app-error-toast` | message/dismissed. 하단 중앙·안전 영역·role=alert·닫기 버튼. 자동 소멸하지 않음 |

@@ -76,6 +76,8 @@ Supabase DB 선택과 초기 사용 대상(본인과 친구들)은 기획안에 
 프로젝트 ref: `wslqgfetdwcmqeztixvs`. 사용자가 프로젝트 생성·공개 키 제공·Google 제공자 설정을 진행했다. 이전 ‘프로젝트 없음’ 기록은 당시 상태다. Google Client Secret은 Supabase 제공자 설정에만 입력한다.
 런타임 설정: app/public/supabase-config.example.json을 참고한 supabase-config.json(Git 제외). 지도 키 파일은 유지한다. Supabase URL Configuration의 Site URL은 http://localhost:4200, Redirect URL은 http://localhost:4200/auth/callback. Google 리디렉션 URI는 https://wslqgfetdwcmqeztixvs.supabase.co/auth/v1/callback 이다.
 실제 별도 브라우저에서 4200 /login → Supabase → accounts.google.com의 ‘로그인 - Google 계정’ 화면 도착을 확인했다. 사용자의 실제 Google 계정 인증 완료·DB 저장은 이 검증에 포함하지 않는다.
+Edge Function은 두 개다. AI 일정 만들기(`ai-plan`)는 2026-09-17 배포했고 모델 키를 `GEMINI_API_KEY` 비밀값으로 갖는다. 설정 절차와 파일 구성은 [AI-PLANNING.md](AI-PLANNING.md)를 따른다. 비밀값은 `npx supabase secrets set`으로 등록하며 앱 설정 파일에 넣지 않는다.
+
 회원탈퇴 함수는 supabase/functions/delete-account/에 준비한다. 현재 CLI projects list는 Access token not provided를 반환하므로 관리 인증·배포 전이다. 프로젝트 터미널에서 `npx supabase login`으로 인증 후 `npx supabase functions deploy delete-account --project-ref wslqgfetdwcmqeztixvs`로 배포한다. 서버가 주입하는 SUPABASE_SERVICE_ROLE_KEY는 앱에 복사하지 않는다. 배포 확인 후 로컬 공개 설정의 accountDeletionEnabled를 true로 변경하고 별도 테스트 계정의 탈퇴를 검증한다. 기존 여행 테이블·사진 Storage 연결 전에 삭제 정책을 확장해야 한다.
 참고: [Google Auth](https://supabase.com/docs/guides/auth/social-login/auth-google), [계정 삭제](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser).
 
