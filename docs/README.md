@@ -25,9 +25,11 @@
 | 원본 | 담당 내용 |
 | --- | --- |
 | [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Angular 21·NgRx Signals·Zoneless 구현과 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
+| [DATABASE.md](architecture/DATABASE.md) | 여행 표 구조·관계·접근 제어와 설계 결정. 원본 마이그레이션은 `supabase/migrations/` |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 개발 순서·연동 범위·검증 안내 |
 | [HARNESS.md](HARNESS.md) | MCP·지도·Supabase 인증 설정과 개발 도구 안내 |
 | [AI-PLANNING.md](AI-PLANNING.md) | AI 일정 만들기의 모델 선택 근거, 키 설정, 무료 한도, 실제 검증 기록 |
+| [챗봇 설계](superpowers/specs/2026-09-17-travel-chat-design.md) | 대화형 여행 탐색 챗봇의 설계 결정과 근거. 요구사항은 기획안 35절과 OpenSpec에 있다 |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
 

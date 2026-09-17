@@ -563,3 +563,77 @@
 #### Scenario: Compare title and region hints
 - **WHEN** 여행 만들기 화면의 여행 이름·기간·지역 입력을 본다
 - **THEN** 각 설명은 입력 박스 아래에서 같은 간격과 글자색으로 시작한다.
+
+### Requirement: Conversational trip discovery
+시스템은 목적지를 정하지 못한 사용자를 위해 대화형 탐색을 선택형 단계와 별개 경로로 SHALL 제공한다. 대화에서 얻은 결과도 일정 저장은 확인 카드를 거친다.
+#### Scenario: Entering from the trip list
+- **WHEN** 여행 목록에서 AI 일정 만들기를 누른다
+- **THEN** 조건 고르기와 대화로 찾기 중에서 고르는 화면을 먼저 보여준다. 여행 목록에 별도의 떠 있는 챗봇 버튼을 두지 않는다.
+#### Scenario: Entering from trip detail
+- **WHEN** 개별 여행 상세에서 오른쪽 아래 떠 있는 버튼을 누른다
+- **THEN** 하단 시트가 화면 절반쯤 올라오고 뒤로 그 여행의 일정이 계속 보인다. 대화 대상은 그 여행으로 고정되며 어느 여행인지 다시 묻지 않는다.
+#### Scenario: Floating button does not hide content
+- **WHEN** 360px 화면에서 일정 목록을 끝까지 내린다
+- **THEN** 떠 있는 버튼이 마지막 항목을 가리지 않고, 오류 알림이 뜰 때 버튼과 겹치지 않는다.
+#### Scenario: Starting with suggested prompts
+- **WHEN** 대화를 처음 연다
+- **THEN** 빈 화면 대신 추천 질문 칩을 4~6개 보여준다. 여행 상세에서는 그 여행의 상태를 반영한 칩을 제시한다.
+
+### Requirement: Chat scope restriction
+시스템은 국내 여행과 무관한 요청을 SHALL 걸러내고 대화 상태를 바꾸지 않는다. 범위 판정은 지시문만이 아니라 서버 검사로 함께 수행한다.
+#### Scenario: Asking something unrelated to travel
+- **WHEN** 코드 작성이나 주가처럼 여행과 무관한 것을 묻는다
+- **THEN** 정해진 안내를 돌려주고 추천 질문 칩을 다시 보여준다. 일정과 대화 기록은 바뀌지 않는다.
+#### Scenario: Asking about services the app does not cover
+- **WHEN** 항공권 가격이나 렌터카 예약을 묻는다
+- **THEN** 다루지 않는 영역임을 알린 뒤 일정 만들기로 이어지는 제안을 함께 보여준다. 거절만 하고 대화를 끊지 않는다.
+#### Scenario: Asking for a subjective judgement
+- **WHEN** 어디가 재미있는지, 맛집이 어디인지 묻는다
+- **THEN** 맛과 재미를 단정하지 않고 어떤 장소가 있는지 설명하는 추천으로 답한다.
+
+### Requirement: Unverified information disclosure
+시스템은 영업시간·휴무·요금·예약 여부를 모델이 답할 때 확인된 사실과 SHALL 구분해 표시하고 확인할 수 있는 링크를 함께 제공한다. 이 값들은 일정에 저장하지 않는다.
+#### Scenario: Asking about opening hours
+- **WHEN** 특정 장소가 몇 시에 여는지 묻는다
+- **THEN** 답변 위에 AI가 생성해 부정확할 수 있다는 표시를 두고, 아래에 네이버 지도와 카카오맵 링크를 함께 제공한다.
+#### Scenario: Business information never reaches storage
+- **WHEN** 대화에서 안내받은 영업시간이 있는 장소를 일정에 담는다
+- **THEN** 저장되는 값은 장소 검색으로 확인한 좌표·주소·분류뿐이며 모델이 말한 영업시간은 일정 항목에 들어가지 않는다.
+
+### Requirement: Chat draft confirmation
+시스템은 대화가 만든 변경을 사용자 확인 없이 SHALL 반영하지 않는다. 확인은 말풍선 안의 카드에서 받으며 말로 안내하지 않는다.
+#### Scenario: Reviewing a reorder proposal
+- **WHEN** 대화로 일정 순서 정리를 요청한다
+- **THEN** 바뀌기 전과 후를 나란히 보여주는 카드가 버튼과 함께 말풍선 안에 나타난다. 앱 어딘가를 누르라는 문장으로 대신하지 않는다.
+#### Scenario: Undoing an applied change
+- **WHEN** 카드에서 적용한 뒤 되돌리기를 누른다
+- **THEN** 변경 직전 상태로 돌아가고 기존 숙소·고정 예약을 보존한다.
+#### Scenario: Reading the result in plain words
+- **WHEN** 변경이 적용된 결과 메시지를 본다
+- **THEN** 내부 처리 표현이 아니라 무엇이 어떻게 바뀌었는지 사용자 언어로 적는다.
+
+### Requirement: Chat draft verification
+시스템은 대화가 제안한 장소를 장소 검색으로 SHALL 대조하고 확인된 것만 담을 수 있게 한다. 모델이 등록 함수를 직접 호출하게 하지 않는다.
+#### Scenario: Proposing a place that does not exist
+- **WHEN** 모델이 실제로 없는 장소 이름을 낸다
+- **THEN** 검색에서 찾지 못한 이름은 직접 확인 필요로 남기되 선택할 수 없게 하고 담기에서 제외한다.
+#### Scenario: Reordering by distance
+- **WHEN** 거리순 정렬을 요청한다
+- **THEN** 이미 저장된 좌표로 앱이 직접 계산하며 모델의 추측한 거리를 쓰지 않는다.
+
+### Requirement: Chat session call limit
+시스템은 한 대화 세션의 모델 호출을 20회로 SHALL 제한한다.
+#### Scenario: Reaching the limit
+- **WHEN** 한 대화에서 호출이 20회에 이른다
+- **THEN** 지금까지의 초안을 담고 새 대화를 시작하도록 안내하며, 이미 만들어진 초안은 계속 담을 수 있다.
+#### Scenario: Conversation stays on the device
+- **WHEN** 대화를 나눈 뒤 앱을 다시 연다
+- **THEN** 대화 기록은 이 기기에만 저장되어 있고 서버로 보내지 않는다.
+
+#### Scenario: Keep the picker open while its panel scrolls
+- **WHEN** 작은 높이에서 기간 선택기 패널 내부를 스크롤한다
+- **THEN** 패널은 닫히지 않고 달력 콘텐츠가 계속 스크롤되며, 패널 밖 스크롤에서는 선택기가 닫힌다.
+
+#### Scenario: Use shared tabs with keyboard arrows
+- **WHEN** 공통 탭에 포커스한 상태에서 ArrowRight 또는 ArrowLeft를 누른다
+- **THEN** 인접 탭으로 포커스와 선택 상태가 이동하고 현재 탭만 기본 탭 순서에 포함된다.
