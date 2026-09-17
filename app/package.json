@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve --port 4200",
     "build": "ng build",
-    "build:deploy": "node scripts/write-runtime-config.mjs && ng build",
+    "build:deploy": "node scripts/write-runtime-config.mjs && node scripts/write-version.mjs && ng build",
     "build:test": "ng build --configuration test",
     "test": "vitest run",
     "test:watch": "vitest",

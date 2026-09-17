@@ -1,4 +1,9 @@
-/** Shared Tailwind recipe; String.raw preserves escaped selector underscores. */
+/**
+ * Shared Tailwind recipe; String.raw preserves escaped selector underscores.
+ *
+ * 색을 채우는 버튼(primary·danger)은 테두리를 배경과 같은 색으로 둔다. 기본
+ * 회색 테두리를 그대로 두면 파란 배경 가장자리에 회색 선이 남아 지저분하다.
+ */
 export const BUTTON_CLASSES = String.raw`
   btn relative inline-flex items-center justify-center gap-1.5 min-h-11 rounded-control border
   border-border bg-panel text-ink font-semibold text-14 no-underline py-0 px-4
@@ -10,8 +15,13 @@ export const BUTTON_CLASSES = String.raw`
   [&.btn--primary:active]:bg-accent-deep-hover [-webkit-tap-highlight-color:transparent]
   disabled:opacity-[0.45] [&[aria-disabled='true']]:opacity-[0.45] [&:disabled:active]:bg-panel
   [&[aria-disabled='true']:active]:bg-panel [&.btn--primary]:bg-accent-deep [&.btn--primary]:text-white
-  [@media(hover:_hover)]:[&.btn--primary:hover]:bg-accent-deep-hover [&.btn--danger]:bg-danger-tint
-  [&.btn--danger]:text-danger-ink
+  [&.btn--primary]:border-accent-deep
+  [@media(hover:_hover)]:[&.btn--primary:hover]:bg-accent-deep-hover
+  [@media(hover:_hover)]:[&.btn--primary:hover]:border-accent-deep-hover
+  [&.btn--primary:active]:border-accent-deep-hover [&.btn--danger]:bg-danger-tint
+  [&.btn--danger]:text-danger-ink [&.btn--danger]:border-danger-tint
+  [@media(hover:_hover)]:[&.btn--danger:hover]:border-danger-fill
+  [&.btn--danger:active]:border-danger-fill
   [@media(hover:_hover)]:[&.btn--danger:hover]:bg-danger-fill [&.btn--danger:active]:bg-danger-fill
   [&.btn--ghost]:bg-transparent [&.btn--ghost]:min-h-9 [&.btn--ghost]:text-ink-2
   [&.btn--ghost]:font-medium [&.btn--ghost]:py-0 [&.btn--ghost]:px-3

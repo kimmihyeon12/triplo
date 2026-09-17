@@ -40,6 +40,19 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 
 `master`는 배포 브랜치다. 여기에 푸시하면 호스팅이 자동으로 빌드·배포한다. 개발은 `develop`에서 진행하고, 배포할 준비가 된 뒤에만 `master`로 병합한다. 기능 작업은 `develop`에서 브랜치를 떠서 다시 `develop`으로 합친다.
 
+### 배포 버전
+
+배포할 때마다 `master`에 태그를 붙인다. 태그가 없으면 지금 올라가 있는 것이 어느 시점의 코드인지 알 수 없어, 고친 내용이 실제로 반영됐는지 매번 짐작하게 된다.
+
+형식은 `v<major>.<minor>.<patch>`다. 내부 알파 동안은 `major`를 0으로 두고, 화면이나 사용 흐름이 눈에 띄게 달라지면 `minor`를, 고치기만 했으면 `patch`를 올린다.
+
+```bash
+git tag -a v0.1.0 -m "무엇이 바뀌었는지 한 줄"
+git push origin v0.1.0
+```
+
+앱은 이 태그를 내 정보 화면 아래에 표시한다. 값은 배포 빌드가 `app/scripts/write-version.mjs`로 만들며, `app/src/app/core/version.ts`의 값은 스크립트를 돌리지 않았을 때 쓰는 개발용 기본값이다.
+
 호스팅은 Cloudflare Pages 무료 플랜이고 배포 주소는 `https://triplo.pages.dev`다(2026-09-16). Netlify를 먼저 붙였다가 무료 플랜에서 지울 수 없는 ‘Powered by Netlify’ 배지 때문에 옮겼다. Cloudflare는 배지가 없고 전송량 제한도 없으며 `_redirects` 형식을 그대로 쓴다.
 
 2026-09-16 배포 검증: 사이트 200 응답, 환경 변수로 `app-config.json`·`supabase-config.json` 생성 확인, 구글·카카오 로그인 버튼 활성, 카카오 지도 SDK 로드 성공, 매니페스트(`display: standalone`)와 서비스 워커 등록 확인, `/trips`·`/onboarding` 등 하위 경로 새로고침 정상. 실제 로그인 계정으로 세션을 만드는 검증과 서버 저장은 아직 하지 않았다.
