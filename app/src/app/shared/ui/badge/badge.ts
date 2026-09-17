@@ -14,12 +14,24 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     '[class.cell--warn]': "tone() === 'warn'",
     '[class.cell--danger]': "tone() === 'danger'",
     '[class.cell--ok]': "tone() === 'ok'",
+    '[class.cell--meal]': "tone() === 'meal'",
+    '[class.cell--cafe]': "tone() === 'cafe'",
     '[class.cell--ghost]': "tone() === 'neutral'",
   },
 })
 export class UiBadge {
   readonly classes = BADGE_CLASSES;
-  readonly tone = input<
-    'accent' | 'place' | 'region' | 'stay' | 'warn' | 'danger' | 'ok' | 'neutral' | null
-  >(null);
+  readonly tone = input<BadgeTone | null>(null);
 }
+
+export type BadgeTone =
+  | 'accent'
+  | 'place'
+  | 'region'
+  | 'stay'
+  | 'warn'
+  | 'danger'
+  | 'ok'
+  | 'meal'
+  | 'cafe'
+  | 'neutral';

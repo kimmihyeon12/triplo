@@ -40,6 +40,16 @@
   --color-danger-fill: #fbcfcb;
   --color-ok-ink: #1e7a4e;
   --color-ok-tint: #e3f5ea;
+  /*
+    일정 분류 전용 색. ok(완료)나 stay(숙소)를 빌려 쓰면 배지의 뜻이 겹쳐
+    식사 배지가 완료 표시로 읽힌다. 그래서 분류에만 쓰는 색을 따로 둔다.
+    카페에는 원두를 떠올리는 갈색이 어울리지만 식사의 주황과 나란히 두면
+    거의 같은 색으로 보인다. 그래서 색상환에서 확실히 떨어진 청록으로 옮겼다.
+  */
+  --color-meal-ink: #b4530c;
+  --color-meal-tint: #fdeee1;
+  --color-cafe-ink: #0e7490;
+  --color-cafe-tint: #dcf0f7;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
   --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
   --ai-fill-hover: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);

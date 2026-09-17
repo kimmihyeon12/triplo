@@ -204,6 +204,11 @@
       ><span appBadge tone="warn">확인 필요</span><span appBadge tone="danger">오류</span
       ><span appBadge tone="ok">완료</span><span appBadge tone="neutral">지난 일정</span>
     </div>
+    <!-- 일정 분류 전용 색. 완료·숙소와 뜻이 겹치지 않도록 따로 두었다. -->
+    <div class="mb-5 flex flex-wrap gap-2">
+      <span appBadge tone="place">장소</span><span appBadge tone="meal">식사</span
+      ><span appBadge tone="cafe">카페</span><span appBadge tone="region">지역</span>
+    </div>
     <div class="flex flex-col gap-3">
       <div appNotice tone="warn">
         <app-icon name="alert" />

@@ -6,7 +6,9 @@ export const BADGE_CLASSES = String.raw`
   [&.cell--region]:bg-region-tint [&.cell--region]:text-region-ink
   [&.cell--stay]:bg-stay-tint [&.cell--stay]:text-stay-ink [&.cell--warn]:bg-warn-tint
   [&.cell--warn]:text-warn-ink [&.cell--danger]:bg-danger-tint [&.cell--danger]:text-danger-ink
-  [&.cell--ok]:bg-ok-tint [&.cell--ok]:text-ok-ink [&.cell--ghost]:bg-panel [&.cell--ghost]:text-ink-3
+  [&.cell--ok]:bg-ok-tint [&.cell--ok]:text-ok-ink [&.cell--meal]:bg-meal-tint
+  [&.cell--meal]:text-meal-ink [&.cell--cafe]:bg-cafe-tint [&.cell--cafe]:text-cafe-ink
+  [&.cell--ghost]:bg-panel [&.cell--ghost]:text-ink-3
   [&.cell--ghost]:border-border [&.cell--solid-accent]:bg-accent-deep [&.cell--solid-accent]:text-white
   [&.cell--solid-accent]:font-bold
 `;
