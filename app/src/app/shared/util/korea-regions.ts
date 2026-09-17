@@ -14,6 +14,16 @@ export interface KoreaRegion {
   readonly province: string;
   /** 후보 목록에 붙이는 짧은 표기. 예: 강원 */
   readonly short: string;
+  /**
+   * 집계에 쓰는 고정 키. 예: 'gangwon-gangneung'
+   *
+   * 표시 이름 대신 코드를 쓰는 이유는 두 가지다. 지명이 바뀌어도 과거 기록이
+   * 끊기지 않고, '광주(경기)'처럼 화면에서 구분하려고 붙인 괄호가 키에
+   * 섞이지 않는다.
+   */
+  readonly code: string;
+  /** 시·도 코드. code의 앞부분과 같다. 예: 'gangwon' */
+  readonly provinceCode: string;
 }
 
 /**
@@ -87,11 +97,114 @@ const BY_PROVINCE: Record<string, readonly string[]> = {
   제주특별자치도: ['제주', '서귀포'],
 };
 
+/** 시·도 코드. 정식 명칭을 키로 쓴다. */
+const PROVINCE_CODE: Record<string, string> = {
+  서울특별시: 'seoul',
+  부산광역시: 'busan',
+  대구광역시: 'daegu',
+  인천광역시: 'incheon',
+  광주광역시: 'gwangju',
+  대전광역시: 'daejeon',
+  울산광역시: 'ulsan',
+  세종특별자치시: 'sejong',
+  경기도: 'gyeonggi',
+  강원특별자치도: 'gangwon',
+  충청북도: 'chungbuk',
+  충청남도: 'chungnam',
+  전북특별자치도: 'jeonbuk',
+  전라남도: 'jeonnam',
+  경상북도: 'gyeongbuk',
+  경상남도: 'gyeongnam',
+  제주특별자치도: 'jeju',
+};
+
+/**
+ * 시·군 이름의 로마자 표기. 표시 이름에서 구분용 괄호를 뗀 값을 키로 쓴다.
+ * 같은 지명이 여러 도에 있어도 코드는 시·도 코드와 합쳐져 겹치지 않는다.
+ */
+const CITY_ROMAN: Record<string, string> = {
+  서울: 'seoul', 부산: 'busan', 대구: 'daegu', 인천: 'incheon', 광주: 'gwangju',
+  대전: 'daejeon', 울산: 'ulsan', 세종: 'sejong', 강화: 'ganghwa', 옹진: 'ongjin',
+  수원: 'suwon', 성남: 'seongnam', 고양: 'goyang', 용인: 'yongin', 부천: 'bucheon',
+  안산: 'ansan', 안양: 'anyang', 남양주: 'namyangju', 화성: 'hwaseong', 평택: 'pyeongtaek',
+  의정부: 'uijeongbu', 시흥: 'siheung', 파주: 'paju', 광명: 'gwangmyeong', 김포: 'gimpo',
+  군포: 'gunpo', 이천: 'icheon', 양주: 'yangju', 오산: 'osan', 구리: 'guri',
+  안성: 'anseong', 포천: 'pocheon', 의왕: 'uiwang', 하남: 'hanam', 여주: 'yeoju',
+  동두천: 'dongducheon', 과천: 'gwacheon', 양평: 'yangpyeong', 가평: 'gapyeong', 연천: 'yeoncheon',
+  춘천: 'chuncheon', 원주: 'wonju', 강릉: 'gangneung', 동해: 'donghae', 태백: 'taebaek',
+  속초: 'sokcho', 삼척: 'samcheok', 홍천: 'hongcheon', 횡성: 'hoengseong', 영월: 'yeongwol',
+  평창: 'pyeongchang', 정선: 'jeongseon', 철원: 'cheorwon', 화천: 'hwacheon', 양구: 'yanggu',
+  인제: 'inje', 고성: 'goseong', 양양: 'yangyang',
+  청주: 'cheongju', 충주: 'chungju', 제천: 'jecheon', 보은: 'boeun', 옥천: 'okcheon',
+  영동: 'yeongdong', 증평: 'jeungpyeong', 진천: 'jincheon', 괴산: 'goesan', 음성: 'eumseong',
+  단양: 'danyang',
+  천안: 'cheonan', 공주: 'gongju', 보령: 'boryeong', 아산: 'asan', 서산: 'seosan',
+  논산: 'nonsan', 계룡: 'gyeryong', 당진: 'dangjin', 금산: 'geumsan', 부여: 'buyeo',
+  서천: 'seocheon', 청양: 'cheongyang', 홍성: 'hongseong', 예산: 'yesan', 태안: 'taean',
+  전주: 'jeonju', 군산: 'gunsan', 익산: 'iksan', 정읍: 'jeongeup', 남원: 'namwon',
+  김제: 'gimje', 완주: 'wanju', 진안: 'jinan', 무주: 'muju', 장수: 'jangsu',
+  임실: 'imsil', 순창: 'sunchang', 고창: 'gochang', 부안: 'buan',
+  목포: 'mokpo', 여수: 'yeosu', 순천: 'suncheon', 나주: 'naju', 광양: 'gwangyang',
+  담양: 'damyang', 곡성: 'gokseong', 구례: 'gurye', 고흥: 'goheung', 보성: 'boseong',
+  화순: 'hwasun', 장흥: 'jangheung', 강진: 'gangjin', 해남: 'haenam', 영암: 'yeongam',
+  무안: 'muan', 함평: 'hampyeong', 영광: 'yeonggwang', 장성: 'jangseong', 완도: 'wando',
+  진도: 'jindo', 신안: 'sinan',
+  포항: 'pohang', 경주: 'gyeongju', 김천: 'gimcheon', 안동: 'andong', 구미: 'gumi',
+  영주: 'yeongju', 영천: 'yeongcheon', 상주: 'sangju', 문경: 'mungyeong', 경산: 'gyeongsan',
+  의성: 'uiseong', 청송: 'cheongsong', 영양: 'yeongyang', 영덕: 'yeongdeok', 청도: 'cheongdo',
+  고령: 'goryeong', 성주: 'seongju', 칠곡: 'chilgok', 예천: 'yecheon', 봉화: 'bonghwa',
+  울진: 'uljin', 울릉: 'ulleung',
+  창원: 'changwon', 진주: 'jinju', 통영: 'tongyeong', 사천: 'sacheon', 김해: 'gimhae',
+  밀양: 'miryang', 거제: 'geoje', 양산: 'yangsan', 의령: 'uiryeong', 함안: 'haman',
+  창녕: 'changnyeong', 남해: 'namhae', 하동: 'hadong', 산청: 'sancheong', 함양: 'hamyang',
+  거창: 'geochang', 합천: 'hapcheon',
+  제주: 'jeju', 서귀포: 'seogwipo',
+};
+
+/** 표시 이름에서 구분용 괄호를 뗀다. '광주(경기)' → '광주' */
+function bareName(name: string): string {
+  return name.replace(/\(.*\)$/, '');
+}
+
 /** 검색·선택에 쓰는 평평한 목록. */
 export const KOREA_REGIONS: readonly KoreaRegion[] = Object.entries(BY_PROVINCE).flatMap(
   ([province, names]) =>
-    names.map((name) => ({ name, province, short: SHORT_PROVINCE[province] ?? province })),
+    names.map((name) => {
+      const provinceCode = PROVINCE_CODE[province] ?? province;
+      const city = CITY_ROMAN[bareName(name)] ?? bareName(name);
+      return {
+        name,
+        province,
+        short: SHORT_PROVINCE[province] ?? province,
+        code: `${provinceCode}-${city}`,
+        provinceCode,
+      };
+    }),
 );
+
+const BY_CODE = new Map(KOREA_REGIONS.map((r) => [r.code, r]));
+const BY_NAME = new Map(KOREA_REGIONS.map((r) => [r.name, r]));
+
+/** 코드로 지역을 찾는다. 없으면 null. */
+export function findRegionByCode(code: string): KoreaRegion | null {
+  return BY_CODE.get(code) ?? null;
+}
+
+/**
+ * 표시 이름으로 지역을 찾는다. 없으면 null.
+ *
+ * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 지역 이름은 이 고정 목록에서
+ * 고른 값이므로 대부분 찾아진다.
+ */
+export function findRegionByName(name: string): KoreaRegion | null {
+  return BY_NAME.get(name.trim()) ?? null;
+}
+
+/** 지역 코드에서 시·도 코드를 뗀다. 'gangwon-gangneung' → 'gangwon' */
+export function provinceCodeOf(code: string): string {
+  const cut = code.indexOf('-');
+  return cut === -1 ? code : code.slice(0, cut);
+}
 
 /**
  * 입력한 글자로 지역을 찾는다. 세 단계로 나누어 담는다.

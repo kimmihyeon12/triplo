@@ -16,6 +16,14 @@ export interface TripRegion {
   id: string;
   name: string;
   order: number;
+  /**
+   * 표준 지역 코드(`shared/util/korea-regions`). 통계 집계의 키다.
+   *
+   * 예전 여행에는 없으므로 선택 항목이다. 없으면 읽는 쪽에서 이름으로
+   * 찾아 채운다. 전면 마이그레이션은 실패하면 기존 데이터를 망가뜨리므로
+   * 하지 않는다.
+   */
+  regionCode?: string;
 }
 
 export interface TripStop {

@@ -1,61 +1,56 @@
 import { describe, expect, it } from 'vitest';
-import { KOREA_REGIONS, searchRegions } from './korea-regions';
+import {
+  KOREA_REGIONS,
+  findRegionByCode,
+  findRegionByName,
+  provinceCodeOf,
+} from './korea-regions';
 
-describe('korea-regions', () => {
-  it('빈 검색어에는 아무것도 돌려주지 않는다', () => {
-    expect(searchRegions('')).toEqual([]);
-    expect(searchRegions('   ')).toEqual([]);
+describe('지역 코드', () => {
+  it('모든 지역이 코드를 가진다', () => {
+    for (const region of KOREA_REGIONS) {
+      expect(region.code, `${region.name}에 코드가 없다`).toBeTruthy();
+    }
   });
 
-  it('지명이 그 글자로 시작하는 곳만 앞에 놓는다', () => {
-    // 도 이름이 '강원'이라는 이유로 딸려 온 춘천·원주는 앞을 차지하지 않고,
-    // 구분용 괄호에 '강원'이 든 '고성(강원)'도 마찬가지다.
-    expect(searchRegions('강', 3).map((r) => r.name)).toEqual(['강화', '강릉', '강진']);
+  it('코드가 서로 겹치지 않는다', () => {
+    const codes = KOREA_REGIONS.map((r) => r.code);
+    expect(new Set(codes).size).toBe(codes.length);
   });
 
-  it('지명 안에 든 글자도 찾는다', () => {
-    expect(searchRegions('천', 30).map((r) => r.name)).toEqual(
-      expect.arrayContaining(['천안', '춘천', '이천']),
-    );
+  it('표시용 괄호를 코드에 넣지 않는다', () => {
+    // '광주(경기)'는 화면에서 구분하려고 붙인 표기다. 집계 키에 들어가면 안 된다.
+    const gwangju = findRegionByName('광주(경기)');
+    expect(gwangju?.code).toBe('gyeonggi-gwangju');
+    expect(KOREA_REGIONS.every((r) => !r.code.includes('('))).toBe(true);
   });
 
-  it('도 이름으로 그 안의 시·군을 찾는다', () => {
-    const found = searchRegions('제주', 10);
-    expect(found.map((r) => r.name)).toEqual(expect.arrayContaining(['제주', '서귀포']));
+  it('같은 지명이라도 시·도가 다르면 코드가 다르다', () => {
+    expect(findRegionByName('광주')?.code).toBe('gwangju-gwangju');
+    expect(findRegionByName('광주(경기)')?.code).toBe('gyeonggi-gwangju');
   });
 
-  it('두 글자 약칭으로도 그 도의 시·군을 찾는다', () => {
-    expect(searchRegions('충북', 30).map((r) => r.name)).toEqual(
-      expect.arrayContaining(['청주', '제천']),
-    );
+  it('코드에서 시·도 코드를 얻는다', () => {
+    expect(provinceCodeOf('gangwon-gangneung')).toBe('gangwon');
+    expect(provinceCodeOf('seoul-seoul')).toBe('seoul');
   });
 
-  it('긴 도 이름에는 짧은 표기를 함께 담는다', () => {
-    const gangneung = KOREA_REGIONS.find((r) => r.name === '강릉');
-    expect(gangneung?.province).toBe('강원특별자치도');
-    expect(gangneung?.short).toBe('강원');
+  it('코드로 지역을 찾는다', () => {
+    expect(findRegionByCode('gangwon-gangneung')?.name).toBe('강릉');
   });
 
-  it('같은 이름이 여러 도에 있으면 상위 지역을 붙여 구분한다', () => {
-    const found = searchRegions('고성', 10);
-    expect(found.map((r) => r.name)).toEqual(
-      expect.arrayContaining(['고성(강원)', '고성(경남)']),
-    );
-    expect(searchRegions('광주', 10).map((r) => r.name)).toEqual(
-      expect.arrayContaining(['광주', '광주(경기)']),
-    );
+  it('없는 코드로 찾으면 비운다', () => {
+    expect(findRegionByCode('nowhere-here')).toBeNull();
   });
 
-  it('찾는 지역이 없으면 빈 목록을 돌려준다', () => {
-    expect(searchRegions('도쿄')).toEqual([]);
+  it('이름으로 지역을 찾는다', () => {
+    const region = findRegionByName('강릉');
+    expect(region?.code).toBe('gangwon-gangneung');
+    expect(region?.provinceCode).toBe('gangwon');
   });
 
-  it('limit보다 많이 돌려주지 않는다', () => {
-    expect(searchRegions('시', 3).length).toBeLessThanOrEqual(3);
-  });
-
-  it('표시 이름이 겹치지 않는다', () => {
-    const names = KOREA_REGIONS.map((r) => r.name);
-    expect(new Set(names).size).toBe(names.length);
+  it('없는 이름으로 찾으면 비운다', () => {
+    expect(findRegionByName('없는곳')).toBeNull();
+    expect(findRegionByName('')).toBeNull();
   });
 });
