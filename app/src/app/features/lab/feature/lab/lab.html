@@ -189,6 +189,25 @@
         <app-field label="메모" inputId="lab-memo" class="mt-5">
           <textarea appInput id="lab-memo" rows="3" placeholder="여행 메모를 남겨보세요"></textarea>
         </app-field>
+
+        <!--
+          스위치는 누르는 즉시 반영되는 설정에 쓴다. 폼을 보내야 반영되는
+          자리에는 체크박스를 쓴다.
+        -->
+        <div class="mt-6 flex flex-col gap-3">
+          <div class="flex items-center gap-3">
+            <app-switch
+              [checked]="labSwitch()"
+              label="알림 받기"
+              (changed)="labSwitch.set($event)"
+            />
+            <span class="text-14">{{ labSwitch() ? '켜짐' : '꺼짐' }}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <app-switch [checked]="true" disabled label="바꿀 수 없는 설정" />
+            <span class="text-14 text-ink-3">쓸 수 없음</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
