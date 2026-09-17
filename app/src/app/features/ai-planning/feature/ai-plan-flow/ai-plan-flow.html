@@ -118,10 +118,14 @@
           data-testid="ai-period-input"
         >
           <label class="sr-only" for="ai-start">시작일</label>
-          <input #aiStartInput appInput id="ai-start" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" [ngModel]="startDate()" (ngModelChange)="draft.set('startDate', $event)" name="aiStart" data-testid="ai-start" />
+          <!--
+            iOS는 이 칸을 text로 바꿔 자체 달력을 열기 때문에 placeholder가 보인다.
+            네이티브 날짜 입력을 쓰는 환경은 브라우저 표기를 그대로 둔다.
+          -->
+          <input #aiStartInput appInput id="ai-start" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" placeholder="시작일" [ngModel]="startDate()" (ngModelChange)="draft.set('startDate', $event)" name="aiStart" data-testid="ai-start" />
           <span class="shrink-0 text-hint" aria-hidden="true">~</span>
           <label class="sr-only" for="ai-end">종료일</label>
-          <input appInput id="ai-end" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" [ngModel]="endDate()" (ngModelChange)="draft.set('endDate', $event)" name="aiEnd" data-testid="ai-end" />
+          <input appInput id="ai-end" type="date" class="range-date min-w-0 flex-1" data-range-start="ai-start" data-range-end="ai-end" placeholder="종료일" [ngModel]="endDate()" (ngModelChange)="draft.set('endDate', $event)" name="aiEnd" data-testid="ai-end" />
           <button type="button" class="flex h-10.5 w-4.5 shrink-0 items-center justify-center text-hint" aria-label="여행 기간 달력 열기" (click)="aiStartInput.click()"><app-icon name="calendar" [size]="16" /></button>
         </div>
         <p class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
@@ -322,39 +326,101 @@
         </ul>
       </section>
 
-      <div appNotice class="notice notice--warn">
-        <app-icon name="alert" />
-        <div class="notice__body flex-1 min-w-0">
-          실제 AI 제공자가 아직 연결되지 않았습니다. 지금 만들어지는 일정은
-          <strong class="in-[.notice]:font-bold">고정된 샘플 결과</strong>이며 실제 추천이 아닙니다.
+      <!-- 설정이 없으면 만들 수 없다. 이유를 적어 눌러보게 하지 않는다. -->
+      @if (!aiReady()) {
+        <div appNotice class="notice notice--warn" data-testid="ai-unavailable">
+          <app-icon name="alert" />
+          <div class="notice__body flex-1 min-w-0">{{ unavailableReason() }}</div>
         </div>
-      </div>
+      }
+
+      <!-- 만들기에 실패했을 때. 조건은 그대로 남아 다시 시도할 수 있다. -->
+      @if (error(); as err) {
+        <div appNotice class="notice notice--danger" role="alert" data-testid="ai-error">
+          <app-icon name="alert" />
+          <div class="notice__body flex-1 min-w-0">
+            <strong class="in-[.notice]:font-bold">{{ err.message }}</strong>
+            <p class="mt-1 text-12 leading-normal">
+              입력한 조건은 그대로 남아 있어요. 다시 시도하거나 직접 일정을 만들 수 있습니다.
+            </p>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- 만드는 중: 모델을 처음 부르면 오래 걸린다. 기다림을 설명하고 멈출 길을 준다. -->
+    @case ('generating') {
+      <section
+        class="panel flex flex-col items-center gap-3 rounded-panel bg-panel p-8 text-center shadow-panel"
+        role="status"
+        data-testid="ai-generating"
+      >
+        <app-spinner />
+        <p class="text-15 font-bold">일정을 만들고 있어요</p>
+        <p class="text-13 leading-relaxed text-ink-3">
+          처음 한 번은 1~2분 걸릴 수 있어요.<br />
+          만든 장소는 실제로 있는 곳인지 확인한 뒤 보여드립니다.
+        </p>
+      </section>
     }
 
     <!-- 결과: 검증된 항목이 전체 선택된 상태로 시작. 담기를 눌러야 반영된다. -->
     @case ('result') {
-      <div appNotice class="notice notice--warn" data-testid="ai-sample-notice">
+      <!--
+        AI가 낸 것은 장소 이름과 날짜 배치뿐이다. 주소·분류는 장소 검색에서 가져오며,
+        찾지 못한 이름은 목록에 들이지 않는다. 좌표가 없으면 지도에 올릴 수 없다.
+      -->
+      <div appNotice class="notice" data-testid="ai-result-notice">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
-          <strong class="in-[.notice]:font-bold">샘플 결과</strong>입니다. 실제 AI가 만든 추천이
-          아니라 고정된 예시이며, 위치·영업정보는 확인되지 않았습니다.
+          실제 장소 검색으로 위치를 확인한 곳만 보여드립니다. 영업시간·휴무는 지도에서 확인해
+          주세요.
         </div>
       </div>
 
-      <section class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="ai-result">
-        <h2 class="sec text-16 mb-1">추천 일정</h2>
-        <p class="sec__hint text-12 text-ink-3 mb-4 leading-normal">
-          확인된 항목이 모두 선택되어 있습니다. 원치 않는 항목을 해제한 뒤 아래 버튼으로 담으세요.
-        </p>
+      <!--
+        여백은 항목마다 주고 섹션에는 두지 않는다. 둘 다 주면 좌우가 이중으로
+        들어가 좁은 화면에서 읽을 자리가 줄어든다. 여행 상세와 같은 규칙이다.
+      -->
+      <section class="panel bg-panel rounded-panel shadow-panel" data-testid="ai-result">
+        <div class="px-4 pt-4">
+          <h2 class="sec mb-1 text-16">추천 일정</h2>
+          <p class="sec__hint text-12 leading-normal text-ink-3">
+            원치 않는 항목을 해제한 뒤 아래 버튼으로 담으세요.
+          </p>
+        </div>
+
+        <!--
+          후보가 열 곳 넘게 나오므로 하나씩 누르지 않아도 되게 한다. 아래 항목들과
+          같은 격자·체크박스를 써서 '이 줄이 전체를 대표한다'는 뜻이 바로 통하게 한다.
+        -->
+        <label
+          class="mt-4 grid cursor-pointer grid-cols-[32px_minmax(0,1fr)] items-center gap-x-3 border-b border-border px-4 pb-3"
+        >
+          <input
+            class="checkbox size-5 cursor-pointer appearance-none rounded-[7px] border-2 border-border-strong bg-panel bg-center bg-no-repeat [background-size:13px_13px] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] checked:border-accent-deep checked:bg-accent-deep checked:[background-image:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3.5%208.4l3%203%206-6.4%22%2F%3E%3C%2Fsvg%3E')] hover:border-accent-deep focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] forced-colors:appearance-auto"
+            type="checkbox"
+            [checked]="allSelected()"
+            (change)="toggleAll()"
+            data-testid="ai-toggle-all"
+          />
+          <span class="text-13 font-medium text-ink-2">
+            전체 선택 <span class="text-ink-3">({{ selected().size }}/{{ planItems().length }})</span>
+          </span>
+        </label>
+
         <ul class="picks flex flex-col">
-          @for (item of sampleItems(); track item.id) {
+          @for (item of planItems(); track item.id) {
+            <!--
+              여행 상세의 장소 목록과 같은 격자·여백·위계를 쓴다. 담기 전과 담은
+              뒤가 같은 모양이라야 무엇이 일정에 들어갈지 미리 읽을 수 있다.
+              상세의 순번 배지가 놓이는 왼쪽 열을 여기서는 체크박스가 쓴다.
+            -->
+            <!-- 체크 표시만으로 충분하다. 배경까지 바꾸면 목록이 얼룩덜룩해진다. -->
             <li
-              class="pickrow [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
-              [class.pickrow--on]="selected().has(item.id)"
+              class="pickrow grid grid-cols-[32px_minmax(0,1fr)] gap-x-3 p-4 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
             >
-              <label
-                class="pickrow__label flex items-start gap-3 min-h-11 cursor-pointer py-3 px-0"
-              >
+              <label class="pickrow__label col-span-full grid cursor-pointer grid-cols-subgrid items-start">
 <!-- 라벨이 제목·배지로 이뤄져 app-checkbox로 감쌀 수 없다. 모양만 같은 규칙으로 맞춘다. -->
                 <input
                   class="checkbox mt-0.5 size-5 flex-none cursor-pointer appearance-none rounded-[7px] border-2 border-border-strong bg-panel bg-center bg-no-repeat [background-size:13px_13px] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] checked:border-accent-deep checked:bg-accent-deep checked:[background-image:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3.5%208.4l3%203%206-6.4%22%2F%3E%3C%2Fsvg%3E')] hover:border-accent-deep focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] forced-colors:appearance-auto"
@@ -363,110 +429,86 @@
                   (change)="toggle(item.id)"
                   [attr.data-testid]="'ai-pick-' + item.id"
                 />
-                <span class="pickrow__main flex flex-col gap-1 min-w-0">
-                  <span class="pickrow__title flex items-center flex-wrap gap-1.25 wrap-anywhere">
-                    <strong class="in-[.notice]:font-bold">{{ item.name }}</strong>
-                    <span appBadge class="cell cell--place">{{ item.kindLabel }}</span>
-                    @if (item.verified) {
-                      <span appBadge class="cell cell--ok"
-                        ><app-icon name="pin" [size]="12" /> 위치 확인됨</span
+                <!-- 여행 상세의 장소 카드와 같은 위계로 둔다. 담기 전후가 같아 보여야 한다. -->
+                <span class="item__main flex min-w-0 flex-col gap-1">
+                  <span class="item__title flex items-center gap-1.5 text-15">
+                    <strong class="item__name min-w-0 truncate" [title]="item.name">{{
+                      item.name
+                    }}</strong>
+                    <!-- 지도 링크는 여행 상세와 같이 이름 줄 오른쪽 끝에 둔다. -->
+                    <span class="item__maps ml-auto inline-flex flex-none gap-1">
+                      <a
+                        class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                        [href]="naverLink(item.name, item.address)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [attr.aria-label]="item.name + ' 네이버지도에서 검색'"
+                        [attr.data-testid]="'ai-naver-' + item.id"
                       >
-                    } @else {
-                      <span appBadge class="cell cell--warn">위치 미확인</span>
-                    }
+                        <img
+                          class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                          src="brand/navermap.png"
+                          width="26"
+                          height="26"
+                          alt=""
+                          aria-hidden="true"
+                        />
+                      </a>
+                      <a
+                        class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+                        [href]="kakaoLink(item.name, item.address)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [attr.aria-label]="item.name + ' 카카오맵에서 검색'"
+                        [attr.data-testid]="'ai-kakao-' + item.id"
+                      >
+                        <img
+                          class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+                          src="brand/kakaomap.png"
+                          width="26"
+                          height="26"
+                          alt=""
+                          aria-hidden="true"
+                        />
+                      </a>
+                    </span>
                   </span>
-                  <span class="pickrow__meta text-12 leading-normal text-ink-3">{{
-                    item.note
-                  }}</span>
+                  <!-- 분류와 주소는 장소 검색에서 온 값이다. AI가 쓴 설명은 쓰지 않는다. -->
+                  @if (item.address) {
+                    <span class="item__addr truncate text-12 leading-normal text-ink-3">
+                      {{ item.note }}{{ item.note && item.address ? ' · ' : '' }}{{ item.address }}
+                    </span>
+                  }
                 </span>
               </label>
 
               <!--
-                일차 변경과 지도 링크는 라벨 밖에 둔다. 안에 넣으면 누를 때마다
-                체크 상태가 함께 바뀐다.
+                일차 선택은 라벨 밖에 둔다. 안에 넣으면 누를 때마다 체크가 함께 바뀐다.
+                분류 배지도 여기에 둔다. 이름 옆에 두면 좁은 화면에서 이름이 먼저 잘린다.
               -->
-              <div class="flex flex-wrap items-center gap-2 pb-3 pl-8">
+              <div class="col-start-2 flex flex-wrap items-center gap-2 pt-2">
+                <span appBadge [tone]="kindTone(item.kind)">{{ kindLabels[item.kind] }}</span>
                 @if (canChangeDay()) {
-                  @if (useDayChips()) {
-                    <div
-                      class="flex flex-wrap gap-1"
-                      role="radiogroup"
-                      [attr.aria-label]="item.name + ' 일차'"
-                    >
-                      @for (d of dayChoices(); track d) {
-                        <button
-                          type="button"
-                          role="radio"
-                          [attr.aria-checked]="d === item.day"
-                          class="min-h-8 rounded-full border px-3 text-12 font-medium focus-visible:outline-2 focus-visible:outline-accent-deep"
-                          [class.border-accent-deep]="d === item.day"
-                          [class.bg-accent-deep]="d === item.day"
-                          [class.text-white]="d === item.day"
-                          [class.border-border]="d !== item.day"
-                          [class.bg-panel]="d !== item.day"
-                          [class.text-ink-3]="d !== item.day"
-                          (click)="changeDay(item.id, d + '')"
-                          [attr.data-testid]="'ai-day-' + item.id + '-' + d"
-                        >
-                          {{ d }}일차
-                        </button>
-                      }
-                    </div>
-                  } @else {
-                    <label class="sr-only" [attr.for]="'ai-day-' + item.id"
-                      >{{ item.name }} 일차</label
-                    >
-                    <select
-                      appInput
-                      class="select w-auto!"
-                      [id]="'ai-day-' + item.id"
-                      [value]="item.day"
-                      (change)="changeDay(item.id, $any($event.target).value)"
-                      [attr.data-testid]="'ai-day-' + item.id"
-                    >
-                      @for (d of dayChoices(); track d) {
-                        <option [value]="d">{{ d }}일차</option>
-                      }
-                    </select>
-                  }
+                  <!--
+                    일차는 언제나 드롭다운으로 고른다. 칩으로 늘어놓으면 긴 여행에서
+                    한 줄을 다 차지하고 좁은 화면에서는 며칠만 되어도 넘친다.
+                  -->
+                  <label class="sr-only" [attr.for]="'ai-day-' + item.id"
+                    >{{ item.name }} 일차</label
+                  >
+                  <select
+                    appInput
+                    class="select ml-auto h-9! w-auto! py-0! text-13!"
+                    [id]="'ai-day-' + item.id"
+                    [value]="item.day"
+                    (change)="changeDay(item.id, $any($event.target).value)"
+                    [attr.data-testid]="'ai-day-' + item.id"
+                  >
+                    @for (d of dayChoices(); track d) {
+                      <option [value]="d">{{ d }}일차</option>
+                    }
+                  </select>
                 }
-                <!-- 지도 앱 열기: 여행 상세와 같은 공식 서비스 아이콘·크기로 맞춘다. -->
-                <span class="item__maps ml-auto inline-flex flex-none gap-1">
-                  <a
-                    class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                    [href]="naverLink(item.name)"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    [attr.aria-label]="item.name + ' 네이버지도에서 검색'"
-                    [attr.data-testid]="'ai-naver-' + item.id"
-                  >
-                    <img
-                      class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                      src="brand/navermap.png"
-                      width="26"
-                      height="26"
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  </a>
-                  <a
-                    class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                    [href]="kakaoLink(item.name)"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    [attr.aria-label]="item.name + ' 카카오맵에서 검색'"
-                    [attr.data-testid]="'ai-kakao-' + item.id"
-                  >
-                    <img
-                      class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                      src="brand/kakaomap.png"
-                      width="26"
-                      height="26"
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  </a>
-                </span>
               </div>
             </li>
           }
@@ -531,11 +573,24 @@
             appButton
             type="button"
             class="btn"
+            [disabled]="!aiReady()"
             (click)="generate()"
             data-testid="ai-generate"
             variant="primary"
           >
-            <app-icon name="sparkle" [size]="16" /> AI 일정 만들기
+            <app-icon name="sparkle" [size]="16" />
+            {{ error() ? '다시 시도' : 'AI 일정 만들기' }}
+          </button>
+        }
+        @case ('generating') {
+          <button
+            appButton
+            type="button"
+            class="btn w-full"
+            (click)="cancelGenerate()"
+            data-testid="ai-cancel-generate"
+          >
+            그만두기
           </button>
         }
         @case ('result') {
@@ -543,7 +598,7 @@
             appButton
             type="button"
             class="btn"
-            (click)="draft.set('phase', 'summary')"
+            (click)="backToSummary()"
             data-testid="ai-back-summary"
           >
             조건 고치기

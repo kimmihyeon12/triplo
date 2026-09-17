@@ -4,23 +4,46 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiButton } from '../../../../shared/ui/button/button';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiPlanStore } from '../../data/ai-plan-store';
+import { AI_PLAN_PROVIDER } from '../../data/ai-plan-provider';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { STOP_KIND_LABEL } from '../../../trips/model/trip';
+import { kindTone } from '../../../trips/util/kind-tone';
 import type { KoreaRegion } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 
 @Component({
   selector: 'app-ai-plan-flow',
-  imports: [UiButton, UiInput, UiBadge, UiNotice, UiActionBar, UiField, FormsModule, IconComponent],
+  imports: [
+    UiButton,
+    UiInput,
+    UiBadge,
+    UiNotice,
+    UiActionBar,
+    UiField,
+    UiSpinner,
+    FormsModule,
+    IconComponent,
+  ],
   providers: [AiPlanStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ai-plan-flow.html',
 })
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
+  private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
   readonly saveFailed = input(false);
   readonly apply = output<AiPlanSelection>();
@@ -28,8 +51,11 @@ export class AiPlanFlow {
   readonly companions = COMPANION;
   readonly paces = PACE;
   readonly transports = TRANSPORT;
-  /** 사용자가 고친 일차가 반영된 목록. 고정 SAMPLE_ITEMS를 직접 쓰지 않는다. */
-  readonly sampleItems = this.draft.items;
+  readonly kindLabels = STOP_KIND_LABEL;
+  /** 분류 배지 색. 상세 화면과 같은 규칙을 쓴다. */
+  readonly kindTone = kindTone;
+  /** 사용자가 고친 일차가 반영된 목록. */
+  readonly planItems = this.draft.items;
   readonly phase = this.draft.phase;
   readonly regions = this.draft.regions;
   readonly regionInput = this.draft.regionInput;
@@ -44,13 +70,18 @@ export class AiPlanFlow {
   readonly extraNote = this.draft.extraNote;
   readonly selected = this.draft.selected;
   readonly dayChoices = this.draft.dayChoices;
-  readonly useDayChips = this.draft.useDayChips;
+  readonly error = this.draft.error;
   /** 당일 여행처럼 고를 일차가 하나뿐이면 바꿀 것이 없어 감춘다. */
   readonly canChangeDay = computed(() => this.dayChoices().length > 1);
   readonly stepNumber = this.draft.stepNumber;
   readonly dateValidation = this.draft.dateValidation;
   readonly dateError = this.draft.dateError;
   readonly canLeaveStep1 = this.draft.canLeaveStep1;
+
+  /** AI를 쓸 수 없는 이유. 설정이 없으면 생성 버튼을 막고 이 문구를 보여준다. */
+  readonly unavailableReason = signal<string | null>(null);
+  readonly aiReady = computed(() => this.unavailableReason() === null);
+
   readonly summaryRows = computed(() => [
     { label: '지역', value: this.regions().join(' → '), phase: 'step1' as Phase },
     {
@@ -72,6 +103,15 @@ export class AiPlanFlow {
 
   readonly regionMatches = this.draft.regionMatches;
 
+  constructor() {
+    void this.checkAvailability();
+  }
+
+  private async checkAvailability(): Promise<void> {
+    const status = await this.provider.availability();
+    this.unavailableReason.set(status.available ? null : status.reason);
+  }
+
   pickRegion(region: KoreaRegion): void {
     this.draft.pickRegion(region);
   }
@@ -85,8 +125,14 @@ export class AiPlanFlow {
     this.draft.removeRegion(index);
   }
 
+  readonly allSelected = this.draft.allSelected;
+
   toggle(id: string): void {
     this.draft.toggle(id);
+  }
+
+  toggleAll(): void {
+    this.draft.toggleAll();
   }
 
   /** select의 값은 문자열이므로 숫자로 바꿔 넘긴다. */
@@ -96,24 +142,32 @@ export class AiPlanFlow {
   }
 
   /**
-   * 장소를 네이버 지도에서 찾는 주소. 추천에는 좌표가 없으므로 이름과
-   * 지역으로 검색한다. 리뷰·위치·영업시간은 그 화면에서 확인한다.
+   * 장소를 네이버 지도에서 찾는 주소. 확인된 장소에는 주소가 있으므로
+   * 함께 넣어 같은 이름의 다른 곳이 나오지 않게 한다.
    */
-  naverLink(name: string): string {
-    return naverSearchUrl(this.mapSearch(name));
+  naverLink(name: string, address: string): string {
+    return naverSearchUrl(this.mapSearch(name, address));
   }
 
-  kakaoLink(name: string): string {
-    return kakaoSearchUrl(this.mapSearch(name));
+  kakaoLink(name: string, address: string): string {
+    return kakaoSearchUrl(this.mapSearch(name, address));
   }
 
-  /** 지역을 앞에 붙여야 동명 장소가 섞이지 않는다. 예: '강릉 안목해변 카페거리' */
-  private mapSearch(name: string): string {
-    return mapQuery(this.regions()[0] ?? '', name);
+  /** 주소가 없으면 지역을 앞에 붙인다. 예: '강릉 안목해변' */
+  private mapSearch(name: string, address: string): string {
+    return address ? mapQuery(name, address) : mapQuery(this.regions()[0] ?? '', name);
   }
 
   generate(): void {
-    this.draft.generate();
+    void this.draft.generate();
+  }
+
+  cancelGenerate(): void {
+    this.draft.cancel();
+  }
+
+  backToSummary(): void {
+    this.draft.backToSummary();
   }
 
   leave(event: Event): void {
