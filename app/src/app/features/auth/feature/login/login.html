@@ -354,7 +354,12 @@
     <a appButton routerLink="/trips" class="btn">여행으로 돌아가기</a>
   }
   <!--
-    둘러보기·설치·실험실 링크는 뺐다. 첫 화면에는 로그인만 남긴다.
-    화면 점검용 미리보기는 enterPreview()와 designPreview 설정으로 남아 있다.
+    실험실은 내 정보 안에 둔다. 여행 목록은 매번 보는 화면이라 점검용 링크가
+    설 자리가 아니다. 로그인 화면에는 로그인만 남긴다.
   -->
+  @if (accountView()) {
+    <p class="text-center text-12 leading-normal text-ink-3">
+      <a routerLink="/lab" class="text-ink-3 underline underline-offset-4">디자인 실험실</a>
+    </p>
+  }
 </div>
