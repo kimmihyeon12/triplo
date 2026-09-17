@@ -1,44 +1,17 @@
 <!--
   로그인은 화면 높이를 채우고 버튼을 아래에 붙인다. 내용이 짧아도 누를 곳이
-  엄지 닿는 자리에 온다. 내 정보는 본문이라 그대로 위에서부터 흐른다.
+  엄지 닿는 자리에 온다.
 -->
 <div
-  class="page login mx-auto my-0 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)] flex flex-col gap-4 max-w-105"
-  [class.min-h-dvh]="!accountView()"
+  class="page login mx-auto my-0 flex min-h-dvh max-w-105 flex-col gap-4 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   [attr.aria-busy]="auth.loading() || auth.busy()"
 >
-  <!--
-    로그인은 가운데로 모으고, 내 정보는 본문 성격이라 왼쪽 정렬을 유지한다.
-    확인 중에는 스피너만 보이므로 내 정보가 아니라 로그인 쪽 정렬을 따른다.
-  -->
-  <section
-    class="intro flex flex-col gap-2 px-0 pb-2"
-    [class.flex-1]="!accountView()"
-    [class.justify-center]="!accountView()"
-    [class.items-center]="!accountView()"
-    [class.text-center]="!accountView()"
-    [class.items-start]="accountView()"
-    [class.pt-6]="accountView()"
-    [class.pt-10]="!accountView()"
-  >
-    <!--
-      확인 중을 가장 먼저 본다. 로그인을 마치고 떠나는 순간에는
-      displayedUser()도 참이라, 뒤에 두면 '내 정보'의 로고가 스쳐 보인다.
-    -->
+  <section class="intro flex flex-1 flex-col items-center justify-center gap-2 px-0 pb-2 pt-10 text-center">
     @if (settling()) {
       <!-- intro 안에 두어야 가운데에 온다. 바깥에 두면 왼쪽 아래로 떨어진다. -->
       <div role="status" aria-label="로그인 상태 확인 중" data-testid="login-settling">
         <app-spinner />
       </div>
-    } @else if (displayedUser()) {
-      <img
-        class="intro__mark text-accent-deep"
-        src="brand/triplo-symbol.svg"
-        width="44"
-        height="44"
-        alt=""
-        aria-hidden="true"
-      />
     } @else {
       <!--
         로그인은 여행을 시작하는 자리라 탑승권을 앞세운다. 로고는 티켓 안에 있다.
@@ -238,135 +211,17 @@
           </p>
       </nav>
     }
-    @if (accountView()) {
-      <h1 class="intro__title text-22 font-bold leading-[1.4]">내 정보</h1>
-    }
-    @if (accountView()) {
-      <p
-        class="intro__sub text-14 leading-[1.6] text-ink-2 [.account_details_&]:block [.account_details_&]:mb-3"
-        data-testid="login-storage-notice"
-      >
-        여행은 아직 이 기기에만 저장되며, 계정별 저장·다른 기기와 동기화는 준비 중입니다.
-      </p>
-    }
   </section>
-  @if (auth.deleted()) {
-    <p
-      class="[.account_details_&]:block [.account_details_&]:mb-3"
-      role="status"
-      data-testid="account-deleted"
-    >
-      회원탈퇴가 완료되었습니다. 이 기기에 저장된 여행은 그대로 남아 있습니다.
-    </p>
-  }
   @if (auth.error()) {
     <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
   }
   @if (!auth.available() && !auth.loading() && !auth.busy()) {
     <button appButton type="button" class="btn" (click)="reload()">다시 시도</button>
   }
-  @if (settling()) {
-    <!-- The redirect is still resolving; neither surface is meaningful yet. -->
-  } @else if (displayedUser(); as user) {
-    <section
-      aria-label="로그인한 계정"
-      class="account grid gap-3 wrap-anywhere"
-      data-testid="login-account"
-    >
-      <strong class="in-[.notice]:font-bold">{{ auth.nickname() || '여행친구 · 미리보기' }}</strong>
-      <p class="[.account_details_&]:block [.account_details_&]:mb-3">
-        {{ user.email || '소셜 계정' }}
-      </p>
-      <p
-        class="text-12 leading-normal text-ink-3 [.account_details_&]:block [.account_details_&]:mb-3"
-      >
-        로그인 방식 · {{ user.app_metadata['provider'] === 'kakao' ? '카카오' : 'Google' }}
-      </p>
-      <button
-        appButton
-        type="button"
-        class="btn"
-        (click)="auth.signOut()"
-        [disabled]="!auth.available() || !auth.user()"
-        [attr.aria-busy]="auth.activity() === 'logout'"
-        data-testid="logout"
-      >
-        @if (auth.activity() === 'logout') {
-          <app-spinner />
-        }
-        로그아웃
-      </button>
-      <details class="in-[.account]:pt-3 in-[.account]:[border-top:1px_solid_var(--color-border)]">
-        <summary class="in-[.account]:cursor-pointer in-[.account]:py-3 in-[.account]:px-0">
-          회원탈퇴
-        </summary>
-        <p class="text-12 leading-normal [.account_details_&]:block [.account_details_&]:mb-3">
-          탈퇴하면 이 서비스의 계정이 삭제되며 되돌릴 수 없습니다. Google·카카오 계정과 이 기기에
-          저장된 여행은 삭제되지 않습니다.
-        </p>
-        @if (auth.deletionEnabled()) {
-          <label
-            class="[.account_details_&]:block [.account_details_&]:mb-3"
-            for="delete-confirmation"
-            >계정을 삭제하려면 ‘탈퇴’를 입력하세요.</label
-          >
-          <input
-            class="[.account_details_&]:block [.account_details_&]:mb-3"
-            appInput
-            id="delete-confirmation"
-            #confirmationInput
-            [value]="confirmation()"
-            (input)="confirmation.set(confirmationInput.value)"
-            autocomplete="off"
-            [disabled]="auth.busy()"
-          />
-          <button
-            appButton
-            type="button"
-            class="btn"
-            (click)="auth.deleteAccount(confirmation())"
-            [disabled]="!auth.available() || confirmation() !== '탈퇴'"
-            [attr.aria-busy]="auth.activity() === 'delete'"
-            data-testid="delete-account"
-          >
-            @if (auth.activity() === 'delete') {
-              <app-spinner />
-            }
-            계정 영구 삭제
-          </button>
-        } @else {
-          <p
-            class="text-12 leading-normal text-ink-3 [.account_details_&]:block [.account_details_&]:mb-3"
-          >
-            회원탈퇴 서버를 준비 중입니다. 연결 후 이곳에서 탈퇴할 수 있습니다.
-          </p>
-        }
-      </details>
-    </section>
-  } @else {
-    <!-- 로그인 버튼은 티켓 반권 안에 있다. 여기에는 안내만 남는다. -->
+  <!-- 로그인 버튼은 티켓 반권 안에 있다. 여기에는 안내만 남는다. -->
+  @if (!settling()) {
     <p class="text-center text-12 leading-relaxed text-ink-3 select-none">
       여행은 아직 이 기기에만 저장돼요. 계정별 저장과 다른 기기 동기화는 준비 중입니다.
-    </p>
-  }
-  <!-- 떠나는 도중에는 감춘다. 목록으로 가는 길에 버튼이 스쳐 보이면 안 된다. -->
-  @if (!settling() && auth.user()) {
-    <a appButton routerLink="/trips" class="btn">여행으로 돌아가기</a>
-  }
-  <!--
-    실험실은 내 정보 안에 둔다. 여행 목록은 매번 보는 화면이라 점검용 링크가
-    설 자리가 아니다. 로그인 화면에는 로그인만 남긴다.
-  -->
-  @if (accountView()) {
-    <!--
-      배포된 화면이 어느 것인지 여기서 확인한다. 이것이 없으면 고친 내용이
-      실제로 올라갔는지 매번 짐작해야 한다.
-    -->
-    <p class="text-center text-12 leading-normal text-ink-3" data-testid="app-version">
-      버전 {{ version.name }}
-    </p>
-    <p class="text-center text-12 leading-normal text-ink-3">
-      <a routerLink="/lab" class="text-ink-3 underline underline-offset-4">디자인 실험실</a>
     </p>
   }
 </div>

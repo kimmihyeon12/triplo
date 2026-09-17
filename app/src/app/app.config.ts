@@ -21,6 +21,8 @@ import {
   type KeyValueStorage,
 } from './features/trips/data/local-storage-trip-repository';
 import { TRIP_REPOSITORY } from './features/trips/data/trip-repository';
+import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
+import { LocalSupportRepository } from './features/support/data/local-support-repository';
 import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
 import { FixturePlaceSearch } from './features/places/data/fixture/fixture-place-search';
 import { KakaoMapProvider } from './features/places/data/kakao/kakao-map-provider';
@@ -89,6 +91,12 @@ export const appConfig: ApplicationConfig = {
           environment.storageKey,
           environment.isTest ? `${environment.storageKey}.failSave` : null,
         ),
+    },
+    // 공지·문의도 같은 자리에 둔다. 서버가 붙으면 구현만 갈아 끼운다.
+    {
+      provide: SUPPORT_REPOSITORY,
+      useFactory: () =>
+        new LocalSupportRepository(new SafeLocalStorage(), `${environment.storageKey}.support`),
     },
     // 지도 표시와 장소 검색은 별개 어댑터다. 테스트 앱은 외부 호출 없는 픽스처를 쓴다.
     { provide: MAP_PROVIDER, useExisting: useFixture ? FixtureMapProvider : KakaoMapProvider },
