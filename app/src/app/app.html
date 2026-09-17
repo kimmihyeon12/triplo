@@ -12,8 +12,8 @@
     @if (bar().back) {
       <a
         class="topbar__back inline-flex items-center justify-center w-11 h-11 text-ink no-underline rounded-cell flex-none hover:bg-ground-2 focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
-        [routerLink]="bar().back"
-        [queryParams]="bar().backQueryParams ?? {}"
+        [attr.href]="backHref()"
+        (click)="goBack($event)"
         aria-label="뒤로"
       >
         <svg
