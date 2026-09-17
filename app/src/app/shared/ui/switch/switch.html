@@ -1,0 +1,38 @@
+<!--
+  손잡이 위치는 인라인 스타일로 준다. [class.left-5] 같은 표기는 Tailwind가
+  그 문자열을 소스에서 찾지 못해 클래스를 만들지 않는다. 그러면 켜고 꺼도
+  손잡이가 제자리에 있다.
+-->
+@if (presentational()) {
+  <!--
+    바깥의 버튼이 조작을 맡는 경우다. 여기에 또 button을 두면 버튼 안에
+    버튼이 들어가 눌러도 반응하지 않는 자리가 생긴다.
+  -->
+  <span
+    class="relative block h-6.5 w-11 rounded-pill [transition:background-color_var(--dur)_var(--ease-out)]"
+    [style.background]="checked() ? 'var(--color-accent-deep)' : 'var(--color-border-strong)'"
+    [style.opacity]="disabled() ? 0.45 : null"
+    aria-hidden="true"
+  >
+    <span
+      class="absolute top-0.5 size-5.5 rounded-full bg-panel shadow-[0_1px_3px_rgba(22,24,29,0.2)] [transition:left_var(--dur)_var(--ease-out)]"
+      [style.left.px]="checked() ? 20 : 2"
+    ></span>
+  </span>
+} @else {
+  <button
+    type="button"
+    role="switch"
+    class="relative block h-6.5 w-11 flex-none cursor-pointer rounded-pill border-0 p-0 [transition:background-color_var(--dur)_var(--ease-out)] disabled:cursor-not-allowed disabled:opacity-45"
+    [style.background]="checked() ? 'var(--color-accent-deep)' : 'var(--color-border-strong)'"
+    [attr.aria-checked]="checked()"
+    [attr.aria-label]="label() || null"
+    [disabled]="disabled()"
+    (click)="toggle()"
+  >
+    <span
+      class="absolute top-0.5 size-5.5 rounded-full bg-panel shadow-[0_1px_3px_rgba(22,24,29,0.2)] [transition:left_var(--dur)_var(--ease-out)]"
+      [style.left.px]="checked() ? 20 : 2"
+    ></span>
+  </button>
+}

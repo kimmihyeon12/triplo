@@ -1,0 +1,73 @@
+<div
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-2 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  [attr.aria-busy]="loading()"
+>
+  @if (loading()) {
+    <div class="flex justify-center py-16" role="status" aria-label="문의 불러오는 중">
+      <app-spinner />
+    </div>
+  } @else if (list().length === 0) {
+    <div class="flex flex-col items-center gap-3 py-16 text-center" data-testid="empty-inquiries">
+      <span class="text-ink-3"><app-icon name="mail" [size]="32" /></span>
+      <p class="text-14 text-ink-2">아직 보낸 문의가 없어요.</p>
+      <p class="text-12 leading-relaxed text-ink-3">
+        쓰다가 막히는 곳이 있거나<br />있었으면 하는 기능이 있으면 알려주세요.
+      </p>
+    </div>
+  } @else {
+    <ul class="flex list-none flex-col gap-2 p-0" data-testid="inquiry-list">
+      @for (inquiry of list(); track inquiry.id) {
+        <li class="rounded-panel bg-panel shadow-panel">
+          <details class="px-4 [[open]]:pb-4" (toggle)="open(inquiry)">
+            <summary
+              class="flex min-h-14 cursor-pointer list-none items-center gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
+            >
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-13">{{ inquiry.body }}</span>
+                <span class="mt-0.5 block text-12 text-ink-3"
+                  >{{ kindLabel[inquiry.kind] }} · {{ day(inquiry.createdAt) }}</span
+                >
+              </span>
+              @if (inquiry.replies.length > 0 && !inquiry.readAt) {
+                <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
+              }
+              <span appBadge [tone]="tone(inquiry)" class="flex-none">{{
+                statusLabel[inquiry.status]
+              }}</span>
+              <span
+                class="flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
+                aria-hidden="true"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </span>
+            </summary>
+
+            <p class="mb-3 whitespace-pre-line text-13 leading-relaxed text-ink-2">
+              {{ inquiry.body }}
+            </p>
+
+            @for (reply of inquiry.replies; track reply.id) {
+              <div class="mt-2 rounded-control bg-ground-2 px-3.5 py-3">
+                <p class="mb-1 text-12 font-bold text-ink-3">답변 · {{ day(reply.createdAt) }}</p>
+                <p class="whitespace-pre-line text-13 leading-relaxed text-ink-2">
+                  {{ reply.body }}
+                </p>
+              </div>
+            } @empty {
+              <p class="text-12 text-ink-3">답변을 준비하고 있어요.</p>
+            }
+          </details>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<!-- 새 문의는 하단 고정 버튼으로 보낸다. 목록이 길어도 자리가 일정하다. -->
+<div appActionBar class="action-bar">
+  <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
+    <a appButton variant="primary" routerLink="new" class="btn" data-testid="new-inquiry">
+      문의 보내기
+    </a>
+  </div>
+</div>

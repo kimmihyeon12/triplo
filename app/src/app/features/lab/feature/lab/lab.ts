@@ -14,6 +14,7 @@ import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
+import { UiSwitch } from '../../../../shared/ui/switch/switch';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
@@ -29,6 +30,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
     UiBadge,
     UiNotice,
     UiSpinner,
+    UiSwitch,
     UiActionBar,
     ErrorToast,
     IconComponent,
@@ -42,6 +44,7 @@ export class LabPage {
   readonly busy = signal(false);
   readonly toast = signal(false);
   readonly inputError = signal(false);
+  readonly labSwitch = signal(true);
   readonly nickname = signal('');
   readonly linkClicks = signal(0);
   readonly colors = [

@@ -1,0 +1,49 @@
+<div
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  [attr.aria-busy]="loading()"
+>
+  @if (loading()) {
+    <div class="flex justify-center py-16" role="status" aria-label="공지사항 불러오는 중">
+      <app-spinner />
+    </div>
+  } @else if (notices().length === 0) {
+    <p class="py-16 text-center text-14 text-ink-3" data-testid="empty-notices">
+      아직 공지사항이 없어요.
+    </p>
+  } @else {
+    <ul class="flex list-none flex-col gap-2 p-0" data-testid="notice-list">
+      @for (notice of notices(); track notice.id) {
+        <li class="rounded-panel bg-panel shadow-panel">
+          <!--
+            첫 공지는 펼쳐 둔다. 목록에 들어온 사람은 대개 가장 새 소식을
+            보러 온 것이라, 한 번 더 누르게 할 이유가 없다.
+          -->
+          <details class="px-4 [[open]]:pb-4" [open]="$first">
+            <summary
+              class="flex min-h-14 cursor-pointer list-none items-start gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
+            >
+              <span
+                class="mt-2 size-1.5 flex-none rounded-full"
+                [class.bg-danger-ink]="unreadIds().has(notice.id)"
+                aria-hidden="true"
+              ></span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-14 font-bold leading-snug">{{ notice.title }}</span>
+                <span class="mt-0.5 block text-12 text-ink-3">{{ day(notice.createdAt) }}</span>
+              </span>
+              <span
+                class="mt-1 flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
+                aria-hidden="true"
+              >
+                <app-icon name="chevron-right" [size]="16" />
+              </span>
+            </summary>
+            <p class="whitespace-pre-line pl-4 text-13 leading-relaxed text-ink-2">
+              {{ notice.body }}
+            </p>
+          </details>
+        </li>
+      }
+    </ul>
+  }
+</div>
