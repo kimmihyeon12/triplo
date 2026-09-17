@@ -358,6 +358,13 @@
     설 자리가 아니다. 로그인 화면에는 로그인만 남긴다.
   -->
   @if (accountView()) {
+    <!--
+      배포된 화면이 어느 것인지 여기서 확인한다. 이것이 없으면 고친 내용이
+      실제로 올라갔는지 매번 짐작해야 한다.
+    -->
+    <p class="text-center text-12 leading-normal text-ink-3" data-testid="app-version">
+      버전 {{ version.name }}
+    </p>
     <p class="text-center text-12 leading-normal text-ink-3">
       <a routerLink="/lab" class="text-ink-3 underline underline-offset-4">디자인 실험실</a>
     </p>

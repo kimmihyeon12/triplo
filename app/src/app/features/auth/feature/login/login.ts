@@ -1,5 +1,6 @@
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { APP_VERSION } from '../../../../core/version';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -38,6 +39,8 @@ export class LoginPage {
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
   readonly previewAccount = this.auth.designPreview && inject(Router).url.startsWith('/account');
+  /** 배포된 화면이 어느 것인지 알리는 버전. 빌드가 만든다. */
+  readonly version = APP_VERSION;
   readonly displayedUser = computed(
     () =>
       this.auth.user() ??
