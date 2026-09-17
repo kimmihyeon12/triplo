@@ -21,6 +21,19 @@ test.describe('여행 날짜: 당일, 날짜 미정 → 확정, 날짜 오류', 
     await expect(page.getByTestId('date-error')).toContainText('모두');
   });
 
+  test('작은 높이에서 기간 달력 내부를 스크롤해도 달력이 닫히지 않는다', async ({ page }) => {
+    await page.setViewportSize({ width: 740, height: 360 });
+    await page.goto('/trips/new');
+    await page.getByRole('button', { name: '여행 기간 달력 열기' }).click();
+    const picker = page.getByRole('dialog', { name: '여행 기간 선택' });
+    await expect(picker).toBeVisible();
+    await picker.evaluate((element) => {
+      element.scrollTop = 100;
+      element.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    await expect(picker).toBeVisible();
+  });
+
   test('날짜 미정 초안에 장소를 담고 날짜를 정하면 미배치가 유지되고 날짜별 탭이 열린다', async ({
     page,
   }) => {

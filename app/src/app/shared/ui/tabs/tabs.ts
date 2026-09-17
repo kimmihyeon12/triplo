@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 export interface TabItem {
@@ -25,4 +25,26 @@ export class UiTabs {
   readonly active = input.required<string>();
   readonly ariaLabel = input('보기 전환');
   readonly selected = output<string>();
+  private readonly host = inject(ElementRef<HTMLElement>);
+
+  /**
+   * 방향키로 옆 탭에 간다. role=tab을 쓰면 화살표 이동을 기대하기 때문이다.
+   * 탭을 자기 안에서만 찾는다. 문서 전체에서 찾으면 한 화면에 탭이 둘 이상일 때
+   * 다른 탭 줄의 같은 id를 집는다.
+   */
+  onKeydown(event: KeyboardEvent, index: number): void {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    const items = this.items();
+    const next = event.key === 'ArrowRight' ? index + 1 : index - 1;
+    if (next < 0 || next >= items.length) return;
+    const targetId = items[next]?.id;
+    if (!targetId) return;
+    const target = (this.host.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      `[data-tab-id="${CSS.escape(targetId)}"]`,
+    );
+    if (!target) return;
+    event.preventDefault();
+    target.focus();
+    target.click();
+  }
 }

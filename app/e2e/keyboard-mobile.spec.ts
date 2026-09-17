@@ -75,7 +75,12 @@ test.describe('키보드만으로 첫 흐름, 가로 스크롤 없음', () => {
     await expect(page.getByTestId('daytab-2')).toBeFocused();
     await expect(page.getByTestId('empty-day')).toBeVisible();
 
-    await page.getByTestId('tab-stays').focus();
+    // 공통 탭도 날짜 탭과 같은 방향키 계약을 지킨다.
+    await page.getByTestId('tab-days').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('tab-stays')).toBeFocused();
+    await expect(page.getByTestId('tab-stays')).toHaveAttribute('aria-selected', 'true');
+
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('panel-stays')).toBeVisible();
     await expectNoHorizontalScroll(page);

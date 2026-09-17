@@ -44,7 +44,11 @@ export class TemporalPicker {
   readonly hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   readonly minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
   readonly weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  private readonly closeOnScroll = () => this.close(false);
+  private readonly closeOnScroll = (event: Event) => {
+    const target = event.target;
+    if (target instanceof Node && this.panel().nativeElement.contains(target)) return;
+    this.close(false);
+  };
 
   isDateTarget(): boolean {
     const el = this.target();

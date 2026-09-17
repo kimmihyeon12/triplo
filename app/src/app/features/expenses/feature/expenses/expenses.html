@@ -76,19 +76,22 @@
       (selected)="tab.set($any($event))"
     />
 
+    @if (formOpen()) {
+      <section [class.hidden]="tab() !== 'expenses'" [attr.aria-hidden]="tab() !== 'expenses'">
+        <app-expense-form
+          [people]="ledger().people"
+          [links]="links()"
+          [initial]="editing()"
+          [prefillLinkId]="add()"
+          [existing]="ledger().expenses"
+          (saved)="saveExpense($event)"
+          (cancelled)="formOpen.set(false)"
+        />
+      </section>
+    }
+
     @if (tab() === 'expenses') {
       <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-expenses">
-        @if (formOpen()) {
-          <app-expense-form
-            [people]="ledger().people"
-            [links]="links()"
-            [initial]="editing()"
-            [prefillLinkId]="add()"
-            [existing]="ledger().expenses"
-            (saved)="saveExpense($event)"
-            (cancelled)="formOpen.set(false)"
-          />
-        }
         @if (ledger().expenses.length > 0) {
           <!-- 목록이 길어지면 찾기 어려우므로 분류로 거르고 정렬을 고른다. -->
           <div class="flex flex-wrap items-center justify-between gap-2">

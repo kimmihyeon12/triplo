@@ -53,7 +53,7 @@
       (ngModelChange)="amount.set($event)"
       placeholder="0"
   /></app-field>
-  <div class="grid grid-cols-2 gap-3">
+  <div class="grid gap-3 [@media(min-width:_420px)]:grid-cols-2">
     <app-field label="지출 날짜" inputId="expense-date"
       ><input
         appInput

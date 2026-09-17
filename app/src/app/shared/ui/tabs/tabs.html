@@ -1,15 +1,18 @@
 <nav class="tabs flex min-w-0 flex-1 gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
-  @for (t of items(); track t.id) {
+  @for (t of items(); track t.id; let i = $index) {
     @if (t.queryParams) {
       <a
         class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 no-underline [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
         role="tab"
+        [attr.data-tab-id]="t.id"
         [class.tab--on]="active() === t.id"
         [attr.aria-selected]="active() === t.id"
+        [attr.tabindex]="active() === t.id ? 0 : -1"
         [routerLink]="[]"
         [queryParams]="t.queryParams"
         queryParamsHandling="merge"
         [attr.data-testid]="t.testId || 'tab-' + t.id"
+        (keydown)="onKeydown($event, i)"
       >
         {{ t.label }}
       </a>
@@ -18,9 +21,12 @@
         class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
         type="button"
         role="tab"
+        [attr.data-tab-id]="t.id"
         [class.tab--on]="active() === t.id"
         [attr.aria-selected]="active() === t.id"
+        [attr.tabindex]="active() === t.id ? 0 : -1"
         [attr.data-testid]="t.testId || 'tab-' + t.id"
+        (keydown)="onKeydown($event, i)"
         (click)="selected.emit(t.id)"
       >
         {{ t.label }}
