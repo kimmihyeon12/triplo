@@ -497,14 +497,14 @@
                     >{{ item.name }} 일차</label
                   >
                   <!--
-                    공통 select는 44px 높이와 44px 화살표 여백을 갖는다. 여기서는
-                    배지 옆에 서는 작은 칸이라 높이와 여백을 함께 줄인다. h-9만
-                    낮추면 min-h-11이 남아 실제 높이가 변하지 않고 안쪽 여백만
-                    사라져 글자가 화살표에 눌린다.
+                    공통 select는 44px 높이와 44px 화살표 여백을 갖는다. 배지 옆에
+                    서는 작은 칸이라 높이·여백·화살표 위치를 함께 줄인다.
+                    위아래 여백을 0으로 만들면 글자가 위로 붙어 화살표와 높이가
+                    어긋나므로, 여백 대신 content-center로 세로 가운데를 맞춘다.
                   -->
                   <select
                     appInput
-                    class="select ml-auto h-9! min-h-9! w-auto! py-0! pr-7! pl-2.5! text-13! [background-position:right_8px_center]!"
+                    class="select ml-auto h-9! min-h-9! w-auto! content-center py-0! pr-7! pl-2.5! text-13! [background-position:right_8px_center]!"
                     [id]="'ai-day-' + item.id"
                     [value]="item.day"
                     (change)="changeDay(item.id, $any($event.target).value)"
