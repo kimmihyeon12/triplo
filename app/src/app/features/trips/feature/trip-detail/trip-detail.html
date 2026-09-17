@@ -346,23 +346,10 @@
                               </a>
                             </span>
                           </div>
-                          <div
-                            class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
-                          >
-                            <span
-                              >체크인 {{ seg.stay.checkInTime || '시각 미정' }}</span
-                            >
-                            @if (seg.stay.location) {
-                              <span class="text-border-strong" aria-hidden="true">·</span>
-                              <span class="inline-flex text-ok-ink" title="위치 확인됨"
-                                ><app-icon name="pin" [size]="12" />
-                                <span class="sr-only">위치 확인됨</span></span
-                              >
-                            } @else {
-                              <span class="text-border-strong" aria-hidden="true">·</span>
-                              <span class="text-warn-ink">위치 미확인</span>
-                            }
-                          </div>
+                          <!--
+                            장소 카드와 같은 순서로 둔다. 이름 다음에 어디인지(주소)를
+                            보고, 그다음에 언제인지(체크인 시각)를 읽는다.
+                          -->
                           @if (seg.stay.address) {
                             <div
                               class="item__addr text-12 leading-normal text-ink-3 flex items-center gap-1"
@@ -391,6 +378,19 @@
                               }
                             </div>
                           }
+                          <div
+                            class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
+                          >
+                            <!--
+                              이어 묵는 날은 체크인 시각을 적을 일이 없다.
+                              오늘 밤 어디서 자는지만 알려 준다.
+                            -->
+                            @if (isContinuedStay(seg.stay)) {
+                              <span>이어서 묵는 날</span>
+                            } @else {
+                              <span>체크인 {{ seg.stay.checkInTime || '시각 미정' }}</span>
+                            }
+                          </div>
                           @if (copyFallback() && copyFallbackId() === seg.stay.id) {
                             <p class="text-12 leading-normal copy-fallback text-warn-ink">
                               클립보드를 사용할 수 없습니다. 아래 주소를 직접 선택해
@@ -415,8 +415,8 @@
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
                           >
                             <span appBadge class="cell cell--stay">숙소</span>
-                            @if (regionName(seg.stay.regionId); as rn) {
-                              <span appBadge class="cell cell--region">{{ rn }}</span>
+                            @if (!seg.stay.location) {
+                              <span appBadge class="cell cell--warn">위치 미확인</span>
                             }
                           </span>
                         </div>
@@ -427,35 +427,42 @@
                             class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden"
                           >
                             <span appBadge class="cell cell--stay">숙소</span>
-                            @if (regionName(seg.stay.regionId); as rn) {
-                              <span appBadge class="cell cell--region">{{ rn }}</span>
+                            @if (!seg.stay.location) {
+                              <span appBadge class="cell cell--warn">위치 미확인</span>
                             }
                           </span>
                           <span class="flex-1" aria-hidden="true"></span>
-                          <button
-                            appButton
-                            type="button"
-                            class="btn"
-                            [disabled]="isFirst(idx)"
-                            (click)="moveStayRow(seg.stay.id, 'up')"
-                            [attr.aria-label]="seg.stay.name + ' 위로'"
-                            [attr.data-testid]="'up-stay-' + seg.stay.id"
-                            variant="icon"
-                          >
-                            <app-icon name="arrow-up" [size]="16" />
-                          </button>
-                          <button
-                            appButton
-                            type="button"
-                            class="btn"
-                            [disabled]="isLast(idx)"
-                            (click)="moveStayRow(seg.stay.id, 'down')"
-                            [attr.aria-label]="seg.stay.name + ' 아래로'"
-                            [attr.data-testid]="'down-stay-' + seg.stay.id"
-                            variant="icon"
-                          >
-                            <app-icon name="arrow-down" [size]="16" />
-                          </button>
+                          <!--
+                            이어 묵는 날의 숙소는 목록 맨 끝에 고정된다. 자리를
+                            정하는 값은 체크인한 날 하나뿐이라 여기서 옮기면
+                            보고 있는 날이 아니라 그날의 순서가 바뀐다.
+                          -->
+                          @if (!isContinuedStay(seg.stay)) {
+                            <button
+                              appButton
+                              type="button"
+                              class="btn"
+                              [disabled]="isFirst(idx)"
+                              (click)="moveStayRow(seg.stay.id, 'up')"
+                              [attr.aria-label]="seg.stay.name + ' 위로'"
+                              [attr.data-testid]="'up-stay-' + seg.stay.id"
+                              variant="icon"
+                            >
+                              <app-icon name="arrow-up" [size]="16" />
+                            </button>
+                            <button
+                              appButton
+                              type="button"
+                              class="btn"
+                              [disabled]="isLast(idx)"
+                              (click)="moveStayRow(seg.stay.id, 'down')"
+                              [attr.aria-label]="seg.stay.name + ' 아래로'"
+                              [attr.data-testid]="'down-stay-' + seg.stay.id"
+                              variant="icon"
+                            >
+                              <app-icon name="arrow-down" [size]="16" />
+                            </button>
+                          }
                           <app-row-menu
                             [items]="stayMenu(seg.stay)"
                             [ariaLabel]="seg.stay.name + ' 더보기'"
@@ -504,8 +511,7 @@
                       >
                         <button
                           type="button"
-                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 w-8 h-8 flex items-center justify-center rounded-full bg-ground-2 text-ink text-14 font-bold border-0 cursor-pointer p-0 -mt-1.25 [&.item\_\_badge--place]:bg-accent-deep [&.item\_\_badge--place]:text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
-                          [class.item__badge--place]="seg.stop.kind === 'place'"
+                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 -mt-1.25 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-accent-deep p-0 text-14 font-bold text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
                           [class.item__badge--unverified]="!seg.stop.location"
                           [attr.aria-label]="
                             stopNumber(idx) +
@@ -583,25 +589,18 @@
                             목록 화면과 같은 위계로 둔다. 수치·상태는 회색 한 줄,
                             분류 배지는 그 아래 한 줄에 모은다.
                           -->
-                          <div
-                            class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
-                          >
-                            @if (seg.stop.stayMinutes !== null) {
+                          <!--
+                            체류시간은 적어 둔 경우에만 보여준다. '미정'을 적어 두면
+                            대부분의 카드에 같은 말이 붙어 읽을 것이 늘어나기만 한다.
+                            위치 미확인은 아래 배지 줄로 옮겼다.
+                          -->
+                          @if (seg.stop.stayMinutes !== null) {
+                            <div
+                              class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
+                            >
                               <span>체류 {{ minutes(seg.stop.stayMinutes) }}</span>
-                            } @else {
-                              <span>체류 미정</span>
-                            }
-                            @if (seg.stop.location) {
-                              <span class="text-border-strong" aria-hidden="true">·</span>
-                              <span class="item__unverified inline-flex text-ok-ink" title="위치 확인됨"
-                                ><app-icon name="pin" [size]="12" />
-                                <span class="sr-only">위치 확인됨</span></span
-                              >
-                            } @else {
-                              <span class="text-border-strong" aria-hidden="true">·</span>
-                              <span class="item__unverified text-warn-ink">위치 미확인</span>
-                            }
-                          </div>
+                            </div>
+                          }
                           @if (seg.stop.address) {
                             <!--
                               주소 복사는 주소와 같은 행에 아이콘으로 둔다.
@@ -656,14 +655,19 @@
                               >
                             </p>
                           }
+                          <!--
+                            분류는 이름 아래 한 줄에 둔다. 이름 옆에 두면 좁은 화면에서
+                            배지에 밀려 이름이 먼저 잘린다. 모바일에서는 이름이 온전한
+                            편이 낫다.
+                          -->
                           <span
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
                           >
-                            <span appBadge class="cell cell--place">{{
+                            <span appBadge [tone]="kindTone(seg.stop.kind)">{{
                               kindLabel[seg.stop.kind]
                             }}</span>
-                            @if (regionName(seg.stop.regionId); as rn) {
-                              <span appBadge class="cell cell--region">{{ rn }}</span>
+                            @if (!seg.stop.location) {
+                              <span appBadge class="cell cell--warn">위치 미확인</span>
                             }
                           </span>
                         </div>
@@ -675,11 +679,11 @@
                           class="item__actions flex items-center gap-1.5 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:[align-self:start]"
                         >
                           <span class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden">
-                            <span appBadge class="cell cell--place">{{
+                            <span appBadge [tone]="kindTone(seg.stop.kind)">{{
                               kindLabel[seg.stop.kind]
                             }}</span>
-                            @if (regionName(seg.stop.regionId); as rn) {
-                              <span appBadge class="cell cell--region">{{ rn }}</span>
+                            @if (!seg.stop.location) {
+                              <span appBadge class="cell cell--warn">위치 미확인</span>
                             }
                           </span>
                           <span class="flex-1" aria-hidden="true"></span>
@@ -893,7 +897,7 @@
                 <li
                   class="flex flex-wrap items-center gap-2 plain-item gap-2.5 py-2.5 px-0 [border-top:1px_solid_var(--color-border)] first:[border-top:0]"
                 >
-                  <span appBadge class="cell cell--place"
+                  <span appBadge [tone]="kindTone(s.kind)"
                     ><app-icon [name]="s.kind" [size]="14" /> {{ kindLabel[s.kind] }}</span
                   >
                   <span class="grow flex-1 min-w-0 text-14 wrap-anywhere">{{ s.name }}</span>

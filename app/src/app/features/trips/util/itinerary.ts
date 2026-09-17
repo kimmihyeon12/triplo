@@ -47,7 +47,7 @@ export function moveStop(trip: Trip, stopId: string, direction: 'up' | 'down'): 
   if (idx < 0 || swapIdx < 0 || swapIdx >= entries.length) return trip;
   const next = [...entries];
   [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-  return writeDayOrder(trip, next);
+  return writeDayOrder(trip, next, target.date);
 }
 
 /** 항목을 다른 날짜(또는 미배치)의 마지막 순서로 옮긴다. */
@@ -166,8 +166,16 @@ export function sortDayByNearest(trip: Trip, date: IsoDate): NearestSortResult {
   const stops = trip.stops.map((s) =>
     orderById.has(s.id) ? { ...s, order: orderById.get(s.id)! } : s,
   );
-  // 숙소는 그날의 끝이므로 가까운 순 정렬에 끼우지 않고 맨 뒤로 보낸다.
-  const dayStayIds = new Set(dayStays(trip, date).map((s) => s.id));
+  /*
+    숙소는 그날의 끝이므로 가까운 순 정렬에 끼우지 않고 맨 뒤로 보낸다.
+    dayOrder는 체크인한 날의 자리를 뜻하므로 그날 정렬할 때만 지운다.
+    연박 중인 날에서 지우면 체크인한 날에 잡아 둔 자리까지 흐트러진다.
+  */
+  const dayStayIds = new Set(
+    dayStays(trip, date)
+      .filter((s) => s.checkIn === date)
+      .map((s) => s.id),
+  );
   const stays = trip.stays.map((s) => (dayStayIds.has(s.id) ? { ...s, dayOrder: null } : s));
 
   return {
@@ -211,24 +219,27 @@ export type DaySegment =
   | { type: 'leg'; fromRegion: string | null; toRegion: string | null; regionChange: boolean };
 
 /**
- * 그날 일정 목록에 서는 숙소. 체크인하는 날에만 들어간다.
- * 연박 중인 날은 이미 그 숙소에 머무는 중이라 이동이 없다.
+ * 그날 밤을 보내는 숙소. 체크인하는 날부터 체크아웃 전날까지 모두 들어간다.
+ * 연박 중인 날에도 어디서 자는지 그날 일정에서 바로 읽을 수 있어야 한다.
  */
 export function dayStays(trip: Trip, date: IsoDate): AccommodationStay[] {
   return trip.stays
-    .filter((s) => s.checkIn === date)
+    .filter((s) => s.checkIn <= date && date < s.checkOut)
     .sort((a, b) => (a.dayOrder ?? Number.MAX_SAFE_INTEGER) - (b.dayOrder ?? Number.MAX_SAFE_INTEGER));
 }
 
 /**
  * 그날 항목을 순서대로 늘어놓는다. 장소와 숙소가 같은 축(order/dayOrder)을 공유하고,
  * 자리를 정하지 않은 숙소는 맨 끝에 선다.
+ *
+ * dayOrder는 숙소마다 하나뿐이라 체크인한 날의 자리를 뜻한다. 연박 중인 날은
+ * 장소 수가 달라 그 자리를 그대로 쓸 수 없으므로 맨 끝에 세운다.
  */
 function dayEntries(trip: Trip, date: IsoDate): (TripStop | AccommodationStay)[] {
   const stops = dayStops(trip, date);
   const stays = dayStays(trip, date);
-  const positioned = stays.filter((s) => s.dayOrder !== null);
-  const trailing = stays.filter((s) => s.dayOrder === null);
+  const positioned = stays.filter((s) => s.dayOrder !== null && s.checkIn === date);
+  const trailing = stays.filter((s) => s.dayOrder === null || s.checkIn !== date);
   const out: (TripStop | AccommodationStay)[] = [];
   let si = 0;
   stops.forEach((stop, i) => {
@@ -246,14 +257,22 @@ function isStay(entry: TripStop | AccommodationStay): entry is AccommodationStay
 /**
  * 합쳐진 목록의 자리를 장소 order와 숙소 dayOrder에 다시 새긴다.
  * 숙소의 dayOrder는 '자기 앞에 선 장소의 수'이므로, 같은 값이어도 장소 뒤에 선다.
+ *
+ * dayOrder는 체크인한 날의 자리를 뜻한다. 연박 중인 날에도 숙소가 목록에
+ * 보이므로, 그 날의 자리를 새기면 체크인한 날의 자리를 덮어써 버린다.
  */
-function writeDayOrder(trip: Trip, entries: (TripStop | AccommodationStay)[]): Trip {
+function writeDayOrder(
+  trip: Trip,
+  entries: (TripStop | AccommodationStay)[],
+  date: IsoDate,
+): Trip {
   const stopOrder = new Map<string, number>();
   const stayOrder = new Map<string, number>();
   let stopCount = 0;
   for (const entry of entries) {
-    if (isStay(entry)) stayOrder.set(entry.id, stopCount);
-    else stopOrder.set(entry.id, stopCount++);
+    if (isStay(entry)) {
+      if (entry.checkIn === date) stayOrder.set(entry.id, stopCount);
+    } else stopOrder.set(entry.id, stopCount++);
   }
   return {
     ...trip,
@@ -266,7 +285,10 @@ function writeDayOrder(trip: Trip, entries: (TripStop | AccommodationStay)[]): T
   };
 }
 
-/** 숙소를 체크인 날짜 목록 안에서 위·아래로 한 칸 옮긴다. */
+/**
+ * 숙소를 체크인 날짜 목록 안에서 위·아래로 한 칸 옮긴다.
+ * 연박 중인 날에서는 자리가 없어 화면에서도 이 버튼을 감춘다.
+ */
 export function moveStay(trip: Trip, stayId: string, direction: 'up' | 'down'): Trip {
   const stay = trip.stays.find((s) => s.id === stayId);
   if (!stay) return trip;
@@ -276,7 +298,7 @@ export function moveStay(trip: Trip, stayId: string, direction: 'up' | 'down'): 
   if (idx < 0 || swapIdx < 0 || swapIdx >= entries.length) return trip;
   const next = [...entries];
   [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-  return writeDayOrder(trip, next);
+  return writeDayOrder(trip, next, stay.checkIn);
 }
 
 /** 시간순 항목과 그 사이 이동 구간. 제외 항목 앞뒤에는 구간을 두지 않는다. */

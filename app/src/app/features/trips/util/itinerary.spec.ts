@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createRegion, createStop, createTrip } from './factories';
+import { createRegion, createStay, createStop, createTrip } from './factories';
 import {
   daySegments,
+  dayStays,
   dayStops,
   dayTotals,
   fixedTimeConflicts,
@@ -110,6 +111,63 @@ describe('itinerary', () => {
     const legs = segs.filter((s) => s.type === 'leg');
     expect(legs[0]).toMatchObject({ fromRegion: '강릉', toRegion: null, regionChange: false });
     expect(legs[1]).toMatchObject({ fromRegion: '강릉', toRegion: '속초', regionChange: true });
+  });
+
+  it('dayStays: 연박 숙소는 체크아웃 전날까지 매일 목록에 선다', () => {
+    const t = createTrip({
+      startDate: '2026-05-01',
+      endDate: '2026-05-03',
+      stops: [createStop({ id: 's1', name: '안목해변', date: '2026-05-02', order: 0 })],
+      stays: [
+        createStay({ id: 'h1', name: '강릉 호텔', checkIn: '2026-05-01', checkOut: '2026-05-03' }),
+      ],
+    });
+    // 체크인한 날과 이어 묵는 날 모두 나오고, 체크아웃하는 날에는 빠진다.
+    expect(dayStays(t, '2026-05-01').map((s) => s.id)).toEqual(['h1']);
+    expect(dayStays(t, '2026-05-02').map((s) => s.id)).toEqual(['h1']);
+    expect(dayStays(t, '2026-05-03')).toEqual([]);
+  });
+
+  it('daySegments: 이어 묵는 날의 숙소는 장소 뒤 맨 끝에 선다', () => {
+    const t = createTrip({
+      startDate: '2026-05-01',
+      endDate: '2026-05-03',
+      stops: [createStop({ id: 's1', name: '안목해변', date: '2026-05-02', order: 0 })],
+      stays: [
+        // 체크인한 날에는 맨 앞에 두었지만, 이어 묵는 날에는 그 자리를 쓰지 않는다.
+        createStay({
+          id: 'h1',
+          name: '강릉 호텔',
+          checkIn: '2026-05-01',
+          checkOut: '2026-05-03',
+          dayOrder: 0,
+        }),
+      ],
+    });
+    const segs = daySegments(t, '2026-05-02');
+    expect(segs.filter((s) => s.type !== 'leg').map((s) => s.type)).toEqual(['stop', 'stay']);
+  });
+
+  it('moveStop: 이어 묵는 날에서 장소를 옮겨도 체크인한 날의 숙소 자리는 그대로다', () => {
+    const t = createTrip({
+      startDate: '2026-05-01',
+      endDate: '2026-05-03',
+      stops: [
+        createStop({ id: 'a', name: '카페', date: '2026-05-02', order: 0 }),
+        createStop({ id: 'b', name: '해변', date: '2026-05-02', order: 1 }),
+      ],
+      stays: [
+        createStay({
+          id: 'h1',
+          name: '강릉 호텔',
+          checkIn: '2026-05-01',
+          checkOut: '2026-05-03',
+          dayOrder: 0,
+        }),
+      ],
+    });
+    const moved = moveStop(t, 'b', 'up');
+    expect(moved.stays[0].dayOrder).toBe(0);
   });
 
   it('fixedTimeConflicts: 앞 항목의 고정 시각이 뒤 항목보다 늦으면 충돌', () => {

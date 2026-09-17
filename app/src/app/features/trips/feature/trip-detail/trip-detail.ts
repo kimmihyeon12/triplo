@@ -41,6 +41,7 @@ import {
   type TripStop,
 } from '../../model/trip';
 import { buildOverview } from '../../util/overview';
+import { kindTone } from '../../util/kind-tone';
 import { dayStayInfo, removeStay } from '../../util/stays';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
@@ -96,6 +97,8 @@ export class TripDetailPage {
     })),
   );
   readonly kindLabel = STOP_KIND_LABEL;
+  /** 분류 배지 색. 순번 원이 모두 같은 색이라 종류는 이 배지가 알린다. */
+  readonly kindTone = kindTone;
 
   readonly trip = computed<Trip | null>(() =>
     this.store.current()?.id === this.id() ? this.store.current() : null,
@@ -262,10 +265,6 @@ export class TripDetailPage {
           : 'cell--ghost';
   }
 
-  regionName(id: string | null): string | null {
-    return this.trip()?.regions.find((r) => r.id === id)?.name ?? null;
-  }
-
   segKey(seg: DaySegment, i: number): string {
     if (seg.type === 'stop') return 'stop:' + seg.stop.id;
     if (seg.type === 'stay') return 'stay:' + seg.stay.id;
@@ -288,6 +287,14 @@ export class TripDetailPage {
     return this.segments()
       .slice(0, idx + 1)
       .filter((s) => s.type === 'stay' || (s.type === 'stop' && !s.stop.excluded)).length;
+  }
+
+  /**
+   * 어제부터 이어 묵는 날인지. 체크인하는 날이 아니라는 뜻이다.
+   * 이런 날의 숙소는 목록 맨 끝에 서고 자리를 옮길 수 없다.
+   */
+  isContinuedStay(stay: { checkIn: string }): boolean {
+    return stay.checkIn !== this.selectedDay();
   }
 
   isFirst(idx: number): boolean {
