@@ -1,0 +1,281 @@
+<div
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  [attr.aria-busy]="auth.loading() || auth.busy()"
+>
+  @if (auth.error()) {
+    <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
+  }
+
+  <!--
+    탈퇴 결과는 계정 정보 바깥에 둔다. 탈퇴에 성공하면 user가 사라지므로,
+    안쪽에 두면 알릴 내용이 함께 사라져 정말 지워졌는지 알 수 없다.
+  -->
+  @if (auth.deleted()) {
+    <div appNotice role="status" data-testid="account-deleted">
+      회원탈퇴가 완료되었습니다. 이 기기에 저장된 여행은 그대로 남아 있습니다.
+    </div>
+    <a appButton routerLink="/login" class="w-full">로그인 화면으로</a>
+  }
+
+  @if (settling()) {
+    <!-- 로그인 확인 중에는 본문을 감춘다. 계정 정보가 한 순간 스쳐 보이면 안 된다. -->
+    <div
+      class="flex flex-1 items-center justify-center py-16"
+      role="status"
+      aria-label="로그인 상태 확인 중"
+      data-testid="account-settling"
+    >
+      <app-spinner />
+    </div>
+  } @else if (displayedUser(); as user) {
+    <!--
+      계정 정보. data-testid는 로그인 화면에서 쓰던 이름을 그대로 옮겼다.
+      화면을 나눈 것이지 동작을 바꾼 것이 아니므로 기존 검사가 그대로 돈다.
+    -->
+    <section
+      aria-label="로그인한 계정"
+      class="account rounded-panel bg-panel shadow-panel"
+      data-testid="login-account"
+    >
+      @if (editing()) {
+        <form class="flex flex-col gap-3 p-4" (submit)="saveNickname($event)" novalidate>
+          <app-field label="닉네임" inputId="account-nickname" hint="2~20자로 입력해주세요.">
+            <input
+              appInput
+              id="account-nickname"
+              #nicknameInput
+              [value]="draftNickname()"
+              (input)="draftNickname.set(nicknameInput.value)"
+              name="nickname"
+              autocomplete="nickname"
+              aria-describedby="account-nickname-hint"
+              [disabled]="auth.busy()"
+              data-testid="nickname-input"
+            />
+          </app-field>
+          <div class="flex gap-2">
+            <button
+              appButton
+              type="button"
+              class="flex-1"
+              (click)="cancelEdit()"
+              [disabled]="auth.busy()"
+            >
+              취소
+            </button>
+            <button
+              appButton
+              type="submit"
+              variant="primary"
+              class="flex-1"
+              [disabled]="!canSaveNickname()"
+              [loading]="auth.activity() === 'profile'"
+              data-testid="nickname-save"
+            >
+              저장
+            </button>
+          </div>
+        </form>
+      } @else {
+        <div class="flex items-center gap-3 p-4">
+          <span
+            class="flex size-13 flex-none items-center justify-center rounded-full bg-accent-tint text-20 font-bold text-accent-deep"
+            aria-hidden="true"
+            >{{ (auth.nickname() || '나').slice(0, 1) }}</span
+          >
+          <div class="min-w-0 flex-1">
+            <strong class="block truncate text-16 font-bold">{{
+              auth.nickname() || '여행친구 · 미리보기'
+            }}</strong>
+            <p class="truncate text-12 text-ink-3">{{ user.email || '소셜 계정' }}</p>
+          </div>
+          <button
+            appButton
+            variant="icon"
+            type="button"
+            class="flex-none"
+            (click)="startEdit()"
+            aria-label="닉네임 고치기"
+            data-testid="nickname-edit"
+          >
+            <app-icon name="edit" [size]="18" />
+          </button>
+        </div>
+      }
+    </section>
+
+    <!--
+      아직 기기 저장이라는 사실을 알린다. 계정으로 로그인했으니 어디서든
+      보일 것이라 여기기 쉬운데, 그렇지 않다. 서버 저장이 붙으면 지운다.
+    -->
+    <p
+      class="px-1 text-12 leading-relaxed text-ink-3"
+      data-testid="login-storage-notice"
+    >
+      여행은 아직 이 기기에만 저장되며, 계정별 저장·다른 기기와 동기화는 준비 중입니다.
+    </p>
+
+    <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">소식</p>
+    <nav class="rounded-panel bg-panel shadow-panel" aria-label="소식">
+      <a
+        class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"
+        routerLink="/account/notices"
+        data-testid="go-notices"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="megaphone" [size]="18" /></span>
+        <span class="flex-1">공지사항</span>
+        @if (unreadNotices() > 0) {
+          <span class="flex items-center gap-1.5 text-12 text-ink-3">
+            <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
+            새 소식 {{ unreadNotices() }}
+          </span>
+        }
+        <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+      </a>
+      <a
+        class="flex min-h-12 items-center gap-3 px-4 py-3 text-14 text-ink no-underline"
+        routerLink="/account/inquiries"
+        data-testid="go-inquiries"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="mail" [size]="18" /></span>
+        <span class="flex-1">문의하기</span>
+        @if (unreadReplies() > 0) {
+          <span class="text-12 text-ink-3">답변 {{ unreadReplies() }}</span>
+        }
+        <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+      </a>
+    </nav>
+
+    <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">설정</p>
+    <div class="rounded-panel bg-panel shadow-panel">
+      <!--
+        알림은 화면을 옮기지 않고 그 자리에서 켜고 끈다. 스위치 하나를 위해
+        화면을 하나 더 두면 누르는 횟수만 늘어난다.
+      -->
+      <button
+        type="button"
+        class="flex min-h-12 w-full items-center gap-3 border-b border-border bg-transparent px-4 py-3 text-left text-14"
+        role="switch"
+        [attr.aria-checked]="notificationsOn()"
+        (click)="toggleNotifications()"
+        data-testid="toggle-notifications"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="bell" [size]="18" /></span>
+        <span class="flex-1">알림</span>
+        <!-- 줄 전체가 버튼이므로 스위치는 표시만 맡는다. -->
+        <app-switch [checked]="notificationsOn()" presentational />
+      </button>
+      <a
+        class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"
+        routerLink="/account/privacy"
+        data-testid="go-privacy"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="document" [size]="18" /></span>
+        <span class="flex-1">개인정보 처리방침</span>
+        <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+      </a>
+      <a
+        class="flex min-h-12 items-center gap-3 px-4 py-3 text-14 text-ink no-underline"
+        routerLink="/account/terms"
+        data-testid="go-terms"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="document" [size]="18" /></span>
+        <span class="flex-1">이용약관</span>
+        <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+      </a>
+    </div>
+
+    <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">계정</p>
+    <div class="rounded-panel bg-panel shadow-panel">
+      <div class="flex min-h-12 items-center gap-3 px-4 py-3 text-14">
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="lock" [size]="18" /></span>
+        <span class="flex-1">로그인 방식</span>
+        <span class="text-13 text-ink-3">{{
+          user.app_metadata['provider'] === 'kakao' ? '카카오' : 'Google'
+        }}</span>
+      </div>
+    </div>
+
+    <button
+      appButton
+      type="button"
+      class="mt-1 w-full"
+      (click)="auth.signOut()"
+      [disabled]="!auth.available() || !auth.user()"
+      [attr.aria-busy]="auth.activity() === 'logout'"
+      data-testid="logout"
+    >
+      @if (auth.activity() === 'logout') {
+        <app-spinner />
+      }
+      로그아웃
+    </button>
+
+    <!--
+      로그아웃과 같은 생김새로 둔다. 다른 것은 글자색뿐이다. 되돌릴 수 없는
+      동작임을 색으로 알리되, 누르는 즉시 지우지 않고 확인을 한 번 받는다.
+    -->
+    <button
+      appButton
+      variant="danger"
+      type="button"
+      class="w-full"
+      (click)="toggleLeaving()"
+      [attr.aria-expanded]="leaving()"
+      data-testid="open-delete"
+    >
+      회원탈퇴
+    </button>
+
+    @if (leaving()) {
+      <div class="rounded-panel bg-panel p-4 shadow-panel">
+        <p class="mb-3 text-12 leading-normal text-ink-2">
+          탈퇴하면 이 서비스의 계정이 삭제되며 되돌릴 수 없습니다. Google·카카오 계정과 이 기기에
+          저장된 여행은 삭제되지 않습니다.
+        </p>
+        @if (auth.deletionEnabled()) {
+          <label class="mb-2 block text-13" for="delete-confirmation"
+            >계정을 삭제하려면 ‘탈퇴’를 입력하세요.</label
+          >
+          <input
+            class="mb-3 w-full"
+            appInput
+            id="delete-confirmation"
+            #confirmationInput
+            [value]="confirmation()"
+            (input)="confirmation.set(confirmationInput.value)"
+            autocomplete="off"
+            [disabled]="auth.busy()"
+          />
+          <button
+            appButton
+            variant="danger"
+            type="button"
+            class="w-full"
+            (click)="auth.deleteAccount(confirmation())"
+            [disabled]="!auth.available() || confirmation() !== '탈퇴'"
+            [attr.aria-busy]="auth.activity() === 'delete'"
+            data-testid="delete-account"
+          >
+            @if (auth.activity() === 'delete') {
+              <app-spinner />
+            }
+            계정 영구 삭제
+          </button>
+        } @else {
+          <p class="text-12 leading-normal text-ink-3">
+            회원탈퇴 서버를 준비 중입니다. 연결 후 이곳에서 탈퇴할 수 있습니다.
+          </p>
+        }
+      </div>
+    }
+
+    <p class="pt-2 text-center text-12 text-ink-3" data-testid="app-version">
+      버전 {{ version.name }}
+    </p>
+  }
+
+  @if (!auth.available() && !auth.loading() && !auth.busy()) {
+    <button appButton type="button" class="w-full" (click)="reload()">다시 시도</button>
+  }
+</div>

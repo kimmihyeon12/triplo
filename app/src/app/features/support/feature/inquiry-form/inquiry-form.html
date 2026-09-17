@@ -1,0 +1,72 @@
+<form
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-5 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  (submit)="send($event)"
+  [attr.aria-busy]="sending()"
+  novalidate
+>
+  <fieldset class="m-0 border-0 p-0">
+    <legend class="mb-2 p-0 text-13 font-bold">어떤 문의인가요?</legend>
+    <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="문의 종류">
+      @for (k of kinds; track k) {
+        <button
+          type="button"
+          role="radio"
+          [attr.aria-checked]="kind() === k"
+          class="min-h-11 rounded-control border bg-panel text-13 [transition:border-color_var(--dur)_var(--ease-out)]"
+          [class.border-accent]="kind() === k"
+          [class.bg-accent-tint]="kind() === k"
+          [class.text-accent-deep]="kind() === k"
+          [class.font-bold]="kind() === k"
+          [class.border-border]="kind() !== k"
+          (click)="pick(k)"
+          [attr.data-testid]="'kind-' + k"
+        >
+          {{ kindLabel[k] }}
+        </button>
+      }
+    </div>
+  </fieldset>
+
+  <div>
+    <label class="mb-2 block text-13 font-bold" for="inquiry-body">문의 내용</label>
+    <textarea
+      appInput
+      id="inquiry-body"
+      #bodyInput
+      class="min-h-40 w-full resize-y py-3"
+      [value]="body()"
+      (input)="body.set(bodyInput.value)"
+      [attr.maxlength]="bodyMax"
+      placeholder="무엇이 불편하셨는지 알려주세요."
+      [disabled]="sending()"
+      data-testid="inquiry-body"
+    ></textarea>
+    <p class="mt-1.5 text-right text-12 text-hint [font-variant-numeric:tabular-nums]">
+      {{ body().length }} / {{ bodyMax }}
+    </p>
+  </div>
+
+  <!--
+    무엇이 함께 가는지 미리 알린다. 오류 신고에서 기기를 다시 묻지 않으려고
+    버전과 기기 정보를 붙이는데, 말없이 보내면 놀랄 수 있다.
+  -->
+  <p class="rounded-panel bg-panel px-4 py-3 text-12 leading-relaxed text-ink-3 shadow-panel">
+    답변은 문의하기 목록에서 확인할 수 있어요. 앱 버전과 기기 정보가 함께 전달됩니다.
+  </p>
+
+  <div appActionBar class="action-bar">
+    <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
+      <button
+        appButton
+        type="submit"
+        variant="primary"
+        class="btn"
+        [disabled]="!canSend()"
+        [loading]="sending()"
+        data-testid="inquiry-send"
+      >
+        보내기
+      </button>
+    </div>
+  </div>
+</form>

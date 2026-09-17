@@ -1,0 +1,16 @@
+<div
+  class="page mx-auto my-0 max-w-105 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  <article class="rounded-panel bg-panel p-5 shadow-panel">
+    <p class="mb-5 text-12 text-hint">{{ doc().updatedAt }} 기준</p>
+
+    @for (section of doc().sections; track section.heading) {
+      <section class="mb-6 last:mb-0">
+        <h2 class="mb-2 text-14 font-bold">{{ section.heading }}</h2>
+        @for (paragraph of section.paragraphs; track paragraph) {
+          <p class="mb-2 text-13 leading-relaxed text-ink-2 last:mb-0">{{ paragraph }}</p>
+        }
+      </section>
+    }
+  </article>
+</div>
