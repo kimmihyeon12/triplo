@@ -1,7 +1,13 @@
-import { DOCUMENT } from '@angular/common';
 import { environment } from '../../../../../environments/environment';
 import { RouterLink } from '@angular/router';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  DOCUMENT,
+  inject,
+  signal,
+} from '@angular/core';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
