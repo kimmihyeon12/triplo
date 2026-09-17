@@ -31,8 +31,8 @@ test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () =
     );
     await page.getByTestId('stop-save').click();
 
-    // 카드에 위치 확인됨, 지도에 마커 1개(안내선 없음)
-    await expect(page.getByTestId('day-items')).toContainText('위치 확인됨');
+    // 위치를 확인했으면 경고를 붙이지 않는다. 지도에 마커 1개(안내선 없음)
+    await expect(page.getByTestId('day-items')).not.toContainText('위치 미확인');
     await expect(page.getByTestId('trip-map')).toHaveAttribute('data-state', 'ready');
     await expect(
       page.getByTestId('map-marker-' + (await stopIdByName(page, '안목해변'))),
@@ -114,7 +114,7 @@ test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () =
 
     // 숙소 탭에는 지도를 두지 않는다. 위치는 일정 탭 지도와 카드의 지도 링크가 맡는다.
     await expect(page.getByTestId('panel-stays')).toBeVisible();
-    await expect(page.getByTestId('stay-list')).toContainText('위치 확인됨');
+    await expect(page.getByTestId('stay-list')).not.toContainText('위치 미확인');
     await expect(page.getByTestId('fixture-map')).toHaveCount(0);
 
     await page.getByTestId('tab-days').click();

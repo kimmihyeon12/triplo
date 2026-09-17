@@ -40,6 +40,8 @@ export async function resetApp(page: Page): Promise<void> {
       localStorage.removeItem(flag);
       localStorage.removeItem('tc.test.mapFail');
       localStorage.removeItem('tc.test.mapDelayMs');
+      localStorage.removeItem('tc.test.aiFail');
+      localStorage.removeItem('tc.test.aiDelayMs');
     },
     [STORAGE_KEY, FAIL_FLAG],
   );
@@ -88,8 +90,10 @@ export async function addStop(page: Page, tripId: string, input: StopInput): Pro
   await expect(page.getByTestId('stop-name')).toBeVisible();
   if (input.kind) await page.getByRole('radio', { name: kindLabel(input.kind) }).check();
   await page.getByTestId('stop-name').fill(input.name);
-  if (input.address) await page.getByTestId('stop-address').fill(input.address);
-  if (input.region) await page.getByTestId('stop-region').selectOption({ label: input.region });
+  // 지역은 고르지 않고 주소에서 정해진다. region을 넘기면 주소에 지역명을 담아
+  // 실제 검색 결과와 같은 모양으로 만든다.
+  const stopAddress = input.address ?? (input.region ? `강원 ${input.region}시 어딘가` : '');
+  if (stopAddress) await page.getByTestId('stop-address').fill(stopAddress);
   if (input.date) await page.getByTestId('stop-date').selectOption(input.date);
   if (input.stayMinutes !== undefined)
     await page.getByTestId('stop-stay').fill(String(input.stayMinutes));
@@ -113,8 +117,9 @@ export async function addStay(page: Page, tripId: string, input: StayInput): Pro
   await page.goto(`/trips/${tripId}/stays/new`);
   await expect(page.getByTestId('stay-name')).toBeVisible();
   await page.getByTestId('stay-name').fill(input.name);
-  if (input.address) await page.getByTestId('stay-address').fill(input.address);
-  if (input.region) await page.getByTestId('stay-region').selectOption({ label: input.region });
+  // 지역은 고르지 않고 주소에서 정해진다. region을 넘기면 주소에 지역명을 담는다.
+  const stayAddress = input.address ?? (input.region ? `강원 ${input.region}시 어딘가` : '');
+  if (stayAddress) await page.getByTestId('stay-address').fill(stayAddress);
   await page.getByTestId('stay-checkin').fill(input.checkIn);
   await page.getByTestId('stay-checkout').fill(input.checkOut);
   if (input.checkInTime) await page.getByTestId('stay-checkin-time').fill(input.checkInTime);
