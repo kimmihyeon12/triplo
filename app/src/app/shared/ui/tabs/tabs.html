@@ -1,3 +1,8 @@
+<!--
+  탭은 같은 화면 안에서 보는 자리를 바꾼다. 방문 기록을 쌓으면 뒤로가기가
+  화면을 나가지 못하고 이전 탭으로만 되돌아가, 상단 바의 ‹ 뒤로 가기와
+  제스처 뒤로가기가 서로 다르게 동작한다. 그래서 주소만 바꿔 치운다.
+-->
 <nav class="tabs flex min-w-0 flex-1 gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
   @for (t of items(); track t.id; let i = $index) {
     @if (t.queryParams) {
@@ -11,6 +16,7 @@
         [routerLink]="[]"
         [queryParams]="t.queryParams"
         queryParamsHandling="merge"
+        replaceUrl
         [attr.data-testid]="t.testId || 'tab-' + t.id"
         (keydown)="onKeydown($event, i)"
       >
