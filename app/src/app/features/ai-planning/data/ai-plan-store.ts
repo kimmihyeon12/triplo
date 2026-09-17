@@ -3,7 +3,7 @@ import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
 import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regions';
 import { PLACE_SEARCH } from '../../places/data/place-search';
-import { verifyPlaces } from '../util/verify-places';
+import { verifyPlaces } from './verify-places';
 import {
   type Phase,
   type AiPlanSelection,

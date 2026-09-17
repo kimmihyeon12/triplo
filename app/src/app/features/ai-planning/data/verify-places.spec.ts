@@ -2,7 +2,7 @@ import { expect, it, describe, vi } from 'vitest';
 import type { PlaceCandidate } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
 import { verifyPlaces } from './verify-places';
-import type { AiItem } from './ai-response';
+import type { AiItem } from '../util/ai-response';
 
 function candidate(partial: Partial<PlaceCandidate> & { name: string }): PlaceCandidate {
   return {
@@ -180,6 +180,59 @@ describe('verifyPlaces', () => {
       search,
     );
     expect(found!.verified).toBe(true);
+  });
+
+  it('정확히 같은 이름이 뒤에 있으면 그것을 고른다', async () => {
+    // 검색은 '롯데월드'에 주차장을 먼저 내놓기도 한다. 부분만 겹치는 후보를
+    // 집으면 이름은 롯데월드인데 좌표만 주차장이 되어 사용자가 알 수 없다.
+    const search = fakeSearch({
+      서울: [
+        candidate({ name: '롯데월드 주차장', id: 'p1', category: '주차장' }),
+        candidate({ name: '롯데월드', id: 'p2', category: '관광명소' }),
+      ],
+    });
+    const [found] = await verifyPlaces([{ day: 1, name: '롯데월드', kind: 'place' }], ['서울'], search);
+    expect(found!.placeRef?.id).toBe('p2');
+  });
+
+  it('부속 시설만 있으면 확정하지 않는다', async () => {
+    // 주차장·매표소는 그 장소가 아니다. 좌표를 잘못 잡느니 직접 확인하게 둔다.
+    const search = fakeSearch({
+      서울: [candidate({ name: '롯데월드 주차장', category: '주차장' })],
+    });
+    const [found] = await verifyPlaces([{ day: 1, name: '롯데월드', kind: 'place' }], ['서울'], search);
+    expect(found!.verified).toBe(false);
+  });
+
+  it('지점명이 붙은 가게는 같은 곳으로 본다', async () => {
+    // '스타벅스 강릉안목항점'은 스타벅스를 찾을 때 맞는 답이다.
+    const search = fakeSearch({
+      강릉: [candidate({ name: '스타벅스 강릉안목항점', category: '카페' })],
+    });
+    const [found] = await verifyPlaces([{ day: 1, name: '스타벅스', kind: 'break' }], ['강릉'], search);
+    expect(found!.verified).toBe(true);
+  });
+
+  it('첫 지역에서 못 찾으면 나머지 지역도 찾아본다', async () => {
+    // 지역을 첫 번째 것으로 고정하면 '강릉 속초관광수산시장'만 찾고 끝나
+    // 속초 장소를 영영 확인하지 못한다.
+    const search = fakeSearch({});
+    const spy = vi.spyOn(search, 'search');
+    await verifyPlaces(
+      [{ day: 2, name: '속초관광수산시장', kind: 'place' }],
+      ['강릉', '속초'],
+      search,
+    );
+    const queries = spy.mock.calls.map((c) => c[0]);
+    expect(queries).toContain('속초 속초관광수산시장');
+  });
+
+  it('첫 지역에서 찾으면 나머지 지역은 찾지 않는다', async () => {
+    // 이미 맞는 것을 찾았는데 더 뒤지면 검색 횟수만 늘고 결과는 같다.
+    const search = fakeSearch({ 강릉: [candidate({ name: '경포해변' })] });
+    const spy = vi.spyOn(search, 'search');
+    await verifyPlaces([{ day: 1, name: '경포해변', kind: 'place' }], ['강릉', '속초'], search);
+    expect(spy).toHaveBeenCalledTimes(1);
   });
 
   it('카테고리가 없으면 확인됨이어도 설명을 비운다', async () => {
