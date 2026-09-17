@@ -11,6 +11,8 @@ app/test-results/
 .impeccable/review/
 app/public/app-config.json
 app/public/supabase-config.json
+# Supabase CLI가 만드는 로컬 상태(연결한 프로젝트 ref 등)
+supabase/.temp/
 .superpowers/
 .playwright-cli/
 output/
