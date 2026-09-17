@@ -85,9 +85,14 @@ export class FixturePlaceSearch implements PlaceSearchProvider {
     }
     const q = query.trim();
     if (q === '') return { candidates: [], total: 0 };
-    const hit = FIXTURE_PLACES.filter(
-      (p) => p.name.includes(q) || p.address.includes(q) || p.roadAddress.includes(q),
-    );
+    // 실제 검색은 '강릉 안목해변'처럼 지역이 앞에 붙어도 찾는다. 검색어 전체로 먼저
+    // 맞춰 보고, 없으면 마지막 낱말(장소 이름 자리)로 다시 찾는다.
+    const words = q.split(/\s+/).filter(Boolean);
+    const match = (needle: string) =>
+      FIXTURE_PLACES.filter(
+        (p) => p.name.includes(needle) || p.address.includes(needle) || p.roadAddress.includes(needle),
+      );
+    const hit = match(q).length ? match(q) : match(words[words.length - 1] ?? q);
     return { candidates: hit, total: hit.length };
   }
 }

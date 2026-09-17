@@ -1,4 +1,5 @@
 {
   "_설명": "이 파일을 같은 폴더에 app-config.json 이름으로 복사한 뒤 값을 채우세요. app-config.json은 git에 올리지 않습니다.",
-  "kakaoJsKey": "여기에 카카오 디벨로퍼스 JavaScript 키를 넣으세요"
+  "kakaoJsKey": "여기에 카카오 디벨로퍼스 JavaScript 키를 넣으세요",
+  "_ai설명": "AI 일정 만들기의 모델 키는 여기에 두지 않습니다. Supabase Edge Function의 비밀값으로 등록합니다. docs/AI-PLANNING.md를 보세요."
 }

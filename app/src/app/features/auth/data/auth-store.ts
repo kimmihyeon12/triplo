@@ -240,6 +240,24 @@ export class AuthStore {
     }
   }
 
+  /**
+   * Edge Function을 부른다. 로그인 토큰은 클라이언트가 알아서 실어 보낸다.
+   * 서버가 돌려준 오류 코드를 그대로 던져 부르는 쪽이 사정을 구분하게 한다.
+   */
+  async callFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
+    if (!this.client) throw new Error('server_unavailable');
+    const { data, error } = await this.client.functions.invoke(name, { body });
+    if (!error) return data as T;
+    // 상태 코드가 400대·500대면 응답 본문에 우리가 정한 코드가 들어 있다.
+    // 그것을 꺼내 던져야 '하루 한도'와 '그 밖의 실패'를 나눌 수 있다.
+    const response = (error as { context?: Response }).context;
+    if (response instanceof Response) {
+      const parsed = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (parsed?.error) throw new Error(parsed.error);
+    }
+    throw new Error('function_failed');
+  }
+
   async deleteAccount(confirmation: string): Promise<boolean> {
     if (
       !this.available() ||

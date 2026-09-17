@@ -28,6 +28,9 @@ import { KakaoPlaceSearch } from './features/places/data/kakao/kakao-place-searc
 import { MapConfig } from './features/places/data/map-config';
 import { MAP_PROVIDER } from './features/places/data/map-provider';
 import { PLACE_SEARCH } from './features/places/data/place-search';
+import { AI_PLAN_PROVIDER } from './features/ai-planning/data/ai-plan-provider';
+import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
+import { FixtureAiProvider } from './features/ai-planning/data/fixture-ai-provider';
 
 /** 브라우저가 localStorage 접근을 막으면 예외 대신 실패 상태로 이어지도록 감싼다. */
 class SafeLocalStorage implements KeyValueStorage {
@@ -90,6 +93,8 @@ export const appConfig: ApplicationConfig = {
     // 지도 표시와 장소 검색은 별개 어댑터다. 테스트 앱은 외부 호출 없는 픽스처를 쓴다.
     { provide: MAP_PROVIDER, useExisting: useFixture ? FixtureMapProvider : KakaoMapProvider },
     { provide: PLACE_SEARCH, useExisting: useFixture ? FixturePlaceSearch : KakaoPlaceSearch },
+    // AI 일정은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.
+    { provide: AI_PLAN_PROVIDER, useExisting: useFixture ? FixtureAiProvider : EdgeAiProvider },
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && !environment.isTest,
