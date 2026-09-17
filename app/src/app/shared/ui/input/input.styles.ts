@@ -1,4 +1,10 @@
-/** Shared Tailwind recipe; String.raw preserves escaped selector underscores. */
+/**
+ * Shared Tailwind recipe; String.raw preserves escaped selector underscores.
+ *
+ * range-date(기간 칸 안에 나란히 놓는 날짜 입력)의 여백·테두리는 type을
+ * 가리지 않는다. iOS에서는 자체 달력을 쓰려고 이 칸을 text로 바꾸는데,
+ * [type='date']에만 걸면 그때 기본 px-3이 남아 시작일만 안쪽으로 밀린다.
+ */
 export const INPUT_CLASSES = String.raw`
   [&.input]:h-11 [&.select]:h-11 [&.input[type='date']]:min-w-0 [&.input[type='time']]:min-w-0
   [&.input]:w-full [&.input]:min-h-11 [&.input]:border [&.input]:border-border
@@ -57,7 +63,8 @@ export const INPUT_CLASSES = String.raw`
   [&.input::-webkit-calendar-picker-indicator]:hidden
   [&.input::-webkit-calendar-picker-indicator]:opacity-0 [&.input::-webkit-calendar-picker-indicator]:pointer-events-none
   [&.input.range-date]:border-0 [&.input.range-date]:rounded-none [&.input.range-date]:bg-transparent
-  [&.input.range-date[type='date']]:bg-none [&.input.range-date[type='date']]:px-0 [&.input.range-date[type='date']]:pr-0 [&.input.range-date]:text-14
+  [&.input.range-date[type='date']]:bg-none [&.input.range-date]:text-14
+  [&.input.range-date]:px-0 [&.input.range-date]:pr-0
   [&.input.range-date[type='date']]:appearance-none [&.input.range-date[type='date']]:[-webkit-appearance:none]
   [&.input.range-date:hover]:bg-transparent [&.input.range-date:focus-visible]:bg-transparent
   [&.input.range-date::-webkit-calendar-picker-indicator]:opacity-0 [&.input.range-date::-webkit-calendar-picker-indicator]:pointer-events-none

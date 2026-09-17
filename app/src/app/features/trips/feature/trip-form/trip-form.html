@@ -43,6 +43,10 @@
           data-testid="trip-period-input"
         >
           <label class="sr-only" for="start">시작일</label>
+          <!--
+            iOS는 이 칸을 text로 바꿔 자체 달력을 열기 때문에 placeholder가 보인다.
+            네이티브 날짜 입력을 쓰는 환경은 브라우저 표기를 그대로 둔다.
+          -->
           <input
             #startInput
             appInput
@@ -51,6 +55,7 @@
             class="range-date min-w-0 flex-1"
             data-range-start="start"
             data-range-end="end"
+            placeholder="시작일"
             [ngModel]="startDate()"
             (ngModelChange)="startDate.set($event)"
             name="start"
@@ -66,6 +71,7 @@
             class="range-date min-w-0 flex-1"
             data-range-start="start"
             data-range-end="end"
+            placeholder="종료일"
             [ngModel]="endDate()"
             (ngModelChange)="endDate.set($event)"
             name="end"
