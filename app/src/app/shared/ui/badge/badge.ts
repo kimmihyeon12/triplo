@@ -1,4 +1,5 @@
 import { BADGE_CLASSES } from './badge.styles';
+import type { BadgeTone } from '../../util/badge-tone';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
@@ -23,15 +24,3 @@ export class UiBadge {
   readonly classes = BADGE_CLASSES;
   readonly tone = input<BadgeTone | null>(null);
 }
-
-export type BadgeTone =
-  | 'accent'
-  | 'place'
-  | 'region'
-  | 'stay'
-  | 'warn'
-  | 'danger'
-  | 'ok'
-  | 'meal'
-  | 'cafe'
-  | 'neutral';

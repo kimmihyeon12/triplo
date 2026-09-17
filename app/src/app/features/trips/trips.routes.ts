@@ -28,14 +28,16 @@ export const TRIPS_ROUTES: Routes = [
     loadComponent: () =>
       import('./feature/trip-workspace/trip-workspace').then((m) => m.TripWorkspace),
     children: [
+      // 다른 기능의 화면은 그 기능이 공개한 경로로 붙인다. 내부 파일을 직접
+      // 가리키면 그쪽 폴더를 정리할 때마다 여기까지 고쳐야 한다.
       {
         path: 'expenses',
-        loadComponent: () =>
-          import('../expenses/feature/expenses/expenses').then((m) => m.Expenses),
+        loadChildren: () => import('../expenses/expenses.routes').then((m) => m.EXPENSES_ROUTES),
       },
       {
         path: 'invite',
-        loadComponent: () => import('../collaboration/feature/invite/invite').then((m) => m.Invite),
+        loadChildren: () =>
+          import('../collaboration/collaboration.routes').then((m) => m.INVITE_ROUTES),
       },
       {
         path: 'export',

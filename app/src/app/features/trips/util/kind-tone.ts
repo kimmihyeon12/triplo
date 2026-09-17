@@ -1,4 +1,4 @@
-import type { BadgeTone } from '../../../shared/ui/badge/badge';
+import type { BadgeTone } from '../../../shared/util/badge-tone';
 import type { StopKind } from '../model/trip';
 
 /**
