@@ -47,9 +47,18 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 형식은 `v<major>.<minor>.<patch>`다. 내부 알파 동안은 `major`를 0으로 두고, 화면이나 사용 흐름이 눈에 띄게 달라지면 `minor`를, 고치기만 했으면 `patch`를 올린다.
 
 ```bash
+# 1. 태그를 붙이고
 git tag -a v0.1.0 -m "무엇이 바뀌었는지 한 줄"
-git push origin v0.1.0
+
+# 2. 같은 값을 파일에도 적는다
+echo v0.1.0 > app/RELEASE
+git add app/RELEASE && git commit -m "chore: 배포 태그를 v0.1.0으로 적는다"
+
+# 3. 밀어 올린다
+git push origin master && git push origin v0.1.0
 ```
+
+`app/RELEASE`에 같은 값을 적는 이유가 있다. **Cloudflare는 저장소를 얕게 복제해 태그를 받아오지 않는다.** 2026-09-17 v0.1.0 배포에서 확인했다. 빌드 환경에서 `git describe`가 빈 값을 돌려주어 버전 자리에 커밋 해시만 나왔다. 스크립트는 git에서 태그를 못 읽으면 이 파일을 읽는다.
 
 앱은 이 태그를 내 정보 화면 아래에 표시한다. 값은 배포 빌드가 `app/scripts/write-version.mjs`로 만들며, `app/src/app/core/version.ts`의 값은 스크립트를 돌리지 않았을 때 쓰는 개발용 기본값이다.
 
