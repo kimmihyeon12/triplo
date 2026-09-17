@@ -502,16 +502,20 @@
                     위아래 여백을 0으로 만들면 글자가 위로 붙어 화살표와 높이가
                     어긋나므로, 여백 대신 content-center로 세로 가운데를 맞춘다.
                   -->
+                  <!--
+                    선택값은 option의 selected로 정한다. select의 [value]는 option이
+                    그려지기 전에 설정되어 반영되지 않으며, 그러면 몇 일차든 첫
+                    항목인 1일차만 보인다.
+                  -->
                   <select
                     appInput
-                    class="select ml-auto h-9! min-h-9! w-auto! content-center py-0! pr-7! pl-2.5! text-13! [background-position:right_8px_center]!"
+                    class="select ml-auto h-9! min-h-9! w-auto! content-center bg-position-[right_8px_center]! py-0! pr-7! pl-2.5! text-13!"
                     [id]="'ai-day-' + item.id"
-                    [value]="item.day"
                     (change)="changeDay(item.id, $any($event.target).value)"
                     [attr.data-testid]="'ai-day-' + item.id"
                   >
                     @for (d of dayChoices(); track d) {
-                      <option [value]="d">{{ d }}일차</option>
+                      <option [value]="d" [selected]="d === item.day">{{ d }}일차</option>
                     }
                   </select>
                 }

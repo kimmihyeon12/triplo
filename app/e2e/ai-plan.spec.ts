@@ -144,6 +144,32 @@ test('추천 일차를 바꾸면 그 날짜로 담기고 지도 링크가 붙는
   expect(trips[0]!.stops.find((s) => s.name === '안목해변')?.date).toBe('2026-05-03');
 });
 
+test('일차를 바꾸면 목록이 일차 순으로 다시 늘어선다', async ({ page }) => {
+  await resetApp(page);
+  await fillConditions(page, '2026-05-01', '2026-05-03');
+  await page.getByTestId('ai-generate').click();
+  await expect(page.getByTestId('ai-result')).toBeVisible();
+
+  // 픽스처는 안목해변(1일)·오죽헌(1일)·속초관광수산시장(2일)을 낸다.
+  const days = () => page.locator('[data-testid^="ai-day-"]').evaluateAll((els) =>
+    els.map((e) => Number((e as HTMLSelectElement).value)),
+  );
+  expect(await days()).toEqual([1, 1, 2]);
+
+  // 첫 항목을 3일차로 보내면 그 줄이 맨 뒤로 가야 한다.
+  await page.getByTestId('ai-day-ai-0').selectOption('3');
+  expect(await days()).toEqual([1, 2, 3]);
+
+  // 각 줄의 드롭다운 값이 그 줄의 장소를 따라가야 한다.
+  const rows = await page.locator('.pickrow').evaluateAll((els) =>
+    els.map((e) => ({
+      name: e.querySelector('.item__name')?.textContent?.trim() ?? '',
+      day: Number(e.querySelector('select')?.value ?? 0),
+    })),
+  );
+  expect(rows.find((r) => r.name.includes('안목해변'))?.day).toBe(3);
+});
+
 test('고를 일차가 하나뿐인 당일 여행에서는 일차 선택을 감춘다', async ({ page }) => {
   await resetApp(page);
   await fillConditions(page, '2026-05-01', '2026-05-01');
