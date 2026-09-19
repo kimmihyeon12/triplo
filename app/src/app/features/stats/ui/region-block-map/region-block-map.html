@@ -1,0 +1,65 @@
+<!--
+  블록 하나가 버튼이다. SVG 안에서도 키보드로 고를 수 있어야 하므로
+  role과 tabindex를 직접 단다.
+-->
+<svg
+  class="block-map"
+  [attr.viewBox]="viewBox()"
+  role="group"
+  aria-label="지역별 방문 횟수 지도"
+  data-testid="block-map"
+>
+  @for (block of blocks(); track block.regionCode + '-' + block.labelX + '-' + block.labelY) {
+    <g
+      class="block"
+      [class.block--empty]="block.visitCount === 0"
+      [attr.data-level]="block.level"
+      [attr.data-region]="block.regionCode"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="ariaLabel(block)"
+      (click)="onSelect(block.regionCode)"
+      (keydown.enter)="onSelect(block.regionCode)"
+      (keydown.space)="onSelect(block.regionCode)"
+    >
+      @if (block.left) {
+        <polygon class="block__side block__side--left" [attr.points]="block.left" />
+      }
+      @if (block.right) {
+        <polygon class="block__side block__side--right" [attr.points]="block.right" />
+      }
+      <polygon class="block__top" [attr.points]="block.top" />
+    </g>
+  }
+
+  @for (block of blocks(); track block.regionCode + '-label') {
+    @if (block.isLabel) {
+      <text
+        class="block__label"
+        [attr.x]="block.labelX"
+        [attr.y]="block.labelY"
+        text-anchor="middle"
+        aria-hidden="true"
+      >
+        {{ block.name }}
+      </text>
+    }
+  }
+</svg>
+
+<!--
+  같은 값을 표로도 둔다. 숨은 대체 텍스트만 두면 확인하기 어렵고 쉽게 낡는다.
+  눈에 보이는 목록이면 모두가 같은 것을 본다.
+-->
+<ul class="block-map__list" data-testid="block-map-list">
+  @for (item of visitedList(); track item.regionCode) {
+    <li>
+      <button type="button" (click)="onSelect(item.regionCode)">
+        <span class="block-map__name">{{ item.name }}</span>
+        <span class="block-map__count">{{ item.visitCount }}회</span>
+      </button>
+    </li>
+  } @empty {
+    <li class="block-map__none">아직 방문한 지역이 없습니다.</li>
+  }
+</ul>

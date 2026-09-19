@@ -1,0 +1,197 @@
+:host {
+  display: block;
+  padding: 1rem 1rem 2rem;
+}
+
+.stats__status,
+.stats__none {
+  color: var(--color-hint);
+  font-size: 0.9375rem;
+}
+
+.stats__empty {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.stats__empty-title {
+  margin: 0 0 0.5rem;
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.stats__empty-body {
+  margin: 0 0 1.25rem;
+  color: var(--color-ink-3);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.stats__empty-link {
+  display: inline-block;
+  padding: 0.625rem 1.125rem;
+  border-radius: 999px;
+  background: var(--color-accent-deep);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stats__summary {
+  margin-bottom: 0.75rem;
+}
+
+.stats__count {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.stats__count strong {
+  color: var(--color-region-ink);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats__sub {
+  margin: 0.25rem 0 0;
+  color: var(--color-ink-3);
+  font-size: 0.875rem;
+}
+
+.stats__legend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.stats__legend-label {
+  color: var(--color-hint);
+  font-size: 0.75rem;
+}
+
+.stats__legend-label:first-child {
+  margin-right: 0.25rem;
+}
+
+.stats__legend-label:last-child {
+  margin-left: 0.25rem;
+}
+
+.stats__legend-chip {
+  display: inline-block;
+  width: 1.125rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+/* 지도 블록과 같은 5단계를 쓴다. 두 곳이 어긋나면 범례가 거짓이 된다. */
+.stats__legend-chip[data-level='1'] {
+  background: #d9ead0;
+}
+.stats__legend-chip[data-level='2'] {
+  background: #b6d79f;
+}
+.stats__legend-chip[data-level='3'] {
+  background: #89c06d;
+}
+.stats__legend-chip[data-level='4'] {
+  background: #5da247;
+}
+.stats__legend-chip[data-level='5'] {
+  background: #3f6212;
+}
+
+.stats__note {
+  margin-top: 1rem;
+  color: var(--color-hint);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.stats__back {
+  margin-bottom: 0.75rem;
+  padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-panel);
+  color: var(--color-ink-2);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.stats__back::before {
+  content: '‹';
+  margin-right: 0.25rem;
+}
+
+.stats__back:hover {
+  border-color: var(--color-border-strong);
+}
+
+.stats__region {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1rem 0 0.75rem;
+  color: var(--color-ink);
+  font-size: 1.125rem;
+}
+
+.stats__region-count {
+  color: var(--color-region-ink);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.stats__places {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats__places button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.1875rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.625rem;
+  background: var(--color-panel);
+  text-align: left;
+  cursor: pointer;
+}
+
+.stats__places button:hover {
+  border-color: var(--color-border-strong);
+}
+
+.stats__place-name {
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.stats__place-address {
+  color: var(--color-ink-3);
+  font-size: 0.8125rem;
+}
+
+.stats__place-address--none {
+  color: var(--color-hint);
+  font-style: italic;
+}
+
+.stats__place-meta {
+  color: var(--color-hint);
+  font-size: 0.75rem;
+}

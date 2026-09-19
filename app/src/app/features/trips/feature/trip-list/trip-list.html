@@ -27,6 +27,16 @@
         직접 만들기
       </a>
     </nav>
+
+    <!-- 다녀온 곳이 쌓이는 자리. 날짜가 지난 여행의 장소를 지역별로 모아 본다. -->
+    <a
+      class="flex items-center gap-1.5 self-start text-13 text-ink-3 no-underline hover:text-ink-2"
+      routerLink="/stats"
+      data-testid="go-stats"
+    >
+      <app-icon name="map" [size]="15" />
+      다녀온 곳 지도 보기
+    </a>
   }
 
   @if (store.skippedCount() > 0) {

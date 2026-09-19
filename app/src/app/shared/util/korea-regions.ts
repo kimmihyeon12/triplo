@@ -206,6 +206,11 @@ export function provinceCodeOf(code: string): string {
   return cut === -1 ? code : code.slice(0, cut);
 }
 
+/** 시·도 코드에 붙일 짧은 이름. 지도 라벨과 통계 집계가 같은 표를 쓴다. */
+export const PROVINCE_SHORT_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(PROVINCE_CODE).map(([province, code]) => [code, SHORT_PROVINCE[province]]),
+);
+
 /**
  * 입력한 글자로 지역을 찾는다. 세 단계로 나누어 담는다.
  *
