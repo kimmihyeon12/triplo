@@ -153,3 +153,7 @@ development 구성만 `designPreview=true`로 여행·계정·온보딩 진입�
 
 ### 로컬 비용·공유 화면 (2026-09-14)
 `features/expenses`는 순수 원화 분담/정산 모델·util, 기기 저장 data, 지출 폼 ui, 가계부 feature로 나눈다. `features/collaboration`은 동행 ui와 초대/공유 미리보기 feature를 제공한다. 여행 PNG는 순수 출력 모델(util)과 Canvas renderer(data), 미리보기 ui/화면(feature)로 분리한다. 여행 저장소는 기존 localStorage를 유지하며 실제 서버 공유나 권한을 대체하지 않는다.
+
+## 방문 통계 지도 통합 (2026-09-19)
+
+`/stats`는 인증 가드 아래 `features/stats/feature/visit-map/VisitMapPage`를 지연 로드한다. Three.js 렌더러는 stats/ui/voxel-scene, 데이터 어댑터는 stats/data/saved-map-places, 순수 계산은 stats/util에 둔다. 구 record-map과 별도 voxel-map 기능은 제거했다. `/stats/details`의 기존 SVG/목록 화면은 서울 구별 상세 및 WebGL 대체 경로로 유지한다. 이전 실험 라우트 /lab/map과 /lab/map2는 제거한다. 저장소·집계 원본은 기존 LocalVisitStats/TRIP_REPOSITORY이며 화면 선택은 Signals로만 관리한다.
