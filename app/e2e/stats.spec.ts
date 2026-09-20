@@ -44,7 +44,8 @@ test('지난 여행의 장소를 지역별로 센다', async ({ page }) => {
   await page.goto('/stats/details');
   await expect(page.getByTestId('stats-summary')).toContainText('2');
   // 지도를 읽을 수 없어도 같은 값을 볼 수 있어야 한다.
-  await expect(page.getByTestId('block-map-list')).toContainText('강릉');
+  // 전국 격자는 시·도 단위이므로 '강릉'은 '강원'으로 모아 센다.
+  await expect(page.getByTestId('block-map-list')).toContainText('강원');
   await expect(page.getByTestId('block-map-list')).toContainText('2회');
 });
 
@@ -58,7 +59,7 @@ test('지역을 고르면 그곳에서 방문한 장소를 보여준다', async 
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
 
   await expect(page.getByTestId('stats-places')).toContainText('안목해변');
   // 방문으로 본 근거인 여행 종료일을 함께 보여준다.
@@ -75,7 +76,7 @@ test('장소를 누르면 그 여행으로 간다', async ({ page }) => {
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
   await page.getByTestId('stats-places').getByRole('button').first().click();
 
   await expect(page).toHaveURL(new RegExp(`/trips/${id}$`));
@@ -115,7 +116,7 @@ test('전국 지도로 돌아간다', async ({ page }) => {
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
   await page.getByTestId('stats-back').click();
 
   await expect(page.getByTestId('stats-summary')).toBeVisible();
