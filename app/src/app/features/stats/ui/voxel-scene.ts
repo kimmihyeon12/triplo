@@ -66,6 +66,11 @@ export class VoxelScene {
     this.controls.minZoom = 0.75;
     this.controls.maxZoom = 4;
     this.controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+    // 한 손가락은 페이지 스크롤에 양보하고 두 손가락으로만 지도를 옮긴다.
+    // 지도가 세로를 크게 차지하므로 한 손가락까지 가져가면 화면을 벗어날
+    // 방법이 없어진다. 확대는 손가락을 모으고 벌려서 한다.
+    this.controls.touches.ONE = null as unknown as THREE.TOUCH;
+    this.controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
     this.controls.addEventListener('change', this.render);
     this.renderer.domElement.addEventListener('pointerdown', this.pointerDown);
     this.renderer.domElement.addEventListener('pointermove', this.pointerMove);

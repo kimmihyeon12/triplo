@@ -75,6 +75,7 @@ export class VisitMapPage {
   readonly places = signal<VisitedPlace[]>([]);
   readonly year = signal(new Date().getFullYear());
   readonly steps = VISIT_STEPS;
+  /** 지도에 올라간 장소 수. 배너도 같은 기준을 쓴다(util/visit-total). */
   readonly total = computed(() => this.counts().reduce((sum, c) => sum + c.visitCount, 0));
   readonly countMap = computed(() => new Map(this.counts().map(c => [c.regionCode, c.visitCount])));
   readonly selectedCount = computed(() => this.countMap().get(this.selected() ?? '') ?? 0);

@@ -12,6 +12,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { LocalVisitStats } from '../../data/local-visit-stats';
 import { KOREA_GRID } from '../../data/korea-grid';
 import type { VisitPalette } from '../../util/visit-style';
+import { mappedTotal } from '../../util/visit-total';
 import {
   BANNER_VIEWBOX,
   JEJU,
@@ -99,7 +100,9 @@ export class VisitMapBanner {
     try {
       const summary = await this.stats.provinceCounts();
       this.visitedCount.set(summary.regions.length);
-      this.totalVisits.set(summary.totalPlaces);
+      // 지도에 올라간 몫만 센다. totalPlaces를 그대로 쓰면 분류하지 못한
+      // 장소까지 더해져 통계 화면의 합계보다 커진다.
+      this.totalVisits.set(mappedTotal(summary));
       this.counts.set(new Map(summary.regions.map((r) => [r.regionCode, r.visitCount])));
     } catch {
       // 목록 화면의 곁다리 요소다. 읽지 못해도 여행 목록을 막지 않는다.
