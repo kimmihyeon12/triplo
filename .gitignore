@@ -8,6 +8,8 @@ artifacts/
 app/dist/
 app/e2e-report/
 app/test-results/
+# Playwright를 앱 밖에서 실행하면 루트에도 같은 폴더가 생긴다.
+test-results/
 .impeccable/review/
 app/public/app-config.json
 app/public/supabase-config.json
