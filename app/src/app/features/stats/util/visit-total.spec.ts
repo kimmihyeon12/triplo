@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Trip } from '../../trips/model/trip';
-import { tallyVisits } from './visit-tally';
+import { tallyVisits, visitedPlacesIn } from './visit-tally';
 import { mappedTotal } from './visit-total';
 
 const TODAY = '2026-09-21';
@@ -76,5 +76,52 @@ describe('mappedTotal', () => {
     ], TODAY);
     expect(mappedTotal(summary)).toBeGreaterThan(0);
     expect(summary.regions.length).toBeGreaterThan(0);
+  });
+});
+
+/*
+  여행에 담은 지역과 장소의 실제 위치가 다른 경우. 광주 여행에 나주 장소를
+  넣으면 여행 지역 목록에 나주가 없어 지역이 비고, 그 장소가 통계에서
+  조용히 빠졌다(2026-09-21 확인). 저장된 주소로 시·도를 읽어 채운다.
+*/
+describe('여행 지역과 다른 장소', () => {
+  function mixed(): Trip {
+    return {
+      id: 't1', title: '광주 여행', startDate: '2024-05-01', endDate: '2024-05-03',
+      regions: [{ id: 'r1', name: '광주', regionCode: 'gwangju', order: 0 }],
+      stops: [
+        {
+          id: 's1', name: '충장로', address: '광주 동구 충장로 1', regionId: 'r1', kind: 'place',
+          excluded: false, location: null, date: '2024-05-01', order: 0,
+          stayMinutes: null, memo: '', fixedTime: null, locationStatus: 'unverified', placeRef: null,
+        },
+        {
+          // 여행 지역에 없는 곳. 주소로만 알 수 있다.
+          id: 's2', name: '죽녹원', address: '전남 담양군 담양읍 1', regionId: null, kind: 'place',
+          excluded: false, location: null, date: '2024-05-02', order: 1,
+          stayMinutes: null, memo: '', fixedTime: null, locationStatus: 'unverified', placeRef: null,
+        },
+      ],
+      stays: [],
+    } as unknown as Trip;
+  }
+
+  it('주소로 시·도를 찾아 집계한다', () => {
+    const s = tallyVisits([mixed()], TODAY);
+    expect(s.unclassifiedCount).toBe(0);
+    expect(s.regions.find((r) => r.regionCode === 'gwangju')?.visitCount).toBe(1);
+    expect(s.regions.find((r) => r.regionCode === 'jeonnam')?.visitCount).toBe(1);
+  });
+
+  it('지역을 누르면 그 장소가 목록에 나온다', () => {
+    const places = visitedPlacesIn([mixed()], TODAY, 'jeonnam');
+    expect(places.map((p) => p.name)).toEqual(['죽녹원']);
+  });
+
+  it('집계와 목록의 개수가 같다', () => {
+    const s = tallyVisits([mixed()], TODAY);
+    for (const r of s.regions) {
+      expect(visitedPlacesIn([mixed()], TODAY, r.regionCode).length).toBe(r.visitCount);
+    }
   });
 });

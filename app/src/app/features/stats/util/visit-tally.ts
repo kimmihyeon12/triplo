@@ -9,6 +9,7 @@ import { SEOUL_DISTRICT_NAME } from '../model/seoul-districts';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
 import { districtCodeForAddress } from './district-match';
 import { excludedReasons } from './excluded-reasons';
+import { provinceCodeForAddress } from './province-match';
 
 /**
  * 표준 지역으로 분류하지 못한 몫의 키.
@@ -27,11 +28,17 @@ export const UNCLASSIFIED = '(분류되지 않음)';
 export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: VisitFilter = 'all'): VisitSummary {
   const summary = summarize(visitedItems(trips, today, filter), (item) => {
     const resolved = resolveRegion(item.region);
-    if (!resolved) return null;
-    // 전국 격자는 시·도 단위다. 시·군 코드 그대로 세면 지도에서 찾지 못해
-    // 모든 블록이 0회로 남는다. '강릉'과 '속초'는 함께 '강원'으로 센다.
-    const code = provinceCodeOf(resolved.code);
-    return { code, name: PROVINCE_SHORT_NAME[code] ?? resolved.name };
+    if (resolved) {
+      // 전국 격자는 시·도 단위다. 시·군 코드 그대로 세면 지도에서 찾지 못해
+      // 모든 블록이 0회로 남는다. '강릉'과 '속초'는 함께 '강원'으로 센다.
+      const code = provinceCodeOf(resolved.code);
+      return { code, name: PROVINCE_SHORT_NAME[code] ?? resolved.name };
+    }
+    // 여행에 담은 지역과 장소의 실제 위치가 다를 수 있다. 광주 여행에 나주
+    // 장소를 넣으면 여행 지역 목록에 나주가 없어 위에서 비게 된다. 그때는
+    // 저장된 주소를 읽는다. 검증된 값이므로 지어내는 것이 아니다.
+    const byAddress = provinceCodeForAddress(item.address);
+    return byAddress ? { code: byAddress, name: PROVINCE_SHORT_NAME[byAddress] ?? byAddress } : null;
   });
   // 화면이 비었을 때 까닭을 함께 넘긴다. 여행은 있는데 통계가 0이면
   // 사용자는 기록이 사라졌다고 오해한다.
@@ -81,7 +88,11 @@ export function visitedPlacesIn(
   return visitedItems(trips, today, filter)
     .filter((item) => {
       const resolved = resolveRegion(item.region);
-      if (!resolved) return false;
+      if (!resolved) {
+        // 여행 지역으로 못 찾으면 주소를 읽는다. tallyVisits와 같은 기준이어야
+        // 지도에 센 장소를 지역 목록에서도 볼 수 있다.
+        return isProvince && provinceCodeForAddress(item.address) === provinceCode;
+      }
       if (isProvince) return provinceCodeOf(resolved.code) === provinceCode;
       if (!isDistrict) return resolved.code === regionCode;
       return (
