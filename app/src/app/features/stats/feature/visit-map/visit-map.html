@@ -156,7 +156,17 @@
             막대는 딥 블루를 쓴다. 청록은 지도에서 '방문량'을 뜻하므로
             월별 값에까지 쓰면 같은 색이 두 가지 뜻을 갖는다.
           -->
-          <div class="mt-6 flex items-center justify-between gap-2"><h4 class="text-14 font-semibold">월별 방문</h4><select appInput class="w-24! text-13!" aria-label="방문 연도" [value]="year()" (change)="year.set(+$any($event.target).value)">@for (value of years(); track value) { <option [value]="value">{{ value }}년</option> }</select></div>
+          <!--
+            폭을 좁히면 '2024년'이 잘려 …으로 보인다. 공통 select는 화살표
+            자리로 오른쪽 44px을 쓰므로 글자에 남는 폭이 그만큼 줄어든다.
+            내용에 맞춰 늘리고 최소 폭만 정해 둔다.
+          -->
+          <div class="mt-6 flex items-center justify-between gap-2">
+            <h4 class="text-14 font-semibold">월별 방문</h4>
+            <select appInput class="w-auto! min-w-28! text-13!" aria-label="방문 연도" [value]="year()" (change)="year.set(+$any($event.target).value)">
+              @for (value of years(); track value) { <option [value]="value">{{ value }}년</option> }
+            </select>
+          </div>
           <div class="mt-3 flex h-24 items-end gap-1" aria-label="월별 방문 횟수">
             @for (month of months(); track month.month) {
               <div class="flex h-full min-w-0 flex-1 flex-col justify-end text-center" [attr.title]="month.month + '월 ' + month.count + '곳'" [attr.aria-label]="month.month + '월 ' + month.count + '곳'">
@@ -294,6 +304,21 @@
           }
         </ul>
 
+        <!--
+          일부 여행만 빠졌을 때도 까닭을 여기서 알린다. 지도 아래 작은 글씨만
+          두면 '내가 간 곳이 왜 없지'를 묻는 자리에서 답을 볼 수 없다.
+        -->
+        @if (excludedNotes().length) {
+          <ul class="mt-4 grid gap-1.5">
+            @for (note of excludedNotes(); track note) {
+              <li class="flex items-start gap-1.5 rounded-control bg-ground-2 px-2.5 py-2 text-12 leading-relaxed text-ink-2">
+                <app-icon class="mt-0.5 flex-none text-warn-ink" name="alert" [size]="13"/>
+                <span class="min-w-0">{{ note }}</span>
+              </li>
+            }
+          </ul>
+        }
+
         @if (unvisitedList().length) {
           <h4 class="mt-5 text-12 font-semibold text-ink-3">아직 안 간 곳 <span class="tabular-nums">{{ unvisitedList().length }}</span>곳</h4>
           <div class="mt-2 flex flex-wrap gap-1.5">
@@ -309,7 +334,6 @@
   @if (locationNotice()) { <p class="mt-3 text-13 text-ink-2" role="status">{{ locationNotice() }}</p> }
   @if (state() === 'ready' && total()) {
     <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·도별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
-    @for (note of excludedNotes(); track note) { <p class="mt-1 text-12 text-ink-3">{{ note }}</p> }
   }
   <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/southkorea/southkorea-maps" target="_blank" rel="noopener noreferrer">경계: 통계청 2013 · southkorea-maps</a> · 현재 경계와 다를 수 있어요.</p>
 </section>

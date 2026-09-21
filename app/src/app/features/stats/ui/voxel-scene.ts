@@ -72,6 +72,11 @@ export class VoxelScene {
     this.controls.touches.ONE = null as unknown as THREE.TOUCH;
     this.controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
     this.controls.addEventListener('change', this.render);
+    // 휠은 페이지 스크롤에 양보한다. 지도가 세로를 크게 차지하므로 휠까지
+    // 가져가면 그 위에서 화면을 내릴 수 없다. OrbitControls보다 먼저(capture)
+    // 받아 전파만 끊고 preventDefault는 하지 않아 기본 스크롤이 살아 있다.
+    // 확대는 화면의 +/- 버튼과 두 손가락이 맡는다.
+    this.renderer.domElement.addEventListener('wheel', this.wheel, { capture: true });
     this.renderer.domElement.addEventListener('pointerdown', this.pointerDown);
     this.renderer.domElement.addEventListener('pointermove', this.pointerMove);
     this.renderer.domElement.addEventListener('pointerup', this.pointerUp);
@@ -210,6 +215,7 @@ export class VoxelScene {
   private readonly pointerMove = (event: PointerEvent): void => {
     if (this.start?.pointer === event.pointerId && Math.hypot(event.clientX-this.start.x,event.clientY-this.start.y)>5) this.start.dragged = true;
   };
+  private readonly wheel = (event: WheelEvent): void => { event.stopPropagation(); };
   private readonly pointerCancel = (): void => { this.start = null; };
   private readonly pointerUp = (event: PointerEvent): void => {
     const start = this.start;
@@ -233,6 +239,7 @@ export class VoxelScene {
     this.observer.disconnect();
     this.controls.removeEventListener('change',this.render);
     this.controls.dispose();
+    this.renderer.domElement.removeEventListener('wheel',this.wheel,{ capture: true });
     this.renderer.domElement.removeEventListener('pointerdown',this.pointerDown);
     this.renderer.domElement.removeEventListener('pointermove',this.pointerMove);
     this.renderer.domElement.removeEventListener('pointerup',this.pointerUp);
