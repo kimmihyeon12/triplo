@@ -260,7 +260,9 @@ export class StopFormPage {
     const next = base ? updateStop(trip, stop) : appendStop(trip, stop);
     const ok = await this.store.commit(next);
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
-      void this.router.navigate(this.backLink(), { queryParams: this.backQuery() });
+      // 일을 마친 폼은 히스토리에서 치운다. 그대로 두면 상세에서 뒤로 갔을 때
+      // 방금 저장한 활동의 입력 화면이 다시 나타난다.
+      void this.router.navigate(this.backLink(), { queryParams: this.backQuery(), replaceUrl: true });
   }
 
   async remove(): Promise<void> {
@@ -269,6 +271,7 @@ export class StopFormPage {
     if (!trip || !base) return;
     const ok = await this.store.commit(removeStop(trip, base.id));
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
-      void this.router.navigate(this.backLink(), { queryParams: this.backQuery() });
+      // 지운 활동의 폼으로 되돌아갈 수 있으면 없는 것을 편집하게 된다.
+      void this.router.navigate(this.backLink(), { queryParams: this.backQuery(), replaceUrl: true });
   }
 }

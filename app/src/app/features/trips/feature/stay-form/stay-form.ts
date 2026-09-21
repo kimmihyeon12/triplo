@@ -270,7 +270,9 @@ export class StayFormPage {
       : [...trip.stays, stay];
     const ok = await this.store.commit({ ...trip, stays });
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
-      void this.router.navigate(this.backLink(), { queryParams: { tab: 'stays' } });
+      // 일을 마친 폼은 히스토리에서 치운다. 그대로 두면 상세에서 뒤로 갔을 때
+      // 방금 저장한 숙소의 입력 화면이 다시 나타난다.
+      void this.router.navigate(this.backLink(), { queryParams: { tab: 'stays' }, replaceUrl: true });
   }
 
   async remove(): Promise<void> {
@@ -282,6 +284,7 @@ export class StayFormPage {
       stays: trip.stays.filter((s) => s.id !== base.id),
     });
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
-      void this.router.navigate(this.backLink(), { queryParams: { tab: 'stays' } });
+      // 지운 숙소의 폼으로 되돌아갈 수 있으면 없는 것을 편집하게 된다.
+      void this.router.navigate(this.backLink(), { queryParams: { tab: 'stays' }, replaceUrl: true });
   }
 }
