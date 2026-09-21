@@ -37,6 +37,7 @@
     "@ngrx/signals": "^21.0.0",
     "@supabase/supabase-js": "^2.116.0",
     "rxjs": "~7.8.0",
+    "three": "^0.186.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -45,6 +46,7 @@
     "@angular/compiler-cli": "^21.2.23",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/three": "^0.186.0",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2",

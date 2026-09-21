@@ -53,5 +53,10 @@ export const routes: Routes = [
     canActivateChild: [signedIn],
     loadChildren: () => import('./features/trips/trips.routes').then((m) => m.TRIPS_ROUTES),
   },
+  {
+    path: 'stats',
+    canActivate: [signedIn],
+    loadChildren: () => import('./features/stats/stats.routes').then((m) => m.STATS_ROUTES),
+  },
   { path: '**', redirectTo: 'trips' },
 ];

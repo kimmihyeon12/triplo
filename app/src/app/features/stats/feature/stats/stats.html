@@ -1,0 +1,99 @@
+@if (loadState() === 'loading') {
+  <p class="stats__status" data-testid="stats-loading">불러오는 중입니다.</p>
+} @else if (loadState() === 'error') {
+  <p class="stats__status" data-testid="stats-error">
+    방문 기록을 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.
+  </p>
+} @else if (isEmpty()) {
+  <div class="stats__empty" data-testid="stats-empty">
+    <p class="stats__empty-title">아직 다녀온 여행이 없습니다</p>
+    <p class="stats__empty-body">
+      여행 날짜가 지나면 그 일정에 담은 장소가 여기에 쌓입니다.
+    </p>
+    <a class="stats__empty-link" routerLink="/trips">여행 만들러 가기</a>
+  </div>
+} @else {
+  @switch (view()) {
+    @case ('country') {
+      <section class="stats__summary" data-testid="stats-summary">
+        <p class="stats__count">
+          <strong>{{ totalPlaces() }}</strong>곳을 다녀왔습니다
+        </p>
+        <p class="stats__sub">{{ visitedRegionCount() }}개 지역에 기록이 쌓였습니다</p>
+      </section>
+
+      <app-region-block-map
+        [cells]="countryGrid"
+        [counts]="countryCounts()"
+        [names]="countryNames"
+        [labelCells]="countryLabelCells"
+        (select)="onProvinceSelect($event)"
+      />
+
+      <div class="stats__legend" aria-hidden="true">
+        <span class="stats__legend-label">적게 방문</span>
+        <span class="stats__legend-chip" data-level="1"></span>
+        <span class="stats__legend-chip" data-level="2"></span>
+        <span class="stats__legend-chip" data-level="3"></span>
+        <span class="stats__legend-chip" data-level="4"></span>
+        <span class="stats__legend-chip" data-level="5"></span>
+        <span class="stats__legend-label">많이 방문</span>
+      </div>
+
+      @if (unclassifiedCount() > 0) {
+        <p class="stats__note" data-testid="stats-unclassified">
+          지역을 알 수 없는 장소 {{ unclassifiedCount() }}곳은 지도에 넣지 못했습니다.
+        </p>
+      }
+    }
+
+    @case ('province') {
+      <button type="button" class="stats__back" (click)="backToCountry()" data-testid="stats-back">
+        전국 지도로
+      </button>
+
+      <app-region-block-map
+        [cells]="seoulGrid"
+        [counts]="districtCounts()"
+        [names]="seoulNames"
+        (select)="onRegionSelect($event)"
+      />
+    }
+
+    @case ('places') {
+      <button
+        type="button"
+        class="stats__back"
+        (click)="backToProvince()"
+        data-testid="stats-back"
+      >
+        {{ hasSubGrid() ? provinceName() + ' 지도로' : '전국 지도로' }}
+      </button>
+
+      <h2 class="stats__region">
+        {{ regionName() }}
+        <span class="stats__region-count">{{ places().length }}곳</span>
+      </h2>
+
+      <ul class="stats__places" data-testid="stats-places">
+        @for (place of places(); track place.id) {
+          <li>
+            <button type="button" (click)="openTrip(place)">
+              <span class="stats__place-name">{{ place.name }}</span>
+              @if (place.address) {
+                <span class="stats__place-address">{{ place.address }}</span>
+              } @else {
+                <span class="stats__place-address stats__place-address--none">위치 미확인</span>
+              }
+              <span class="stats__place-meta">
+                {{ place.visitedOn }} · {{ place.tripTitle }}
+              </span>
+            </button>
+          </li>
+        } @empty {
+          <li class="stats__none">이 지역에서 방문한 장소가 없습니다.</li>
+        }
+      </ul>
+    }
+  }
+}

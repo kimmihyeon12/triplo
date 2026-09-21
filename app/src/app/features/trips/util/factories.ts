@@ -1,3 +1,4 @@
+import { findRegionByName } from '../../../shared/util/korea-regions';
 import {
   STOP_KIND_DEFAULT_NAME,
   type Trip,
@@ -75,5 +76,9 @@ export function createStay(
 }
 
 export function createRegion(name: string, order: number, id?: string): TripRegion {
-  return { id: id ?? newId(), name: name.trim(), order };
+  const trimmed = name.trim();
+  // 지역은 고정 목록에서 고르므로 대부분 코드가 붙는다. 자유 입력으로 들어온
+  // 이름은 코드 없이 남고, 통계에서 '분류되지 않음'으로 센다.
+  const code = findRegionByName(trimmed)?.code;
+  return { id: id ?? newId(), name: trimmed, order, ...(code ? { regionCode: code } : {}) };
 }

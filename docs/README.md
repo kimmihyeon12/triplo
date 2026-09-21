@@ -54,3 +54,11 @@
 - CLAUDE.md에는 원본 경로와 진입 지침만 둔다. 별도 인수인계 문서는 만들지 않는다. 경로가 바뀌면 이 목차와 모든 참조를 함께 수정한다.
 - 각 기능 작업에는 필요한 문서를 골라 읽는다. 분석 기록·도구 설치 이력 전체를 매번 필수 입력으로 넣지 않는다.
 - MD 파일 간 동기화는 자동이 아니다. 작업하는 에이전트가 직접 관련 원본을 수정하고 링크·명세를 검증한다.
+
+## 입체 기록 지도
+
+- [별도 복셀 지도 제안·설계·검증](../openspec/changes/add-voxel-visit-map/proposal.md): `/stats`의 기본 3D 지도 및 `/stats/details`의 상세 통계. 구 실험 지도 라우트와 파일은 삭제.
+- [Higgsfield 지도 참고 이미지와 적용 기록](design/references/map2-higgsfield.md): 이전 시도 보관용. 현재 map2는 사용자 첨부 원본을 직접 코드로 재현하며 생성물은 디자인 기준이 아니다.
+
+- [map2 방문 볼륨 구현 계획](superpowers/plans/2026-09-18-map2-visit-volume.md): 첨부 요청 적용 범위, 데이터 제약과 검증 순서.
+- [map2 맞물리는 지형·장소 마커 구현 계획](superpowers/plans/2026-09-19-map2-fitted-terrain.md): 현재 지도 전용 범위, 저장 좌표와 임시 선택, 실제 브라우저 검증.
