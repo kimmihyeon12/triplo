@@ -1,4 +1,3 @@
-import { UiSpinner } from './shared/ui/spinner/spinner';
 import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -9,7 +8,7 @@ import { PageTools } from './shared/ui/page-tools/page-tools';
 
 @Component({
   selector: 'app-root',
-  imports: [UiSpinner, RouterOutlet, RouterLink, IconComponent, PageTools],
+  imports: [RouterOutlet, RouterLink, IconComponent, PageTools],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
 })
