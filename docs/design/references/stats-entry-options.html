@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지도 진입점 배치안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#fbfbfa; --ground-2:#f0f0ee; --panel:#ffffff;
+  --accent:#3b6fef; --accent-deep:#2f5fdb; --accent-tint:#eaf0fe; --accent-fill:#cfdcfb;
+  --map-water:#dcecfa; --map-water-light:#f0f8ff;
+  --visit-low:#a3dbe8; --visit-mid:#3fb3c9; --visit-high:#0d5563;
+  --region-ink:#3f6212; --region-tint:#eaf3dc;
+  --place-ink:#2650bd; --place-tint:#eaf0fe;
+  --stay-ink:#6a4bb5; --stay-tint:#efe9fb;
+  --ink:#16181d; --ink-2:#4a4f58; --ink-3:#6b7280;
+  --border:#e8eaef; --border-strong:#d4d8e0;
+  --shadow-panel:0 0 0 1px rgba(28,25,23,.05), 0 2px 10px rgba(28,25,23,.07);
+  --shadow-float:0 4px 18px rgba(28,25,23,.12);
+  --ai-fill:linear-gradient(135deg,#3b6fef 0%,#6d4fd6 100%);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Noto Sans KR",system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1280px; margin:0 auto; padding:40px 20px 80px}
+h1{font-size:26px; font-weight:800; letter-spacing:-.02em; margin:0}
+.lede{margin:10px 0 0; font-size:14px; line-height:1.75; color:var(--ink-2); max-width:74ch}
+.callout{
+  margin:18px 0 0; padding:14px 16px; border-radius:12px;
+  background:var(--accent-tint); font-size:13px; line-height:1.75; color:#25407e;
+}
+.callout b{font-weight:700}
+
+/* 네 안을 2열로 묶어 어느 것도 줄바꿈 때문에 혼자 떨어지지 않게 한다. */
+.options{display:grid; gap:30px 26px; margin-top:32px; grid-template-columns:repeat(2,1fr)}
+@media (max-width:760px){ .options{grid-template-columns:1fr} }
+.option{display:flex; flex-direction:column}
+.option > header{margin-bottom:12px}
+/* 목업이 남은 높이를 먹어야 아래 설명 카드가 두 안에서 같은 줄에 선다. */
+.option .stage{flex:1; display:flex; align-items:flex-start; justify-content:center}
+.tag{
+  display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:800;
+  letter-spacing:.04em; padding:4px 10px; border-radius:999px;
+  background:var(--ground-2); color:var(--ink-2);
+}
+.tag.best{background:var(--accent-deep); color:#fff}
+.option h2{font-size:16px; font-weight:700; margin:9px 0 0; letter-spacing:-.01em}
+.option .why{margin:6px 0 0; font-size:13px; line-height:1.7; color:var(--ink-2)}
+
+/* ── 휴대폰 목업 ────────────────────────────────── */
+.phone{
+  width:100%; max-width:390px; margin:0 auto; background:var(--ground);
+  border:1px solid var(--border-strong); border-radius:26px; overflow:hidden;
+  box-shadow:var(--shadow-float); position:relative;
+}
+.topbar{
+  display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center;
+  gap:4px; min-height:52px; padding:0 8px;
+  background:var(--panel); border-bottom:1px solid var(--border);
+}
+.brand{
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+  color:var(--accent-deep); font-weight:800; font-size:17px;
+}
+.topbar h3{margin:0; font-size:16px; font-weight:700; text-align:center}
+.topbar .right{display:flex; align-items:center; gap:2px; justify-self:end}
+.avatar{
+  width:30px; height:30px; border-radius:999px; background:var(--accent-tint);
+  color:var(--accent-deep); font-size:12px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.iconbtn{
+  width:36px; height:36px; border-radius:9px; display:flex; align-items:center;
+  justify-content:center; color:var(--ink-3); background:none; border:0; cursor:pointer;
+}
+.iconbtn.tinted{background:var(--accent-tint); color:var(--accent-deep)}
+
+.body{padding:12px 12px 16px; display:flex; flex-direction:column; gap:10px; min-height:430px}
+.make{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  min-height:40px; border-radius:10px; font-size:12.5px; font-weight:700;
+  border:1px solid var(--border-strong); background:var(--panel); color:var(--ink);
+  white-space:nowrap;
+}
+.btn.ai{background:var(--ai-fill); color:#fff; border-color:transparent}
+
+/* 현재 위치의 옅은 텍스트 링크 */
+.textlink{
+  display:inline-flex; align-items:center; gap:6px; align-self:flex-start;
+  font-size:12px; color:var(--ink-3); text-decoration:none;
+}
+.textlink.ghost{opacity:.35}
+
+.card{
+  background:var(--panel); border-radius:14px; box-shadow:var(--shadow-panel);
+  padding:12px; border:1px solid transparent;
+}
+.rule{display:flex; align-items:center; gap:8px; padding:6px 2px}
+.rule i{flex:1; height:1px; background:var(--border)}
+.rule span{
+  font-size:11px; font-weight:700; color:var(--ink-3);
+  background:var(--ground-2); border-radius:999px; padding:2px 9px;
+}
+.card h4{margin:0; font-size:14.5px; font-weight:700}
+.card .when{margin:3px 0 0; font-size:12.5px; color:var(--ink-2)}
+.card .meta{display:flex; flex-wrap:wrap; gap:5px; margin:9px 0 0; font-size:10.5px}
+.chip{border-radius:999px; padding:2px 7px; font-weight:600}
+.chip.region{background:var(--region-tint); color:var(--region-ink)}
+.chip.place{background:var(--place-tint); color:var(--place-ink)}
+.chip.stay{background:var(--stay-tint); color:var(--stay-ink)}
+.muted{color:var(--ink-3)}
+
+/* ── 안 1: 지도 배너 카드 ──────────────────────── */
+.mapcard{
+  position:relative; display:flex; align-items:center; gap:12px;
+  padding:13px 14px; border-radius:14px; overflow:hidden; text-decoration:none;
+  color:inherit; box-shadow:var(--shadow-panel); background:var(--panel);
+}
+.mapcard .thumb{
+  width:76px; height:58px; flex:none; border-radius:10px; overflow:hidden;
+  background:var(--map-water); background-image:radial-gradient(ellipse at 50% 25%,var(--map-water-light),var(--map-water));
+  display:flex; align-items:center; justify-content:center;
+}
+.mapcard .thumb svg{width:100%; height:100%}
+.mapcard .txt{min-width:0; flex:1}
+.mapcard .txt b{display:block; font-size:14.5px; font-weight:700}
+.mapcard .txt small{display:block; margin-top:4px; font-size:12px; color:var(--ink-3); line-height:1.5}
+.mapcard .go{color:var(--ink-3); flex:none}
+/* 채운 만큼이 곧 다녀온 시·도 비율. 숫자만으로는 '6곳'이 많은지 적은지 모른다. */
+.mapcard .bar{
+  display:block; height:5px; margin-top:7px; border-radius:999px;
+  background:var(--ground-2); overflow:hidden;
+}
+.mapcard .bar i{
+  display:block; height:100%; border-radius:999px;
+  background:linear-gradient(90deg,var(--visit-mid),var(--visit-high));
+}
+
+/* ── 안 3: 하단 탭바 ───────────────────────────── */
+.tabbar{
+  display:grid; grid-template-columns:repeat(3,1fr); background:var(--panel);
+  border-top:1px solid var(--border); padding:6px 0 8px;
+}
+.tab{
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:10.5px; font-weight:600; color:var(--ink-3); text-decoration:none;
+}
+.tab.on{color:var(--accent-deep)}
+
+/* ── 안 4: 떠 있는 버튼 ────────────────────────── */
+.fab{
+  position:absolute; right:14px; bottom:16px; display:inline-flex; align-items:center;
+  gap:7px; height:42px; padding:0 15px; border-radius:999px;
+  background:var(--panel); color:var(--ink); box-shadow:var(--shadow-float);
+  font-size:12.5px; font-weight:700; text-decoration:none; border:1px solid var(--border);
+}
+.fab .dot{
+  width:7px; height:7px; border-radius:999px; background:var(--visit-mid);
+}
+
+.pros{
+  margin:14px 0 0; margin-top:auto; padding:13px 15px; border-radius:12px; background:var(--panel);
+  box-shadow:var(--shadow-panel); font-size:12.5px; line-height:1.75; color:var(--ink-2);
+}
+.pros b{color:var(--ink); font-weight:700}
+.pros .con{color:var(--ink-3)}
+@media (max-width:560px){ .wrap{padding:28px 16px 60px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>‘다녀온 곳 지도 보기’ 진입점 배치안</h1>
+  <p class="lede">지금 이 링크는 여행 목록 화면에서 ‘AI 일정 만들기 / 직접 만들기’ 버튼 바로 아래에, 회색 작은 글씨 링크로 놓여 있습니다. 만들기 버튼 두 개에 시선을 다 뺏겨 잘 보이지 않고, 여행이 하나도 없을 때는 아예 사라집니다. 아래는 옮길 만한 자리 네 곳입니다.</p>
+  <p class="callout"><b>제약 하나</b> — 상단 바 오른쪽 자리는 이미 계정 아바타가 쓰고 있습니다. 그래서 ‘상단 바로 옮기기’는 아바타를 밀어내거나 아이콘 두 개를 나란히 놓아야 하며, 네 번째 안에서 그 모습을 확인할 수 있습니다.</p>
+
+  <div class="options" id="options"></div>
+</div>
+
+<script>
+/* 지도 섬네일용 미니 육각 지도 */
+function miniMap(){
+  const cells=[[2,0],[3,0],[2,1],[3,1],[4,1],[3,2],[4,2],[4,0],[5,0],[5,1],
+               [3,3],[4,3],[5,2],[2,3],[4,4],[6,2],[6,3],[2,4],[3,4],[2,5],
+               [3,5],[3,6],[5,4],[6,4],[5,5],[3,8]];
+  const hot=new Set(['3,1','2,0','3,0','6,4','3,8','5,0']);
+  let out='';
+  const sorted=[...cells].sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  for(const [q,r] of sorted){
+    const x=(q-r)*7.3, y=(q+r)*4.2;
+    const on=hot.has(q+','+r);
+    const h=on?5:0;
+    const cy=y-h;
+    const pts=[[x,cy-4.6],[x+8.2,cy-2.3],[x+8.2,cy+2.3],[x,cy+4.6],[x-8.2,cy+2.3],[x-8.2,cy-2.3]]
+      .map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    // 옆면은 윗면 청록을 어둡게 눌러 만든다. 왼쪽이 더 어두워 광원이 오른쪽 위에 있다.
+    if(h) out+=`<polygon points="${x-8.2},${(cy+2.3).toFixed(1)} ${x},${(cy+4.6).toFixed(1)} ${x},${(cy+4.6+h).toFixed(1)} ${x-8.2},${(cy+2.3+h).toFixed(1)}" fill="#2a8298"/>`
+             + `<polygon points="${x},${(cy+4.6).toFixed(1)} ${x+8.2},${(cy+2.3).toFixed(1)} ${x+8.2},${(cy+2.3+h).toFixed(1)} ${x},${(cy+4.6+h).toFixed(1)}" fill="#3599b1"/>`;
+    out+=`<polygon points="${pts}" fill="${on?'#3fb3c9':'#ffffff'}"/>`;
+  }
+  return `<svg viewBox="-62 -18 124 88" preserveAspectRatio="xMidYMid meet">${out}</svg>`;
+}
+
+const ICON={
+  map:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 4-6 3v13l6-3 6 3 6-3V4l-6 3-6-3Zm0 0v13m6-10v13"/></svg>',
+  plus:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  sparkle:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 13.8 9 20 11l-6.2 2L12 19.5 10.2 13 4 11l6.2-2L12 2.5Z"/></svg>',
+  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  list:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+  mapbig:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 4-6 3v13l6-3 6 3 6-3V4l-6 3-6-3Zm0 0v13m6-10v13"/></svg>',
+  user:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.4 7.4 0 0 1 14.4 0"/></svg>',
+};
+
+/* 목록 본문 공통 조각 */
+function makeRow(ghost){
+  return `<nav class="make">
+    <a class="btn ai">${ICON.sparkle} AI 일정 만들기</a>
+    <a class="btn">${ICON.plus} 직접 만들기</a>
+  </nav>` + (ghost ? `<a class="textlink ghost">${ICON.map} 다녀온 곳 지도 보기</a>` : '');
+}
+function tripCards(){
+  return `
+  <div class="rule"><i></i><span>D-12</span><i></i></div>
+  <div class="card">
+    <h4>제주 3박 4일</h4>
+    <p class="when">10월 2일 – 10월 5일</p>
+    <p class="meta">
+      <span class="chip region">제주</span>
+      <span class="chip place">장소 8</span>
+      <span class="chip stay">숙소 2</span>
+      <span class="muted">지출 미설정</span>
+    </p>
+  </div>
+  <div class="rule"><i></i><span>다녀옴</span><i></i></div>
+  <div class="card">
+    <h4>부산 주말 여행</h4>
+    <p class="when">8월 16일 – 8월 17일</p>
+    <p class="meta">
+      <span class="chip region">부산</span>
+      <span class="chip place">장소 5</span>
+      <span class="chip stay">숙소 1</span>
+      <span class="muted">지출 미설정</span>
+    </p>
+  </div>`;
+}
+
+const OPTIONS=[
+  {
+    tag:'추천', best:true, title:'안 1 · 목록 맨 위 지도 배너 카드',
+    why:'만들기 버튼 아래에 여행 카드와 같은 생김새의 카드로 둡니다. 목록의 일부처럼 읽히면서도 지도 섬네일과 누적 숫자가 보여 누를 이유가 생깁니다.',
+    pros:'<b>좋은 점</b> 지금 자리를 그대로 쓰면서 존재감만 올리므로 구조를 바꾸지 않습니다. 섬네일이 안에 무엇이 있는지 미리 보여 주고, ‘17곳 중 6곳’ 같은 숫자가 다음 여행을 부릅니다.<br><span class="con"><b>치를 값</b> 목록 맨 위 한 칸을 차지하므로 첫 여행 카드가 그만큼 밀립니다.</span>',
+    render: () => `
+      <div class="phone">
+        <div class="topbar"><div class="brand">T</div><h3>내 여행</h3><div class="right"><div class="avatar">나</div></div></div>
+        <div class="body">
+          ${makeRow(false)}
+          <a class="mapcard">
+            <span class="thumb">${miniMap()}</span>
+            <span class="txt">
+              <b>다녀온 곳 지도</b>
+              <small>17개 시·도 중 <strong style="color:var(--visit-high)">6곳</strong> · 누적 34회</small>
+              <span class="bar" aria-hidden="true"><i style="width:35%"></i></span>
+            </span>
+            <span class="go">${ICON.chev}</span>
+          </a>
+          ${tripCards()}
+        </div>
+      </div>`,
+  },
+  {
+    tag:'대안', title:'안 2 · 목록 맨 아래 회고 카드',
+    why:'여행 목록을 끝까지 내려본 사람에게 보여 줍니다. 앞으로의 일정을 다 확인한 다음 지난 기록으로 넘어가는 순서라 흐름이 자연스럽습니다.',
+    pros:'<b>좋은 점</b> 다가올 여행이라는 목록의 본래 목적을 조금도 가리지 않습니다. 화면을 다 본 뒤라 ‘이제 지난 여행을 볼까’라는 마음과 맞습니다.<br><span class="con"><b>치를 값</b> 여행이 많이 쌓이면 한참 내려야 나오므로 대부분 발견하지 못합니다.</span>',
+    render: () => `
+      <div class="phone">
+        <div class="topbar"><div class="brand">T</div><h3>내 여행</h3><div class="right"><div class="avatar">나</div></div></div>
+        <div class="body">
+          ${makeRow(false)}
+          ${tripCards()}
+          <a class="mapcard" style="margin-top:4px">
+            <span class="thumb">${miniMap()}</span>
+            <span class="txt">
+              <b>지금까지 6곳을 다녀왔어요</b>
+              <small>지도에서 발자취를 확인해 보세요</small>
+            </span>
+            <span class="go">${ICON.chev}</span>
+          </a>
+        </div>
+      </div>`,
+  },
+  {
+    tag:'구조 변경', title:'안 3 · 하단 탭바에 고정',
+    why:'‘내 여행 · 지도 · 내 정보’ 세 탭을 화면 아래에 상시로 둡니다. 지도를 목록에 딸린 링크가 아니라 앱의 기둥 하나로 올리는 방식입니다.',
+    pros:'<b>좋은 점</b> 어느 화면에서든 한 번에 닿고 위치가 늘 같습니다. 엄지로 누르기 가장 편한 자리이며, 앞으로 기록·경비 같은 탭을 늘릴 길도 열립니다.<br><span class="con"><b>치를 값</b> 지금 앱에는 탭바 자체가 없어 새로 만들어야 하고, 모든 화면의 아래 여백과 상단 바 구성을 함께 손봐야 합니다.</span>',
+    render: () => `
+      <div class="phone">
+        <div class="topbar"><div class="brand">T</div><h3>내 여행</h3><div class="right"><div class="avatar">나</div></div></div>
+        <div class="body" style="min-height:380px">
+          ${makeRow(false)}
+          ${tripCards()}
+        </div>
+        <div class="tabbar">
+          <a class="tab on">${ICON.list} 내 여행</a>
+          <a class="tab">${ICON.mapbig} 지도</a>
+          <a class="tab">${ICON.user} 내 정보</a>
+        </div>
+      </div>`,
+  },
+  {
+    tag:'최소 변경', title:'안 4 · 상단 바 아이콘 (아바타 옆)',
+    why:'상단 바 오른쪽에 지도 아이콘을 계정 아바타와 나란히 둡니다. 본문은 한 줄도 건드리지 않습니다.',
+    pros:'<b>좋은 점</b> 고칠 코드가 가장 적고 목록 공간을 전혀 쓰지 않습니다. 여행이 하나도 없는 첫 화면에서도 사라지지 않습니다.<br><span class="con"><b>치를 값</b> 라벨 없는 아이콘이라 무슨 기능인지 눌러 보기 전에는 알기 어렵고, 오른쪽 위는 화면에서 엄지가 가장 닿기 힘든 자리입니다.</span>',
+    render: () => `
+      <div class="phone">
+        <div class="topbar">
+          <div class="brand">T</div><h3>내 여행</h3>
+          <div class="right">
+            <button class="iconbtn tinted">${ICON.map}</button>
+            <div class="avatar">나</div>
+          </div>
+        </div>
+        <div class="body">
+          ${makeRow(false)}
+          ${tripCards()}
+        </div>
+      </div>`,
+  },
+];
+
+const host=document.getElementById('options');
+for(const o of OPTIONS){
+  const el=document.createElement('section');
+  el.className='option';
+  el.innerHTML=`
+    <header>
+      <span class="tag ${o.best?'best':''}">${o.tag}</span>
+      <h2>${o.title}</h2>
+      <p class="why">${o.why}</p>
+    </header>
+    <div class="stage">${o.render()}</div>
+    <p class="pros">${o.pros}</p>`;
+  host.appendChild(el);
+}
+</script>
+</body>
+</html>

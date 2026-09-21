@@ -29,9 +29,15 @@
   --color-stay-ink: #6a4bb5;
   --color-stay-tint: #efe9fb;
   --color-stay-fill: #ddd2f5;
-  /* 지역 전용. ok(완료·확인됨)와 뜻이 겹치지 않도록 올리브 쪽으로 떨어뜨렸다. */
-  --color-region-ink: #3f6212;
-  --color-region-tint: #eaf3dc;
+  /*
+    지역 전용. ok(완료·확인됨)와 뜻이 겹치면 안 되므로 초록을 피한다.
+    2026-09-21 올리브(#3f6212)에서 청록으로 옮겼다. 올리브는 색상이 누런
+    초록(H86)이라 옆의 장소(파랑)·숙소(보라) 배지와 나란히 놓이면 혼자
+    바랜 것처럼 보였다. 청록은 ok(H151)와 색상각이 37도 벌어져 구분되면서
+    기록 지도의 방문색과 계열이 이어진다.
+  */
+  --color-region-ink: #0f6f7d;
+  --color-region-tint: #e0f2f5;
   --color-warn-ink: #7f5400;
   --color-warn-tint: #fff4d1;
   --color-warn-fill: #ffe08a;
