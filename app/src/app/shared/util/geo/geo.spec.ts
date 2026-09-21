@@ -119,4 +119,49 @@ describe('격자 만들기', () => {
     expect(grid.cells).toEqual([]);
     expect(grid.centers.size).toBe(0);
   });
+
+  /*
+    광역시는 도 안에 둘러싸여 있고, 단순화된 경계에서는 두 폴리곤이 겹친다.
+    큰 지역을 먼저 보면 작은 지역이 격자에서 통째로 사라진다. 실제로 광주가
+    전남에 먹혀 지도에 나오지 않았고, 서울 좌표의 마커가 경기로 잡혔다
+    (2026-09-21 확인).
+  */
+  const nested: GeoCollection = {
+    type: 'FeatureCollection',
+    features: [
+      // 큰 지역이 먼저 온다. GeoJSON의 실제 순서와 같다.
+      {
+        type: 'Feature',
+        properties: { code: 'BIG', name: '큰지역' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[127.0, 36.0], [128.0, 36.0], [128.0, 37.0], [127.0, 37.0], [127.0, 36.0]]],
+        },
+      },
+      // 큰 지역 한가운데 들어 있는 작은 지역.
+      {
+        type: 'Feature',
+        properties: { code: 'SMALL', name: '작은지역' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[127.4, 36.4], [127.6, 36.4], [127.6, 36.6], [127.4, 36.6], [127.4, 36.4]]],
+        },
+      },
+    ],
+  };
+
+  it('작은 지역이 큰 지역에 먹히지 않는다', () => {
+    const grid = buildGrid(nested, { ...options, cellSize: 4 });
+    const codes = new Set(grid.cells.map((c) => c.regionCode));
+    expect(codes.has('SMALL')).toBe(true);
+    expect(codes.has('BIG')).toBe(true);
+  });
+
+  it('겹친 칸은 작은 지역으로 배정한다', () => {
+    const grid = buildGrid(nested, { ...options, cellSize: 4 });
+    const small = grid.centers.get('SMALL');
+    expect(small).toBeDefined();
+    // 작은 지역 칸은 모두 그 경계 안에 있다. 큰 지역이 가져가면 0칸이 된다.
+    expect(grid.cells.filter((c) => c.regionCode === 'SMALL').length).toBeGreaterThan(0);
+  });
 });
