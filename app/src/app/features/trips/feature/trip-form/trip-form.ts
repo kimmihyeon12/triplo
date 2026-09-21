@@ -226,7 +226,13 @@ export class TripFormPage {
     const routeId = this.id();
     this.original.set(next);
     const ok = await this.store.commit(next);
-    if (ok && !this.destroyRef.destroyed && this.id() === routeId)
-      void this.router.navigate(['/trips', next.id]);
+    if (!ok || this.destroyRef.destroyed || this.id() !== routeId) return;
+
+    /*
+      새로 만든 경우에는 만들기 화면을 히스토리에서 치운다. 그대로 두면
+      상세에서 뒤로 갔을 때 방금 만든 여행의 빈 입력 폼이 다시 나타난다.
+      편집은 상세에서 들어온 것이므로 뒤로 가면 상세로 돌아가야 한다.
+    */
+    void this.router.navigate(['/trips', next.id], { replaceUrl: !orig });
   }
 }
