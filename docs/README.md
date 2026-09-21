@@ -62,3 +62,4 @@
 
 - [map2 방문 볼륨 구현 계획](superpowers/plans/2026-09-18-map2-visit-volume.md): 첨부 요청 적용 범위, 데이터 제약과 검증 순서.
 - [map2 맞물리는 지형·장소 마커 구현 계획](superpowers/plans/2026-09-19-map2-fitted-terrain.md): 현재 지도 전용 범위, 저장 좌표와 임시 선택, 실제 브라우저 검증.
+- 2026-09-21 비교 시안(`design/references/`의 `map-concepts` · `stats-entry-options` · `stats-banner-states` · `banner-thumb-options` · `region-badge-options`): 색·배치·배너 형태를 고르기 위해 만든 비교판이다. 고른 결과는 DESIGN.md와 코드에 반영했으며 이 파일들은 선택 근거 보관용이다. 여기 남은 다른 안은 현재 기준이 아니다.

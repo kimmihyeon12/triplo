@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지역 배지 색 대안</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#fbfbfa; --ground-2:#f0f0ee; --panel:#fff;
+  --ink:#16181d; --ink-2:#4a4f58; --ink-3:#6b7280;
+  --border:#e8eaef; --border-strong:#d4d8e0;
+  --accent-deep:#2f5fdb; --accent-tint:#eaf0fe;
+  --place-ink:#2650bd; --place-tint:#eaf0fe;
+  --stay-ink:#6a4bb5; --stay-tint:#efe9fb;
+  --ok-ink:#1e7a4e; --ok-tint:#e3f5ea;
+  --meal-ink:#b4530c; --meal-tint:#fdeee1;
+  --shadow:0 0 0 1px rgba(28,25,23,.05), 0 2px 10px rgba(28,25,23,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:36px 20px 80px}
+h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0}
+.lede{margin:9px 0 0;font-size:13.5px;line-height:1.75;color:var(--ink-2);max-width:76ch}
+.why{
+  margin:18px 0 0;padding:13px 16px;border-radius:12px;background:var(--accent-tint);
+  font-size:13px;line-height:1.8;color:#25407e;
+}
+.why b{font-weight:700}
+code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:rgba(255,255,255,.6);border-radius:5px;padding:1px 5px}
+
+.grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));margin-top:28px}
+.opt{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--ground-2);color:var(--ink-2)}
+.tag.now{background:#ffe9e0;color:#b4530c}
+.tag.best{background:var(--accent-deep);color:#fff}
+.opt h2{font-size:15.5px;font-weight:700;margin:9px 0 2px}
+.opt .vals{margin:0 0 12px;font-size:11.5px;color:var(--ink-3);font-family:ui-monospace,Menlo,monospace}
+.opt .desc{margin:0 0 12px;font-size:12.5px;line-height:1.65;color:var(--ink-2)}
+
+/* 실제 여행 카드 */
+.card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:13px;margin-bottom:9px}
+.card h4{margin:0;font-size:15px;font-weight:700}
+.card .when{margin:3px 0 0;font-size:12.5px;color:var(--ink-2)}
+.card .meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:9px 0 0;font-size:11px}
+.chip{
+  display:inline-flex;align-items:center;min-height:22px;border-radius:8px;
+  padding:2px 8px;font-weight:500;font-size:12px;line-height:1.5;border:1px solid transparent;
+}
+.chip.place{background:var(--place-tint);color:var(--place-ink)}
+.chip.stay{background:var(--stay-tint);color:var(--stay-ink)}
+.muted{color:var(--ink-3);font-size:12px}
+.dot{color:var(--border-strong)}
+
+/* 배지 줄줄이 보기 */
+.row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.note{margin-top:auto;padding-top:11px;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.note b{color:var(--ink-2);font-weight:700}
+.contrast{margin-top:8px;font-size:11.5px;color:var(--ink-3);font-family:ui-monospace,Menlo,monospace}
+.contrast .ok{color:#1e7a4e;font-weight:700}
+.contrast .bad{color:#d92d20;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>지역 배지 색 대안</h1>
+  <p class="lede">여행 카드의 ‘광주·전주’ 같은 지역 배지가 칙칙해 보이는 문제입니다. 각 안을 실제 카드 맥락에서 장소(파랑)·숙소(보라) 배지와 나란히 놓고 비교합니다.</p>
+  <p class="why"><b>지금 왜 칙칙한가</b> — 현재 값 <code>#3f6212</code>는 채도가 낮은 <b>올리브</b>이고 배경 <code>#eaf3dc</code>도 누런 기가 돕니다. 애초에 <code>ok</code>(완료)의 초록과 뜻이 겹치지 않게 일부러 떨어뜨린 색인데, 옆의 선명한 파랑·보라와 나란히 놓이니 혼자 바랜 것처럼 보입니다. 그래서 <b>ok와 구분되면서도 탁하지 않은 색</b>을 찾아야 합니다.</p>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const OK='#1e7a4e';           // 완료 배지. 이 색과 충분히 달라야 한다
+const PLACE='#2650bd', STAY='#6a4bb5';
+
+const OPTS=[
+  { tag:'현재', tagCls:'now', title:'A · 지금 색 (올리브)',
+    ink:'#3f6212', tint:'#eaf3dc',
+    desc:'채도가 낮아 옆의 파랑·보라와 나란히 두면 혼자 바래 보입니다.',
+    note:'<b>문제</b> 누런 기가 도는 배경까지 겹쳐 전체가 탁합니다.' },
+
+  { tag:'추천', tagCls:'best', title:'B · 청록 (teal)',
+    ink:'#0f6f7d', tint:'#e0f2f5',
+    desc:'방금 지도에 쓰기로 한 청록과 같은 계열입니다. 맑고 선명하면서 ok의 초록과 확실히 다릅니다.',
+    note:'<b>좋은 점</b> 지도의 방문색과 계열이 이어져 ‘지역’이라는 뜻이 앱 전체에서 한 색으로 읽힙니다.<br><b>살필 것</b> 파랑(장소)과 계열이 가까우나 청록이라 구분됩니다.' },
+
+  { tag:'대안', tagCls:'', title:'C · 짙은 청록 (더 진하게)',
+    ink:'#0d5563', tint:'#dcedf1',
+    desc:'지도의 가장 진한 방문색과 같은 값입니다. B안보다 차분합니다.',
+    note:'<b>살필 것</b> 진해서 또렷하지만 12px 배지에서는 거의 검정에 가깝게 읽힐 수 있습니다.' },
+
+  { tag:'대안', tagCls:'', title:'D · 인디고 (남보라)',
+    ink:'#4338ca', tint:'#eaeafe',
+    desc:'장소(파랑)와 숙소(보라) 사이에 자리한 색입니다.',
+    note:'<b>살필 것</b> 셋이 모두 파랑·보라 계열이라 배지 세 개가 한 덩어리로 뭉쳐 보입니다.' },
+
+  { tag:'대안', tagCls:'', title:'E · 선명한 초록',
+    ink:'#15803d', tint:'#e6f6ea',
+    desc:'올리브의 누런 기를 빼고 초록 쪽으로 맑게 올렸습니다.',
+    note:'<b>살필 것</b> 가장 자연스럽지만 ok(<code>#1e7a4e</code>)와 매우 가까워 ‘완료’로 오독될 수 있습니다. 애초에 피하려던 문제입니다.' },
+];
+
+/* 명도비 계산 */
+const ch=(h,i)=>parseInt(h.slice(i,i+2),16);
+const lum=h=>{const c=[1,3,5].map(i=>ch(h,i)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2];};
+const ratio=(a,b)=>{const[x,y]=[lum(a),lum(b)].sort((p,q)=>q-p);return (x+.05)/(y+.05);};
+/* 두 색이 얼마나 다른지. 낮으면 헷갈린다 */
+const dist=(a,b)=>Math.sqrt([1,3,5].reduce((s,i)=>s+Math.pow(ch(a,i)-ch(b,i),2),0));
+
+const grid=document.getElementById('grid');
+for(const o of OPTS){
+  const cr=ratio(o.ink,o.tint);
+  const dOk=dist(o.ink,OK), dPlace=dist(o.ink,PLACE);
+  const el=document.createElement('section');
+  el.className='opt';
+  el.innerHTML=`
+    <span class="tag ${o.tagCls}">${o.tag}</span>
+    <h2>${o.title}</h2>
+    <p class="vals">${o.ink} / ${o.tint}</p>
+    <p class="desc">${o.desc}</p>
+
+    <div class="card">
+      <h4>광주 주말 여행</h4>
+      <p class="when">8월 16일 – 8월 17일</p>
+      <p class="meta">
+        <span class="chip" style="background:${o.tint};color:${o.ink}">광주</span>
+        <span class="chip place">장소 5</span>
+        <span class="chip stay">숙소 1</span>
+        <span class="muted">지출 미설정</span>
+      </p>
+    </div>
+    <div class="card">
+      <h4>전주 한옥마을 2박</h4>
+      <p class="when">9월 5일 – 9월 7일</p>
+      <p class="meta">
+        <span class="chip" style="background:${o.tint};color:${o.ink}">전주</span>
+        <span class="chip place">장소 8</span>
+        <span class="chip stay">숙소 2</span>
+        <span class="muted">지출 미설정</span>
+      </p>
+    </div>
+
+    <div class="row">
+      ${['광주','전주','서울','제주','강원 속초'].map(n=>
+        `<span class="chip" style="background:${o.tint};color:${o.ink}">${n}</span>`).join('')}
+      <span class="chip" style="background:#e3f5ea;color:${OK}">완료</span>
+    </div>
+
+    <p class="contrast">
+      글자·배경 대비 <span class="${cr>=4.5?'ok':'bad'}">${cr.toFixed(2)}</span>${cr>=4.5?' (AA 통과)':' (AA 미달)'}<br>
+      완료 초록과 거리 <span class="${dOk>=60?'ok':'bad'}">${Math.round(dOk)}</span>${dOk>=60?'':' (헷갈림)'}
+      · 장소 파랑과 거리 <span class="${dPlace>=60?'ok':'bad'}">${Math.round(dPlace)}</span>
+    </p>
+    <p class="note">${o.note}</p>`;
+  grid.appendChild(el);
+}
+</script>
+</body>
+</html>
