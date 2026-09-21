@@ -89,21 +89,25 @@
   border-radius: 2px;
 }
 
-/* 지도 블록과 같은 5단계를 쓴다. 두 곳이 어긋나면 범례가 거짓이 된다. */
+/*
+  지도 블록과 같은 5단계를 쓴다. 두 곳이 어긋나면 범례가 거짓이 된다.
+  region-block-map.css의 --block-1~5와 같은 값이며 원본은 /stats의
+  map-visit 토큰이다(2026-09-21 청록 확정).
+*/
 .stats__legend-chip[data-level='1'] {
-  background: #d9ead0;
+  background: #c9eaf0;
 }
 .stats__legend-chip[data-level='2'] {
-  background: #b6d79f;
+  background: #84cedc;
 }
 .stats__legend-chip[data-level='3'] {
-  background: #89c06d;
+  background: #3fb3c9;
 }
 .stats__legend-chip[data-level='4'] {
-  background: #5da247;
+  background: #268496;
 }
 .stats__legend-chip[data-level='5'] {
-  background: #3f6212;
+  background: #0d5563;
 }
 
 .stats__note {
