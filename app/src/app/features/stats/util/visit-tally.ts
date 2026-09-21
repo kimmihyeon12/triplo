@@ -8,6 +8,7 @@ import type { IsoDate, Trip, TripRegion } from '../../trips/model/trip';
 import { SEOUL_DISTRICT_NAME } from '../model/seoul-districts';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
 import { districtCodeForAddress } from './district-match';
+import { excludedReasons } from './excluded-reasons';
 
 /**
  * 표준 지역으로 분류하지 못한 몫의 키.
@@ -24,7 +25,7 @@ export const UNCLASSIFIED = '(분류되지 않음)';
  * 저장하지 않고 화면을 열 때마다 계산한다.
  */
 export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: VisitFilter = 'all'): VisitSummary {
-  return summarize(visitedItems(trips, today, filter), (item) => {
+  const summary = summarize(visitedItems(trips, today, filter), (item) => {
     const resolved = resolveRegion(item.region);
     if (!resolved) return null;
     // 전국 격자는 시·도 단위다. 시·군 코드 그대로 세면 지도에서 찾지 못해
@@ -32,6 +33,9 @@ export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: Visi
     const code = provinceCodeOf(resolved.code);
     return { code, name: PROVINCE_SHORT_NAME[code] ?? resolved.name };
   });
+  // 화면이 비었을 때 까닭을 함께 넘긴다. 여행은 있는데 통계가 0이면
+  // 사용자는 기록이 사라졌다고 오해한다.
+  return { ...summary, excluded: excludedReasons(trips, today) };
 }
 
 /**

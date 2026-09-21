@@ -11,7 +11,7 @@ import { KOREA_ORIGIN, pointInPolygon } from '../../../../shared/util/geo/projec
 import type { VoxelGrid } from '../../../../shared/util/geo/geo-types';
 import { PROVINCE_SHORT_NAME } from '../../../../shared/util/korea-regions';
 import { LocalVisitStats } from '../../data/local-visit-stats';
-import type { RegionVisitCount, VisitedPlace } from '../../model/visit-stats';
+import type { ExcludedReasons, RegionVisitCount, VisitedPlace } from '../../model/visit-stats';
 import { SEOUL_DISTRICT_NAME } from '../../model/seoul-districts';
 import { VoxelScene } from '../../ui/voxel-scene';
 import type { MapLabel, RegionMapMarker } from '../../model/map-marker';
@@ -51,11 +51,22 @@ export class VisitMapPage {
   readonly palette = signal<VisitPalette | null>(null);
   readonly actual = signal<readonly RegionVisitCount[]>([]);
   readonly unclassified = signal(0);
+  /** 집계되지 않은 여행의 까닭. 통계가 비었을 때 화면에 이유를 보여준다. */
+  readonly excluded = signal<ExcludedReasons | null>(null);
+  readonly excludedNotes = computed(() => {
+    const reasons = this.excluded();
+    if (!reasons) return [];
+    const notes: string[] = [];
+    if (reasons.notEnded) notes.push(`아직 끝나지 않은 여행 ${reasons.notEnded}개는 종료일이 지나면 들어와요.`);
+    if (reasons.noEndDate) notes.push(`종료일이 없는 여행이 ${reasons.noEndDate}개 있어요. 날짜를 정하면 집계돼요.`);
+    if (reasons.noRegion) notes.push(`지역이 연결되지 않은 여행이 ${reasons.noRegion}개 있어요. 장소에 지역을 지정해 주세요.`);
+    if (reasons.emptyItinerary) notes.push(`담긴 장소나 숙소가 없는 여행이 ${reasons.emptyItinerary}개 있어요.`);
+    return notes;
+  });
   readonly selected = signal<string | null>(null);
   readonly labels = signal<MapLabel[]>([]);
   readonly markers = signal<readonly RegionMapMarker[]>([]);
   readonly selectedMarker = signal<string | null>(null);
-  readonly activeMarker = computed(() => this.markers().find(marker => marker.id === this.selectedMarker()));
   readonly names = PROVINCE_SHORT_NAME;
   readonly counts = this.actual;
   readonly layers = signal(true);
@@ -70,6 +81,10 @@ export class VisitMapPage {
   readonly legendColors = computed(() => { const p = this.palette(); return p ? VISIT_STEPS.map(step => visitStyle(step.min, 0, p).color) : []; });
   readonly allRegions = computed(() => Object.entries(this.names).map(([regionCode, name]) => ({ regionCode, name, visitCount: this.countMap().get(regionCode) ?? 0 })).sort((a, b) => b.visitCount - a.visitCount));
   readonly visitedRegions = computed(() => this.allRegions().filter(r => r.visitCount > 0).length);
+  /** 다녀온 곳은 많이 간 순서로, 안 간 곳은 이름 순으로 나눠 보여준다. */
+  readonly visitedList = computed(() => this.allRegions().filter(r => r.visitCount > 0));
+  readonly unvisitedList = computed(() =>
+    this.allRegions().filter(r => !r.visitCount).sort((a, b) => a.name.localeCompare(b.name, 'ko')));
   readonly coverage = computed(() => Math.round(this.visitedRegions() / this.allRegions().length * 100));
   readonly months = computed(() => monthlyVisits(this.places(), this.year()));
   readonly monthMax = computed(() => Math.max(1, ...this.months().map(m => m.count)));
@@ -103,10 +118,13 @@ export class VisitMapPage {
       const geo = await response.json() as GeoCollection;
       if (controller.signal.aborted || this.destroyRef.destroyed) return;
       this.geo = geo;
-      this.grid = buildGrid(geo, { cellSize: 6.5, origin: KOREA_ORIGIN,
+      // 격자가 잘면 지형이 모래알처럼 부서져 보인다. 타일을 키워 덩어리로
+      // 읽히게 하고, 대신 해안선의 세밀함은 포기한다.
+      this.grid = buildGrid(geo, { cellSize: 11, origin: KOREA_ORIGIN,
         codeOf: p => CODES[String(p['code'])] ?? String(p['code']), nameOf: p => String(p['name']) });
       this.actual.set(summary.regions);
       this.unclassified.set(summary.unclassifiedCount);
+      this.excluded.set(summary.excluded ?? null);
       this.markers.set(regionMarkers(markers, geo, CODES, this.names));
       this.scene?.destroy();
       this.scene = undefined;
@@ -164,6 +182,10 @@ export class VisitMapPage {
   toggleLayers(): void { this.layers.update(value => !value); this.paint(); }
   private paint(): void { if (this.grid) this.scene?.setData(this.grid, this.layers() ? this.countMap() : new Map(), this.markers()); }
   color(count: number): string { const p = this.palette(); return p ? visitStyle(count, 0, p).color : 'var(--color-panel)'; }
+  /** 임시 선택은 주 동작색, 저장한 지역은 방문색을 쓴다. */
+  markerInk(label: MapLabel): string {
+    return label.temporary ? 'var(--color-accent-deep)' : 'var(--color-map-visit-high)';
+  }
 
   locate(): void {
     if (!navigator.geolocation) { this.locationNotice.set('이 브라우저에서는 현재 위치를 확인할 수 없어요.'); return; }

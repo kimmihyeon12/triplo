@@ -172,7 +172,9 @@ export class VoxelScene {
     const { clientWidth: w, clientHeight: h } = this.host;
     if (!w || !h) return;
     this.renderer.setSize(w, h);
-    const halfHeight = Math.max(78, 51 * h / w);
+    // 지형 높이는 약 145단위다. 반높이를 그 절반 가까이 두어야 한반도가
+    // 화면을 채운다. 값이 크면 지형이 작아지고 바다 여백만 넓어진다.
+    const halfHeight = Math.max(62, 44 * h / w);
     this.camera.left = -halfHeight * w / h;
     this.camera.right = halfHeight * w / h;
     this.camera.top = halfHeight;

@@ -37,4 +37,19 @@ export interface VisitSummary {
   totalPlaces: number;
   /** 표준 지역으로 분류하지 못한 장소 수. 감추지 않고 화면에 표시한다. */
   unclassifiedCount: number;
+  /**
+   * 집계에서 빠진 여행의 이유별 개수. 화면이 비었을 때 까닭을 알려 준다.
+   *
+   * 저장소가 계산해 넘긴다. 화면이 직접 세려면 여행 본문을 받아야 하는데
+   * 그러면 서버 집계로 옮길 수 없다.
+   */
+  excluded?: ExcludedReasons;
+}
+
+/** 여행이 집계되지 않는 까닭. 자세한 판정은 util/excluded-reasons에 있다. */
+export interface ExcludedReasons {
+  notEnded: number;
+  noEndDate: number;
+  noRegion: number;
+  emptyItinerary: number;
 }

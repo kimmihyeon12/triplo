@@ -30,7 +30,9 @@ export function buildBlockLayout(grid: VoxelGrid, counts: ReadonlyMap<string, nu
     if (!nearest) return { cell, levels: 0, height: 0, visitRegion: null, strength: 0 };
     const falloff = Math.pow(1 - nearest.distance / nearest.radius, 1.35);
     const height = Math.max(1, VISIT_STEPS[nearest.level - 1].height * falloff);
-    const levels = Math.ceil(height / 4);
+    // 층 두께는 최고 높이에 맞춘다. 높이를 낮추면서 두께를 그대로 두면
+    // 층이 몇 개로 줄어 군집이 계단이 아니라 한 덩어리로 보인다.
+    const levels = Math.ceil(height / 1.75);
     return { cell, levels, height, visitRegion: nearest.code, strength: (nearest.level - 1) / 4 * falloff };
   });
   const elevation = new Map(columns.map(column => [column.cell, column.levels]));

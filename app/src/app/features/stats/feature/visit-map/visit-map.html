@@ -4,33 +4,61 @@
     <p class="mt-2 text-14 leading-relaxed text-ink-2">다녀온 지역과 방문 기록을 한눈에 확인하세요.</p>
   </header>
   <div class="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
-    <div class="min-w-0 overflow-hidden rounded-panel bg-panel shadow-panel lg:row-span-2">
+    <div class="min-w-0 overflow-hidden rounded-panel bg-panel shadow-panel">
       @if (state() === 'ready') {
-      <div class="flex items-center justify-between gap-3 px-4 py-3 text-13" aria-label="방문 통계 요약" data-testid="stats-summary">
-        <span class="font-semibold">전국 시·도 <span class="ml-1 text-accent-deep">{{ visitedRegions() }} / {{ allRegions().length }}</span></span>
-        <span class="text-ink-2">누적 방문 <strong class="text-ink tabular-nums">{{ total() | number }}회</strong></span>
+      <div class="flex items-center gap-4 border-b border-border px-4 py-3" aria-label="방문 통계 요약" data-testid="stats-summary">
+        <span class="flex items-baseline gap-1.5">
+          <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ visitedRegions() }}</strong>
+          <span class="text-12 text-ink-3">/ {{ allRegions().length }}개 시·도</span>
+        </span>
+        <!--
+          집계 단위는 여행에 담긴 장소·숙소의 개수다. 여행 횟수가 아니다.
+          오른쪽 패널의 지역별 값과 헷갈리지 않도록 '전국'을 붙인다.
+        -->
+        <span class="ml-auto flex items-baseline gap-1.5">
+          <span class="text-12 text-ink-3">전국</span>
+          <strong class="text-17 font-bold tabular-nums">{{ total() | number }}</strong>
+          <span class="text-12 text-ink-3">곳</span>
+        </span>
       </div>
-      } @else { <div class="px-4 py-3 text-13 text-ink-2">대한민국 · 시·도별 방문 기록</div> }
-      <div class="relative isolate h-[clamp(420px,58svh,640px)] overflow-hidden bg-map-water [background:radial-gradient(ellipse_at_48%_25%,var(--color-map-water-light),var(--color-map-water))] md:h-[600px]">
-        <div #mapHost class="absolute inset-0 touch-none" role="img" aria-label="대한민국 방문 빈도 입체 지도. 방문 횟수가 많을수록 높고 진한 초록색입니다. 아래 지역 목록으로도 선택할 수 있습니다."></div>
+      } @else { <div class="border-b border-border px-4 py-3 text-13 text-ink-3">대한민국 · 시·도별 방문 기록</div> }
+      <!--
+        지역을 고르기 전에는 지도가 화면의 주인공이므로 크게 둔다. 고른 뒤에는
+        오른쪽 기록이 길어지므로 조금 줄여 둘의 높이를 맞춘다.
+      -->
+      <div
+        class="relative isolate overflow-hidden bg-map-water [background:radial-gradient(ellipse_at_48%_25%,var(--color-map-water-light),var(--color-map-water))]"
+        [style.height]="selected() ? 'clamp(420px, 60svh, 640px)' : 'clamp(460px, 74svh, 820px)'"
+      >
+        <div #mapHost class="absolute inset-0 touch-none" role="img" aria-label="대한민국 방문 빈도 입체 지도. 방문 횟수가 많을수록 높고 진한 청록색입니다. 아래 지역 목록으로도 선택할 수 있습니다."></div>
         @if (state() === 'ready') {
           <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-label="지역 마커">
             @for (label of visibleLabels(); track label.id) {
-              <div class="pointer-events-auto absolute" [style.left.px]="label.x" [style.top.px]="label.y" [style.z-index]="selectedMarker() === label.id ? 5 : 1">
-                <button type="button" class="absolute -left-[22px] -top-[40px] size-11 rounded-control text-12 font-semibold text-accent-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep" [attr.aria-label]="label.name + (label.temporary ? ' · 선택 지역' : ' · 저장한 지역')" [attr.aria-pressed]="selectedMarker() === label.id" (click)="activateMarker(label.id)">
-                  <svg class="absolute left-2 top-[6px] h-9 w-7 drop-shadow-sm" viewBox="0 0 28 36" aria-hidden="true"><path d="M14 34S2 20 2 13a12 12 0 0 1 24 0c0 7-12 21-12 21Z" [attr.fill]="label.temporary ? 'var(--color-accent-deep)' : 'var(--color-map-visit-high)'" stroke="var(--color-panel)" stroke-width="2"/><circle cx="14" cy="13" r="4" fill="var(--color-panel)"/></svg>
-                  <span class="absolute top-1 max-w-28 truncate rounded-control bg-panel px-2 py-1.5 shadow-panel" [style.left.px]="label.x < mapHost.clientWidth - 135 ? 34 : null" [style.right.px]="label.x >= mapHost.clientWidth - 135 ? 34 : null">{{ label.name }}</span>
+              <!--
+                마커는 지형을 가리지 않을 만큼 작게 둔다. 누르면 활성 표시만 바꾸고
+                내용은 오른쪽 패널이 맡는다. 지도 위에 창을 띄우면 지형이 가려지고
+                같은 정보가 두 곳에 생긴다.
+                조작 영역 44px은 투명 여백으로 확보한다(보이는 크기와 별개).
+              -->
+              <div class="pointer-events-auto absolute -translate-x-1/2 -translate-y-full" [style.left.px]="label.x" [style.top.px]="label.y" [style.z-index]="selectedMarker() === label.id ? 5 : 1">
+                <button
+                  type="button"
+                  class="group flex flex-col items-center px-3 pt-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+                  [attr.aria-label]="label.name + (label.temporary ? ' · 선택 지역' : ' · 저장한 지역')"
+                  [attr.aria-pressed]="selectedMarker() === label.id"
+                  (click)="activateMarker(label.id)"
+                >
+                  <span
+                    class="rounded-pill px-2 py-0.5 text-12 font-semibold shadow-panel"
+                    [style.background]="selectedMarker() === label.id ? markerInk(label) : 'var(--color-panel)'"
+                    [style.color]="selectedMarker() === label.id ? 'var(--color-panel)' : markerInk(label)"
+                  >{{ label.name }}</span>
+                  <span
+                    class="mt-0.5 block size-2 rounded-pill ring-2 ring-panel"
+                    [style.background]="markerInk(label)"
+                    aria-hidden="true"
+                  ></span>
                 </button>
-                @if (selectedMarker() === label.id) {
-                  <div class="absolute z-10 max-h-44 w-40 overflow-y-auto rounded-control bg-panel p-3 text-12 shadow-float" [style.left.px]="label.x < 88 ? 8 - label.x : label.x > mapHost.clientWidth - 88 ? mapHost.clientWidth - label.x - 168 : -80" [style.top.px]="label.y <= mapHost.clientHeight / 2 ? 8 : null" [style.bottom.px]="label.y > mapHost.clientHeight / 2 ? 44 : null">
-                    @if (label.temporary) {
-                      <p class="text-ink-2">{{ label.name }} · 선택한 지역</p>
-                    } @else if (activeMarker(); as marker) {
-                      <p class="text-ink-2">{{ marker.name }} · 저장한 지역</p>
-                    }
-                    <button type="button" class="mt-1 min-h-11 w-full text-left text-ink-2" (click)="clearSelection()">마커 선택 닫기</button>
-                  </div>
-                }
               </div>
             }
           </div>
@@ -44,77 +72,228 @@
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="지도 축소" (click)="zoom(0.77)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/></svg></button>
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="지도 시점 초기화" (click)="reset()"><app-icon name="refresh" [size]="18"/></button>
           </div>
-          <p class="absolute bottom-4 left-4 text-12 text-ink-2">{{ layers() ? '방문 시·도 ' + coverage() + '%' : '기본 지형 보기' }}</p>
+          <!-- 기록이 없을 때 '0%'는 알려 주는 값이 아니라 없음을 강조할 뿐이다. -->
+          @if (!layers()) {
+            <p class="absolute bottom-4 left-4 text-12 text-ink-3">기본 지형 보기</p>
+          } @else if (total()) {
+            <p class="absolute bottom-4 left-4 rounded-pill bg-panel/85 px-2.5 py-1 text-12 font-medium text-ink-2 shadow-panel backdrop-blur-sm">전국의 <span class="tabular-nums text-accent-deep">{{ coverage() }}%</span></p>
+          }
         }
         @if (state() === 'loading') { <div class="absolute inset-0 flex items-center justify-center gap-2 bg-ground-2 text-13 text-ink-2" role="status"><app-spinner/> 지도를 불러오는 중…</div> }
         @if (state() === 'error') { <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-ground-2 px-5 text-center" role="alert"><p class="font-semibold">지도를 불러오지 못했어요.</p><p class="text-13 text-ink-2">연결 상태를 확인하고 다시 시도해 주세요.</p><button appButton type="button" (click)="load()">다시 시도</button><a appButton routerLink="/stats/details">일반 통계로 보기</a></div> }
       </div>
-      <div class="px-4 py-4" aria-label="방문 횟수 범례">
-        <div class="flex items-center justify-between text-12"><strong class="font-semibold">방문 횟수</strong><span class="text-ink-2">흰 블록은 기본 지형</span></div>
-        <div class="mt-3 grid grid-cols-5 gap-2">
+      <!--
+        범례는 끊기지 않은 한 줄이라 '적게 → 많이'가 눈금이 아니라 연속으로
+        읽힌다. 높이 변화는 오른쪽 설명 문구로 전한다.
+      -->
+      @if (total()) {
+      <div class="border-t border-border px-4 py-3.5" aria-label="방문 횟수 범례">
+        <div class="flex items-center justify-between gap-3">
+          <strong class="text-12 font-semibold">방문 횟수</strong>
+          <span class="text-12 text-ink-3">많을수록 높고 진해요</span>
+        </div>
+        <div class="mt-2.5 flex overflow-hidden rounded-pill" aria-hidden="true">
           @for (step of steps; track step.min) {
-            <div class="text-center"><div class="flex h-9 items-end"><span class="block w-full rounded-t-sm" [style.background]="legendColors()[$index]" [style.height.px]="8 + step.height * 0.8"></span></div><span class="mt-1 block whitespace-nowrap text-12 text-ink-2">{{ step.label }}</span></div>
+            <span class="h-2 flex-1" [style.background]="legendColors()[$index]"></span>
           }
         </div>
+        <div class="mt-1.5 flex justify-between text-12 text-ink-3">
+          <span>1곳</span>
+          <span>21곳 이상</span>
+        </div>
       </div>
+      }
     </div>
 
+    <!-- 오른쪽 열: 선택 패널과 지역 목록을 한 묶음으로 붙인다. -->
+    <div class="grid min-w-0 gap-4">
     <aside class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-selection" aria-label="선택 지역 방문 기록">
       @if (selected(); as code) {
         <div class="flex items-start justify-between gap-3">
-          <div aria-live="polite"><h3 class="text-22 font-bold">{{ names[code] }}</h3><p class="mt-1 text-14 text-ink-2">총 <strong class="text-accent-deep">{{ selectedCount() | number }}회</strong>의 방문 기록</p></div>
+          <div aria-live="polite">
+            <h3 class="text-22 font-bold leading-tight">{{ names[code] }}</h3>
+            <!-- 0곳은 성과가 아니므로 주 동작색으로 강조하지 않는다. -->
+            @if (selectedCount()) {
+              <p class="mt-1.5 flex items-baseline gap-1.5">
+                <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ selectedCount() | number }}</strong>
+                <span class="text-13 text-ink-3">곳 방문</span>
+              </p>
+            } @else {
+              <p class="mt-1.5 text-13 text-ink-3">아직 다녀오지 않은 지역이에요</p>
+            }
+          </div>
           <button appButton type="button" class="w-11 border-transparent! px-0!" aria-label="지역 선택 해제" (click)="clearSelection()"><app-icon name="x"/></button>
         </div>
         @if (detailState() === 'loading') { <p class="mt-6 flex items-center gap-2 text-13" role="status"><app-spinner/> 방문 기록을 불러오는 중…</p> }
         @if (detailState() === 'error') { <p class="mt-5 text-13" role="alert">방문 기록을 읽지 못했어요.</p><button appButton type="button" class="mt-2" (click)="select(code)">기록 다시 불러오기</button> }
-        @if (detailState() === 'ready') {
+        @if (detailState() === 'ready' && !places().length) {
+          <!--
+            기록이 없는 지역에는 빈 그래프와 빈 목록을 늘어놓지 않는다.
+            아직 가지 않았다는 사실 하나만 전한다.
+          -->
+          <p class="mt-6 text-13 leading-relaxed text-ink-2">이 지역에는 아직 방문 기록이 없어요. 여행을 다녀오면 여기에 월별 기록과 장소가 쌓여요.</p>
+          <a appButton routerLink="/trips/new" class="mt-4 w-full">
+            <app-icon name="plus" [size]="16"/>
+            {{ names[code] }} 여행 만들기
+          </a>
+        } @else if (detailState() === 'ready') {
+          <!--
+            막대는 딥 블루를 쓴다. 청록은 지도에서 '방문량'을 뜻하므로
+            월별 값에까지 쓰면 같은 색이 두 가지 뜻을 갖는다.
+          -->
           <div class="mt-6 flex items-center justify-between gap-2"><h4 class="text-14 font-semibold">월별 방문</h4><select appInput class="w-24! text-13!" aria-label="방문 연도" [value]="year()" (change)="year.set(+$any($event.target).value)">@for (value of years(); track value) { <option [value]="value">{{ value }}년</option> }</select></div>
-          <div class="mt-3 flex h-28 items-end gap-1.5" aria-label="월별 방문 횟수">
+          <div class="mt-3 flex h-24 items-end gap-1" aria-label="월별 방문 횟수">
             @for (month of months(); track month.month) {
-              <div class="flex h-full min-w-0 flex-1 flex-col justify-end text-center" [attr.title]="month.month + '월 ' + month.count + '회'" [attr.aria-label]="month.month + '월 ' + month.count + '회'"><span class="text-12 tabular-nums text-ink-2">{{ month.count || '' }}</span><span class="mt-1 block rounded-t-sm bg-ok-ink" [style.height.px]="month.count ? 8 + month.count / monthMax() * 56 : 2" [style.opacity]="month.count ? 1 : 0.15"></span><span class="mt-2 text-12 text-ink-2">{{ month.month }}</span></div>
+              <div class="flex h-full min-w-0 flex-1 flex-col justify-end text-center" [attr.title]="month.month + '월 ' + month.count + '곳'" [attr.aria-label]="month.month + '월 ' + month.count + '곳'">
+                <span class="text-12 font-semibold tabular-nums text-accent-deep">{{ month.count || '' }}</span>
+                <span class="mt-1 block rounded-t-sm" [style.background]="month.count ? 'var(--color-accent-deep)' : 'var(--color-border)'" [style.height.px]="month.count ? 6 + month.count / monthMax() * 46 : 3"></span>
+                <span class="mt-1.5 text-12 tabular-nums" [style.color]="month.count ? 'var(--color-ink-2)' : 'var(--color-ink-3)'">{{ month.month }}</span>
+              </div>
             }
           </div>
-          <p class="mt-3 text-12 text-ink-2">여행 종료 월 기준이에요.</p>
-          <h4 class="mt-6 text-14 font-semibold">최근 방문한 장소</h4>
-          @if (!places().length) { <p class="mt-3 text-13 leading-relaxed text-ink-2">이 지역에는 방문 기록이 아직 없어요.</p> }
+          <p class="mt-2.5 text-12 text-ink-3">여행 종료 월 기준이에요.</p>
+
+          <!--
+            목록은 다섯 개만 보여준다. 전체 개수를 함께 적지 않으면 위쪽
+            '4곳 방문'과 목록 길이가 달라 보여 수치가 틀린 것처럼 읽힌다.
+          -->
+          <div class="mt-6 flex items-baseline justify-between gap-2">
+            <h4 class="text-14 font-semibold">최근 방문한 장소</h4>
+            <span class="text-12 tabular-nums text-ink-3">{{ places().length }}곳</span>
+          </div>
+          <!--
+            항목마다 같은 핀을 놓으면 다섯 줄이 구분되지 않는다. 최근 순서를
+            번호로 보여 어느 것이 마지막 방문인지 바로 읽히게 한다.
+          -->
           <ul class="mt-2 divide-y divide-border">
             @for (place of places().slice(0, 5); track place.tripId + ':' + place.id) {
-              <li><a [routerLink]="['/trips', place.tripId]" class="flex min-h-16 items-center gap-3 rounded-control py-3 focus-visible:outline-2 focus-visible:outline-accent-deep"><span class="flex size-10 shrink-0 items-center justify-center rounded-control bg-accent-tint text-accent-deep"><app-icon name="place"/></span><span class="min-w-0 flex-1"><strong class="block truncate text-14 font-medium">{{ place.name }}</strong><small class="mt-1 block truncate text-12 text-ink-2">{{ place.visitedOn }} · {{ place.tripTitle }}</small></span><app-icon name="chevron-right" [size]="16"/></a></li>
+              <li>
+                <a [routerLink]="['/trips', place.tripId]" class="group flex min-h-16 items-center gap-3 rounded-control py-3 focus-visible:outline-2 focus-visible:outline-accent-deep">
+                  <span class="flex size-9 shrink-0 items-center justify-center rounded-control text-13 font-bold tabular-nums" [style.background]="$index === 0 ? 'var(--color-accent-deep)' : 'var(--color-accent-tint)'" [style.color]="$index === 0 ? 'var(--color-panel)' : 'var(--color-accent-deep)'">{{ $index + 1 }}</span>
+                  <span class="min-w-0 flex-1">
+                    <strong class="block truncate text-14 font-medium">{{ place.name }}</strong>
+                    <small class="mt-0.5 block truncate text-12 text-ink-3">{{ place.visitedOn }} · {{ place.tripTitle }}</small>
+                  </span>
+                  <app-icon class="text-ink-3" name="chevron-right" [size]="16"/>
+                </a>
+              </li>
             }
           </ul>
+          @if (places().length > 5) {
+            <p class="mt-2 text-12 text-ink-3">최근 5곳만 보여요. 나머지 <span class="tabular-nums">{{ places().length - 5 }}</span>곳은 전체 보기에서 확인할 수 있어요.</p>
+          }
           <a [routerLink]="['/stats/details']" [queryParams]="{ region: code }" class="mt-4 flex min-h-11 items-center justify-between rounded-control text-13 font-semibold text-accent-deep">{{ code === 'seoul' ? '서울 구별 통계 보기' : '지역 기록 전체 보기' }}<app-icon name="arrow-right" [size]="17"/></a>
           <p class="mt-2 text-12 leading-relaxed text-ink-2">전국 지도는 시·도 단위예요. 구별 보기는 서울 통계에서 지원해요.</p>
         }
-      } @else {
-        <span class="flex size-12 items-center justify-center rounded-control-lg bg-accent-tint text-accent-deep"><app-icon name="map" [size]="24"/></span>
-        <h3 class="mt-4 text-17 font-semibold">{{ total() ? '어떤 여행이 쌓였을까요?' : '첫 방문 기록을 기다리고 있어요' }}</h3>
-        <p class="mt-2 text-14 leading-relaxed text-ink-2">{{ total() ? '지도 위 지역을 누르면 월별 방문과 최근 다녀온 장소를 볼 수 있어요.' : '종료일이 지난 여행의 장소와 숙소가 초록 블록으로 쌓여요.' }}</p>
-        @if (!total()) { <a appButton routerLink="/trips/new" class="mt-5">여행 만들기</a> }
-      }
-    </aside>
-
-    @if (state() === 'ready') {
-      <section class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-regions" aria-label="지역별 방문 횟수">
-        <div class="flex items-baseline justify-between gap-2">
-          <h3 class="text-14 font-semibold">지역별 방문 횟수</h3>
-          <span class="text-12 text-ink-2">17개 시·도</span>
-        </div>
-        <ul class="mt-2 grid grid-cols-2 gap-x-4">
-          @for (region of allRegions(); track region.regionCode) {
+      } @else if (total()) {
+        <!--
+          아이콘 대신 '무엇을 누르면 되는지'를 그대로 보여준다. 접힌 지도 아이콘은
+          이 자리에서 아무것도 알려 주지 않았다.
+        -->
+        <p class="text-13 font-semibold text-accent-deep">지역을 골라 보세요</p>
+        <h3 class="mt-1.5 text-17 font-semibold">어떤 여행이 쌓였을까요?</h3>
+        <p class="mt-2 text-14 leading-relaxed text-ink-2">지도나 아래 목록에서 지역을 누르면 월별 방문과 최근 다녀온 장소를 볼 수 있어요.</p>
+        <ul class="mt-4 flex flex-wrap gap-1.5">
+          @for (region of visitedList().slice(0, 4); track region.regionCode) {
             <li>
-              <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-control px-2 text-left text-13 hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" [style.color]="region.visitCount ? null : 'var(--color-ink-2)'" [attr.aria-pressed]="selected() === region.regionCode" (click)="select(region.regionCode)">
-                <i class="size-3 rounded-sm border border-border-strong" [style.background]="color(region.visitCount)" aria-hidden="true"></i>{{ region.name }}<strong class="ml-auto font-medium tabular-nums">{{ region.visitCount }}회</strong>
+              <button type="button" class="flex min-h-9 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
+                <i class="size-2 rounded-pill" [style.background]="color(region.visitCount)" aria-hidden="true"></i>
+                {{ region.name }}
+                <span class="tabular-nums text-ink-3">{{ region.visitCount }}</span>
               </button>
             </li>
           }
         </ul>
+      } @else {
+        <!--
+          기록이 없을 때는 결과가 아니라 다음에 할 일을 보여준다. 0회 목록과
+          범례는 아직 뜻이 없으므로 감추고, 세 단계로 무엇이 쌓이는지 알린다.
+        -->
+        <span class="flex size-12 items-center justify-center rounded-control-lg bg-accent-tint text-accent-deep"><app-icon name="luggage" [size]="24"/></span>
+        @if (excludedNotes().length) {
+          <!--
+            여행은 있는데 통계가 비었다면 까닭을 알려준다. 이유를 모르면
+            기록이 사라졌다고 오해한다.
+          -->
+          <h3 class="mt-4 text-17 font-semibold">아직 집계할 여행이 없어요</h3>
+          <p class="mt-2 text-14 leading-relaxed text-ink-2">저장한 여행은 있지만 아래 이유로 아직 통계에 들어오지 않았어요.</p>
+          <ul class="mt-4 grid gap-2">
+            @for (note of excludedNotes(); track note) {
+              <li class="flex items-start gap-2 rounded-control bg-ground-2 px-3 py-2.5 text-13 leading-relaxed text-ink-2">
+                <app-icon class="mt-0.5 flex-none text-ink-3" name="alert" [size]="15"/>
+                <span class="min-w-0">{{ note }}</span>
+              </li>
+            }
+          </ul>
+          <a appButton routerLink="/trips" class="mt-4 w-full">여행 목록으로</a>
+        } @else {
+        <h3 class="mt-4 text-17 font-semibold">첫 여행을 기다리고 있어요</h3>
+        <p class="mt-2 text-14 leading-relaxed text-ink-2">여행이 끝나면 다녀온 곳이 지도에 쌓입니다.</p>
+        <ol class="mt-5 grid gap-3">
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 flex size-6 flex-none items-center justify-center rounded-pill bg-ground-2 text-12 font-bold tabular-nums text-ink-3">1</span>
+            <span class="min-w-0"><strong class="block text-13 font-semibold">여행을 만들어요</strong><small class="mt-0.5 block text-12 leading-relaxed text-ink-3">날짜와 지역을 정합니다</small></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 flex size-6 flex-none items-center justify-center rounded-pill bg-ground-2 text-12 font-bold tabular-nums text-ink-3">2</span>
+            <span class="min-w-0"><strong class="block text-13 font-semibold">다녀옵니다</strong><small class="mt-0.5 block text-12 leading-relaxed text-ink-3">종료일이 지나면 방문으로 세요</small></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 flex size-6 flex-none items-center justify-center rounded-pill bg-accent-deep text-12 font-bold tabular-nums text-panel">3</span>
+            <span class="min-w-0"><strong class="block text-13 font-semibold">여기에 쌓여요</strong><small class="mt-0.5 block text-12 leading-relaxed text-ink-3">지도가 지역별로 물듭니다</small></span>
+          </li>
+        </ol>
+        <a appButton variant="primary" routerLink="/trips/new" class="mt-5 w-full">
+          <app-icon name="plus" [size]="16"/>
+          여행 만들기
+        </a>
+        }
+      }
+    </aside>
+
+    <!--
+      다녀온 곳과 아직 안 간 곳을 나눈다. 예전에는 0회 지역 열한 개가 목록의
+      대부분을 차지해 실제 기록이 묻혔다.
+    -->
+    @if (state() === 'ready' && total()) {
+      <section class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-regions" aria-label="지역별 방문 횟수">
+        <div class="flex items-baseline justify-between gap-2">
+          <h3 class="text-14 font-semibold">다녀온 지역</h3>
+          <span class="text-12 tabular-nums text-ink-3">{{ visitedRegions() }} / {{ allRegions().length }}곳</span>
+        </div>
+        <ul class="mt-2 divide-y divide-border">
+          @for (region of visitedList(); track region.regionCode) {
+            <li>
+              <!--
+                선택은 행을 칠하지 않고 왼쪽 세로 막대로 표시한다. 배경을 칠하면
+                목록 전체가 얼룩져 보이고 숫자를 비교하기 어려워진다.
+              -->
+              <button type="button" class="flex min-h-11 w-full items-center gap-2.5 border-l-2 border-transparent pl-2.5 pr-2 text-left text-13 hover:bg-ground-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep" [style.border-left-color]="selected() === region.regionCode ? 'var(--color-accent-deep)' : null" [attr.aria-pressed]="selected() === region.regionCode" (click)="select(region.regionCode)">
+                <i class="size-2.5 flex-none rounded-pill" [style.background]="color(region.visitCount)" aria-hidden="true"></i>
+                <span class="min-w-0 flex-1 truncate" [style.color]="selected() === region.regionCode ? 'var(--color-accent-deep)' : null" [style.font-weight]="selected() === region.regionCode ? 600 : null">{{ region.name }}</span>
+                <strong class="font-semibold tabular-nums">{{ region.visitCount }}곳</strong>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (unvisitedList().length) {
+          <h4 class="mt-5 text-12 font-semibold text-ink-3">아직 안 간 곳 <span class="tabular-nums">{{ unvisitedList().length }}</span>곳</h4>
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            @for (region of unvisitedList(); track region.regionCode) {
+              <button type="button" class="min-h-9 rounded-pill border border-border px-2.5 text-12 text-ink-3 hover:border-border-strong hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">{{ region.name }}</button>
+            }
+          </div>
+        }
       </section>
     }
+    </div>
   </div>
   @if (locationNotice()) { <p class="mt-3 text-13 text-ink-2" role="status">{{ locationNotice() }}</p> }
-  @if (state() === 'ready') {
-    <p class="mt-4 text-12 leading-relaxed text-ink-2">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 초록 군집은 시·도별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
-    @if (unclassified()) { <p class="mt-1 text-12 text-ink-2">지역 미분류 {{ unclassified() }}개 항목은 지도 합계에서 제외됐어요.</p> }
+  @if (state() === 'ready' && total()) {
+    <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·도별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
+    @if (unclassified()) { <p class="mt-1 text-12 text-ink-3">지역 미분류 {{ unclassified() }}개 항목은 지도 합계에서 제외됐어요.</p> }
+    @for (note of excludedNotes(); track note) { <p class="mt-1 text-12 text-ink-3">{{ note }}</p> }
   }
-  <p class="mt-2 text-12 text-ink-2"><a class="underline underline-offset-2" href="https://github.com/southkorea/southkorea-maps" target="_blank" rel="noopener noreferrer">경계: 통계청 2013 · southkorea-maps</a> · 현재 경계와 다를 수 있어요.</p>
+  <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/southkorea/southkorea-maps" target="_blank" rel="noopener noreferrer">경계: 통계청 2013 · southkorea-maps</a> · 현재 경계와 다를 수 있어요.</p>
 </section>
