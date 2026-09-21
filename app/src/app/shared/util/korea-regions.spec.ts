@@ -53,4 +53,31 @@ describe('지역 코드', () => {
     expect(findRegionByName('없는곳')).toBeNull();
     expect(findRegionByName('')).toBeNull();
   });
+
+  /*
+    여행에 저장된 지역 이름은 시·군만이 아니다. 광역시·도를 통째로 고른
+    여행도 있고, 그 이름이 '광주광역시'처럼 정식 명칭일 수 있다. 이때
+    찾지 못하면 통계에서 미분류가 되어 '0곳인데 누적 1곳' 같은 모순이
+    생긴다(2026-09-21 확인).
+  */
+  it('시·도 정식 명칭으로 찾는다', () => {
+    expect(findRegionByName('광주광역시')?.provinceCode).toBe('gwangju');
+    expect(findRegionByName('전라남도')?.provinceCode).toBe('jeonnam');
+    expect(findRegionByName('강원특별자치도')?.provinceCode).toBe('gangwon');
+  });
+
+  it('시·도 짧은 이름으로 찾는다', () => {
+    expect(findRegionByName('전남')?.provinceCode).toBe('jeonnam');
+    expect(findRegionByName('경기')?.provinceCode).toBe('gyeonggi');
+    expect(findRegionByName('충북')?.provinceCode).toBe('chungbuk');
+  });
+
+  it('시·군 이름이 시·도 이름보다 우선한다', () => {
+    // '광주'는 광주광역시이면서 경기도 광주시이기도 하다. 광역시를 쓴다.
+    expect(findRegionByName('광주')?.provinceCode).toBe('gwangju');
+  });
+
+  it('앞뒤 공백이 있어도 찾는다', () => {
+    expect(findRegionByName(' 광주광역시 ')?.provinceCode).toBe('gwangju');
+  });
 });

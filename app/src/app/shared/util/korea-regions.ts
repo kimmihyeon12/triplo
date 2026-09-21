@@ -191,13 +191,29 @@ export function findRegionByCode(code: string): KoreaRegion | null {
 }
 
 /**
+ * 시·도 이름으로 찾는 보조 색인.
+ *
+ * 정식 명칭('광주광역시')과 짧은 이름('전남') 양쪽을 담는다. 여행이 시·군이
+ * 아니라 광역시·도를 통째로 담는 경우가 있고, 그 이름이 시·군 목록에 없어
+ * 통계에서 미분류로 떨어졌다(2026-09-21 확인). 대표 시·군을 돌려주되 통계는
+ * provinceCode만 쓰므로 어느 시·군이 뽑히는지는 결과에 영향을 주지 않는다.
+ */
+const BY_PROVINCE_NAME = new Map<string, KoreaRegion>();
+for (const region of KOREA_REGIONS) {
+  if (!BY_PROVINCE_NAME.has(region.province)) BY_PROVINCE_NAME.set(region.province, region);
+  if (!BY_PROVINCE_NAME.has(region.short)) BY_PROVINCE_NAME.set(region.short, region);
+}
+
+/**
  * 표시 이름으로 지역을 찾는다. 없으면 null.
  *
- * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 지역 이름은 이 고정 목록에서
- * 고른 값이므로 대부분 찾아진다.
+ * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 시·군 이름을 먼저 보고
+ * 없으면 시·도 이름으로 찾는다. 순서를 지키는 이유는 '광주'처럼 광역시와
+ * 경기도 시·군에 같은 이름이 있기 때문이다.
  */
 export function findRegionByName(name: string): KoreaRegion | null {
-  return BY_NAME.get(name.trim()) ?? null;
+  const key = name.trim();
+  return BY_NAME.get(key) ?? BY_PROVINCE_NAME.get(key) ?? null;
 }
 
 /** 지역 코드에서 시·도 코드를 뗀다. 'gangwon-gangneung' → 'gangwon' */
