@@ -8,9 +8,17 @@
   -->
   @if (!isFirstTime()) {
     <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
+<!--
+        공통 버튼은 1px 테두리를 갖는다. 단색 버튼은 테두리를 배경색과 맞추면
+        되지만 그라데이션은 단색이 아니라 그 방법을 쓸 수 없다. 투명 테두리만
+        두면 배경이 테두리 자리까지 늘어나 가장자리 1px이 안쪽과 다르게 뜬다.
+        background 단축 속성 안에 padding-box를 넣어 테두리 안쪽에만 그린다.
+        Tailwind의 bg-clip-padding은 여기서 쓸 수 없다. background 단축 속성이
+        background-clip까지 초기화해 나중에 적용되면서 그 값을 덮는다.
+      -->
       <a
         appButton
-        class="btn btn--ai min-w-0 border-transparent text-white [background:var(--ai-fill)] hover:[background:var(--ai-fill-hover)] in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
+        class="btn btn--ai min-w-0 border-transparent text-white [background:var(--ai-fill)_padding-box] hover:[background:var(--ai-fill-hover)_padding-box] in-[.make]:whitespace-nowrap in-[.make]:py-0 in-[.make]:px-2"
         routerLink="/trips/ai"
         data-testid="new-trip-ai"
       >
