@@ -61,21 +61,36 @@ function boundsOf(polygons: Point[][][]) {
   return { minX, maxX, minY, maxY };
 }
 
+/** 경계 상자의 넓이. 지역 크기를 비교할 때만 쓰는 어림값이다. */
+function extentOf(bounds: ProjectedRegion['bounds']): number {
+  return (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
+}
+
+/**
+ * 지역을 평면으로 펴고 작은 것부터 늘어놓는다.
+ *
+ * 순서가 중요한 이유는 칸 하나를 한 지역에만 넣기 때문이다. 광역시는 도에
+ * 둘러싸여 있고 단순화된 경계에서는 두 폴리곤이 겹친다. 큰 지역을 먼저 보면
+ * 작은 지역이 격자에서 통째로 사라진다. 실제로 광주가 전남에 먹혀 지도에
+ * 나오지 않았다(2026-09-21 확인).
+ */
 function projectRegions(collection: GeoCollection, options: GridOptions): ProjectedRegion[] {
   const project = createProjection(options.origin);
-  return collection.features.map((feature) => {
-    const raw =
-      feature.geometry.type === 'Polygon'
-        ? [feature.geometry.coordinates]
-        : feature.geometry.coordinates;
-    const polygons = raw.map((rings) => rings.map((ring) => ringToPoints(ring, project)));
-    return {
-      code: options.codeOf(feature.properties),
-      name: options.nameOf(feature.properties),
-      polygons,
-      bounds: boundsOf(polygons),
-    };
-  });
+  return collection.features
+    .map((feature) => {
+      const raw =
+        feature.geometry.type === 'Polygon'
+          ? [feature.geometry.coordinates]
+          : feature.geometry.coordinates;
+      const polygons = raw.map((rings) => rings.map((ring) => ringToPoints(ring, project)));
+      return {
+        code: options.codeOf(feature.properties),
+        name: options.nameOf(feature.properties),
+        polygons,
+        bounds: boundsOf(polygons),
+      };
+    })
+    .sort((a, b) => extentOf(a.bounds) - extentOf(b.bounds));
 }
 
 /** 점이 이 지역 안인지 본다. 범위 밖이면 다각형 판정을 건너뛴다. */
