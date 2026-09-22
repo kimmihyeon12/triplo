@@ -4,9 +4,8 @@ import type { ChatReply, ChatScope } from '../model/chat';
 /**
  * 대화 답변을 만들어 주는 제공자. 화면은 이 인터페이스만 쓴다.
  *
- * 지금은 고정 응답을 돌려주는 구현이 붙어 있고, 13-B에서 Supabase Edge
- * Function(`ai-chat`)을 부르는 구현으로 갈아 끼운다. 화면 코드는 그때
- * 고치지 않는다.
+ * 실제 앱은 Supabase Edge Function(`ai-chat`)을 호출한다.
+ * 테스트·시안 환경에서만 고정 응답을 사용한다.
  *
  * `ai-plan`과 별개 함수로 두기로 한 결정에 맞춰 제공자도 따로 둔다. 지시문과
  * 응답 형식이 다르고, 한쪽 배포가 다른 쪽을 멈추게 하지 않아야 한다.

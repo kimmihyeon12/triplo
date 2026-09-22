@@ -37,6 +37,7 @@ import {
   CHAT_HISTORY,
   CHAT_PROVIDER,
   FixtureChatProvider,
+  EdgeChatProvider,
   LocalChatHistory,
 } from './features/travel-chat/travel-chat';
 
@@ -112,12 +113,8 @@ export const appConfig: ApplicationConfig = {
     { provide: PLACE_SEARCH, useExisting: useFixture ? FixturePlaceSearch : KakaoPlaceSearch },
     // AI 일정은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.
     { provide: AI_PLAN_PROVIDER, useExisting: useFixture ? FixtureAiProvider : EdgeAiProvider },
-    /*
-      대화는 아직 고정 응답만 쓴다(13-A). 실제 모델을 부르는 Edge Function은
-      Supabase 여행 저장이 끝난 뒤 13-B에서 붙이며, 그때 이 줄의 구현만 바뀐다.
-      화면과 store는 제공자 인터페이스만 보므로 고치지 않는다.
-    */
-    { provide: CHAT_PROVIDER, useExisting: FixtureChatProvider },
+    // 실제 실행은 로그인된 Edge AI, 테스트·시안은 외부 호출 없는 고정 응답.
+    { provide: CHAT_PROVIDER, useExisting: useFixture ? FixtureChatProvider : EdgeChatProvider },
     // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
     {
       provide: CHAT_HISTORY,

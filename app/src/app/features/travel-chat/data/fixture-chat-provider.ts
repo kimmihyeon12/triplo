@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { OUT_OF_SCOPE_REPLY, type ChatReply } from '../model/chat';
 import { classifyQuestion, referenceLinks } from '../util/chat-scope';
+import { regionChips } from '../util/chat-suggestions';
 import type { ChatProvider, ChatRequest } from './chat-provider';
 
 /**
@@ -59,7 +60,7 @@ export class FixtureChatProvider implements ChatProvider {
       kind: 'explore',
       text: '강릉과 속초를 묶으면 이동이 짧아 2박 3일에 맞습니다. 바다를 볼지 산을 볼지 정하면 더 좁혀 드릴게요.',
       regions: ['강릉'],
-      chips: ['강릉으로 일정 짜줘', '속초는 어때', '바다 쪽으로 보고 싶어', '다른 지역도 볼래'],
+      chips: regionChips('강릉'),
     });
   }
 }
@@ -89,7 +90,7 @@ function referenceReply(text: string): ChatReply {
       body: '보통 오전 9시부터 오후 6시까지 운영하며, 명절에는 다를 수 있습니다.',
       links: referenceLinks(subject, ''),
     },
-    chips: ['다른 곳도 알려줘', '근처에 뭐가 있어'],
+    chips: ['숨은 여행 명소 추천해줘', '근처에서 사진 찍기 좋은 곳 추천해줘'],
   });
 }
 
@@ -115,7 +116,7 @@ function draftReply(request: ChatRequest): ChatReply {
         : '이런 일정은 어떠세요? 담고 싶은 곳만 골라 주세요.',
     places,
     regions: request.trip?.regions.length ? [...request.trip.regions] : ['강릉', '속초'],
-    chips: ['다른 곳으로 바꿔줘', '카페도 넣어줘'],
+    chips: ['이 코스를 먹방 여행으로 바꿔줘', '이 코스에 디저트 카페도 넣어줘'],
   });
 }
 

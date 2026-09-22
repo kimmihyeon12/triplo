@@ -6,3 +6,6 @@ verify_jwt = true
 # 로그인한 사람만 AI 일정을 만든다. 핸들러에서도 토큰을 다시 확인한다.
 [functions.ai-plan]
 verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = true
