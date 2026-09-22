@@ -1,5 +1,11 @@
 # 개발 범위·진행·검증 안내
 
+실제 채팅 AI 연결(2026-09-22): 실행 앱은 `EdgeChatProvider`와 별도 `ai-chat` 서버 함수를 사용한다. 로컬 명령 및 테스트 픽스처는 유지한다. 인증·입력 크기·응답 정규화·호출 오류 테스트와 앱 빌드 후 연결된 Supabase 프로젝트의 배포 상태를 별도로 확인한다. [검증 상태](../openspec/changes/connect-chat-ai/tasks.md).
+
+로컬 채팅 명령 확장(2026-09-22): 기존 확인 카드에서 일정·경비 변경을 검토·적용하고, 저장 정보 조회와 계산은 즉시 처리한다. 상태 스냅샷 비교로 오래된 초안·되돌리기를 차단한다. [사용 명령과 제한](local-chat-commands.md), [설계·검증 작업](../openspec/changes/local-chat-commands/tasks.md). 브라우저 검증은 운영 앱과 별도인 test 구성 4300에서 수행한다.
+
+로컬 채팅 날짜 배정(2026-09-22): 미배치 장소 전체 배정은 저장된 데이터만 사용하는 로컬 명령으로 처리한다. 날짜 해석·충돌 안내·초안 대상 고정·적용 직전 재검사·모델 미호출·한도 후 처리·되돌리기를 단위 및 스토어 테스트로 검증한다. [변경 범위와 검증 상태](../openspec/changes/local-chat-assignment/tasks.md).
+
 후속 검증(2026-09-18): 통계 자치구 상수의 계층 참조 오류 2건과 `/lab/map`의 사각 격자→육각 렌더러 연결 오류를 해결했다. 전체 단위 298개·구조 검사 142개 모듈·운영 빌드 통과. 4300 test 앱에서 지도 렌더·서울 예시 선택·장소 목록·360px 가로 넘침 없음을 확인했다. 초기 번들 625.63kB 예산 경고와 LoginPage 미사용 import 2건은 남는다. 상세 내역은 [OpenSpec 작업](../openspec/changes/add-voxel-visit-map/tasks.md)을 따른다. 아래 기존 lint 실패 기록은 수정 전 이력이다.
 
 현재는 Angular 21·NgRx Signals·Zoneless 기반 내부 알파다. 문서 목차는 [README](README.md), 공통 작업 규칙은 [AGENTS.md](../AGENTS.md), 구조 원본은 [아키텍처](architecture/ARCHITECTURE.md), 요구사항은 [기획안](기획안-v0.1.md)과 [OpenSpec](../openspec/changes/plan-travel-companion-mvp/tasks.md)이다.
