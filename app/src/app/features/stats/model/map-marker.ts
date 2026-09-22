@@ -19,4 +19,8 @@ export interface MapLabel {
   x: number;
   y: number;
   temporary: boolean;
+  /** 이 자리의 방문 수. 마커가 겹칠 때 많이 간 곳을 먼저 남긴다. */
+  count?: number;
+  /** 이름표가 이웃과 겹쳐 가린 상태. 점은 그대로 보인다. */
+  labelHidden?: boolean;
 }

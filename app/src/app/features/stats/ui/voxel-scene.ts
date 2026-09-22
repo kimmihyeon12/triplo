@@ -22,7 +22,7 @@ export class VoxelScene {
   private mesh?: THREE.Mesh;
   private pickRegions: (string | null)[] = [];
   private readonly anchors = new Map<string, THREE.Vector3>();
-  private markerPoints: { marker: RegionMapMarker; point: THREE.Vector3 }[] = [];
+  private markerPoints: { marker: RegionMapMarker; point: THREE.Vector3; count: number }[] = [];
   private temporary: THREE.Vector3 | null = null;
   private temporaryRegion: string | null = null;
   private start: { x: number; y: number; pointer: number; dragged: boolean } | null = null;
@@ -154,12 +154,12 @@ export class VoxelScene {
         used.set(spot.regionCode, seen + 1);
         const id = seen ? `${spot.regionCode}#${seen}` : spot.regionCode;
         const point = new THREE.Vector3((cell.x - midX) * scale, (tops.get(cell) ?? 0) + 0.5, (cell.y - midY) * scale);
-        return { marker: { id, name: spot.name }, point };
+        return { marker: { id, name: spot.name }, point, count: spot.count };
       });
     } else {
       this.markerPoints = markers.flatMap(marker => {
         const anchor = this.anchors.get(marker.id);
-        return anchor ? [{ marker, point: anchor.clone().add(new THREE.Vector3(0, 0.5, 0)) }] : [];
+        return anchor ? [{ marker, point: anchor.clone().add(new THREE.Vector3(0, 0.5, 0)), count: counts.get(marker.id) ?? 0 }] : [];
       });
     }
     if (this.temporaryRegion && this.temporary) this.temporary = this.anchors.get(this.temporaryRegion)?.clone().add(new THREE.Vector3(0, 0.5, 0)) ?? null;
@@ -222,11 +222,11 @@ export class VoxelScene {
     if (this.disposed) return;
     this.renderer.render(this.scene, this.camera);
     const w = this.host.clientWidth, h = this.host.clientHeight;
-    const points = this.markerPoints.map(({marker,point}) => ({id:marker.id,name:marker.name,point,temporary:false}));
-    if (this.temporary) points.push({id:'temporary',name:PROVINCE_SHORT_NAME[this.temporaryRegion ?? ''] ?? '',point:this.temporary,temporary:true});
+    const points = this.markerPoints.map(({marker,point,count}) => ({id:marker.id,name:marker.name,point,temporary:false,count}));
+    if (this.temporary) points.push({id:'temporary',name:PROVINCE_SHORT_NAME[this.temporaryRegion ?? ''] ?? '',point:this.temporary,temporary:true,count:0});
     this.labels(visibleMarkers(points.map(marker => {
       const p = marker.point.clone().project(this.camera);
-      return {id:marker.id,name:marker.name,temporary:marker.temporary,x:(p.x+1)*w/2,y:(1-p.y)*h/2};
+      return {id:marker.id,name:marker.name,temporary:marker.temporary,count:marker.count,x:(p.x+1)*w/2,y:(1-p.y)*h/2};
     }).filter(p => p.x >= 12 && p.x <= w-12 && p.y >= 30 && p.y <= h-8), this.camera.zoom, this.selectedMarker));
   };
   private readonly pointerDown = (event: PointerEvent): void => {
