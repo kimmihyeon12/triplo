@@ -2,6 +2,7 @@ import { addDays, diffDays } from '../../../shared/util/dates';
 import { createStop } from '../../trips/util/factories';
 import { appendStop, haversineKm, placeStopOnDate, removeStop } from '../../trips/util/itinerary';
 import { regionIdForAddress } from '../../trips/util/region-match';
+import type { GeoPoint } from '../../places/model/place';
 import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
 import type { ChatDraft } from '../model/chat';
 
@@ -59,6 +60,35 @@ function dayLabel(trip: Trip, date: IsoDate | null): string {
   if (!date) return '미배치';
   if (!trip.startDate) return date;
   return `${diffDays(trip.startDate, date) + 1}일차`;
+}
+
+/**
+ * 하루 안에서 가장 가까운 곳부터 잇는 차례. 첫 장소는 출발점이라 그대로 둔다.
+ *
+ * 좌표가 없는 장소가 섞이면 거리로 고를 수 없으므로 원래 차례를 그대로
+ * 돌려준다. 좌표 없는 항목을 뒤로 밀면 사용자가 정한 순서가 뜻 없이 바뀐다.
+ */
+export function nearestOrder(
+  stops: readonly { readonly id: string; readonly location: GeoPoint | null }[],
+): string[] {
+  if (stops.length === 0) return [];
+  if (stops.some((s) => s.location === null)) return stops.map((s) => s.id);
+  const remaining = [...stops];
+  const ordered = [remaining.shift()!];
+  while (remaining.length) {
+    const from = ordered[ordered.length - 1]!.location!;
+    let best = 0;
+    let bestKm = haversineKm(from, remaining[0]!.location!);
+    for (let i = 1; i < remaining.length; i += 1) {
+      const km = haversineKm(from, remaining[i]!.location!);
+      if (km < bestKm) {
+        bestKm = km;
+        best = i;
+      }
+    }
+    ordered.push(remaining.splice(best, 1)[0]!);
+  }
+  return ordered.map((s) => s.id);
 }
 
 export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {

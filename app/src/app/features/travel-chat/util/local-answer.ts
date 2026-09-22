@@ -1,6 +1,6 @@
-import { haversineKm } from '../../trips/util/itinerary';
 import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
 import { OUT_OF_SCOPE_REPLY, type ChatReply } from '../model/chat';
+import { nearestOrder } from './chat-draft';
 import { classifyQuestion } from './chat-scope';
 import { listChips, pickRandomRegion, tripChips } from './chat-suggestions';
 
@@ -90,26 +90,6 @@ function randomRegionAnswer(
       6,
     ),
   });
-}
-
-/** 하루 안에서 가장 가까운 곳부터 잇는 차례. 첫 장소는 그대로 둔다. */
-function nearestOrder(stops: readonly TripStop[]): string[] {
-  const remaining = [...stops];
-  const ordered: TripStop[] = [remaining.shift()!];
-  while (remaining.length) {
-    const from = ordered[ordered.length - 1]!.location!;
-    let best = 0;
-    let bestKm = haversineKm(from, remaining[0]!.location!);
-    for (let i = 1; i < remaining.length; i += 1) {
-      const km = haversineKm(from, remaining[i]!.location!);
-      if (km < bestKm) {
-        bestKm = km;
-        best = i;
-      }
-    }
-    ordered.push(remaining.splice(best, 1)[0]!);
-  }
-  return ordered.map((s) => s.id);
 }
 
 /**
