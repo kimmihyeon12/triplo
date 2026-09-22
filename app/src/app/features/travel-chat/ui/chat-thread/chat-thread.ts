@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  computed,
   effect,
   inject,
   input,
@@ -19,6 +20,21 @@ import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
 import { previewDraft, type DraftPreview } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
+
+/** 대상 여행이 아직 없을 때 미리보기의 기준이 되는 빈 여행. */
+const EMPTY_TRIP: Trip = {
+  id: '',
+  title: '',
+  startDate: null,
+  endDate: null,
+  regions: [],
+  stops: [],
+  stays: [],
+  status: 'draft',
+  createdAt: '',
+  updatedAt: '',
+  schemaVersion: 1,
+};
 
 /**
  * 대화 말풍선·추천 칩·입력창을 그리는 화면 조각.
@@ -55,6 +71,16 @@ export class ChatThread {
 
   readonly draftText = signal('');
 
+  /** 빈 화면의 안내. 어디서 열었는지에 따라 할 수 있는 일이 다르다. */
+  readonly emptyTitle = computed(() =>
+    this.trip() ? '일정을 어떻게 고칠까요' : '어디로 갈지 함께 찾아요',
+  );
+  readonly emptyHint = computed(() =>
+    this.trip()
+      ? '장소를 더하거나 빼고 순서를 정리할 수 있어요. 바꾸기 전에 무엇이 달라지는지 보여드려요.'
+      : '아직 정하지 못했어도 괜찮아요. 며칠 쉬는지, 누구와 가는지만 알려 주세요.',
+  );
+
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
   constructor() {
@@ -71,13 +97,16 @@ export class ChatThread {
   }
 
   /**
-   * 확인 카드에 보여줄 전후 비교. 여행이 없거나 사용자가 그대로 두기를
-   * 골랐으면 만들지 않는다.
+   * 확인 카드에 보여줄 전후 비교. 사용자가 그대로 두기를 골랐으면 만들지 않는다.
+   *
+   * 여행 목록에서 연 대화는 담기 전까지 대상 여행이 없다. 그때는 빈 여행을
+   * 기준으로 만들어 '무엇이 담기는지'를 보여준다. 담기를 누르는 순간 실제
+   * 여행이 만들어지므로, 그전에 여행을 세워 두면 대화만 하다 나간 사람에게
+   * 빈 여행이 남는다.
    */
   preview(messageId: string, draft: ChatDraft): DraftPreview | null {
     if (this.dismissedIds().includes(messageId)) return null;
-    const trip = this.trip();
-    return trip ? previewDraft(trip, draft) : null;
+    return previewDraft(this.trip() ?? EMPTY_TRIP, draft);
   }
 
   submit(): void {

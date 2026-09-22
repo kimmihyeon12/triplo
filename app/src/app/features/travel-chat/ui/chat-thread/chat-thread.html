@@ -4,82 +4,107 @@
 -->
 <div
   #scroller
-  class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-3"
+  class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
   data-testid="chat-messages"
 >
-  @for (message of messages(); track message.id) {
-    @if (message.role === 'user') {
-      <div class="flex justify-end">
-        <p
-          class="max-w-[85%] rounded-panel rounded-br-cell bg-accent-tint px-3.5 py-2.5 text-14 leading-relaxed text-ink"
-          data-testid="chat-user-message"
+  <!--
+    넓은 화면에서도 한 줄이 길어지지 않게 가둔다. 글줄이 화면 끝까지 늘어나면
+    눈이 다음 줄 첫머리를 찾지 못해 읽기가 느려진다.
+  -->
+  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-3 px-4 py-3">
+    <!--
+      아직 아무 말도 오가지 않았을 때. 빈 화면만 두면 무엇을 물어도 되는지
+      알 수 없어 입력창 앞에서 멈춘다. 할 수 있는 일을 한 줄로 알리고 아래
+      칩으로 예시를 보여준다.
+    -->
+    @if (messages().length === 0 && !pending()) {
+      <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
+        <span
+          class="flex size-12 items-center justify-center rounded-pill text-white [background:var(--ai-fill)]"
+          aria-hidden="true"
         >
-          {{ message.text }}
-        </p>
+          <app-icon name="sparkle" [size]="22" />
+        </span>
+        <p class="mt-1 text-16 font-bold text-ink">{{ emptyTitle() }}</p>
+        <p class="max-w-72 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
       </div>
-    } @else {
-      <div class="flex flex-col gap-2" data-testid="chat-assistant-message">
-        <p
-          class="max-w-[92%] rounded-panel rounded-bl-cell bg-ground-2 px-3.5 py-2.5 text-14 leading-relaxed text-ink"
-          [attr.data-kind]="message.kind"
-        >
-          {{ message.text }}
-        </p>
+    }
 
-        <!--
+    @for (message of messages(); track message.id) {
+      @if (message.role === 'user') {
+        <div class="flex justify-end">
+          <p
+            class="max-w-[80%] rounded-panel rounded-br-cell bg-accent-tint px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+            data-testid="chat-user-message"
+          >
+            {{ message.text }}
+          </p>
+        </div>
+      } @else {
+        <div class="flex flex-col items-start gap-2" data-testid="chat-assistant-message">
+          <p
+            class="max-w-[88%] rounded-panel rounded-bl-cell bg-ground-2 px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+            [attr.data-kind]="message.kind"
+          >
+            {{ message.text }}
+          </p>
+
+          <!--
           확인되지 않은 참고 정보는 답변과 같은 말풍선에 넣지 않는다.
           한 덩어리로 보이면 확인된 사실과 구분되지 않는다.
         -->
-        @if (message.reference; as note) {
-          <div class="max-w-[92%] pl-1">
-            <app-ai-disclaimer [note]="note" />
-          </div>
-        }
-
-        <!-- 카드는 말풍선보다 넓게 두어 전후 비교가 잘리지 않게 한다. -->
-        @if (message.draft; as draft) {
-          @if (preview(message.id, draft); as view) {
-            <app-chat-confirm-card
-              [preview]="view"
-              [applied]="appliedMessageId() === message.id"
-              (confirm)="apply.emit({ messageId: message.id, draft })"
-              (dismiss)="dismissDraft.emit(message.id)"
-              (undo)="undo.emit()"
-            />
+          @if (message.reference; as note) {
+            <div class="w-full max-w-[88%] pl-1">
+              <app-ai-disclaimer [note]="note" />
+            </div>
           }
-        }
+
+          <!-- 카드는 말풍선보다 넓게 두어 전후 비교가 잘리지 않게 한다. -->
+          @if (message.draft; as draft) {
+            @if (preview(message.id, draft); as view) {
+              <app-chat-confirm-card
+                class="w-full max-w-[88%]"
+                [preview]="view"
+                [applied]="appliedMessageId() === message.id"
+                (confirm)="apply.emit({ messageId: message.id, draft })"
+                (dismiss)="dismissDraft.emit(message.id)"
+                (undo)="undo.emit()"
+              />
+            }
+          }
+        </div>
+      }
+    }
+
+    @if (pending()) {
+      <div
+        class="flex items-center gap-2 text-13 text-ink-3"
+        role="status"
+        data-testid="chat-pending"
+      >
+        <app-spinner />
+        답을 찾고 있어요
+        <button
+          appButton
+          class="btn btn--sm ml-1"
+          type="button"
+          (click)="cancel.emit()"
+          data-testid="chat-cancel"
+        >
+          그만두기
+        </button>
       </div>
     }
-  }
 
-  @if (pending()) {
-    <div
-      class="flex items-center gap-2 text-13 text-ink-3"
-      role="status"
-      data-testid="chat-pending"
-    >
-      <app-spinner />
-      답을 찾고 있어요
-      <button
-        appButton
-        class="btn btn--sm ml-1"
-        type="button"
-        (click)="cancel.emit()"
-        data-testid="chat-cancel"
-      >
-        그만두기
-      </button>
-    </div>
-  }
-
-  @if (error(); as err) {
-    <div appNotice class="notice notice--danger" role="alert" data-testid="chat-error">
-      <app-icon name="alert" />
-      <div class="notice__body flex-1 min-w-0">
-        <div class="text-13 leading-normal">{{ err.message }}</div>
+    @if (error(); as err) {
+      <div appNotice class="notice notice--danger" role="alert" data-testid="chat-error">
+        <app-icon name="alert" />
+        <div class="notice__body flex-1 min-w-0">
+          <div class="text-13 leading-normal">{{ err.message }}</div>
+        </div>
       </div>
-    </div>
-  }
+    }
+  </div>
 </div>
 
 <!--
@@ -88,7 +113,7 @@
 -->
 @if (chips().length > 0 && !pending()) {
   <div
-    class="flex flex-none gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
     data-testid="chat-chips"
   >
     @for (chip of chips(); track chip) {
@@ -104,39 +129,41 @@
   </div>
 }
 
-<div class="flex-none border-t border-border bg-panel p-3">
-  @if (turnsLeft() === 0) {
-    <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
-      이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.
-    </p>
-  }
+<div class="flex-none border-t border-border bg-panel">
+  <div class="mx-auto w-full max-w-160 p-3">
+    @if (turnsLeft() === 0) {
+      <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
+        이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.
+      </p>
+    }
 
-  <form class="flex items-end gap-2" (submit)="$event.preventDefault(); submit()">
-    <!--
+    <form class="flex items-end gap-2" (submit)="$event.preventDefault(); submit()">
+      <!--
       textarea를 쓰는 이유는 긴 요청이 한 줄로 밀려 앞이 보이지 않게 되는
       것을 막기 위해서다. 엔터로 보내고 Shift+엔터로 줄을 바꾼다.
     -->
-    <textarea
-      appInput
-      class="textarea max-h-28 min-h-11 flex-1 resize-none py-2.5"
-      rows="1"
-      placeholder="어디로 갈지 물어보세요"
-      aria-label="메시지 입력"
-      [value]="draftText()"
-      (input)="onInput($event)"
-      (keydown)="onKeydown($event)"
-      data-testid="chat-input"
-    ></textarea>
-    <button
-      appButton
-      class="btn size-11 flex-none p-0"
-      type="submit"
-      variant="primary"
-      [disabled]="pending() || draftText().trim().length === 0"
-      aria-label="보내기"
-      data-testid="chat-send"
-    >
-      <app-icon name="arrow-up" [size]="18" />
-    </button>
-  </form>
+      <textarea
+        appInput
+        class="textarea max-h-28 flex-1 resize-none py-2.5 [&.textarea]:min-h-11! [&.textarea]:h-11"
+        rows="1"
+        placeholder="어디로 갈지 물어보세요"
+        aria-label="메시지 입력"
+        [value]="draftText()"
+        (input)="onInput($event)"
+        (keydown)="onKeydown($event)"
+        data-testid="chat-input"
+      ></textarea>
+      <button
+        appButton
+        class="btn size-11 flex-none p-0"
+        type="submit"
+        variant="primary"
+        [disabled]="pending() || draftText().trim().length === 0"
+        aria-label="보내기"
+        data-testid="chat-send"
+      >
+        <app-icon name="arrow-up" [size]="18" />
+      </button>
+    </form>
+  </div>
 </div>

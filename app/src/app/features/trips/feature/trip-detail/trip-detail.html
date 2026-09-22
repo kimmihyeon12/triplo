@@ -1009,10 +1009,14 @@
       z 값은 동작 바(10002)와 상단 바(10006) 사이에 둔다. 동작 바가 안전 영역을
       이미 처리하므로 그 위로 12px 띄우기만 한다.
     -->
+    <!--
+      공통 appButton을 쓰지 않는다. 그 호스트 클래스에 relative가 들어 있고
+      템플릿 class보다 나중에 적용되어 fixed를 덮는다. 떠 있는 버튼은 화면에
+      고정되는 것이 핵심이므로 여기서는 스타일을 직접 준다.
+    -->
     <button
-      appButton
       type="button"
-      class="btn fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] size-14 rounded-pill border-transparent p-0 text-white shadow-float [background:var(--ai-fill)_padding-box] hover:[background:var(--ai-fill-hover)_padding-box]"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] inline-flex size-14 items-center justify-center rounded-pill text-white shadow-float [background:var(--ai-fill)] [transition:transform_var(--dur)_var(--ease-out)] hover:[background:var(--ai-fill-hover)] active:scale-95"
       (click)="chatOpen.set(true)"
       aria-label="대화로 일정 고치기"
       data-testid="open-chat"

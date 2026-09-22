@@ -29,7 +29,13 @@ import type { ChatDraft } from '../../model/chat';
   imports: [ChatThread, UiButton],
   providers: [TravelChatStore, TripEditorStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex min-h-0 flex-1 flex-col' },
+  /*
+    대화는 화면을 가득 채워야 입력창이 아래에 붙는다. main에는 높이가 지정되어
+    있지 않아 flex-1로 늘어날 부모가 없으므로, 상단 바(53px)를 뺀 높이를 여기서
+    직접 잡는다. dvh를 쓰는 이유는 모바일 주소창이 접힐 때 100vh가 화면보다
+    커져 입력창이 아래로 잘리기 때문이다.
+  */
+  host: { class: 'flex h-[calc(100dvh-53px)] flex-col' },
 })
 export class ChatPage implements OnInit {
   readonly store = inject(TravelChatStore);
