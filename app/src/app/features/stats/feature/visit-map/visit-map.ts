@@ -116,7 +116,23 @@ export class VisitMapPage {
   readonly months = computed(() => monthlyVisits(this.places(), this.year()));
   readonly monthMax = computed(() => Math.max(1, ...this.months().map(m => m.count)));
   readonly years = computed(() => [...new Set([this.year(), ...this.places().map(p => Number(p.visitedOn.slice(0, 4)))])].sort((a, b) => b - a));
-  readonly visibleLabels = this.labels;
+  /**
+   * 지도에 그릴 마커.
+   *
+   * 마커를 직접 누르면 그 자리만 남기고 나머지는 감춘다. 여러 마커가 함께
+   * 떠 있으면 어디를 골랐는지 한눈에 읽히지 않고, 고른 자리의 지형도 이웃
+   * 이름표에 가린다(2026-09-22 결정). 선택을 풀면 모두 돌아온다.
+   *
+   * 오른쪽 목록으로 고른 경우에는 감추지 않는다. 지도를 건드리지 않았는데
+   * 마커가 사라지면 기록이 없어진 것으로 읽힌다.
+   */
+  readonly visibleLabels = computed(() => {
+    const picked = this.selectedMarker();
+    const labels = this.labels();
+    if (!picked) return labels;
+    // 고른 자리는 이름표를 늘 보여준다. 혼자 남았으므로 겹칠 상대가 없다.
+    return labels.filter(label => label.id === picked).map(label => ({ ...label, labelHidden: false }));
+  });
 
   constructor() {
     inject(PageBar).set({ title: '방문 통계', back: ['/trips'], action: null });
@@ -194,15 +210,26 @@ export class VisitMapPage {
     }
   }
 
+  /**
+   * 지도의 마커를 눌렀다.
+   *
+   * 마커 하나는 시·도가 아니라 실제로 다녀온 자리다. 한 시·도에 자리가
+   * 여럿이면 두 번째부터 'jeonnam#1'처럼 번호가 붙는다(ui/voxel-scene).
+   * 예전에는 저장 지역 목록에서 id가 같은 것을 찾아 눌렀으므로, 번호가
+   * 붙은 자리는 목록에 없어 클릭이 무시됐다(2026-09-22 확인).
+   *
+   * 오른쪽 기록은 시·도 단위이므로 번호를 뗀 코드로 연다.
+   */
   activateMarker(id: string): void {
-    this.scene?.setSelectedMarker(id);
-    if (id === 'temporary') { this.selectedMarker.set(id); return; }
-    const marker = this.markers().find(value => value.id === id);
-    if (!marker) return;
+    if (id === 'temporary') { this.selectedMarker.set(id); this.scene?.setSelectedMarker(id); return; }
+    const code = id.split('#')[0];
+    if (!this.names[code]) return;
+    // 지역 선택을 먼저 비운 뒤 누른 자리를 다시 넣는다. 순서가 바뀌면
+    // clearSelection이 방금 넣은 값을 지운다.
     this.clearSelection();
     this.selectedMarker.set(id);
     this.scene?.setSelectedMarker(id);
-    void this.select(marker.id, true);
+    void this.select(code, true);
   }
   clearSelection(): void { this.scene?.setSelectedMarker(null); this.detailRequest++; this.selected.set(null); this.places.set([]); this.detailState.set('idle'); this.selectedMarker.set(null); this.scene?.clearTemporary(); }
   zoom(factor: number): void { this.scene?.zoom(factor); }
