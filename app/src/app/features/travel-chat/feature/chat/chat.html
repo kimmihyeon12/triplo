@@ -1,3 +1,10 @@
+<header class="flex flex-none items-center gap-2.5 border-b border-border bg-panel px-4 py-2">
+  <app-companion-face [mood]="'talking'" [size]="56" [decorative]="true" />
+  <div>
+    <h2 class="text-15 font-bold text-ink">여행 친구 구름이</h2>
+    <p class="text-12 text-ink-3">함께 정리하는 다음 여행</p>
+  </div>
+</header>
 <app-chat-thread
   [messages]="store.messages()"
   [chips]="store.chips()"

@@ -357,7 +357,7 @@
                 >
                   <span class="min-w-0 flex-1 truncate">{{ group.name }}</span>
                   <span class="text-12 tabular-nums text-ink-3">{{ group.regions.length }}곳</span>
-                  <app-icon class="flex-none text-ink-3" [name]="openProvince() === group.code ? 'chevron-down' : 'chevron-right'" [size]="15"/>
+                  <app-icon class="flex-none text-ink-3" [name]="openProvince() === group.code ? 'arrow-down' : 'chevron-right'" [size]="15"/>
                 </button>
                 @if (openProvince() === group.code) {
                   <div class="flex flex-wrap gap-1.5 pb-3">

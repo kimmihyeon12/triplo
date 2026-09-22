@@ -18,21 +18,19 @@ export const TRIPS_ROUTES: Routes = [
       },
     ],
   },
-  // AI 진입점은 하나로 두고 여기서 방식을 고르게 한다. 목록 화면의 버튼은
-  // 그대로 이 주소를 가리키므로 사용자가 진입점 둘을 두고 고민하지 않는다.
+  /*
+    AI 일정 만들기와 대화형 탐색은 서로 다른 기능이므로 진입점을 나눈다
+    (2026-09-22 사용자 결정). 조건이 정해진 사용자는 단계를 밟아 만들고,
+    정하지 못한 사용자는 떠 있는 버튼으로 대화를 연다. 한쪽을 다른 쪽
+    안에 넣으면 찾는 기능이 어디 있는지 알 수 없다.
+  */
   {
     path: 'ai',
-    pathMatch: 'full',
-    loadComponent: () => import('./feature/ai-entry/ai-entry').then((m) => m.AiEntryPage),
-    title: 'AI로 일정 만들기',
-  },
-  {
-    path: 'ai/steps',
     loadComponent: () => import('./feature/ai-plan/ai-plan').then((m) => m.AiPlanPage),
     title: 'AI 일정 만들기',
   },
   {
-    path: 'ai/chat',
+    path: 'chat',
     loadChildren: () => import('../travel-chat/travel-chat.routes').then((m) => m.CHAT_ROUTES),
   },
   {

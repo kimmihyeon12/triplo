@@ -13,6 +13,7 @@ import { createRegion, createTrip } from '../../../trips/util/factories';
 import type { Trip } from '../../../trips/model/trip';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
+import { CompanionFace } from '../../ui/companion-face/companion-face';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 
@@ -26,7 +27,7 @@ import type { ChatDraft } from '../../model/chat';
 @Component({
   selector: 'app-chat-page',
   templateUrl: './chat.html',
-  imports: [ChatThread, UiButton],
+  imports: [ChatThread, UiButton, CompanionFace],
   providers: [TravelChatStore, TripEditorStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   /*
@@ -51,7 +52,7 @@ export class ChatPage implements OnInit {
   readonly savedTripId = signal<string | null>(null);
 
   constructor() {
-    inject(PageBar).set({ title: '대화로 찾기', back: ['/trips/ai'], action: null });
+    inject(PageBar).set({ title: 'AI 채팅', back: ['/trips'], action: null });
   }
 
   ngOnInit(): void {

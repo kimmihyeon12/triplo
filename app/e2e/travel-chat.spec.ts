@@ -29,11 +29,10 @@ function savedTrips(
   }, STORAGE_KEY);
 }
 
-/** 대화 화면을 열고 한 마디 건넨다. */
+/** 목록의 떠 있는 버튼으로 대화 화면을 연다. */
 async function openChat(page: Page): Promise<void> {
-  await page.goto('/trips/ai');
-  await expect(page.getByTestId('ai-entry-chat')).toBeVisible();
-  await page.getByTestId('ai-entry-chat').click();
+  await page.goto('/trips');
+  await page.getByTestId('open-chat').click();
   await expect(page.getByTestId('chat-input')).toBeVisible();
 }
 
@@ -42,17 +41,31 @@ async function say(page: Page, text: string): Promise<void> {
   await page.getByTestId('chat-send').click();
 }
 
-test('AI 진입점은 하나이고 누르면 두 방식 중에서 고른다', async ({ page }) => {
+test('AI 일정 만들기와 대화는 서로 다른 진입점을 쓴다', async ({ page }) => {
   await resetApp(page);
-  // 여행이 없는 첫 화면의 AI 카드도 같은 자리로 간다.
+
+  // 목록의 AI 카드는 조건을 고르는 단계형으로 바로 간다.
   await page.getByTestId('empty-ai').click();
   await expect(page).toHaveURL(/\/trips\/ai$/);
-  await expect(page.getByTestId('ai-entry-chat')).toBeVisible();
-  await expect(page.getByTestId('ai-entry-steps')).toBeVisible();
-
-  // 조건 고르기는 기존 단계형으로 이어진다.
-  await page.getByTestId('ai-entry-steps').click();
   await expect(page.getByTestId('ai-region-input')).toBeVisible();
+
+  // 대화는 떠 있는 버튼으로 따로 연다. 한쪽이 다른 쪽 안에 들어가지 않는다.
+  await page.goto('/trips');
+  await page.getByTestId('open-chat').click();
+  await expect(page).toHaveURL(/\/trips\/chat$/);
+  await expect(page.getByTestId('chat-input')).toBeVisible();
+});
+
+test('대화 말풍선에 누가 말하는지 아이콘으로 표시한다', async ({ page }) => {
+  await resetApp(page);
+  await openChat(page);
+
+  await say(page, '3일 쉬는데 어디 가지');
+  await expect(page.getByTestId('chat-bot-avatar').last()).toBeVisible();
+  // 사용자 말풍선에는 붙이지 않는다. 누가 말하는지 이미 자리로 알 수 있다.
+  const avatars = await page.getByTestId('chat-bot-avatar').count();
+  const replies = await page.getByTestId('chat-assistant-message').count();
+  expect(avatars).toBe(replies);
 });
 
 test('대화로 찾아 담으면 새 여행이 만들어진다', async ({ page }) => {
@@ -167,7 +180,7 @@ test('여행 상세에서 떠 있는 버튼으로 시트를 열고 순서를 고
     title: '강릉 여행',
     start: '2026-05-01',
     end: '2026-05-02',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   // 좌표가 있어야 동선을 계산할 수 있다. 장소 검색으로 담아 좌표를 채운다.
   await addStop(page, tripId, { name: '안목해변', date: '2026-05-01' });
@@ -188,7 +201,7 @@ test('여행 상세에서 떠 있는 버튼으로 시트를 열고 순서를 고
 
 test('시트 손잡이로 높이를 바꾼다', async ({ page }) => {
   await resetApp(page);
-  const tripId = await createTrip(page, { title: '강릉 여행', regions: ['강릉'] });
+  const tripId = await createTrip(page, { title: '강릉 여행', regions: ['강릉시'] });
   await page.goto(`/trips/${tripId}`);
   await page.getByTestId('open-chat').click();
 
@@ -207,7 +220,7 @@ test('360px에서 떠 있는 버튼이 마지막 항목을 가리지 않는다',
     title: '강릉 여행',
     start: '2026-05-01',
     end: '2026-05-01',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, tripId, { name: '안목해변', date: '2026-05-01' });
 

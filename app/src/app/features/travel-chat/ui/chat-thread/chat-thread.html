@@ -11,22 +11,17 @@
     넓은 화면에서도 한 줄이 길어지지 않게 가둔다. 글줄이 화면 끝까지 늘어나면
     눈이 다음 줄 첫머리를 찾지 못해 읽기가 느려진다.
   -->
-  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-3 px-4 py-3">
+  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-4 px-4 py-4">
     <!--
       아직 아무 말도 오가지 않았을 때. 빈 화면만 두면 무엇을 물어도 되는지
-      알 수 없어 입력창 앞에서 멈춘다. 할 수 있는 일을 한 줄로 알리고 아래
-      칩으로 예시를 보여준다.
+      알 수 없어 입력창 앞에서 멈춘다. 여행 친구를 크게 세워 누구와 이야기하는
+      것인지 알리고, 할 수 있는 일을 한 줄로 적는다.
     -->
     @if (messages().length === 0 && !pending()) {
-      <div class="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
-        <span
-          class="flex size-12 items-center justify-center rounded-pill text-white [background:var(--ai-fill)]"
-          aria-hidden="true"
-        >
-          <app-icon name="sparkle" [size]="22" />
-        </span>
-        <p class="mt-1 text-16 font-bold text-ink">{{ emptyTitle() }}</p>
-        <p class="max-w-72 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
+      <div class="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+        <app-companion-face class="chat-greet" [mood]="'talking'" [size]="96" [decorative]="true" />
+        <p class="text-18 font-bold tracking-tight text-ink">{{ emptyTitle() }}</p>
+        <p class="max-w-68 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
       </div>
     }
 
@@ -34,7 +29,7 @@
       @if (message.role === 'user') {
         <div class="flex justify-end">
           <p
-            class="max-w-[80%] rounded-panel rounded-br-cell bg-accent-tint px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+            class="chat-bubble max-w-[80%] bg-accent-deep px-3.5 py-2.5 text-14 leading-relaxed text-white"
             data-testid="chat-user-message"
           >
             {{ message.text }}
@@ -42,57 +37,84 @@
         </div>
       } @else {
         <div class="flex flex-col items-start gap-2" data-testid="chat-assistant-message">
-          <p
-            class="max-w-[88%] rounded-panel rounded-bl-cell bg-ground-2 px-3.5 py-2.5 text-14 leading-relaxed text-ink"
-            [attr.data-kind]="message.kind"
-          >
-            {{ message.text }}
-          </p>
-
           <!--
-          확인되지 않은 참고 정보는 답변과 같은 말풍선에 넣지 않는다.
-          한 덩어리로 보이면 확인된 사실과 구분되지 않는다.
-        -->
-          @if (message.reference; as note) {
-            <div class="w-full max-w-[88%] pl-1">
-              <app-ai-disclaimer [note]="note" />
-            </div>
-          }
+            누가 말하는지 얼굴로 알린다. 표정은 답의 성격을 따라간다. 갈 곳을
+            찾았을 때와 그냥 답할 때가 같은 얼굴이면 그림이 아니라 아이콘이 된다.
 
-          <!-- 카드는 말풍선보다 넓게 두어 전후 비교가 잘리지 않게 한다. -->
-          @if (message.draft; as draft) {
-            @if (preview(message.id, draft); as view) {
-              <app-chat-confirm-card
-                class="w-full max-w-[88%]"
-                [preview]="view"
-                [applied]="appliedMessageId() === message.id"
-                (confirm)="apply.emit({ messageId: message.id, draft })"
-                (dismiss)="dismissDraft.emit(message.id)"
-                (undo)="undo.emit()"
-              />
-            }
-          }
+            얼굴은 첫 줄에 맞춰 위쪽에 붙인다. 답이 길어져도 가운데로 내려가지
+            않아야 누가 말하는지가 답 시작점에서 읽힌다.
+          -->
+          <div class="flex w-full items-start gap-2.5">
+            <app-companion-face
+              class="mt-0.5"
+              [mood]="moodOf(message)"
+              [size]="48"
+              [decorative]="true"
+              data-testid="chat-bot-avatar"
+            />
+            <div class="flex min-w-0 flex-1 flex-col items-start gap-2">
+              <p
+                class="chat-bubble chat-bubble--assistant max-w-full bg-panel px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+                [attr.data-kind]="message.kind"
+              >
+                {{ message.text }}
+              </p>
+
+              <!--
+                확인되지 않은 참고 정보는 답변과 같은 말풍선에 넣지 않는다.
+                한 덩어리로 보이면 확인된 사실과 구분되지 않는다.
+              -->
+              @if (message.reference; as note) {
+                <div class="w-full">
+                  <app-ai-disclaimer [note]="note" />
+                </div>
+              }
+
+              @if (message.draft; as draft) {
+                @if (preview(message.id, draft); as view) {
+                  <app-chat-confirm-card
+                    class="w-full"
+                    [preview]="view"
+                    [applied]="appliedMessageId() === message.id"
+                    (confirm)="apply.emit({ messageId: message.id, draft })"
+                    (dismiss)="dismissDraft.emit(message.id)"
+                    (undo)="undo.emit()"
+                  />
+                }
+              }
+            </div>
+          </div>
         </div>
       }
     }
 
+    <!--
+      기다리는 동안에도 여행 친구가 자리를 지킨다. 스피너만 돌면 방금까지
+      이야기하던 상대가 사라진 것처럼 보인다.
+    -->
     @if (pending()) {
-      <div
-        class="flex items-center gap-2 text-13 text-ink-3"
-        role="status"
-        data-testid="chat-pending"
-      >
-        <app-spinner />
-        답을 찾고 있어요
-        <button
-          appButton
-          class="btn btn--sm ml-1"
-          type="button"
-          (click)="cancel.emit()"
-          data-testid="chat-cancel"
-        >
-          그만두기
-        </button>
+      <div class="flex items-start gap-2.5" role="status" data-testid="chat-pending">
+        <app-companion-face class="mt-0.5" [mood]="'talking'" [size]="48" [decorative]="true" />
+        <div class="flex flex-col items-start gap-2">
+          <p
+            class="chat-bubble chat-bubble--assistant flex items-center gap-1.5 bg-panel px-3.5 py-3"
+          >
+            <!-- 말 줄임표가 차례로 뛴다. 무엇을 기다리는지 스피너보다 분명하다. -->
+            <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
+            <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
+            <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
+            <span class="sr-only">답을 찾고 있어요</span>
+          </p>
+          <button
+            appButton
+            class="btn btn--sm"
+            type="button"
+            (click)="cancel.emit()"
+            data-testid="chat-cancel"
+          >
+            그만두기
+          </button>
+        </div>
       </div>
     }
 
@@ -109,17 +131,17 @@
 
 <!--
   칩은 입력창 바로 위에 둔다. 무엇을 물을 수 있는지 보여주는 것이 목적이라
-  입력하려는 순간에 눈에 들어와야 한다. 가로로 굴러 줄이 늘어나지 않는다.
+  입력하려는 순간에 눈에 들어와야 한다. 좁은 화면에서는 가로로 구른다.
 -->
 @if (chips().length > 0 && !pending()) {
   <div
-    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
+    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
     data-testid="chat-chips"
   >
     @for (chip of chips(); track chip) {
       <button
         type="button"
-        class="flex-none rounded-pill border border-border-strong bg-panel px-3 py-1.5 text-13 text-ink-2 transition-colors hover:border-accent hover:text-accent-deep active:bg-ground-2"
+        class="flex-none rounded-pill bg-accent-tint px-3.5 py-2 text-13 font-medium text-accent-deep [transition:background-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:bg-accent-fill active:scale-[0.97]"
         (click)="pickChip(chip)"
         [attr.data-testid]="'chat-chip'"
       >
@@ -139,12 +161,12 @@
 
     <form class="flex items-end gap-2" (submit)="$event.preventDefault(); submit()">
       <!--
-      textarea를 쓰는 이유는 긴 요청이 한 줄로 밀려 앞이 보이지 않게 되는
-      것을 막기 위해서다. 엔터로 보내고 Shift+엔터로 줄을 바꾼다.
-    -->
+        textarea를 쓰는 이유는 긴 요청이 한 줄로 밀려 앞이 보이지 않게 되는
+        것을 막기 위해서다. 엔터로 보내고 Shift+엔터로 줄을 바꾼다.
+      -->
       <textarea
         appInput
-        class="textarea max-h-28 flex-1 resize-none py-2.5 [&.textarea]:min-h-11! [&.textarea]:h-11"
+        class="textarea max-h-28 flex-1 resize-none py-2.5 [&.textarea]:min-h-11! [&.textarea]:h-11 [&.textarea]:rounded-pill [&.textarea]:px-4"
         rows="1"
         placeholder="어디로 갈지 물어보세요"
         aria-label="메시지 입력"
@@ -155,7 +177,7 @@
       ></textarea>
       <button
         appButton
-        class="btn size-11 flex-none p-0"
+        class="btn size-11 flex-none rounded-pill p-0"
         type="submit"
         variant="primary"
         [disabled]="pending() || draftText().trim().length === 0"

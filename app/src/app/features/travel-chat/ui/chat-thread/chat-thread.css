@@ -1,0 +1,25 @@
+.chat-bubble {
+  border-radius: 18px;
+  overflow-wrap: anywhere;
+}
+
+.chat-bubble--assistant {
+  position: relative;
+  border: 1px solid var(--color-border);
+}
+
+/* 꼬리는 아바타와 말풍선 사이의 여백 안에 머문다. */
+.chat-bubble--assistant::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -5px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+  border-bottom-left-radius: 2px;
+  transform: rotate(45deg);
+  pointer-events: none;
+}

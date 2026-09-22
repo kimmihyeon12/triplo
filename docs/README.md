@@ -55,6 +55,10 @@
 - 각 기능 작업에는 필요한 문서를 골라 읽는다. 분석 기록·도구 설치 이력 전체를 매번 필수 입력으로 넣지 않는다.
 - MD 파일 간 동기화는 자동이 아니다. 작업하는 에이전트가 직접 관련 원본을 수정하고 링크·명세를 검증한다.
 
+## 구름이 챗봇
+
+구름이 챗봇: [확정 시안과 적용 기록](design/references/cloud-chat-preview.md), [적용 OpenSpec](../openspec/changes/apply-cloud-chat-mascot/proposal.md). 미채택 캐릭터·생성 프롬프트 기록과 낡은 비교판은 정리했으며 최종 미리보기만 유지한다.
+
 ## 입체 기록 지도
 
 - [별도 복셀 지도 제안·설계·검증](../openspec/changes/add-voxel-visit-map/proposal.md): `/stats`의 기본 3D 지도 및 `/stats/details`의 상세 통계. 구 실험 지도 라우트와 파일은 삭제.

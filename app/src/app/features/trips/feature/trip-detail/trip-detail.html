@@ -1016,12 +1016,12 @@
     -->
     <button
       type="button"
-      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] inline-flex size-14 items-center justify-center rounded-pill text-white shadow-float [background:var(--ai-fill)] [transition:transform_var(--dur)_var(--ease-out)] hover:[background:var(--ai-fill-hover)] active:scale-95"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-accent-deep pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-accent-deep-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
       (click)="chatOpen.set(true)"
-      aria-label="대화로 일정 고치기"
+      aria-label="AI 채팅 열기"
       data-testid="open-chat"
     >
-      <app-icon name="sparkle" [size]="22" />
+      <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 채팅</span>
     </button>
 
     <app-chat-sheet

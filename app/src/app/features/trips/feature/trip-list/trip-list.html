@@ -268,3 +268,21 @@
     내부 알파 · 이 기기에만 저장됩니다
   </p>
 </div>
+
+<!--
+  대화로 여행을 찾는 진입점. 위의 'AI 일정 만들기'와는 다른 기능이라 따로
+  둔다(2026-09-22 결정). 그쪽은 지역·날짜가 정해진 사람이 조건을 골라 만드는
+  곳이고, 이쪽은 어디로 갈지 정하지 못한 사람이 물어보는 곳이다.
+
+  이 화면에는 하단 동작 바가 없으므로 안전 영역 위 16px에 바로 띄운다.
+  공통 appButton을 쓰지 않는 이유는 그 호스트 클래스의 relative가 템플릿
+  class보다 나중에 적용되어 fixed를 덮기 때문이다.
+-->
+<a
+  class="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-accent-deep pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-accent-deep-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+  routerLink="/trips/chat"
+  aria-label="AI 채팅 열기"
+  data-testid="open-chat"
+>
+  <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 채팅</span>
+</a>

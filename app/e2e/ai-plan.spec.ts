@@ -11,7 +11,7 @@ const AI_DELAY = 'tc.test.aiDelayMs';
 
 /** 조건 세 단계를 지나 요약 화면까지 간다. */
 async function fillConditions(page: Page, start: string, end: string): Promise<void> {
-  await page.goto('/trips/ai/steps');
+  await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
   await page.getByTestId('ai-region-match-강릉').click();
   await page.getByTestId('ai-start').fill(start);
@@ -57,7 +57,7 @@ test('위치를 확인한 장소만 보이고 좌표와 함께 담긴다', async
 
 test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는다', async ({ page }) => {
   await resetApp(page);
-  await page.goto('/trips/ai/steps');
+  await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
   await page.getByTestId('ai-region-match-강릉').click();
   await page.getByTestId('ai-start').fill('2026-05-01');

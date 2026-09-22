@@ -11,6 +11,7 @@ import {
 import { UiButton } from '../../../../shared/ui/button/button';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
+import { CompanionFace } from '../../ui/companion-face/companion-face';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 import type { Trip } from '../../../trips/model/trip';
@@ -25,7 +26,7 @@ import type { Trip } from '../../../trips/model/trip';
 @Component({
   selector: 'app-chat-sheet',
   templateUrl: './chat-sheet.html',
-  imports: [ChatThread, UiButton, IconComponent],
+  imports: [ChatThread, UiButton, IconComponent, CompanionFace],
   providers: [TravelChatStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

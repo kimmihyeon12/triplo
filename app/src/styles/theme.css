@@ -186,3 +186,62 @@ details.menu-sheet[open] > [role='menu'] {
     animation: none;
   }
 }
+
+/*
+  대화 중 답을 기다리는 표시. 스피너 대신 말 줄임표가 차례로 뛴다.
+  상대가 무언가 쓰고 있다는 뜻이 사람이 아는 문법 그대로 전달된다.
+*/
+@keyframes chat-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.chat-dot {
+  animation: chat-dot 1.2s var(--ease-out) infinite;
+}
+
+.chat-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/*
+  대화를 처음 열었을 때 여행 친구가 한 번 인사한다. 화면이 뜨는 순간에만
+  움직이고 반복하지 않는다. 계속 흔들리면 읽는 내내 눈이 끌려간다.
+*/
+@keyframes companion-greet {
+  0% {
+    transform: translateY(6px) scale(0.94);
+    opacity: 0;
+  }
+  55% {
+    transform: translateY(-3px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.chat-greet {
+  animation: companion-greet 520ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-dot,
+  .chat-greet {
+    animation: none;
+  }
+}

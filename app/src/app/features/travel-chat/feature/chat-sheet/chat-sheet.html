@@ -35,7 +35,11 @@
     </button>
 
     <header class="flex flex-none items-center justify-between gap-2 px-4 pb-2">
-      <h2 class="min-w-0 flex-1 truncate text-15 font-bold text-ink">{{ trip().title }} 대화</h2>
+      <app-companion-face [mood]="'talking'" [size]="56" [decorative]="true" />
+      <div class="min-w-0 flex-1">
+        <h2 class="truncate text-15 font-bold text-ink">AI 채팅 · 구름이</h2>
+        <p class="truncate text-12 text-ink-3">{{ trip().title }}</p>
+      </div>
       <button
         appButton
         class="btn btn--sm"

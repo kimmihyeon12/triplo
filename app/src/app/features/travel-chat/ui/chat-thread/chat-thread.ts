@@ -13,9 +13,9 @@ import {
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
-import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiDisclaimer } from '../ai-disclaimer/ai-disclaimer';
+import { CompanionFace, type CompanionMood } from '../companion-face/companion-face';
 import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
 import { previewDraft, type DraftPreview } from '../../util/chat-draft';
@@ -46,7 +46,8 @@ const EMPTY_TRIP: Trip = {
 @Component({
   selector: 'app-chat-thread',
   templateUrl: './chat-thread.html',
-  imports: [UiButton, UiInput, UiNotice, UiSpinner, IconComponent, AiDisclaimer, ChatConfirmCard],
+  styleUrl: './chat-thread.css',
+  imports: [UiButton, UiInput, UiNotice, IconComponent, AiDisclaimer, ChatConfirmCard, CompanionFace],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
@@ -107,6 +108,12 @@ export class ChatThread {
   preview(messageId: string, draft: ChatDraft): DraftPreview | null {
     if (this.dismissedIds().includes(messageId)) return null;
     return previewDraft(this.trip() ?? EMPTY_TRIP, draft);
+  }
+
+  /** 대화에는 승인된 작은 미소를 쓴다. 졸림은 진입 버튼 전용이다. */
+  moodOf(message: ChatMessage): CompanionMood {
+    if (message.draft) return 'found';
+    return 'talking';
   }
 
   submit(): void {
