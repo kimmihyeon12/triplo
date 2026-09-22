@@ -1,8 +1,10 @@
 import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
+import { todayIso } from '../../../shared/util/dates';
+import { assignmentAnswer } from './local-assignment';
 import { OUT_OF_SCOPE_REPLY, type ChatReply } from '../model/chat';
 import { nearestOrder } from './chat-draft';
 import { classifyQuestion } from './chat-scope';
-import { listChips, pickRandomRegion, tripChips } from './chat-suggestions';
+import { listChips, pickRandomRegion, tripChips, regionChips } from './chat-suggestions';
 
 /**
  * 모델을 부르기 전에 앱이 직접 답할 수 있는지 본다. 답할 수 있으면 그 답을,
@@ -45,6 +47,7 @@ export function answerLocally(
   input: string,
   trip: Trip | null,
   recentRegionCodes: readonly string[],
+  today = todayIso(),
 ): ChatReply | null {
   const text = input.trim();
   if (!text) return null;
@@ -60,7 +63,9 @@ export function answerLocally(
       chips,
     });
 
-  if (hasWord(text, RANDOM_WORDS)) return randomRegionAnswer(recentRegionCodes, chips);
+  const assignment = assignmentAnswer(text, trip, today);
+  if (assignment) return assignment;
+  if (hasWord(text, RANDOM_WORDS)) return randomRegionAnswer(recentRegionCodes);
   if (trip && hasWord(text, SORT_WORDS)) return sortAnswer(trip, chips);
   if (trip && hasWord(text, REMOVE_WORDS)) return removeAnswer(trip, text, chips);
   return null;
@@ -77,7 +82,6 @@ export function answerLocally(
  */
 function randomRegionAnswer(
   recentRegionCodes: readonly string[],
-  chips: readonly string[],
 ): ChatReply | null {
   const region = pickRandomRegion(recentRegionCodes);
   if (!region) return null;
@@ -85,10 +89,7 @@ function randomRegionAnswer(
     kind: 'explore',
     text: `${region.name}은(는) 어떠세요? ${region.short} 지역이에요. 마음에 들면 일정을 짜 드릴게요.`,
     regions: [region.name],
-    chips: [`${region.name} 일정 짜줘`, `${region.name} 뭐가 있어`, '다시 뽑아줘', ...chips].slice(
-      0,
-      6,
-    ),
+    chips: regionChips(region.name),
   });
 }
 

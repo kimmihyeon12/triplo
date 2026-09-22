@@ -6,6 +6,11 @@ import { PLACE_SEARCH } from '../../places/data/place-search';
 import { verifyPlaces } from '../../ai-planning/data/verify-places';
 import { newId } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
+import { LocalLedger } from '../../expenses/data/local-ledger';
+import type { Ledger } from '../../expenses/model/ledger';
+import { localCommand } from '../util/local-commands';
+import { isLedgerCommand, ledgerCommand } from '../util/local-ledger-commands';
+import { tripVersion, type LocalResult } from '../util/local-command-draft';
 import {
   CHAT_TURN_LIMIT,
   type ChatDraft,
@@ -16,7 +21,7 @@ import {
 } from '../model/chat';
 import { applyDraft, nearestOrder } from '../util/chat-draft';
 import { isBlankInput } from '../util/chat-scope';
-import { listChips, tripChips } from '../util/chat-suggestions';
+import { listChips, tripChips, refreshChips } from '../util/chat-suggestions';
 import { answerLocally } from '../util/local-answer';
 import { CHAT_HISTORY } from './chat-history';
 import { CHAT_PROVIDER, type ChatTripContext, type ChatTurn } from './chat-provider';
@@ -39,6 +44,9 @@ export class TravelChatStore {
   private readonly provider = inject(CHAT_PROVIDER);
   private readonly placeSearch = inject(PLACE_SEARCH);
   private readonly history = inject(CHAT_HISTORY);
+  private readonly ledger = inject(LocalLedger);
+  private undoLedger: { before: Ledger; after: Ledger } | null = null;
+  private appliedVersion: string | null = null;
 
   private readonly state = signalState({
     scope: 'list' as ChatScope,
@@ -75,7 +83,7 @@ export class TravelChatStore {
    */
   readonly chips = computed<readonly string[]>(() => {
     const last = this.messages().at(-1);
-    if (last?.chips.length) return last.chips;
+    if (last?.chips.length) return refreshChips(last.chips);
     const trip = this.trip();
     return trip ? tripChips(trip) : listChips();
   });
@@ -109,6 +117,29 @@ export class TravelChatStore {
     const text = input.trim();
     this.push({ role: 'user', kind: null, text });
     patchState(this.state, { error: null });
+
+    try {
+      const trip = this.trip();
+      let command: LocalResult | null = null;
+      if (/^(?:방금 |마지막 )?(?:변경 |작업 )?(?:되돌려|취소해)(?:줘)?[.!?]*$/.test(text)) {
+        const previous = this.state.undoTrip();
+        if (trip && previous && this.appliedVersion === tripVersion(trip)) {
+          command = {text: '마지막 변경을 되돌릴게요. 확인 후 적용해 주세요.', draft: {
+            action: 'local-change', title: '마지막 변경 되돌리기', before: trip, after: previous,
+            ...(this.undoLedger ? {ledger: {before: this.undoLedger.after, after: this.undoLedger.before}} : {}),
+          }};
+        } else command = {text: '되돌릴 변경이 없거나 이후 일정이 달라졌어요.'};
+      } else if (isLedgerCommand(text)) {
+        command = trip ? ledgerCommand(text, trip, this.ledger.read(trip.id)) : {text: '먼저 경비를 확인할 여행을 열어 주세요.'};
+      } else command = localCommand(text, trip);
+      if (command) {
+        this.push({role: 'assistant', kind: command.draft ? 'draft' : 'explore', ...command});
+        return;
+      }
+    } catch (error) {
+      patchState(this.state, {error: toChatError(error)});
+      return;
+    }
 
     // 앱이 직접 답할 수 있는 질문은 여기서 끝난다.
     const local = answerLocally(text, this.trip(), this.state.recentRegions());
@@ -149,8 +180,10 @@ export class TravelChatStore {
       // 실패해도 주고받은 말은 지우지 않는다. 다시 물을 때 문맥이 남아야 한다.
       patchState(this.state, { error: toChatError(error) });
     } finally {
-      if (this.running === controller) this.running = null;
-      patchState(this.state, { pending: false });
+      if (this.running === controller) {
+        this.running = null;
+        patchState(this.state, { pending: false });
+      }
     }
   }
 
@@ -164,6 +197,8 @@ export class TravelChatStore {
   /** 대화를 처음부터 다시 시작한다. 호출 횟수도 초기화된다. */
   async reset(): Promise<void> {
     this.cancel();
+    this.undoLedger = null;
+    this.appliedVersion = null;
     patchState(this.state, {
       messages: [],
       turnsUsed: 0,
@@ -172,6 +207,10 @@ export class TravelChatStore {
       recentRegions: [],
     });
     await this.history.clear(this.trip()?.id ?? null);
+    if (this.scope() === 'list') {
+      await this.history.clear(null);
+      this.setTrip(null);
+    }
   }
 
   /**
@@ -182,6 +221,22 @@ export class TravelChatStore {
     const current = this.trip();
     if (!current) return null;
     const next = applyDraft(current, draft);
+    if (next === current) {
+      patchState(this.state, {error: {kind: 'other', message: '일정이 변경되어 이전 제안을 적용할 수 없어요. 다시 요청해 주세요.'}});
+      return null;
+    }
+    const ledgerChange = draft.action === 'local-change' ? draft.ledger : undefined;
+    if (ledgerChange) {
+      try {
+        if (JSON.stringify(this.ledger.read(current.id)) !== JSON.stringify(ledgerChange.before)) throw new Error('가계부가 변경되었어요. 다시 요청해 주세요.');
+        this.ledger.save(current.id, ledgerChange.after);
+      } catch (error) {
+        patchState(this.state, {error: toChatError(error)});
+        return null;
+      }
+    }
+    this.undoLedger = ledgerChange ?? null;
+    this.appliedVersion = tripVersion(next);
     patchState(this.state, { trip: next, undoTrip: current });
     return next;
   }
@@ -190,12 +245,30 @@ export class TravelChatStore {
   undo(): Trip | null {
     const previous = this.state.undoTrip();
     if (!previous) return null;
+    const current = this.trip();
+    if (!current || this.appliedVersion !== tripVersion(current)) {
+      patchState(this.state, {error: {kind: 'other', message: '이후 일정이 변경되어 되돌릴 수 없어요.'}});
+      return null;
+    }
+    if (this.undoLedger) {
+      try {
+        if (JSON.stringify(this.ledger.read(current.id)) !== JSON.stringify(this.undoLedger.after)) throw new Error('이후 가계부가 변경되어 되돌릴 수 없어요.');
+        this.ledger.save(current.id, this.undoLedger.before);
+      } catch (error) {
+        patchState(this.state, {error: toChatError(error)});
+        return null;
+      }
+    }
+    this.undoLedger = null;
+    this.appliedVersion = null;
     patchState(this.state, { trip: previous, undoTrip: null });
     return previous;
   }
 
   /** 되돌릴 수 있는 상태를 지운다. 사용자가 다른 일을 하면 불린다. */
   clearUndo(): void {
+    this.undoLedger = null;
+    this.appliedVersion = null;
     patchState(this.state, { undoTrip: null });
   }
 
@@ -251,6 +324,11 @@ export class TravelChatStore {
     const trip = this.trip();
     if (!trip) return null;
     switch (edit.action) {
+      case 'assign-unassigned': {
+        const stopIds = trip.stops.filter(s => !s.excluded && s.date === null)
+          .sort((a, b) => a.order - b.order).map(s => s.id);
+        return stopIds.length ? { action: 'assign-unassigned', date: edit.date, stopIds } : null;
+      }
       case 'remove': {
         const names = new Set(edit.names);
         const ids = trip.stops.filter((s) => names.has(s.name)).map((s) => s.id);
@@ -271,6 +349,12 @@ export class TravelChatStore {
         return date ? { action: 'reschedule', stopId: target.id, date } : null;
       }
     }
+  }
+
+  /** 실제 저장 성공 후 앱이 알린다. AI 호출과 사용량 차감은 없다. */
+  notifyTripSaved(tripId: string): void {
+    this.push({role: 'system', kind: 'explore', text: '여행에 담았어요. 일정을 확인해 보세요.',
+      localLink: `/trips/${encodeURIComponent(tripId)}`, localLinkLabel: '여행 보기'});
   }
 
   private push(partial: Pick<ChatMessage, 'role' | 'kind' | 'text'> & Partial<ChatMessage>): void {
@@ -329,7 +413,7 @@ export class TravelChatStore {
 
 function toChatError(error: unknown): ChatError {
   const message = error instanceof Error ? error.message : '알 수 없는 오류가 생겼습니다.';
-  if (message.includes('오늘 사용량')) return { kind: 'quota', message };
+  if (message.includes('오늘 사용량') || message.includes('AI 요청 한도')) return { kind: 'quota', message };
   if (message.includes('오래 걸립니다')) return { kind: 'timeout', message };
   // fetch가 네트워크에 닿지 못하면 'Failed to fetch'를 던진다.
   if (error instanceof TypeError)

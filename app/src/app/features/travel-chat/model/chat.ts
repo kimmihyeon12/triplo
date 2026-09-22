@@ -1,4 +1,5 @@
-import type { StopKind } from '../../trips/model/trip';
+import type { StopKind, Trip } from '../../trips/model/trip';
+import type { Ledger } from '../../expenses/model/ledger';
 import type { VerifiedItem } from '../../ai-planning/model/ai-plan';
 
 /**
@@ -40,8 +41,8 @@ export interface ReferenceNote {
   readonly links: readonly ReferenceLink[];
 }
 
-/** 확인 카드가 제안하는 변경의 종류. 설계가 정한 네 가지만 허용한다. */
-export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule';
+/** 확인 카드가 제안하는 변경의 종류. */
+export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule' | 'assign-unassigned' | 'local-change';
 
 /**
  * 일정에 담을 후보 장소. 모델은 이름과 일차만 내고, 나머지는 장소 검색으로
@@ -77,10 +78,28 @@ export interface RescheduleDraft {
   readonly date: string | null;
 }
 
-export type ChatDraft = AppendDraft | RemoveDraft | MoveDraft | RescheduleDraft;
+export interface AssignUnassignedDraft {
+  readonly action: 'assign-unassigned';
+  readonly stopIds: readonly string[];
+  readonly date: string;
+}
+
+/** Created only by the local interpreter, never by a provider response. */
+export interface LocalChangeDraft {
+  readonly action: 'local-change';
+  readonly title: string;
+  readonly before: Trip;
+  readonly after: Trip;
+  readonly ledger?: { readonly before: Ledger; readonly after: Ledger };
+}
+
+export type ChatDraft = AppendDraft | RemoveDraft | MoveDraft | RescheduleDraft | AssignUnassignedDraft | LocalChangeDraft;
 
 /** 대화 한 줄. 화면은 이 목록을 위에서 아래로 그린다. */
 export interface ChatMessage {
+  readonly localLink?: string;
+  readonly localLinkLabel?: string;
+  readonly copyText?: string;
   readonly id: string;
   readonly role: ChatRole;
   readonly kind: ChatReplyKind | null;
@@ -126,6 +145,7 @@ export interface ChatPlaceSuggestion {
  * 실제 대상 선택과 거리 계산은 앱이 저장된 값으로 한다.
  */
 export type ChatEditIntent =
+  | { readonly action: 'assign-unassigned'; readonly date: string }
   | { readonly action: 'remove'; readonly names: readonly string[] }
   | { readonly action: 'move'; readonly date: string | null }
   | { readonly action: 'reschedule'; readonly name: string; readonly day: number };

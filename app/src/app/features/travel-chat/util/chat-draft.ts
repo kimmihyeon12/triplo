@@ -1,10 +1,11 @@
-import { addDays, diffDays } from '../../../shared/util/dates';
+import { addDays, diffDays, isIsoDate } from '../../../shared/util/dates';
 import { createStop } from '../../trips/util/factories';
 import { appendStop, haversineKm, placeStopOnDate, removeStop } from '../../trips/util/itinerary';
 import { regionIdForAddress } from '../../trips/util/region-match';
 import type { GeoPoint } from '../../places/model/place';
 import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
 import type { ChatDraft } from '../model/chat';
+import { describeStop, localChangeValid } from './local-command-draft';
 
 /**
  * 확인 카드에 보여줄 '바뀌기 전과 후', 그리고 그것을 실제 일정에 반영하는 일.
@@ -25,6 +26,8 @@ export interface DraftRow {
 }
 
 export interface DraftPreview {
+  /** Local edits contain values that must remain readable before confirmation. */
+  readonly detailed?: boolean;
   /** 무엇을 하는지 한 줄로. 내부 처리를 그대로 적지 않는다. */
   readonly title: string;
   readonly before: readonly DraftRow[];
@@ -93,6 +96,36 @@ export function nearestOrder(
 
 export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {
   switch (draft.action) {
+    case 'local-change': {
+      const tripChanged = draft.before.title !== draft.after.title
+        || draft.before.startDate !== draft.after.startDate || draft.before.endDate !== draft.after.endDate;
+      const describe = (value: Trip) => [
+        ...(tripChanged ? [{ id: 'trip', name: `${value.title} · ${value.startDate ?? '날짜 미정'} ~ ${value.endDate ?? '미정'}`, added: false, removed: false }] : []),
+        ...value.stops.filter(s => JSON.stringify(draft.before.stops.find(b => b.id === s.id)) !== JSON.stringify(draft.after.stops.find(b => b.id === s.id))).map(s => row(s, { name: describeStop(s) })),
+        ...value.stays.filter(s => JSON.stringify(draft.before.stays.find(b => b.id === s.id)) !== JSON.stringify(draft.after.stays.find(b => b.id === s.id))).map(s => ({id: s.id, name: `${s.name} · ${s.checkIn} ~ ${s.checkOut}`, added: false, removed: false})),
+      ];
+      const ledgerRows = (value: NonNullable<typeof draft.ledger>['before']) => [
+        ...(draft.ledger?.before.budget !== draft.ledger?.after.budget ? [{ id: 'budget', name: `예산 ${value.budget === null ? '미정' : value.budget.toLocaleString() + '원'}`, added: false, removed: false }] : []),
+        ...value.expenses.filter(e => JSON.stringify(draft.ledger?.before.expenses.find(b => b.id === e.id)) !== JSON.stringify(draft.ledger?.after.expenses.find(b => b.id === e.id))).map(e => ({ id: e.id, name: `${e.date} · ${e.title} · ${e.amount.toLocaleString()}원`, added: false, removed: false })),
+      ];
+      return { title: draft.title, detailed: true, before: draft.ledger ? ledgerRows(draft.ledger.before) : describe(draft.before),
+        after: draft.ledger ? ledgerRows(draft.ledger.after) : describe(draft.after), distanceDeltaKm: null,
+        applicable: localChangeValid(trip, draft) };
+    }
+    case 'assign-unassigned': {
+      const targets = draft.stopIds.map(id => trip.stops.find(s => s.id === id));
+      const before = stopsOn(trip, draft.date);
+      return {
+        title: `미배치 ${draft.stopIds.length}곳 → ${dayLabel(trip, draft.date)} (${draft.date})`,
+        before: before.map(s => row(s)),
+        after: [...before.map(s => row(s)), ...targets.filter((s): s is TripStop => !!s).map(s => row(s, { added: true }))],
+        distanceDeltaKm: null,
+        applicable: !!trip.startDate && !!trip.endDate && isIsoDate(draft.date)
+          && draft.date >= trip.startDate && draft.date <= trip.endDate
+          && targets.length > 0 && new Set(draft.stopIds).size === targets.length
+          && targets.every(s => !!s && s.date === null && !s.excluded),
+      };
+    }
     case 'move':
       return previewMove(trip, draft.date, draft.orderedStopIds);
     case 'append':
@@ -199,6 +232,12 @@ function dayOf(trip: Trip, day: number): IsoDate | null {
  */
 export function applyDraft(trip: Trip, draft: ChatDraft): Trip {
   switch (draft.action) {
+    case 'local-change':
+      return localChangeValid(trip, draft) ? { ...draft.after, updatedAt: trip.updatedAt } : trip;
+    case 'assign-unassigned':
+      return previewDraft(trip, draft).applicable
+        ? draft.stopIds.reduce((next, id) => placeStopOnDate(next, id, draft.date), trip)
+        : trip;
     case 'append':
       return applyAppend(trip, draft.places);
     case 'remove':

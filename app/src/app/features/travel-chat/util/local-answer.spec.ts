@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { KOREA_REGIONS } from '../../../shared/util/korea-regions';
 import { answerLocally } from './local-answer';
 import type { Trip, TripStop } from '../../trips/model/trip';
 
@@ -62,9 +63,15 @@ describe('answerLocally — 모델을 부르지 않아도 되는 질문', () => 
   });
 
   it('랜덤 뽑기는 최근에 뽑은 지역을 피한다', () => {
-    const first = answerLocally('랜덤으로 골라줘', null, [])!;
-    const again = answerLocally('랜덤으로 골라줘', null, [first.regions[0]!])!;
-    expect(again.regions[0]).not.toBe(first.regions[0]);
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const first = answerLocally('랜덤으로 골라줘', null, [])!;
+      expect(first.regions[0]).toBe(KOREA_REGIONS[0].name);
+      const again = answerLocally('랜덤으로 골라줘', null, [KOREA_REGIONS[0].code])!;
+      expect(again.regions[0]).toBe(KOREA_REGIONS[1].name);
+    } finally {
+      random.mockRestore();
+    }
   });
 
   it('탐색 질문은 가로채지 않고 모델에게 넘긴다', () => {

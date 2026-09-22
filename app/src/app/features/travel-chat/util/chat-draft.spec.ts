@@ -40,6 +40,24 @@ function trip(stops: TripStop[] = []): Trip {
 
 const day = '2026-10-01';
 
+describe('local preview density', () => {
+  it('keeps changed stops but omits unchanged trip information', () => {
+    const before = trip([stop('a', '안목해변', day, 0), stop('b', '오죽헌', day, 1)]);
+    const after = {...before, stops: before.stops.map(s => s.id === 'a' ? {...s, stayMinutes:60} : s)};
+    const view = previewDraft(before, {action:'local-change', title:'체류시간 변경', before, after});
+    expect(view.before.map(r => r.id)).toEqual(['a']);
+    expect(view.after.map(r => r.id)).toEqual(['a']);
+    expect(view.after[0].name).toContain('60분');
+  });
+  it('retains changed trip dates and removed stops for confirmation', () => {
+    const before = trip([stop('a', '안목해변', day, 0)]);
+    const after = {...before, endDate:'2026-10-04', stops:[]};
+    const view = previewDraft(before, {action:'local-change', title:'변경', before, after});
+    expect(view.before.map(r => r.id)).toEqual(['trip','a']);
+    expect(view.after.map(r => r.id)).toEqual(['trip']);
+  });
+});
+
 describe('previewDraft — 순서 변경', () => {
   const base = trip([
     stop('a', '철뚝소머리집', day, 0, 37.75, 128.9),

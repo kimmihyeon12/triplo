@@ -11,44 +11,59 @@ import type { Trip } from '../../trips/model/trip';
 /** 한 번에 보여줄 칩의 최대 개수. 더 늘리면 줄바꿈이 길어져 입력창이 밀린다. */
 const MAX_CHIPS = 6;
 
-/** 하루에 이보다 많으면 빡빡한 일정으로 본다. 이동 시간을 빼고도 빠듯한 수다. */
-const CROWDED_DAY = 5;
+/** 랜덤 여행지를 뽑은 뒤에도 테마를 골라 탐색한다. */
+export function regionChips(region: string): readonly string[] {
+  return [
+    '다시 뽑아줘',
+    `${region}에서 먹방 코스 추천해줘`,
+    `${region}에서 카페 투어 코스 추천해줘`,
+    `${region}에서 사진 찍기 좋은 코스 추천해줘`,
+    `${region}에서 느긋한 하루 코스 추천해줘`,
+  ];
+}
+
+/** 저장된 대화의 옛 탐색 예시만 교체하고 날짜·장소 확인 선택지는 보존한다. */
+export function refreshChips(chips: readonly string[]): readonly string[] {
+  const replacements: Record<string, string> = {
+    '속초는 어때': '속초에서 먹방 코스 추천해줘',
+    '바다 쪽으로 보고 싶어': '바다 보며 멍때리는 코스 추천해줘',
+    '다른 지역도 볼래': '여행지 랜덤으로 뽑아줘',
+    '다른 곳도 알려줘': '숨은 여행 명소 추천해줘',
+    '근처에 뭐가 있어': '근처에서 사진 찍기 좋은 곳 추천해줘',
+    '다른 곳으로 바꿔줘': '이 코스를 먹방 여행으로 바꿔줘',
+    '카페도 넣어줘': '이 코스에 디저트 카페도 넣어줘',
+  };
+  return [...new Set(chips.map((chip) => {
+    const legacy = /^(.+?)(?:으로)? (?:일정 짜줘|뭐가 있어)$/.exec(chip);
+    return legacy ? `${legacy[1]}에서 먹방 코스 추천해줘` : replacements[chip] ?? chip;
+  }))].slice(0, MAX_CHIPS);
+}
 
 /** 여행 목록에서 열었을 때. 아직 대상 여행이 없어 어디로 갈지부터 묻는다. */
 export function listChips(): readonly string[] {
   return [
-    '이번 주말 근교 어디 갈까',
-    '혼자 가기 좋은 소도시 알려줘',
-    '아이와 갈 만한 곳 추천해줘',
-    '2박 3일로 다녀올 만한 곳',
-    '아무 데나 뽑아줘',
+    '여행지 랜덤으로 뽑아줘',
+    '먹방 여행 코스 추천해줘',
+    '카페 투어 코스 추천해줘',
+    '사진 찍기 좋은 여행 코스 추천해줘',
+    '느긋한 당일치기 코스 추천해줘',
   ];
 }
 
 /**
- * 여행 상세에서 열었을 때. 그 여행의 상태를 보고 지금 할 만한 일을 고른다.
- * 장소가 하나도 없는 여행에 '순서 정리하기'를 권하면 눌러도 할 일이 없다.
+ * 여행 상세에서도 가볍게 탐색하는 질문을 권한다.
+ * 저장된 첫 지역을 포함해 현재 여행과 연결한다.
  */
 export function tripChips(trip: Trip): readonly string[] {
-  const chips: string[] = [];
-  const active = trip.stops.filter((s) => !s.excluded);
-
-  if (active.length === 0) {
-    chips.push('일정을 채워줘', '가 볼 만한 곳 알려줘', '맛집 추천해줘', '카페 한 곳 넣어줘');
-    return chips.slice(0, MAX_CHIPS);
-  }
-
-  if (active.some((s) => s.date === null)) chips.push('남은 장소를 날짜에 배치해줘');
-
-  const perDay = new Map<string, number>();
-  for (const stop of active) {
-    if (!stop.date) continue;
-    perDay.set(stop.date, (perDay.get(stop.date) ?? 0) + 1);
-  }
-  if ([...perDay.values()].some((count) => count >= CROWDED_DAY)) chips.push('이 날 너무 빡빡해');
-
-  chips.push('동선에 맞게 순서 정리해줘', '근처 맛집 추가해줘', '카페 한 곳 넣어줘');
-  return chips.slice(0, MAX_CHIPS);
+  const region = trip.regions[0]?.name;
+  const prefix = region ? `${region}에서 ` : '';
+  return [
+    '여행지 랜덤으로 뽑아줘',
+    `${prefix}먹방 코스 추천해줘`,
+    `${prefix}카페 투어 코스 추천해줘`,
+    `${prefix}사진 찍기 좋은 코스 추천해줘`,
+    `${prefix}느긋한 하루 코스 추천해줘`,
+  ].slice(0, MAX_CHIPS);
 }
 
 /**
