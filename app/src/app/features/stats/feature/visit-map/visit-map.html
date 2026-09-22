@@ -242,7 +242,7 @@
         <ul class="mt-4 flex flex-wrap gap-1.5">
           @for (region of visitedList().slice(0, 4); track region.key) {
             <li>
-              <button type="button" class="flex min-h-9 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
+              <button type="button" class="flex min-h-11 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
                 <i class="size-2 rounded-pill" [style.background]="color(region.visitCount)" aria-hidden="true"></i>
                 {{ region.name }}
                 <span class="tabular-nums text-ink-3">{{ region.visitCount }}</span>
@@ -362,7 +362,7 @@
                 @if (openProvince() === group.code) {
                   <div class="flex flex-wrap gap-1.5 pb-3">
                     @for (region of group.regions; track region.regionCode) {
-                      <button type="button" class="min-h-9 rounded-pill border border-border px-2.5 text-12 text-ink-3 hover:border-border-strong hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">{{ region.name }}</button>
+                      <button type="button" class="min-h-11 rounded-pill border border-border px-2.5 text-12 text-ink-3 hover:border-border-strong hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">{{ region.name }}</button>
                     }
                   </div>
                 }
@@ -378,5 +378,9 @@
   @if (state() === 'ready' && total()) {
     <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·군·구별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
   }
-  <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/southkorea/southkorea-maps" target="_blank" rel="noopener noreferrer">경계: 통계청 2013 · southkorea-maps</a> · 현재 경계와 다를 수 있어요.</p>
+  <!--
+    CC BY 4.0은 출처 표시가 의무다. SGIS(통계청) 표기를 승계한다.
+    상세는 public/geo/README.md에 있다.
+  -->
+  <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/vuski/admdongkor" target="_blank" rel="noopener noreferrer">경계: 통계청 SGIS · admdongkor (CC BY 4.0)</a> · 2026년 7월 1일 기준이에요.</p>
 </section>

@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiButton } from '../../../../shared/ui/button/button';
+import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import {
   KOREA_PROVINCES,
+  KOREA_REGIONS,
   REGION_LABEL,
   findRegionByCode,
   provinceCodeOf,
@@ -10,6 +14,7 @@ import {
 import { LocalVisitStats } from '../../data/local-visit-stats';
 import { VISIT_STATS_REPOSITORY } from '../../data/visit-stats-repository';
 import type { RegionVisitCount, VisitedPlace } from '../../model/visit-stats';
+import { visitStyle, type VisitPalette } from '../../util/visit-style';
 
 type View = 'country' | 'places';
 type LoadState = 'loading' | 'ready' | 'error';
@@ -30,10 +35,9 @@ type LoadState = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-stats',
   providers: [{ provide: VISIT_STATS_REPOSITORY, useClass: LocalVisitStats }],
-  imports: [RouterLink],
+  imports: [RouterLink, IconComponent, UiButton, UiSpinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stats.html',
-  styleUrl: './stats.css',
 })
 export class StatsPage {
   private readonly stats = inject(VISIT_STATS_REPOSITORY);
@@ -47,6 +51,8 @@ export class StatsPage {
   readonly region = signal<string | null>(null);
 
   readonly countryCounts = signal<readonly RegionVisitCount[]>([]);
+  /** 전국 시·군·구 수. 지도 화면과 같은 분모를 쓴다. */
+  readonly regionCount = KOREA_REGIONS.length;
   readonly places = signal<readonly VisitedPlace[]>([]);
   readonly totalPlaces = signal(0);
   readonly unclassifiedCount = signal(0);
@@ -58,6 +64,16 @@ export class StatsPage {
 
   readonly isEmpty = computed(
     () => this.loadState() === 'ready' && this.totalPlaces() === 0,
+  );
+
+  /**
+   * 목록에 올라간 장소 수. 지도 화면의 '담은 장소'와 같은 값이다.
+   *
+   * totalPlaces는 지역을 못 읽은 몫까지 세므로 여기 쓰면 두 화면의 숫자가
+   * 어긋난다(2026-09-22 확인).
+   */
+  readonly mappedPlaces = computed(() =>
+    this.countryCounts().reduce((sum, c) => sum + c.visitCount, 0),
   );
 
   /**
@@ -88,6 +104,17 @@ export class StatsPage {
     return REGION_LABEL[code] ?? code;
   });
 
+  /**
+   * 방문 횟수에 따른 점 색. 지도 화면과 같은 단계를 쓴다.
+   *
+   * 화면이 뜨기 전에는 계산된 스타일이 없으므로 토큰을 읽어 그때 채운다.
+   */
+  private readonly palette = signal<VisitPalette | null>(null);
+  color(count: number): string {
+    const p = this.palette();
+    return p ? visitStyle(count, 0, p).color : 'var(--color-accent-tint)';
+  }
+
   constructor() {
     // 화면 안에서 단계를 오가므로 상단 바의 뒤로 가기는 늘 지도를 가리킨다.
     // 단계 사이 이동은 본문의 뒤로 버튼이 맡는다.
@@ -101,9 +128,24 @@ export class StatsPage {
     void this.load();
   }
 
+  /** 지도와 같은 토큰에서 색 단계를 읽는다. 두 화면의 색이 어긋나면 안 된다. */
+  private readPalette(): void {
+    const styles = getComputedStyle(document.documentElement);
+    const read = (name: string) => styles.getPropertyValue(name).trim();
+    const land = read('--color-map-land');
+    if (!land) return;
+    this.palette.set({
+      land,
+      low: read('--color-map-visit-low'),
+      middle: read('--color-map-visit-middle'),
+      high: read('--color-map-visit-high'),
+    });
+  }
+
   private async load(): Promise<void> {
     this.loadState.set('loading');
     try {
+      this.readPalette();
       const summary = await this.stats.provinceCounts();
       this.countryCounts.set(summary.regions);
       this.totalPlaces.set(summary.totalPlaces);
