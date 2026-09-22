@@ -73,3 +73,44 @@ describe('block map aggregate clusters', () => {
     expect(anchor.cell.regionCode).toBe('b');
   });
 });
+
+/*
+  나주와 순천은 둘 다 전남이지만 약 70km 떨어져 있다. 시·도마다 한 덩어리로
+  찍으면 아무도 가지 않은 중간에 색이 들어간다. 실제 방문 자리를 받아 각각
+  찍는다(2026-09-21 결정).
+*/
+describe('방문 자리별 군집', () => {
+  it('자리를 주면 그 근처에 군집을 만든다', () => {
+    const left = buildBlockLayout(grid, new Map([['a', 6]]), 1, [
+      { regionCode: 'a', x: 0, y: 0, count: 6 },
+    ]);
+    const anchor = left.anchors.get('a')!;
+    // 지역 a는 x 0~40에 걸쳐 있다. 목표가 왼쪽 끝이면 앵커도 왼쪽이다.
+    expect(anchor.cell.x).toBeLessThan(20);
+  });
+
+  it('자리가 여럿이면 각각 군집을 만든다', () => {
+    const two = buildBlockLayout(grid, new Map([['a', 6]]), 1, [
+      { regionCode: 'a', x: 0, y: 0, count: 3 },
+      { regionCode: 'a', x: 40, y: 80, count: 3 },
+    ]);
+    const lit = two.columns.filter((c) => c.levels > 0);
+    // 서로 먼 두 자리가 켜져 한 덩어리로 뭉치지 않는다.
+    const xs = lit.map((c) => c.cell.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(20);
+  });
+
+  it('자리를 주지 않으면 지금처럼 시·도 중심을 쓴다', () => {
+    const before = buildBlockLayout(grid, new Map([['a', 6]]));
+    const after = buildBlockLayout(grid, new Map([['a', 6]]), 1, []);
+    expect(after.anchors.get('a')!.cell).toEqual(before.anchors.get('a')!.cell);
+  });
+
+  it('다른 지역 자리는 그 지역 칸만 쓴다', () => {
+    const cross = buildBlockLayout(grid, new Map([['a', 6]]), 1, [
+      // b 지역 한가운데를 가리켜도 a의 앵커는 a 칸에서 고른다.
+      { regionCode: 'a', x: 80, y: 40, count: 6 },
+    ]);
+    expect(cross.anchors.get('a')!.cell.regionCode).toBe('a');
+  });
+});

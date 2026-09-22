@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { VoxelGrid } from '../../../shared/util/geo/geo-types';
 import { PROVINCE_SHORT_NAME } from '../../../shared/util/korea-regions';
-import { buildBlockLayout } from '../util/block-layout';
+import { buildBlockLayout, type SpotAt } from '../util/block-layout';
 import { terrainTile } from '../util/terrain-tiles';
 import { visibleMarkers } from '../util/visible-markers';
 import { visitColor, type VisitPalette } from '../util/visit-style';
@@ -90,10 +90,12 @@ export class VoxelScene {
     this.reset();
   }
 
-  setData(grid: VoxelGrid, counts: ReadonlyMap<string, number>, markers: readonly RegionMapMarker[] = []): void {
+  setData(grid: VoxelGrid, counts: ReadonlyMap<string, number>, markers: readonly RegionMapMarker[] = [],
+    /** 실제 다녀온 자리. 비우면 시·도 중심에 한 덩어리를 놓는다. */
+    spots: readonly SpotAt[] = []): void {
     this.renderer.shadowMap.needsUpdate = true;
     if (this.mesh) { this.scene.remove(this.mesh); this.mesh.geometry.dispose(); this.mesh = undefined; }
-    const layout = buildBlockLayout(grid, counts, 14 / grid.cellSize);
+    const layout = buildBlockLayout(grid, counts, 14 / grid.cellSize, spots);
     const { minX, maxX, minY, maxY } = grid.bounds;
     const scale = 145 / Math.max(grid.cellSize, maxY - minY);
     const side = grid.cellSize * scale;
@@ -141,10 +143,25 @@ export class VoxelScene {
     for (const [code, anchor] of layout.anchors) {
       this.anchors.set(code, new THREE.Vector3((anchor.cell.x - midX) * scale, tops.get(anchor.cell) ?? 0, (anchor.cell.y - midY) * scale));
     }
-    this.markerPoints = markers.flatMap(marker => {
-      const anchor = this.anchors.get(marker.id);
-      return anchor ? [{ marker, point: anchor.clone().add(new THREE.Vector3(0, 0.5, 0)) }] : [];
-    });
+    // 마커는 자리마다 하나씩 둔다. 시·도마다 하나만 두면 나주와 순천에
+    // 다녀와도 '전남' 마커 하나만 보여 어디가 어디인지 알 수 없다.
+    if (layout.spotCells.length) {
+      const used = new Map<string, number>();
+      this.markerPoints = layout.spotCells.map(({ spot, cell }) => {
+        // 같은 지역에 자리가 여럿이면 id가 겹치지 않게 번호를 붙인다.
+        // 선택은 시·도 단위로 동작해야 하므로 첫 자리는 지역 코드 그대로 둔다.
+        const seen = used.get(spot.regionCode) ?? 0;
+        used.set(spot.regionCode, seen + 1);
+        const id = seen ? `${spot.regionCode}#${seen}` : spot.regionCode;
+        const point = new THREE.Vector3((cell.x - midX) * scale, (tops.get(cell) ?? 0) + 0.5, (cell.y - midY) * scale);
+        return { marker: { id, name: spot.name }, point };
+      });
+    } else {
+      this.markerPoints = markers.flatMap(marker => {
+        const anchor = this.anchors.get(marker.id);
+        return anchor ? [{ marker, point: anchor.clone().add(new THREE.Vector3(0, 0.5, 0)) }] : [];
+      });
+    }
     if (this.temporaryRegion && this.temporary) this.temporary = this.anchors.get(this.temporaryRegion)?.clone().add(new THREE.Vector3(0, 0.5, 0)) ?? null;
     this.render();
   }

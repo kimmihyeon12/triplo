@@ -124,20 +124,24 @@
     <div class="grid min-w-0 gap-4">
     <aside class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-selection" aria-label="선택 지역 방문 기록">
       @if (selected(); as code) {
-        <div class="flex items-start justify-between gap-3">
-          <div aria-live="polite">
-            <h3 class="text-22 font-bold leading-tight">{{ names[code] }}</h3>
-            <!-- 0곳은 성과가 아니므로 주 동작색으로 강조하지 않는다. -->
-            @if (selectedCount()) {
-              <p class="mt-1.5 flex items-baseline gap-1.5">
-                <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ selectedCount() | number }}</strong>
-                <span class="text-13 text-ink-3">곳 방문</span>
-              </p>
-            } @else {
-              <p class="mt-1.5 text-13 text-ink-3">아직 다녀오지 않은 지역이에요</p>
-            }
+        <!--
+          닫기 버튼은 제목과 같은 줄에 둔다. 바깥을 items-start로 두면 44px
+          버튼이 맨 위에 붙어 22px 제목과 중심이 어긋난다.
+        -->
+        <div aria-live="polite">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="min-w-0 truncate text-22 font-bold leading-tight">{{ names[code] }}</h3>
+            <button appButton type="button" class="-mr-2 w-11 flex-none border-transparent! px-0!" aria-label="지역 선택 해제" (click)="clearSelection()"><app-icon name="x"/></button>
           </div>
-          <button appButton type="button" class="w-11 border-transparent! px-0!" aria-label="지역 선택 해제" (click)="clearSelection()"><app-icon name="x"/></button>
+          <!-- 0곳은 성과가 아니므로 주 동작색으로 강조하지 않는다. -->
+          @if (selectedCount()) {
+            <p class="mt-1 flex items-baseline gap-1.5">
+              <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ selectedCount() | number }}</strong>
+              <span class="text-13 text-ink-3">곳 방문</span>
+            </p>
+          } @else {
+            <p class="mt-1 text-13 text-ink-3">아직 다녀오지 않은 지역이에요</p>
+          }
         </div>
         @if (detailState() === 'loading') { <p class="mt-6 flex items-center gap-2 text-13" role="status"><app-spinner/> 방문 기록을 불러오는 중…</p> }
         @if (detailState() === 'error') { <p class="mt-5 text-13" role="alert">방문 기록을 읽지 못했어요.</p><button appButton type="button" class="mt-2" (click)="select(code)">기록 다시 불러오기</button> }
@@ -219,7 +223,7 @@
         <h3 class="mt-1.5 text-17 font-semibold">어떤 여행이 쌓였을까요?</h3>
         <p class="mt-2 text-14 leading-relaxed text-ink-2">지도나 아래 목록에서 지역을 누르면 월별 방문과 최근 다녀온 장소를 볼 수 있어요.</p>
         <ul class="mt-4 flex flex-wrap gap-1.5">
-          @for (region of visitedList().slice(0, 4); track region.regionCode) {
+          @for (region of visitedList().slice(0, 4); track region.key) {
             <li>
               <button type="button" class="flex min-h-9 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
                 <i class="size-2 rounded-pill" [style.background]="color(region.visitCount)" aria-hidden="true"></i>
@@ -286,10 +290,10 @@
       <section class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-regions" aria-label="지역별 방문 횟수">
         <div class="flex items-baseline justify-between gap-2">
           <h3 class="text-14 font-semibold">다녀온 지역</h3>
-          <span class="text-12 tabular-nums text-ink-3">{{ visitedRegions() }} / {{ allRegions().length }}곳</span>
+          <span class="text-12 tabular-nums text-ink-3">{{ visitedList().length }}곳</span>
         </div>
         <ul class="mt-2 divide-y divide-border">
-          @for (region of visitedList(); track region.regionCode) {
+          @for (region of visitedList(); track region.key) {
             <li>
               <!--
                 선택은 행을 칠하지 않고 왼쪽 세로 막대로 표시한다. 배경을 칠하면

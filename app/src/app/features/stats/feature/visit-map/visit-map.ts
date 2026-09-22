@@ -7,7 +7,7 @@ import { UiInput } from '../../../../shared/ui/input/input';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { buildGrid, type GeoCollection } from '../../../../shared/util/geo/geo-grid';
-import { KOREA_ORIGIN, pointInPolygon } from '../../../../shared/util/geo/projection';
+import { createProjection, KOREA_ORIGIN, pointInPolygon } from '../../../../shared/util/geo/projection';
 import type { VoxelGrid } from '../../../../shared/util/geo/geo-types';
 import { PROVINCE_SHORT_NAME } from '../../../../shared/util/korea-regions';
 import { LocalVisitStats } from '../../data/local-visit-stats';
@@ -19,6 +19,8 @@ import { regionMarkers } from '../../util/region-markers';
 import { SavedMapPlaces } from '../../data/saved-map-places';
 import { VISIT_STEPS, visitStyle, type VisitPalette } from '../../util/visit-style';
 import { monthlyVisits } from '../../util/monthly-visits';
+import type { VisitSpot } from '../../util/visit-spots';
+import type { SpotAt } from '../../util/block-layout';
 
 const CODES: Record<string, string> = {
   '11': 'seoul', '21': 'busan', '22': 'daegu', '23': 'incheon', '24': 'gwangju', '25': 'daejeon',
@@ -66,6 +68,8 @@ export class VisitMapPage {
   readonly selected = signal<string | null>(null);
   readonly labels = signal<MapLabel[]>([]);
   readonly markers = signal<readonly RegionMapMarker[]>([]);
+  /** 실제 다녀온 자리. 시·도 중심이 아니라 여기에 군집을 놓는다. */
+  readonly spots = signal<readonly VisitSpot[]>([]);
   readonly selectedMarker = signal<string | null>(null);
   readonly names = PROVINCE_SHORT_NAME;
   readonly counts = this.actual;
@@ -80,10 +84,32 @@ export class VisitMapPage {
   readonly countMap = computed(() => new Map(this.counts().map(c => [c.regionCode, c.visitCount])));
   readonly selectedCount = computed(() => this.countMap().get(this.selected() ?? '') ?? 0);
   readonly legendColors = computed(() => { const p = this.palette(); return p ? VISIT_STEPS.map(step => visitStyle(step.min, 0, p).color) : []; });
-  readonly allRegions = computed(() => Object.entries(this.names).map(([regionCode, name]) => ({ regionCode, name, visitCount: this.countMap().get(regionCode) ?? 0 })).sort((a, b) => b.visitCount - a.visitCount));
+  readonly allRegions = computed(() => Object.entries(this.names).map(([regionCode, name]) => ({ regionCode, key: regionCode, name, visitCount: this.countMap().get(regionCode) ?? 0 })).sort((a, b) => b.visitCount - a.visitCount));
   readonly visitedRegions = computed(() => this.allRegions().filter(r => r.visitCount > 0).length);
-  /** 다녀온 곳은 많이 간 순서로, 안 간 곳은 이름 순으로 나눠 보여준다. */
-  readonly visitedList = computed(() => this.allRegions().filter(r => r.visitCount > 0));
+  /**
+   * 다녀온 곳은 실제로 간 시·군으로 보여준다. 시·도만 적으면 나주와 순천을
+   * 둘 다 '전남'으로 묶어 지도와 목록이 다른 것을 가리킨다(2026-09-22 결정).
+   * 좌표가 없어 자리를 못 만든 지역은 시·도 이름 그대로 남긴다.
+   */
+  readonly visitedList = computed(() => {
+    const spots = this.spots();
+    if (!spots.length) return this.allRegions().filter(r => r.visitCount > 0);
+
+    const placed = new Set(spots.map(s => s.regionCode));
+    const rows = spots.map((spot, index) => ({
+      // 첫 자리는 지역 코드를 그대로 써서 마커·선택과 짝이 맞는다.
+      regionCode: spot.regionCode,
+      key: `${spot.regionCode}#${index}`,
+      name: spot.name,
+      visitCount: spot.count,
+    }));
+    // 좌표가 없어 지도에 못 찍은 지역도 목록에는 남긴다. 합계가 어긋나면 안 된다.
+    for (const region of this.allRegions()) {
+      if (region.visitCount <= 0 || placed.has(region.regionCode)) continue;
+      rows.push({ regionCode: region.regionCode, key: region.regionCode, name: region.name, visitCount: region.visitCount });
+    }
+    return rows.sort((a, b) => b.visitCount - a.visitCount || a.name.localeCompare(b.name, 'ko'));
+  });
   readonly unvisitedList = computed(() =>
     this.allRegions().filter(r => !r.visitCount).sort((a, b) => a.name.localeCompare(b.name, 'ko')));
   readonly coverage = computed(() => Math.round(this.visitedRegions() / this.allRegions().length * 100));
@@ -110,10 +136,11 @@ export class VisitMapPage {
     const controller = new AbortController();
     this.controller = controller;
     try {
-      const [response, summary, markers] = await Promise.all([
+      const [response, summary, markers, spots] = await Promise.all([
         fetch('/geo/korea-provinces-2013.geo.json', { signal: controller.signal }),
         this.repository.provinceCounts('all'),
         this.savedPlaces.read('all'),
+        this.repository.spots(),
       ]);
       if (!response.ok) throw new Error('Boundary load failed');
       const geo = await response.json() as GeoCollection;
@@ -127,6 +154,7 @@ export class VisitMapPage {
       this.unclassified.set(summary.unclassifiedCount);
       this.excluded.set(summary.excluded ?? null);
       this.markers.set(regionMarkers(markers, geo, CODES, this.names));
+      this.spots.set(spots);
       this.scene?.destroy();
       this.scene = undefined;
       const styles = getComputedStyle(this.host().nativeElement);
@@ -181,7 +209,22 @@ export class VisitMapPage {
   reset(): void { this.scene?.reset(); this.clearSelection(); }
   focus(): void { const marker = this.selectedMarker(); const code = this.selected(); if (marker) this.scene?.focusMarker(marker); else if (code) this.scene?.focus(code); else this.scene?.reset(); }
   toggleLayers(): void { this.layers.update(value => !value); this.paint(); }
-  private paint(): void { if (this.grid) this.scene?.setData(this.grid, this.layers() ? this.countMap() : new Map(), this.markers()); }
+  /**
+   * 방문 자리를 평면 좌표로 바꾼다. 격자와 같은 투영을 써야 칸을 맞게 고른다.
+   * 레이어를 끄면 지형만 보여야 하므로 자리도 비운다.
+   */
+  private spotsAt(): SpotAt[] {
+    if (!this.layers()) return [];
+    const project = createProjection(KOREA_ORIGIN);
+    return this.spots().map(spot => {
+      const { x, y } = project(spot.location);
+      return { regionCode: spot.regionCode, name: spot.name, x, y, count: spot.count };
+    });
+  }
+
+  private paint(): void {
+    if (this.grid) this.scene?.setData(this.grid, this.layers() ? this.countMap() : new Map(), this.markers(), this.spotsAt());
+  }
   color(count: number): string { const p = this.palette(); return p ? visitStyle(count, 0, p).color : 'var(--color-panel)'; }
   /** 임시 선택은 주 동작색, 저장한 지역은 방문색을 쓴다. */
   markerInk(label: MapLabel): string {

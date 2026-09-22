@@ -3,6 +3,7 @@ import { todayIso } from '../../../shared/util/dates';
 import { TRIP_REPOSITORY } from '../../trips/data/trip-repository';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
 import { tallyDistricts, tallyVisits, visitedPlacesIn } from '../util/visit-tally';
+import { visitSpots, type VisitSpot } from '../util/visit-spots';
 import type { VisitStatsRepository } from './visit-stats-repository';
 
 /**
@@ -26,5 +27,10 @@ export class LocalVisitStats implements VisitStatsRepository {
 
   async placesIn(regionCode: string, filter: VisitFilter = 'all'): Promise<VisitedPlace[]> {
     return visitedPlacesIn(await this.trips.list(), todayIso(), regionCode, filter);
+  }
+
+  /** 지도에 찍을 실제 방문 자리. 좌표가 저장된 장소에서만 낸다. */
+  async spots(): Promise<VisitSpot[]> {
+    return visitSpots(await this.trips.list(), todayIso());
   }
 }
