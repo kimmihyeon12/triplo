@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import { createRegion, createStay, createStop, createTrip } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
 import { UNCLASSIFIED, tallyDistricts, tallyVisits, visitedPlacesIn } from './visit-tally';
@@ -71,6 +71,30 @@ describe('tallyVisits', () => {
       stops: [createStop({ name: '이름만 적은 곳', regionId: 'r1' })],
     });
     expect(tallyVisits([trip], TODAY).regions[0].visitCount).toBe(1);
+  });
+
+  /*
+    '광주 주말 여행'에 구례와 함평을 담은 경우다. 세 장소가 모두 여행 지역
+    '광주'를 가리키므로, 여행 지역을 먼저 쓰면 전남 방문이 광주로 집계되어
+    전남에 색이 칠해지지 않았다(2026-09-22 확인).
+  */
+  it('한 여행에 여러 시·도가 있으면 주소대로 나눠 센다', () => {
+    const trip = createTrip({
+      title: '광주 주말 여행',
+      startDate: '2026-08-15',
+      endDate: '2026-08-17',
+      regions: [createRegion('광주', 0, 'g1')],
+      stops: [
+        createStop({ name: '국립아시아문화전당', regionId: 'g1', address: '광주광역시 동구 문화전당로 38' }),
+        createStop({ name: '화엄사', regionId: 'g1', address: '전라남도 구례군 마산면 화엄사로 539' }),
+        createStop({ name: '함평자연생태공원', regionId: 'g1', address: '전라남도 함평군 대동면 학야리' }),
+      ],
+    });
+    const result = tallyVisits([trip], TODAY);
+    expect(result.regions).toEqual([
+      { regionCode: 'jeonnam', name: '전남', visitCount: 2 },
+      { regionCode: 'gwangju', name: '광주', visitCount: 1 },
+    ]);
   });
 
   it('같은 지역을 여러 여행에서 방문하면 합쳐 센다', () => {

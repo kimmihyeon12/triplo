@@ -1,15 +1,11 @@
-import {
-  PROVINCE_SHORT_NAME,
-  findRegionByName,
-  provinceCodeOf,
-} from '../../../shared/util/korea-regions';
+﻿import { PROVINCE_SHORT_NAME, provinceCodeOf } from '../../../shared/util/korea-regions';
 import type { GeoPoint } from '../../places/model/place';
 import type { IsoDate, Trip, TripRegion } from '../../trips/model/trip';
 import { SEOUL_DISTRICT_NAME } from '../model/seoul-districts';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
 import { districtCodeForAddress } from './district-match';
 import { excludedReasons } from './excluded-reasons';
-import { provinceCodeForAddress } from './province-match';
+import { itemProvinceCode, resolveRegion } from './item-province';
 
 /**
  * 표준 지역으로 분류하지 못한 몫의 키.
@@ -27,18 +23,11 @@ export const UNCLASSIFIED = '(분류되지 않음)';
  */
 export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: VisitFilter = 'all'): VisitSummary {
   const summary = summarize(visitedItems(trips, today, filter), (item) => {
-    const resolved = resolveRegion(item.region);
-    if (resolved) {
-      // 전국 격자는 시·도 단위다. 시·군 코드 그대로 세면 지도에서 찾지 못해
-      // 모든 블록이 0회로 남는다. '강릉'과 '속초'는 함께 '강원'으로 센다.
-      const code = provinceCodeOf(resolved.code);
-      return { code, name: PROVINCE_SHORT_NAME[code] ?? resolved.name };
-    }
-    // 여행에 담은 지역과 장소의 실제 위치가 다를 수 있다. 광주 여행에 나주
-    // 장소를 넣으면 여행 지역 목록에 나주가 없어 위에서 비게 된다. 그때는
-    // 저장된 주소를 읽는다. 검증된 값이므로 지어내는 것이 아니다.
-    const byAddress = provinceCodeForAddress(item.address);
-    return byAddress ? { code: byAddress, name: PROVINCE_SHORT_NAME[byAddress] ?? byAddress } : null;
+    // 주소를 먼저 읽는다. 한 여행에 여러 시·도를 담으면 여행 지역만으로는
+    // 장소마다 다른 실제 위치를 가릴 수 없다(util/item-province).
+    const code = itemProvinceCode(item.address, item.region);
+    if (!code) return null;
+    return { code, name: PROVINCE_SHORT_NAME[code] ?? resolveRegion(item.region)?.name ?? code };
   });
   // 화면이 비었을 때 까닭을 함께 넘긴다. 여행은 있는데 통계가 0이면
   // 사용자는 기록이 사라졌다고 오해한다.
@@ -57,10 +46,9 @@ export function tallyDistricts(
   today: IsoDate,
   provinceCode: string,
 ): VisitSummary {
-  const inProvince = visitedItems(trips, today).filter((item) => {
-    const resolved = resolveRegion(item.region);
-    return resolved !== null && provinceCodeOf(resolved.code) === provinceCode;
-  });
+  const inProvince = visitedItems(trips, today).filter(
+    (item) => itemProvinceCode(item.address, item.region) === provinceCode,
+  );
 
   return summarize(inProvince, (item) => {
     const code = districtCodeOf(item.address, provinceCode);
@@ -87,18 +75,14 @@ export function visitedPlacesIn(
 
   return visitedItems(trips, today, filter)
     .filter((item) => {
-      const resolved = resolveRegion(item.region);
-      if (!resolved) {
-        // 여행 지역으로 못 찾으면 주소를 읽는다. tallyVisits와 같은 기준이어야
-        // 지도에 센 장소를 지역 목록에서도 볼 수 있다.
-        return isProvince && provinceCodeForAddress(item.address) === provinceCode;
-      }
-      if (isProvince) return provinceCodeOf(resolved.code) === provinceCode;
-      if (!isDistrict) return resolved.code === regionCode;
-      return (
-        provinceCodeOf(resolved.code) === provinceCode &&
-        districtCodeOf(item.address, provinceCode) === regionCode
-      );
+      // 집계와 같은 기준으로 고른다. 기준이 다르면 지도에 센 장소를 지역
+      // 목록에서 볼 수 없다.
+      const code = itemProvinceCode(item.address, item.region);
+      if (code !== provinceCode) return false;
+      if (isProvince) return true;
+      if (isDistrict) return districtCodeOf(item.address, provinceCode) === regionCode;
+      // 시·군 코드로 물으면 여행 지역이 그 시·군인 것만 고른다.
+      return resolveRegion(item.region)?.code === regionCode;
     })
     .map((item) => ({
       id: item.id,
@@ -204,17 +188,4 @@ function isVisited(trip: Trip, today: IsoDate): boolean {
 /** 주소에서 하위 구역 코드를 읽는다. 하위 격자가 있는 시·도만 값이 나온다. */
 function districtCodeOf(address: string, provinceCode: string): string | null {
   return provinceCode === 'seoul' ? districtCodeForAddress(address) : null;
-}
-
-/**
- * 여행의 지역을 표준 지역 코드로 바꾼다.
- *
- * 저장된 코드를 먼저 쓰고, 없으면 이름으로 찾는다. 이름은 고정 목록에서 고른
- * 값이므로 대부분 찾아진다. 둘 다 실패하면 null이며 '분류되지 않음'이 된다.
- */
-function resolveRegion(region: TripRegion | null): { code: string; name: string } | null {
-  if (!region) return null;
-  if (region.regionCode) return { code: region.regionCode, name: region.name };
-  const found = findRegionByName(region.name);
-  return found ? { code: found.code, name: found.name } : null;
 }

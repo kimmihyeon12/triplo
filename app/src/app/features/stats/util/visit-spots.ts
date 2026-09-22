@@ -1,7 +1,7 @@
-import { PROVINCE_SHORT_NAME, findRegionByName, provinceCodeOf } from '../../../shared/util/korea-regions';
+﻿import { PROVINCE_SHORT_NAME } from '../../../shared/util/korea-regions';
 import type { GeoPoint } from '../../places/model/place';
 import type { IsoDate, Trip } from '../../trips/model/trip';
-import { provinceCodeForAddress } from './province-match';
+import { itemProvinceCode } from './item-province';
 import { isMetro, spotName } from './spot-name';
 
 /** 지도에 찍을 방문 자리 하나. 여러 장소가 가까우면 한 자리로 모인다. */
@@ -71,12 +71,10 @@ export function visitSpots(trips: readonly Trip[], today: IsoDate): VisitSpot[] 
     for (const item of [...stops, ...trip.stays]) {
       if (!usable(item.location)) continue;
 
-      const region = item.regionId === null ? null : regionById.get(item.regionId);
-      const resolved = region
-        ? region.regionCode ?? findRegionByName(region.name)?.code ?? null
-        : null;
-      // 여행 지역으로 못 찾으면 주소를 읽는다. 집계와 같은 순서다.
-      const code = resolved ? provinceCodeOf(resolved) : provinceCodeForAddress(item.address);
+      const region = item.regionId === null ? null : (regionById.get(item.regionId) ?? null);
+      // 주소를 먼저 읽는다. 집계와 같은 기준이어야 지도와 목록이 어긋나지
+      // 않는다(util/item-province).
+      const code = itemProvinceCode(item.address, region);
       if (!code || !PROVINCE_SHORT_NAME[code]) continue;
 
       /*
