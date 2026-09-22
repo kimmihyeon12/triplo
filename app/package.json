@@ -47,6 +47,7 @@
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/three": "^0.186.0",
+    "mapshaper": "^0.7.64",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2",
