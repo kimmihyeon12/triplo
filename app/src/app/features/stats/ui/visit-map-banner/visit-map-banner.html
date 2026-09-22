@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   기록이 있을 때만 카드로 띄우고, 없으면 점선 테두리로 가라앉힌다.
   두 경우 모두 링크는 살아 있어 빈 지도 화면으로 갈 수 있다.
 -->
@@ -70,11 +70,11 @@
     @if (hasRecord()) {
       <!-- 단위는 통계 화면과 같은 '곳'이다. 담긴 장소·숙소의 개수를 센다. -->
       <small class="mt-1 block text-12 leading-normal text-ink-3">
-        {{ provinceCount }}개 시·도 중
+        {{ regionCount }}개 지역 중
         <strong class="text-map-visit-high">{{ visitedCount() }}곳</strong>
-        · 누적 {{ totalVisits() | number }}곳
+        · 담은 장소 {{ totalVisits() | number }}곳
       </small>
-      <!-- 채운 만큼이 다녀온 시·도 비율. 숫자만으로는 많고 적음을 알 수 없다. -->
+      <!-- 채운 만큼이 다녀온 지역 비율. 통계 화면과 같은 230개 기준이다. -->
       <span
         class="mt-1.5 block h-1.25 overflow-hidden rounded-pill bg-ground-2"
         aria-hidden="true"

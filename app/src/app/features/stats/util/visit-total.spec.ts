@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import type { Trip } from '../../trips/model/trip';
 import { tallyVisits, visitedPlacesIn } from './visit-tally';
 import { mappedTotal } from './visit-total';
@@ -20,13 +20,13 @@ function trip(id: string, region: { name: string; code?: string } | null, names:
 
 describe('mappedTotal', () => {
   it('지도에 올린 장소만 센다', () => {
-    const summary = tallyVisits([trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b'])], TODAY);
+    const summary = tallyVisits([trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b'])], TODAY);
     expect(mappedTotal(summary)).toBe(2);
   });
 
   it('지역을 분류하지 못한 장소는 빼고 센다', () => {
     const trips = [
-      trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b']),
+      trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b']),
       trip('t2', null, ['c', 'd', 'e']),
     ];
     const summary = tallyVisits(trips, TODAY);
@@ -38,7 +38,7 @@ describe('mappedTotal', () => {
 
   it('지역별 합계와 항상 같다', () => {
     const trips = [
-      trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b']),
+      trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b']),
       trip('t2', { name: '부산', code: 'busan' }, ['c']),
       trip('t3', null, ['d']),
     ];
@@ -70,8 +70,9 @@ describe('mappedTotal', () => {
   });
 
   it('누적이 0보다 크면 지역도 하나 이상이다', () => {
+    // 지역을 아는 여행과 모르는 여행이 섞여도 합계와 지역 수가 어긋나면 안 된다.
     const summary = tallyVisits([
-      trip('t1', { name: '광주광역시' }, ['죽녹원']),
+      trip('t1', { name: '담양군' }, ['죽녹원']),
       trip('t2', null, ['어딘가']),
     ], TODAY);
     expect(mappedTotal(summary)).toBeGreaterThan(0);
@@ -88,7 +89,7 @@ describe('여행 지역과 다른 장소', () => {
   function mixed(): Trip {
     return {
       id: 't1', title: '광주 여행', startDate: '2024-05-01', endDate: '2024-05-03',
-      regions: [{ id: 'r1', name: '광주', regionCode: 'gwangju', order: 0 }],
+      regions: [{ id: 'r1', name: '동구(전남광주)', regionCode: '12_동구', order: 0 }],
       stops: [
         {
           id: 's1', name: '충장로', address: '광주 동구 충장로 1', regionId: 'r1', kind: 'place',
@@ -106,15 +107,15 @@ describe('여행 지역과 다른 장소', () => {
     } as unknown as Trip;
   }
 
-  it('주소로 시·도를 찾아 집계한다', () => {
+  it('주소로 시·군·구를 찾아 집계한다', () => {
     const s = tallyVisits([mixed()], TODAY);
     expect(s.unclassifiedCount).toBe(0);
-    expect(s.regions.find((r) => r.regionCode === 'gwangju')?.visitCount).toBe(1);
-    expect(s.regions.find((r) => r.regionCode === 'jeonnam')?.visitCount).toBe(1);
+    expect(s.regions.find((r) => r.regionCode === '12_동구')?.visitCount).toBe(1);
+    expect(s.regions.find((r) => r.regionCode === '12_담양군')?.visitCount).toBe(1);
   });
 
   it('지역을 누르면 그 장소가 목록에 나온다', () => {
-    const places = visitedPlacesIn([mixed()], TODAY, 'jeonnam');
+    const places = visitedPlacesIn([mixed()], TODAY, '12_담양군');
     expect(places.map((p) => p.name)).toEqual(['죽녹원']);
   });
 

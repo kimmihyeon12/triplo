@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
   padding: 1rem 1rem 2rem;
 }
@@ -62,52 +62,77 @@
   font-size: 0.875rem;
 }
 
-.stats__legend {
+/*
+  다녀온 지역 목록. 시·도로 묶어 보여준다.
+
+  예전에는 시·도 17개를 육각 격자로 그렸으나, 지도가 시·군·구 230개
+  단위가 되면서 손배치가 불가능해져 목록으로 바꿨다(2026-09-22 결정).
+*/
+.stats__provinces {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.stats__province-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.stats__province-count {
+  color: var(--color-ink-3);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.stats__regions {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats__regions button {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-top: 0.75rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  /* 손가락으로 누를 수 있는 최소 높이를 지킨다. */
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-panel);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.stats__legend-label {
-  color: var(--color-hint);
-  font-size: 0.75rem;
+.stats__regions button:hover {
+  border-color: var(--color-border-strong);
 }
 
-.stats__legend-label:first-child {
-  margin-right: 0.25rem;
+.stats__region-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.stats__legend-label:last-child {
-  margin-left: 0.25rem;
-}
-
-.stats__legend-chip {
-  display: inline-block;
-  width: 1.125rem;
-  height: 0.625rem;
-  border-radius: 2px;
-}
-
-/*
-  지도 블록과 같은 5단계를 쓴다. 두 곳이 어긋나면 범례가 거짓이 된다.
-  region-block-map.css의 --block-1~5와 같은 값이며 원본은 /stats의
-  map-visit 토큰이다(2026-09-21 청록 확정).
-*/
-.stats__legend-chip[data-level='1'] {
-  background: #c9eaf0;
-}
-.stats__legend-chip[data-level='2'] {
-  background: #84cedc;
-}
-.stats__legend-chip[data-level='3'] {
-  background: #3fb3c9;
-}
-.stats__legend-chip[data-level='4'] {
-  background: #268496;
-}
-.stats__legend-chip[data-level='5'] {
-  background: #0d5563;
+.stats__regions .stats__region-count {
+  flex: none;
+  color: var(--color-ink-2);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .stats__note {

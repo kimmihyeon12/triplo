@@ -21,8 +21,8 @@ function pastTrip(partial: Partial<Trip> = {}): Trip {
 describe('tallyVisits', () => {
   it('종료일이 지난 여행의 장소를 센다', () => {
     const result = tallyVisits([pastTrip()], TODAY);
-    // 전국 지도가 시·도 단위이므로 '강릉'은 '강원'으로 묶인다.
-    expect(result.regions).toEqual([{ regionCode: 'gangwon', name: '강원', visitCount: 1 }]);
+    // 지도가 시·군·구 단위이므로 '강릉'은 '강릉시'로 센다.
+    expect(result.regions).toEqual([{ regionCode: '51_강릉시', name: '강릉시', visitCount: 1 }]);
     expect(result.totalPlaces).toBe(1);
   });
 
@@ -92,8 +92,9 @@ describe('tallyVisits', () => {
     });
     const result = tallyVisits([trip], TODAY);
     expect(result.regions).toEqual([
-      { regionCode: 'jeonnam', name: '전남', visitCount: 2 },
-      { regionCode: 'gwangju', name: '광주', visitCount: 1 },
+      { regionCode: '12_구례군', name: '구례군', visitCount: 1 },
+      { regionCode: '12_동구', name: '동구(전남광주)', visitCount: 1 },
+      { regionCode: '12_함평군', name: '함평군', visitCount: 1 },
     ]);
   });
 
@@ -106,7 +107,7 @@ describe('tallyVisits', () => {
       ],
     });
     const result = tallyVisits([first, second], TODAY);
-    expect(result.regions).toEqual([{ regionCode: 'gangwon', name: '강원', visitCount: 3 }]);
+    expect(result.regions).toEqual([{ regionCode: '51_강릉시', name: '강릉시', visitCount: 3 }]);
   });
 
   it('많이 방문한 지역을 앞에 둔다', () => {
@@ -121,14 +122,14 @@ describe('tallyVisits', () => {
       ],
     });
     const result = tallyVisits([gangneung, jeju], TODAY);
-    expect(result.regions.map((r) => r.name)).toEqual(['제주', '강원']);
+    expect(result.regions.map((r) => r.name)).toEqual(['제주시', '강릉시']);
   });
 
   it('코드가 없는 예전 여행은 이름으로 보정한다', () => {
     const trip = pastTrip({
       regions: [{ id: 'r1', name: '강릉', order: 0 }],
     });
-    expect(tallyVisits([trip], TODAY).regions[0].regionCode).toBe('gangwon');
+    expect(tallyVisits([trip], TODAY).regions[0].regionCode).toBe('51_강릉시');
   });
 
   it('표준 목록에 없는 지역은 분류되지 않음으로 센다', () => {
@@ -172,8 +173,11 @@ describe('tallyVisits', () => {
     expect(UNCLASSIFIED).not.toMatch(/^[a-z]+-[a-z]+$/);
   });
 
-  it('전국 지도는 시·도 단위로 묶어 센다', () => {
-    // 격자는 시·도 단위다. 시·군 코드로 세면 지도에서 찾지 못해 모두 0이 된다.
+  /*
+    같은 강원이라도 강릉과 속초는 다른 시다. 예전에는 둘 다 '강원' 한 줄로
+    묶여 어디를 다녀왔는지 알 수 없었다(2026-09-22 결정).
+  */
+  it('같은 시·도라도 시·군·구가 다르면 따로 센다', () => {
     const gangneung = pastTrip();
     const sokcho = createTrip({
       startDate: '2026-08-10',
@@ -182,17 +186,28 @@ describe('tallyVisits', () => {
       stops: [createStop({ name: '영금정', regionId: 's1' })],
     });
     const result = tallyVisits([gangneung, sokcho], TODAY);
-    expect(result.regions).toEqual([{ regionCode: 'gangwon', name: '강원', visitCount: 2 }]);
+    expect(result.regions.map((r) => r.regionCode).sort()).toEqual(['51_강릉시', '51_속초시']);
   });
 
-  it('시·도 이름은 짧은 표기를 쓴다', () => {
+  it('이름은 행정구역 이름을 쓴다', () => {
     const trip = createTrip({
       startDate: '2026-08-01',
       endDate: '2026-08-03',
       regions: [createRegion('수원', 0, 'r1')],
       stops: [createStop({ regionId: 'r1' })],
     });
-    expect(tallyVisits([trip], TODAY).regions[0].name).toBe('경기');
+    expect(tallyVisits([trip], TODAY).regions[0].name).toBe('수원시');
+  });
+
+  // 같은 이름이 여러 시·도에 있으면 시·도를 괄호로 덧붙여 구분한다.
+  it('겹치는 이름에는 시·도를 덧붙인다', () => {
+    const trip = createTrip({
+      startDate: '2026-08-01',
+      endDate: '2026-08-03',
+      regions: [createRegion('서울', 0, 'r1')],
+      stops: [createStop({ address: '서울특별시 중구 세종대로 110', regionId: 'r1' })],
+    });
+    expect(tallyVisits([trip], TODAY).regions[0].name).toBe('중구(서울)');
   });
 });
 
@@ -212,18 +227,22 @@ describe('tallyDistricts', () => {
 
   it('주소에서 자치구를 읽어 센다', () => {
     const trip = seoulTrip(['서울 강남구 역삼동 1', '서울 강남구 삼성동 2', '서울 마포구 서교동 3']);
-    const result = tallyDistricts([trip], TODAY, 'seoul');
+    const result = tallyDistricts([trip], TODAY, '11');
     expect(result.regions).toEqual([
-      { regionCode: 'seoul-gangnam', name: '강남구', visitCount: 2 },
-      { regionCode: 'seoul-mapo', name: '마포구', visitCount: 1 },
+      { regionCode: '11_강남구', name: '강남구', visitCount: 2 },
+      { regionCode: '11_마포구', name: '마포구', visitCount: 1 },
     ]);
   });
 
-  it('주소가 없으면 분류되지 않음으로 센다', () => {
+  /*
+    주소가 없으면 여행 지역으로 되돌아간다. '서울'은 시·도 이름이라 그
+    시·도의 지역 하나로 읽히며, 어느 자치구인지까지는 알 수 없다.
+  */
+  it('주소가 없으면 여행 지역으로 센다', () => {
     const trip = seoulTrip(['']);
-    const result = tallyDistricts([trip], TODAY, 'seoul');
-    expect(result.regions).toEqual([]);
-    expect(result.unclassifiedCount).toBe(1);
+    const result = tallyDistricts([trip], TODAY, '11');
+    expect(result.regions).toHaveLength(1);
+    expect(result.regions[0].regionCode.startsWith('11_')).toBe(true);
   });
 
   it('선택한 시·도 밖의 장소는 세지 않는다', () => {
@@ -233,8 +252,9 @@ describe('tallyDistricts', () => {
       regions: [createRegion('강릉', 0, 'r1')],
       stops: [createStop({ name: '안목해변', address: '강원 강릉시 창해로 1', regionId: 'r1' })],
     });
-    const result = tallyDistricts([trip], TODAY, 'seoul');
-    expect(result.totalPlaces).toBe(0);
+    // totalPlaces는 훑어본 항목 수이고, 고른 시·도 밖이면 regions가 빈다.
+    const result = tallyDistricts([trip], TODAY, '11');
+    expect(result.regions).toEqual([]);
   });
 
   it('종료일이 지나지 않은 여행은 세지 않는다', () => {
@@ -244,17 +264,20 @@ describe('tallyDistricts', () => {
       regions: [createRegion('서울', 0, 'r1')],
       stops: [createStop({ address: '서울 강남구 역삼동 1', regionId: 'r1' })],
     });
-    expect(tallyDistricts([trip], TODAY, 'seoul').totalPlaces).toBe(0);
+    expect(tallyDistricts([trip], TODAY, '11').regions).toEqual([]);
   });
 
-  it('하위 격자가 없는 시·도는 빈 결과를 낸다', () => {
+  // 이제 모든 시·도가 시·군·구로 나뉜다. 서울만 하위 단위가 있던 때와 다르다.
+  it('서울이 아닌 시·도도 시·군·구로 센다', () => {
     const trip = createTrip({
       startDate: '2026-08-01',
       endDate: '2026-08-03',
       regions: [createRegion('강릉', 0, 'r1')],
       stops: [createStop({ address: '강원 강릉시 창해로 1', regionId: 'r1' })],
     });
-    expect(tallyDistricts([trip], TODAY, 'gangwon').regions).toEqual([]);
+    expect(tallyDistricts([trip], TODAY, '51').regions).toEqual([
+      { regionCode: '51_강릉시', name: '강릉시', visitCount: 1 },
+    ]);
   });
 });
 
@@ -267,11 +290,11 @@ describe('visitedPlacesIn', () => {
       createStop({ name: '제외 식사', kind: 'meal', regionId: 'r1', excluded: true }),
     ] });
     expect(tallyVisits([trip], TODAY, 'meal').totalPlaces).toBe(1);
-    expect(visitedPlacesIn([trip], TODAY, 'gangwon', 'break').map(p => p.name)).toEqual(['커피']);
-    expect(visitedPlacesIn([trip], TODAY, 'gangwon', 'travel').map(p => p.name)).toEqual(['카페라고 적은 일반 장소']);
+    expect(visitedPlacesIn([trip], TODAY, '51', 'break').map(p => p.name)).toEqual(['커피']);
+    expect(visitedPlacesIn([trip], TODAY, '51', 'travel').map(p => p.name)).toEqual(['카페라고 적은 일반 장소']);
   });
   it('지역의 방문 장소를 낸다', () => {
-    const result = visitedPlacesIn([pastTrip()], TODAY, 'gangwon-gangneung');
+    const result = visitedPlacesIn([pastTrip()], TODAY, '51_강릉시');
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       name: '안목해변',
@@ -291,12 +314,12 @@ describe('visitedPlacesIn', () => {
         createStop({ name: '홍대', address: '서울 마포구 서교동 1', regionId: 'r1' }),
       ],
     });
-    const result = visitedPlacesIn([trip], TODAY, 'seoul-gangnam');
+    const result = visitedPlacesIn([trip], TODAY, '11_강남구');
     expect(result.map((p) => p.name)).toEqual(['코엑스']);
   });
 
   it('좌표 없는 장소도 목록에 넣는다', () => {
-    const result = visitedPlacesIn([pastTrip()], TODAY, 'gangwon-gangneung');
+    const result = visitedPlacesIn([pastTrip()], TODAY, '51_강릉시');
     expect(result[0].location).toBeNull();
   });
 
@@ -306,7 +329,7 @@ describe('visitedPlacesIn', () => {
       endDate: '2026-08-20',
       stops: [createStop({ name: '경포대', regionId: 'r1' })],
     });
-    const result = visitedPlacesIn([older, newer], TODAY, 'gangwon-gangneung');
+    const result = visitedPlacesIn([older, newer], TODAY, '51_강릉시');
     expect(result.map((p) => p.name)).toEqual(['경포대', '안목해변']);
   });
 
@@ -317,7 +340,7 @@ describe('visitedPlacesIn', () => {
         createStay({ name: '강릉호텔', regionId: 'r1', checkIn: '2026-08-01', checkOut: '2026-08-02' }),
       ],
     });
-    expect(visitedPlacesIn([trip], TODAY, 'gangwon-gangneung').map((p) => p.name)).toEqual([
+    expect(visitedPlacesIn([trip], TODAY, '51_강릉시').map((p) => p.name)).toEqual([
       '강릉호텔',
     ]);
   });
@@ -336,7 +359,7 @@ describe('visitedPlacesIn', () => {
       regions: [createRegion('속초', 0, 's1')],
       stops: [createStop({ name: '영금정', regionId: 's1' })],
     });
-    const result = visitedPlacesIn([gangneung, sokcho], TODAY, 'gangwon');
+    const result = visitedPlacesIn([gangneung, sokcho], TODAY, '51');
     expect(result.map((p) => p.name)).toEqual(['영금정', '안목해변']);
   });
 
@@ -347,7 +370,7 @@ describe('visitedPlacesIn', () => {
       regions: [createRegion('경주', 0, 'r1')],
       stops: [createStop({ name: '첨성대', regionId: 'r1' })],
     });
-    expect(visitedPlacesIn([trip, pastTrip()], TODAY, 'gangwon').map((p) => p.name)).toEqual([
+    expect(visitedPlacesIn([trip, pastTrip()], TODAY, '51').map((p) => p.name)).toEqual([
       '안목해변',
     ]);
   });

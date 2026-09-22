@@ -1,21 +1,22 @@
-﻿import { PROVINCE_SHORT_NAME, provinceCodeOf } from '../../../shared/util/korea-regions';
+﻿import { REGION_LABEL, provinceCodeOf } from '../../../shared/util/korea-regions';
 import type { GeoPoint } from '../../places/model/place';
 import type { IsoDate, Trip, TripRegion } from '../../trips/model/trip';
-import { SEOUL_DISTRICT_NAME } from '../model/seoul-districts';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
-import { districtCodeForAddress } from './district-match';
 import { excludedReasons } from './excluded-reasons';
-import { itemProvinceCode, resolveRegion } from './item-province';
+import { itemRegionCode } from './item-province';
 
 /**
  * 표준 지역으로 분류하지 못한 몫의 키.
  *
- * 지역 코드는 'gangwon-gangneung' 꼴이므로 이 값과 겹치지 않는다.
+ * 지역 코드는 '12_여수시' 꼴이므로 이 값과 겹치지 않는다.
  */
 export const UNCLASSIFIED = '(분류되지 않음)';
 
 /**
  * 여행 목록에서 지역별 방문 횟수를 센다.
+ *
+ * 세는 단위는 시·군·구다(2026-09-22 결정). 예전에는 시·도로 묶어서, 여수와
+ * 구례에 다녀와도 '전남' 한 덩어리로만 보여 어디를 갔는지 알 수 없었다.
  *
  * 방문 판정은 여행 종료일이 오늘보다 이전인지로 한다(2026-09-18 결정).
  * 사용자가 직접 완료를 선언하는 기능이 아직 없어 날짜를 대신 쓴다. 이 값은
@@ -23,11 +24,10 @@ export const UNCLASSIFIED = '(분류되지 않음)';
  */
 export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: VisitFilter = 'all'): VisitSummary {
   const summary = summarize(visitedItems(trips, today, filter), (item) => {
-    // 주소를 먼저 읽는다. 한 여행에 여러 시·도를 담으면 여행 지역만으로는
+    // 주소를 먼저 읽는다. 한 여행에 여러 지역을 담으면 여행 지역만으로는
     // 장소마다 다른 실제 위치를 가릴 수 없다(util/item-province).
-    const code = itemProvinceCode(item.address, item.region);
-    if (!code) return null;
-    return { code, name: PROVINCE_SHORT_NAME[code] ?? resolveRegion(item.region)?.name ?? code };
+    const code = itemRegionCode(item.address, item.region);
+    return code ? { code, name: REGION_LABEL[code] ?? code } : null;
   });
   // 화면이 비었을 때 까닭을 함께 넘긴다. 여행은 있는데 통계가 0이면
   // 사용자는 기록이 사라졌다고 오해한다.
@@ -35,32 +35,28 @@ export function tallyVisits(trips: readonly Trip[], today: IsoDate, filter: Visi
 }
 
 /**
- * 한 시·도 안에서 하위 구역별 방문 횟수를 센다.
+ * 한 시·도 안에서 시·군·구별 방문 횟수를 센다.
  *
- * 여행의 지역 목록은 광역시를 한 덩어리('서울')로만 담아서 구 단위 값이 없다.
- * 대신 이미 저장된 주소에서 자치구를 읽는다. 하위 격자가 없는 시·도는 빈
- * 결과를 내며, 화면은 그때 장소 목록만 보여준다.
+ * 전국 지도가 이미 시·군·구 단위라 이 함수는 시·도 하나만 추려 보는 자리다.
+ * 시·도 번호('12')를 받는다.
  */
 export function tallyDistricts(
   trips: readonly Trip[],
   today: IsoDate,
   provinceCode: string,
 ): VisitSummary {
-  const inProvince = visitedItems(trips, today).filter(
-    (item) => itemProvinceCode(item.address, item.region) === provinceCode,
-  );
-
-  return summarize(inProvince, (item) => {
-    const code = districtCodeOf(item.address, provinceCode);
-    return code ? { code, name: SEOUL_DISTRICT_NAME[code] ?? code } : null;
+  return summarize(visitedItems(trips, today), (item) => {
+    const code = itemRegionCode(item.address, item.region);
+    if (!code || provinceCodeOf(code) !== provinceCode) return null;
+    return { code, name: REGION_LABEL[code] ?? code };
   });
 }
 
 /**
  * 한 구역에서 방문한 장소 목록을 낸다.
  *
- * 시·도 코드('gangwon-gangneung')와 자치구 코드('seoul-gangnam') 양쪽을 받는다.
- * 최근에 다녀온 것을 앞에 둔다.
+ * 시·군·구 코드('12_여수시')와 시·도 번호('12') 양쪽을 받는다. 시·도 번호를
+ * 주면 그 안의 장소를 모두 낸다. 최근에 다녀온 것을 앞에 둔다.
  */
 export function visitedPlacesIn(
   trips: readonly Trip[],
@@ -68,21 +64,16 @@ export function visitedPlacesIn(
   regionCode: string,
   filter: VisitFilter = 'all',
 ): VisitedPlace[] {
-  const provinceCode = provinceCodeOf(regionCode);
-  const isDistrict = regionCode in SEOUL_DISTRICT_NAME;
-  // 'gangwon'처럼 하이픈이 없으면 시·도 전체다. 전국 지도의 블록이 이 코드를 준다.
-  const isProvince = !isDistrict && regionCode === provinceCode;
+  // '12'처럼 밑줄이 없으면 시·도 전체다.
+  const isProvince = provinceCodeOf(regionCode) === regionCode;
 
   return visitedItems(trips, today, filter)
     .filter((item) => {
       // 집계와 같은 기준으로 고른다. 기준이 다르면 지도에 센 장소를 지역
       // 목록에서 볼 수 없다.
-      const code = itemProvinceCode(item.address, item.region);
-      if (code !== provinceCode) return false;
-      if (isProvince) return true;
-      if (isDistrict) return districtCodeOf(item.address, provinceCode) === regionCode;
-      // 시·군 코드로 물으면 여행 지역이 그 시·군인 것만 고른다.
-      return resolveRegion(item.region)?.code === regionCode;
+      const code = itemRegionCode(item.address, item.region);
+      if (!code) return false;
+      return isProvince ? provinceCodeOf(code) === regionCode : code === regionCode;
     })
     .map((item) => ({
       id: item.id,
@@ -183,9 +174,4 @@ function summarize(
  */
 function isVisited(trip: Trip, today: IsoDate): boolean {
   return trip.endDate !== null && trip.endDate < today;
-}
-
-/** 주소에서 하위 구역 코드를 읽는다. 하위 격자가 있는 시·도만 값이 나온다. */
-function districtCodeOf(address: string, provinceCode: string): string | null {
-  return provinceCode === 'seoul' ? districtCodeForAddress(address) : null;
 }

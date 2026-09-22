@@ -83,7 +83,8 @@ describe('pickRandomRegion', () => {
     const picked = pickRandomRegion([], () => 0);
     expect(picked).not.toBeNull();
     expect(picked!.name.length).toBeGreaterThan(0);
-    expect(picked!.code).toContain('-');
+    // 코드는 '11_종로구'처럼 시·도 번호와 이름을 밑줄로 잇는다.
+    expect(picked!.code).toContain('_');
   });
 
   it('최근에 뽑은 지역은 제외한다', () => {

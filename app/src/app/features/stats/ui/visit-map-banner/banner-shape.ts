@@ -1,4 +1,4 @@
-import { visitColor, visitLevel, type VisitPalette } from '../../util/visit-style';
+﻿import { visitColor, visitLevel, type VisitPalette } from '../../util/visit-style';
 
 /**
  * 배너 섬네일의 방문 점 하나.
@@ -43,27 +43,35 @@ export const OUTLINE = '#b3d4e6';
 
 /**
  * 시·도별 점 자리. 윤곽 위의 대략적인 위치이며 실제 좌표가 아니다.
- * 격자에 있는 17개 시·도를 모두 둔다.
+ *
+ * 배너는 손톱만 한 축약 지도라 시·군·구 230개를 찍을 수 없다. 집계는
+ * 시·군·구 단위지만 여기서는 시·도로 묶어 16개 점만 둔다.
+ * 2026-07-01에 광주와 전남이 합쳐져 점도 하나가 되었다.
  */
 const DOT_AT: Record<string, readonly [number, number]> = {
-  seoul: [25, 20],
-  incheon: [18, 24],
-  gyeonggi: [31, 27],
-  gangwon: [41, 18],
-  chungbuk: [36, 33],
-  chungnam: [22, 34],
-  sejong: [28, 36],
-  daejeon: [30, 40],
-  gyeongbuk: [44, 37],
-  daegu: [40, 44],
-  jeonbuk: [26, 47],
-  jeonnam: [26, 60],
-  gwangju: [22, 54],
-  gyeongnam: [36, 55],
-  busan: [42, 56],
-  ulsan: [45, 48],
-  jeju: [23, 86],
+  '11': [25, 20],  // 서울
+  '28': [18, 24],  // 인천
+  '41': [31, 27],  // 경기
+  '51': [41, 18],  // 강원
+  '43': [36, 33],  // 충북
+  '44': [22, 34],  // 충남
+  '36': [28, 36],  // 세종
+  '30': [30, 40],  // 대전
+  '47': [44, 37],  // 경북
+  '27': [40, 44],  // 대구
+  '52': [26, 47],  // 전북
+  '12': [24, 57],  // 전남광주. 옛 전남과 광주 점의 가운데에 둔다.
+  '48': [36, 55],  // 경남
+  '26': [42, 56],  // 부산
+  '31': [45, 48],  // 울산
+  '50': [23, 86],  // 제주
 };
+
+/** 지역 코드에서 시·도 번호를 뗀다. '12_여수시' → '12' */
+function provinceOf(code: string): string {
+  const cut = code.indexOf('_');
+  return cut === -1 ? code : code.slice(0, cut);
+}
 
 /**
  * 방문 횟수를 섬네일 점으로 바꾼다.
@@ -77,7 +85,14 @@ export function visitDots(
 ): VisitDot[] {
   const dots: VisitDot[] = [];
 
+  // 집계는 시·군·구 단위다. 점은 시·도마다 하나이므로 합쳐서 센다.
+  const byProvince = new Map<string, number>();
   for (const [regionCode, count] of counts) {
+    const province = provinceOf(regionCode);
+    byProvince.set(province, (byProvince.get(province) ?? 0) + count);
+  }
+
+  for (const [regionCode, count] of byProvince) {
     const at = DOT_AT[regionCode];
     if (!at) continue;
 

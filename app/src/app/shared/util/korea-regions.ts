@@ -11,39 +11,9 @@
  * 바뀌면 경계 파일을 갈고 스크립트를 다시 돌린다.
  */
 import { PROVINCE_DATA, REGION_DATA } from './korea-regions.data';
+import type { KoreaProvince, KoreaRegion } from './korea-regions.types';
 
-export interface KoreaRegion {
-  /**
-   * 집계와 지도가 공유하는 키. 시·도 번호와 이름을 붙인다. 예: '12_여수시'
-   *
-   * 표시 이름 대신 코드를 쓰는 이유는 두 가지다. 지명이 바뀌어도 과거 기록이
-   * 끊기지 않고, '중구(서울)'처럼 화면에서 구분하려고 붙인 괄호가 키에
-   * 섞이지 않는다.
-   */
-  readonly code: string;
-  /** 행정구역 이름. 예: '여수시', '종로구' */
-  readonly name: string;
-  /**
-   * 화면에 적을 이름. 같은 이름이 여러 시·도에 있으면 시·도를 덧붙인다.
-   * '중구'는 다섯 곳이라 '중구(서울)'로 적어야 어디인지 알 수 있다.
-   */
-  readonly label: string;
-  /** 정식 시·도 이름. 예: '전남광주통합특별시' */
-  readonly province: string;
-  /** 시·도 번호. code의 앞부분과 같다. 예: '12' */
-  readonly provinceCode: string;
-  /** 후보 목록에 붙이는 짧은 표기. 예: '전남광주' */
-  readonly short: string;
-}
-
-export interface KoreaProvince {
-  /** 시·도 번호. 예: '12' */
-  readonly code: string;
-  /** 정식 이름. 예: '전남광주통합특별시' */
-  readonly name: string;
-  /** 짧은 표기. 예: '전남광주' */
-  readonly short: string;
-}
+export type { KoreaProvince, KoreaRegion };
 
 /** 시·도 16개. 2026-07-01에 광주와 전남이 전남광주통합특별시로 합쳐졌다. */
 export const KOREA_PROVINCES = PROVINCE_DATA;
@@ -61,14 +31,24 @@ export function findRegionByCode(code: string): KoreaRegion | null {
 /**
  * 이름으로 지역을 찾는 색인.
  *
- * 화면 이름('중구(서울)')과 행정구역 이름('중구') 양쪽을 담는다. 이름이
- * 겹치는 '중구'는 먼저 담긴 하나만 남으므로, 겹치는 이름으로 찾으면 어느
- * 곳인지 확정할 수 없다. 그런 이름은 시·도를 함께 받는 쪽을 쓴다.
+ * 화면 이름('중구(서울)'), 행정구역 이름('중구'), 접미사를 뗀 이름('여수')을
+ * 모두 담는다. 접미사 없는 이름을 받는 까닭은 저장된 여행 때문이다. 예전
+ * 목록은 '여수'였고 지금은 '여수시'라, 접미사를 붙인 이름만 보면 예전 여행이
+ * 통계에서 사라진다(2026-09-22 확인).
+ *
+ * 이름이 겹치는 '중구'는 먼저 담긴 하나만 남는다. 겹치는 이름으로 찾으면
+ * 어느 곳인지 확정할 수 없으므로 그런 이름은 시·도를 함께 받는 쪽을 쓴다.
  */
 const BY_NAME = new Map<string, KoreaRegion>();
 for (const region of KOREA_REGIONS) {
   BY_NAME.set(region.label, region);
   if (!BY_NAME.has(region.name)) BY_NAME.set(region.name, region);
+}
+for (const region of KOREA_REGIONS) {
+  // 접미사를 뗀 이름은 나중에 담는다. 정식 이름이 먼저 자리를 잡아야
+  // '중구'로 찾았을 때 '중구'인 곳이 나오지 접미사를 뗀 딴 곳이 나오지 않는다.
+  const bare = region.name.replace(/(특별자치)?[시군구]$/, '');
+  if (bare.length >= 2 && !BY_NAME.has(bare)) BY_NAME.set(bare, region);
 }
 
 /**
@@ -86,6 +66,23 @@ for (const region of KOREA_REGIONS) {
 }
 
 /**
+ * 없어진 시·도 이름. 저장된 여행이 옛 이름을 그대로 담고 있다.
+ *
+ * 2026-07-01에 광주광역시와 전라남도가 전남광주통합특별시가 되었고, 그 전에
+ * 전라북도·강원도·제주도도 이름이 바뀌었다. 옛 이름을 받지 않으면 그 여행이
+ * 통계에서 미분류로 빠진다(2026-09-22 확인).
+ */
+const LEGACY_PROVINCE_NAME: Record<string, string> = {
+  광주광역시: '12', 광주: '12', 전라남도: '12', 전남: '12',
+  전라북도: '52', 강원도: '51', 제주도: '50',
+};
+for (const [name, code] of Object.entries(LEGACY_PROVINCE_NAME)) {
+  if (BY_PROVINCE_NAME.has(name)) continue;
+  const one = KOREA_REGIONS.find((r) => r.provinceCode === code);
+  if (one) BY_PROVINCE_NAME.set(name, one);
+}
+
+/**
  * 표시 이름으로 지역을 찾는다. 없으면 null.
  *
  * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 행정구역 이름을 먼저 보고
@@ -95,6 +92,25 @@ for (const region of KOREA_REGIONS) {
 export function findRegionByName(name: string): KoreaRegion | null {
   const key = name.trim();
   return BY_NAME.get(key) ?? BY_PROVINCE_NAME.get(key) ?? null;
+}
+
+/**
+ * 이 이름이 시·군·구를 정확히 가리키는지 본다.
+ *
+ * '서울'처럼 시·도 이름만 있으면 어느 자치구인지 알 수 없다. 그런데도 그
+ * 시·도의 첫 지역을 집계 키로 쓰면, 주소 없는 장소가 모두 강남구에 다녀온
+ * 것으로 표시된다(2026-09-22 확인). 시·도 단위로 셀 때는 어느 지역이 뽑히든
+ * 상관없었지만 시·군·구 단위에서는 틀린 값이 된다.
+ */
+export function isExactRegionName(name: string): boolean {
+  return BY_NAME.has(name.trim());
+}
+
+/** 이 이름이 가리키는 시·도 번호. 시·도 이름일 때만 값이 나온다. */
+export function provinceCodeByName(name: string): string | null {
+  const key = name.trim();
+  if (BY_NAME.has(key)) return null;
+  return BY_PROVINCE_NAME.get(key)?.provinceCode ?? null;
 }
 
 /** 지역 코드에서 시·도 번호를 뗀다. '12_여수시' → '12' */

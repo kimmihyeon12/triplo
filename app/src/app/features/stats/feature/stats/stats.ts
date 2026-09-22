@@ -1,24 +1,28 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
-import { PROVINCE_SHORT_NAME, provinceCodeOf } from '../../../../shared/util/korea-regions';
-import { KOREA_GRID, PROVINCE_LABEL_CELL } from '../../data/korea-grid';
-import { SEOUL_GRID } from '../../data/seoul-grid';
-import { SEOUL_DISTRICT_NAME } from '../../model/seoul-districts';
+import {
+  KOREA_PROVINCES,
+  REGION_LABEL,
+  findRegionByCode,
+  provinceCodeOf,
+} from '../../../../shared/util/korea-regions';
 import { LocalVisitStats } from '../../data/local-visit-stats';
 import { VISIT_STATS_REPOSITORY } from '../../data/visit-stats-repository';
 import type { RegionVisitCount, VisitedPlace } from '../../model/visit-stats';
-import { RegionBlockMap } from '../../ui/region-block-map/region-block-map';
-import type { GridCell } from '../../util/hex-geometry';
 
-type View = 'country' | 'province' | 'places';
+type View = 'country' | 'places';
 type LoadState = 'loading' | 'ready' | 'error';
 
 /**
- * 방문 통계 지도.
+ * 방문 통계 목록.
  *
- * 세 단계를 한 라우트 안에서 오간다. 전국 지도에서 시·도를 고르면 그 안을
- * 보여주고, 구역을 고르면 방문한 장소 목록을 연다.
+ * 3D 지도를 쓸 수 없을 때의 대체 화면이다. 지역을 고르면 그 안에서 다녀온
+ * 장소를 보여준다.
+ *
+ * 예전에는 시·도 격자 → 서울 자치구 격자 → 장소의 세 단계였다. 전국 지도가
+ * 시·군·구 단위가 되면서 중간 단계가 필요 없어졌고, 230개를 육각 격자로
+ * 손배치할 수도 없어 목록으로 바꿨다(2026-09-22 결정).
  *
  * 방문 판정은 여행 종료일이 지났는지로 한다. 사용자가 직접 완료를 선언하는
  * 기능이 아직 없어 날짜를 대신 쓴다(2026-09-18 결정).
@@ -26,7 +30,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-stats',
   providers: [{ provide: VISIT_STATS_REPOSITORY, useClass: LocalVisitStats }],
-  imports: [RegionBlockMap, RouterLink],
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stats.html',
   styleUrl: './stats.css',
@@ -39,24 +43,15 @@ export class StatsPage {
 
   readonly loadState = signal<LoadState>('loading');
   readonly view = signal<View>('country');
-  /** 선택한 시·도 코드. 전국 화면에서는 null */
-  readonly province = signal<string | null>(null);
-  /** 선택한 구역 코드. 장소 목록 화면에서만 값이 있다 */
+  /** 고른 시·군·구 코드. 장소 목록 화면에서만 값이 있다 */
   readonly region = signal<string | null>(null);
 
   readonly countryCounts = signal<readonly RegionVisitCount[]>([]);
-  readonly districtCounts = signal<readonly RegionVisitCount[]>([]);
   readonly places = signal<readonly VisitedPlace[]>([]);
   readonly totalPlaces = signal(0);
   readonly unclassifiedCount = signal(0);
 
-  readonly countryGrid: readonly GridCell[] = KOREA_GRID;
-  readonly countryNames = PROVINCE_SHORT_NAME;
-  readonly countryLabelCells = PROVINCE_LABEL_CELL;
-  readonly seoulGrid: readonly GridCell[] = SEOUL_GRID;
-  readonly seoulNames = SEOUL_DISTRICT_NAME;
-
-  /** 방문한 지역 수. 전국 화면의 요약에 쓴다 */
+  /** 다녀온 지역 수. 요약에 쓴다 */
   readonly visitedRegionCount = computed(
     () => this.countryCounts().filter((c) => c.visitCount > 0).length,
   );
@@ -65,33 +60,45 @@ export class StatsPage {
     () => this.loadState() === 'ready' && this.totalPlaces() === 0,
   );
 
-  /** 서울만 하위 격자가 있다. 나머지 시·도는 장소 목록으로 바로 간다 */
-  readonly hasSubGrid = computed(() => this.province() === 'seoul');
-
-  readonly provinceName = computed(() => {
-    const code = this.province();
-    return code ? (PROVINCE_SHORT_NAME[code] ?? code) : '';
+  /**
+   * 다녀온 지역을 시·도로 묶는다. 230개를 한 줄로 늘어놓으면 어디를 다녀왔는지
+   * 읽기 어렵다. 시·도 안에서는 많이 간 곳을 앞에 둔다.
+   */
+  readonly byProvince = computed(() => {
+    const groups = new Map<string, { code: string; name: string; regions: RegionVisitCount[]; total: number }>();
+    for (const count of this.countryCounts()) {
+      if (!count.visitCount) continue;
+      const provinceCode = provinceCodeOf(count.regionCode);
+      const province = KOREA_PROVINCES.find((p) => p.code === provinceCode);
+      const group = groups.get(provinceCode)
+        ?? { code: provinceCode, name: province?.short ?? provinceCode, regions: [], total: 0 };
+      group.regions.push(count);
+      group.total += count.visitCount;
+      groups.set(provinceCode, group);
+    }
+    for (const group of groups.values()) {
+      group.regions.sort((a, b) => b.visitCount - a.visitCount || a.name.localeCompare(b.name, 'ko'));
+    }
+    return [...groups.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
   });
 
   readonly regionName = computed(() => {
     const code = this.region();
     if (!code) return '';
-    return SEOUL_DISTRICT_NAME[code] ?? this.nameFromCounts(code) ?? code;
+    return REGION_LABEL[code] ?? code;
   });
 
   constructor() {
-    // 화면 안에서 단계를 오가므로 상단 바의 뒤로 가기는 늘 여행 목록을
-    // 가리킨다. 단계 사이 이동은 본문의 뒤로 버튼이 맡는다.
+    // 화면 안에서 단계를 오가므로 상단 바의 뒤로 가기는 늘 지도를 가리킨다.
+    // 단계 사이 이동은 본문의 뒤로 버튼이 맡는다.
     effect(() => {
-      this.pageBar.set({ title: this.barTitle(this.view()), back: ['/stats'], action: null });
+      this.pageBar.set({
+        title: this.view() === 'country' ? '방문 통계' : this.regionName(),
+        back: ['/stats'],
+        action: null,
+      });
     });
     void this.load();
-  }
-
-  private barTitle(view: View): string {
-    if (view === 'country') return '방문 통계';
-    if (view === 'province') return this.provinceName();
-    return this.regionName();
   }
 
   private async load(): Promise<void> {
@@ -102,37 +109,14 @@ export class StatsPage {
       this.totalPlaces.set(summary.totalPlaces);
       this.unclassifiedCount.set(summary.unclassifiedCount);
       const requested = this.route.snapshot.queryParamMap.get('region');
-      if (requested && Object.hasOwn(PROVINCE_SHORT_NAME, requested)) {
-        await this.onProvinceSelect(requested);
-      } else if (requested && Object.hasOwn(SEOUL_DISTRICT_NAME, requested)) {
-        this.province.set('seoul');
-        await this.openPlaces(requested);
-      }
+      if (requested && findRegionByCode(requested)) await this.openPlaces(requested);
       this.loadState.set('ready');
     } catch {
       this.loadState.set('error');
     }
   }
 
-  /** 전국 지도에서 시·도를 골랐다. */
-  async onProvinceSelect(regionCode: string): Promise<void> {
-    const provinceCode = provinceCodeOf(regionCode);
-    this.province.set(provinceCode);
-    this.region.set(null);
-
-    if (provinceCode === 'seoul') {
-      const summary = await this.stats.subRegionCounts(provinceCode);
-      this.districtCounts.set(summary.regions);
-      this.view.set('province');
-      return;
-    }
-
-    // 하위 격자가 없는 시·도는 장소 목록으로 바로 간다. 빈 지도를 보여줄
-    // 이유가 없다.
-    await this.openPlaces(regionCode);
-  }
-
-  /** 하위 지도나 목록에서 구역을 골랐다. */
+  /** 목록에서 지역을 골랐다. */
   async onRegionSelect(regionCode: string): Promise<void> {
     await this.openPlaces(regionCode);
   }
@@ -144,24 +128,11 @@ export class StatsPage {
   }
 
   backToCountry(): void {
-    void this.router.navigate(['/stats']);
-  }
-
-  backToProvince(): void {
-    if (!this.hasSubGrid()) {
-      this.backToCountry();
-      return;
-    }
-    this.view.set('province');
+    this.view.set('country');
     this.region.set(null);
   }
 
   openTrip(place: VisitedPlace): void {
     void this.router.navigate(['/trips', place.tripId]);
-  }
-
-  private nameFromCounts(code: string): string | null {
-    const all = [...this.countryCounts(), ...this.districtCounts()];
-    return all.find((c) => c.regionCode === code)?.name ?? null;
   }
 }

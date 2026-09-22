@@ -74,7 +74,7 @@ writeFileSync(
   행정구역이다. 지역을 더하거나 빼려면 경계 파일을 바꾼 뒤 스크립트를 다시
   돌린다. 그래야 지도에 있는 지역과 목록이 어긋나지 않는다.
 */
-import type { KoreaProvince, KoreaRegion } from './korea-regions';
+import type { KoreaProvince, KoreaRegion } from './korea-regions.types';
 
 /** 시·도 ${Object.keys(SHORT).length}개. */
 export const PROVINCE_DATA: readonly KoreaProvince[] = [

@@ -1,4 +1,4 @@
-import {
+﻿import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
@@ -10,7 +10,7 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { LocalVisitStats } from '../../data/local-visit-stats';
-import { KOREA_GRID } from '../../data/korea-grid';
+import { KOREA_REGIONS } from '../../../../shared/util/korea-regions';
 import type { VisitPalette } from '../../util/visit-style';
 import { mappedTotal } from '../../util/visit-total';
 import {
@@ -21,8 +21,14 @@ import {
   visitDots,
 } from './banner-shape';
 
-/** 전국 시·도 수. 진행 막대의 분모다. */
-const PROVINCE_COUNT = new Set(KOREA_GRID.map((cell) => cell.regionCode)).size;
+/**
+ * 전국 시·군·구 수. 진행 막대의 분모다.
+ *
+ * 통계 화면과 같은 기준을 쓴다. 한쪽은 시·도, 다른 쪽은 시·군·구로 세면
+ * 같은 기록인데 화면마다 다른 숫자가 나와 어느 쪽이 맞는지 알 수 없다
+ * (2026-09-22 확인).
+ */
+const REGION_COUNT = KOREA_REGIONS.length;
 
 /**
  * 서버 렌더링에는 계산된 스타일이 없다. 토큰을 읽기 전까지 쓸 기본값을 둔다.
@@ -65,7 +71,7 @@ function readPalette(): VisitPalette {
 export class VisitMapBanner {
   private readonly stats = inject(LocalVisitStats);
 
-  readonly provinceCount = PROVINCE_COUNT;
+  readonly regionCount = REGION_COUNT;
   readonly visitedCount = signal(0);
   readonly totalVisits = signal(0);
 
@@ -77,9 +83,14 @@ export class VisitMapBanner {
 
   readonly hasRecord = computed(() => this.loaded() && this.totalVisits() > 0);
 
-  /** 다녀온 시·도 비율. 숫자만으로는 6곳이 많은지 적은지 알 수 없다. */
+  /**
+   * 다녀온 지역 비율. 막대를 채우는 값이다.
+   *
+   * 230이 분모라 초반에는 1~2%다. 퍼센트를 글자로 적지 않고 막대로만 쓰는
+   * 까닭이며, 글자로는 '230개 지역 중 32곳'처럼 센 수를 보여준다.
+   */
   readonly coverage = computed(() =>
-    Math.round((this.visitedCount() / this.provinceCount) * 100),
+    Math.round((this.visitedCount() / this.regionCount) * 100),
   );
 
   /** 섬네일의 고정 도형. 템플릿이 좌표를 계산하지 않도록 여기서 내보낸다. */
@@ -99,6 +110,7 @@ export class VisitMapBanner {
   private async load(): Promise<void> {
     try {
       const summary = await this.stats.provinceCounts();
+      // 다녀온 시·군·구 수. 통계 화면의 '다녀온 지역'과 같은 값이다.
       this.visitedCount.set(summary.regions.length);
       // 지도에 올라간 몫만 센다. totalPlaces를 그대로 쓰면 분류하지 못한
       // 장소까지 더해져 통계 화면의 합계보다 커진다.
