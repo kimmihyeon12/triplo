@@ -143,8 +143,20 @@ body:has(app-row-menu details[open])::before {
 /* 팝오버가 열린 동안에는 뒤 화면이 움직이지 않아야 한다. */
 body:has(details.page-tools-sheet[open]),
 body:has(app-row-menu details[open]),
-body:has(details.menu-sheet[open]) {
+body:has(details.menu-sheet[open]),
+body:has(.chat-sheet) {
   overflow: hidden;
+}
+
+/*
+  여행 상세의 떠 있는 대화 버튼은 오류 알림과 같은 자리(오른쪽 아래)에 선다.
+  그대로 두면 알림이 버튼을 덮어 누를 수 없다. 버튼이 있는 화면에서만
+  알림을 그 높이만큼 위로 민다.
+
+  값은 버튼 56px에 동작 바 위 여백 12px과 알림과의 간격 12px을 더한 것이다.
+*/
+body:has([data-testid='open-chat']) {
+  --toast-bottom-offset: 80px;
 }
 
 details.menu-sheet[open] > .menu-backdrop {

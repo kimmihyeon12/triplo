@@ -33,6 +33,12 @@ import { PLACE_SEARCH } from './features/places/data/place-search';
 import { AI_PLAN_PROVIDER } from './features/ai-planning/data/ai-plan-provider';
 import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
 import { FixtureAiProvider } from './features/ai-planning/data/fixture-ai-provider';
+import {
+  CHAT_HISTORY,
+  CHAT_PROVIDER,
+  FixtureChatProvider,
+  LocalChatHistory,
+} from './features/travel-chat/travel-chat';
 
 /** 브라우저가 localStorage 접근을 막으면 예외 대신 실패 상태로 이어지도록 감싼다. */
 class SafeLocalStorage implements KeyValueStorage {
@@ -106,6 +112,18 @@ export const appConfig: ApplicationConfig = {
     { provide: PLACE_SEARCH, useExisting: useFixture ? FixturePlaceSearch : KakaoPlaceSearch },
     // AI 일정은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.
     { provide: AI_PLAN_PROVIDER, useExisting: useFixture ? FixtureAiProvider : EdgeAiProvider },
+    /*
+      대화는 아직 고정 응답만 쓴다(13-A). 실제 모델을 부르는 Edge Function은
+      Supabase 여행 저장이 끝난 뒤 13-B에서 붙이며, 그때 이 줄의 구현만 바뀐다.
+      화면과 store는 제공자 인터페이스만 보므로 고치지 않는다.
+    */
+    { provide: CHAT_PROVIDER, useExisting: FixtureChatProvider },
+    // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
+    {
+      provide: CHAT_HISTORY,
+      useFactory: () =>
+        new LocalChatHistory(new SafeLocalStorage(), `${environment.storageKey}.chat`),
+    },
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && !environment.isTest,

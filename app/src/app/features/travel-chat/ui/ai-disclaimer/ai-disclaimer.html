@@ -1,0 +1,38 @@
+<!--
+  확인되지 않은 정보임을 먼저 알린다. 답을 읽기 전에 눈에 들어와야 하므로
+  본문 위에 둔다. 경고 색을 쓰되 위험(danger)은 아니다. 틀릴 수 있다는
+  뜻이지 무언가 잘못되었다는 뜻이 아니다.
+-->
+<p
+  class="flex items-center gap-1.5 text-12 font-semibold text-warn-ink"
+  data-testid="ai-disclaimer"
+>
+  <app-icon name="alert" [size]="14" />
+  AI 답변 · 부정확할 수 있습니다
+</p>
+
+<div class="mt-1.5 rounded-control border border-warn-fill bg-warn-tint/50 p-3">
+  <p class="text-14 leading-relaxed text-ink">{{ note().body }}</p>
+</div>
+
+<!--
+  두 곳을 함께 준다. 네이버는 국내 장소의 영업정보가 더 잘 채워져 있고,
+  카카오는 우리가 검색에 쓰는 곳이라 같은 장소를 찾기 쉽다.
+-->
+@if (note().links.length > 0) {
+  <p class="mt-2 text-12 text-ink-3">정확한 정보는 여기서 확인하세요</p>
+  <div class="mt-1.5 flex flex-wrap gap-2">
+    @for (link of note().links; track link.url) {
+      <a
+        class="inline-flex items-center gap-1 rounded-pill border border-border-strong bg-panel px-3 py-1.5 text-12 font-semibold text-ink-2 no-underline transition-colors hover:border-accent hover:text-accent-deep"
+        [href]="link.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        [attr.data-testid]="'reference-link-' + link.label"
+      >
+        {{ link.label }}
+        <app-icon name="arrow-right" [size]="12" />
+      </a>
+    }
+  </div>
+}

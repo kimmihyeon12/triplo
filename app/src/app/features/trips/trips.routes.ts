@@ -18,10 +18,22 @@ export const TRIPS_ROUTES: Routes = [
       },
     ],
   },
+  // AI 진입점은 하나로 두고 여기서 방식을 고르게 한다. 목록 화면의 버튼은
+  // 그대로 이 주소를 가리키므로 사용자가 진입점 둘을 두고 고민하지 않는다.
   {
     path: 'ai',
+    pathMatch: 'full',
+    loadComponent: () => import('./feature/ai-entry/ai-entry').then((m) => m.AiEntryPage),
+    title: 'AI로 일정 만들기',
+  },
+  {
+    path: 'ai/steps',
     loadComponent: () => import('./feature/ai-plan/ai-plan').then((m) => m.AiPlanPage),
     title: 'AI 일정 만들기',
+  },
+  {
+    path: 'ai/chat',
+    loadChildren: () => import('../travel-chat/travel-chat.routes').then((m) => m.CHAT_ROUTES),
   },
   {
     path: ':id',

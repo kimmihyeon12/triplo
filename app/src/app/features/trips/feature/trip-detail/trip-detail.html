@@ -999,5 +999,32 @@
         </details>
       </div>
     </div>
+
+    <!--
+      대화로 일정을 고치는 진입점. 하단 전폭 바는 '일정 추가'가 이미 쓰고 있어
+      바를 하나 더 둘 자리가 없고, 기존 바에 버튼을 끼우면 360px에서 줄바꿈된다.
+      오른쪽 아래 구석은 앱 전체에서 쓰이지 않아 기존 동작과 다른 종류라는
+      신호가 자연스럽게 전달된다.
+
+      z 값은 동작 바(10002)와 상단 바(10006) 사이에 둔다. 동작 바가 안전 영역을
+      이미 처리하므로 그 위로 12px 띄우기만 한다.
+    -->
+    <button
+      appButton
+      type="button"
+      class="btn fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] size-14 rounded-pill border-transparent p-0 text-white shadow-float [background:var(--ai-fill)_padding-box] hover:[background:var(--ai-fill-hover)_padding-box]"
+      (click)="chatOpen.set(true)"
+      aria-label="대화로 일정 고치기"
+      data-testid="open-chat"
+    >
+      <app-icon name="sparkle" [size]="22" />
+    </button>
+
+    <app-chat-sheet
+      [trip]="trip()!"
+      [open]="chatOpen()"
+      (close)="chatOpen.set(false)"
+      (applied)="onChatApplied($event)"
+    />
   </div>
 }

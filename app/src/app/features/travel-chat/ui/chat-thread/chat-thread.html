@@ -1,0 +1,142 @@
+<!--
+  대화가 길어지면 이 영역만 구른다. 입력창은 늘 아래에 붙어 있어야
+  스크롤을 올려 지난 말을 읽는 중에도 바로 물을 수 있다.
+-->
+<div
+  #scroller
+  class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-3"
+  data-testid="chat-messages"
+>
+  @for (message of messages(); track message.id) {
+    @if (message.role === 'user') {
+      <div class="flex justify-end">
+        <p
+          class="max-w-[85%] rounded-panel rounded-br-cell bg-accent-tint px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+          data-testid="chat-user-message"
+        >
+          {{ message.text }}
+        </p>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-2" data-testid="chat-assistant-message">
+        <p
+          class="max-w-[92%] rounded-panel rounded-bl-cell bg-ground-2 px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+          [attr.data-kind]="message.kind"
+        >
+          {{ message.text }}
+        </p>
+
+        <!--
+          확인되지 않은 참고 정보는 답변과 같은 말풍선에 넣지 않는다.
+          한 덩어리로 보이면 확인된 사실과 구분되지 않는다.
+        -->
+        @if (message.reference; as note) {
+          <div class="max-w-[92%] pl-1">
+            <app-ai-disclaimer [note]="note" />
+          </div>
+        }
+
+        <!-- 카드는 말풍선보다 넓게 두어 전후 비교가 잘리지 않게 한다. -->
+        @if (message.draft; as draft) {
+          @if (preview(message.id, draft); as view) {
+            <app-chat-confirm-card
+              [preview]="view"
+              [applied]="appliedMessageId() === message.id"
+              (confirm)="apply.emit({ messageId: message.id, draft })"
+              (dismiss)="dismissDraft.emit(message.id)"
+              (undo)="undo.emit()"
+            />
+          }
+        }
+      </div>
+    }
+  }
+
+  @if (pending()) {
+    <div
+      class="flex items-center gap-2 text-13 text-ink-3"
+      role="status"
+      data-testid="chat-pending"
+    >
+      <app-spinner />
+      답을 찾고 있어요
+      <button
+        appButton
+        class="btn btn--sm ml-1"
+        type="button"
+        (click)="cancel.emit()"
+        data-testid="chat-cancel"
+      >
+        그만두기
+      </button>
+    </div>
+  }
+
+  @if (error(); as err) {
+    <div appNotice class="notice notice--danger" role="alert" data-testid="chat-error">
+      <app-icon name="alert" />
+      <div class="notice__body flex-1 min-w-0">
+        <div class="text-13 leading-normal">{{ err.message }}</div>
+      </div>
+    </div>
+  }
+</div>
+
+<!--
+  칩은 입력창 바로 위에 둔다. 무엇을 물을 수 있는지 보여주는 것이 목적이라
+  입력하려는 순간에 눈에 들어와야 한다. 가로로 굴러 줄이 늘어나지 않는다.
+-->
+@if (chips().length > 0 && !pending()) {
+  <div
+    class="flex flex-none gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    data-testid="chat-chips"
+  >
+    @for (chip of chips(); track chip) {
+      <button
+        type="button"
+        class="flex-none rounded-pill border border-border-strong bg-panel px-3 py-1.5 text-13 text-ink-2 transition-colors hover:border-accent hover:text-accent-deep active:bg-ground-2"
+        (click)="pickChip(chip)"
+        [attr.data-testid]="'chat-chip'"
+      >
+        {{ chip }}
+      </button>
+    }
+  </div>
+}
+
+<div class="flex-none border-t border-border bg-panel p-3">
+  @if (turnsLeft() === 0) {
+    <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
+      이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.
+    </p>
+  }
+
+  <form class="flex items-end gap-2" (submit)="$event.preventDefault(); submit()">
+    <!--
+      textarea를 쓰는 이유는 긴 요청이 한 줄로 밀려 앞이 보이지 않게 되는
+      것을 막기 위해서다. 엔터로 보내고 Shift+엔터로 줄을 바꾼다.
+    -->
+    <textarea
+      appInput
+      class="textarea max-h-28 min-h-11 flex-1 resize-none py-2.5"
+      rows="1"
+      placeholder="어디로 갈지 물어보세요"
+      aria-label="메시지 입력"
+      [value]="draftText()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      data-testid="chat-input"
+    ></textarea>
+    <button
+      appButton
+      class="btn size-11 flex-none p-0"
+      type="submit"
+      variant="primary"
+      [disabled]="pending() || draftText().trim().length === 0"
+      aria-label="보내기"
+      data-testid="chat-send"
+    >
+      <app-icon name="arrow-up" [size]="18" />
+    </button>
+  </form>
+</div>

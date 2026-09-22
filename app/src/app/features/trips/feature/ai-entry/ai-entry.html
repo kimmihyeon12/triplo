@@ -1,0 +1,60 @@
+<div
+  class="page mx-auto flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+>
+  <header class="flex flex-col gap-2 pt-6 pb-1 text-center">
+    <p class="text-13 font-semibold text-accent-deep">AI 일정 만들기</p>
+    <h2 class="text-22 font-bold tracking-tight">어떻게 시작할까요</h2>
+  </header>
+
+  <!--
+    빈 상태 카드와 같은 형태를 쓴다. 두 갈래를 처음 보는 사람도 무엇이 다른지
+    읽고 고를 수 있어야 하므로 작은 버튼 두 개로 줄이지 않는다.
+  -->
+  <div class="mx-auto flex w-full max-w-105 flex-col gap-2.5">
+    <a
+      class="panel relative block overflow-hidden rounded-panel p-5 text-white no-underline shadow-panel [background:var(--ai-fill)] [transition:transform_var(--dur)_var(--ease-out)] hover:[background:var(--ai-fill-hover)] active:scale-[0.99]"
+      routerLink="/trips/ai/chat"
+      data-testid="ai-entry-chat"
+    >
+      <span
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-x-0 top-0 h-16 [background:linear-gradient(to_bottom,rgba(255,255,255,0.16),transparent)]"
+      ></span>
+      <span class="relative flex items-start gap-3">
+        <span
+          class="flex size-10 flex-none items-center justify-center rounded-control bg-white/20"
+        >
+          <app-icon name="sparkle" [size]="20" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-16 font-bold">대화로 찾기</span>
+          <span class="mt-1 block text-13 leading-relaxed opacity-90">
+            어디 갈지 정하지 못했다면 물어보면서 좁혀 보세요
+          </span>
+        </span>
+        <app-icon class="mt-1 flex-none opacity-80" name="chevron-right" [size]="18" />
+      </span>
+    </a>
+
+    <a
+      class="panel block rounded-panel bg-panel p-5 text-inherit no-underline shadow-panel [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:scale-[0.99]"
+      routerLink="/trips/ai/steps"
+      data-testid="ai-entry-steps"
+    >
+      <span class="flex items-start gap-3">
+        <span
+          class="flex size-10 flex-none items-center justify-center rounded-control bg-accent-tint text-accent-deep"
+        >
+          <app-icon name="selector" [size]="20" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-16 font-bold">조건 고르기</span>
+          <span class="mt-1 block text-13 leading-relaxed text-ink-3">
+            지역과 날짜가 정해졌다면 골라서 바로 만듭니다
+          </span>
+        </span>
+        <app-icon class="mt-1 flex-none text-ink-3" name="chevron-right" [size]="18" />
+      </span>
+    </a>
+  </div>
+</div>

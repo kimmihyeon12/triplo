@@ -49,6 +49,7 @@ import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../pla
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
+import { ChatSheet } from '../../../travel-chat/travel-chat';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -71,6 +72,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
     TripHeader,
     TripStays,
     TripMapComponent,
+    ChatSheet,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-detail.html',
@@ -399,6 +401,17 @@ export class TripDetailPage {
       this.deleteTripOpen.set(false);
       await this.router.navigate(['/trips']);
     }
+  }
+
+  /** 대화 시트가 열려 있는지. 오른쪽 아래 떠 있는 버튼으로 연다. */
+  readonly chatOpen = signal(false);
+
+  /**
+   * 대화에서 확인한 변경을 저장한다. 되돌리기도 같은 길로 들어오므로
+   * 여기서는 넘겨받은 여행을 그대로 쓴다.
+   */
+  async onChatApplied(trip: Trip): Promise<void> {
+    await this.store.commit(trip);
   }
 
   async onStayDelete(stayId: string): Promise<void> {
