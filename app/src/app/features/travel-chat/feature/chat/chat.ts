@@ -1,3 +1,5 @@
+import { UiButton } from '../../../../shared/ui/button/button';
+import { CompanionFace } from '../../ui/companion-face/companion-face';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,15 +7,13 @@ import {
   OnInit,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { createRegion, createTrip } from '../../../trips/util/factories';
 import type { Trip } from '../../../trips/model/trip';
-import { UiButton } from '../../../../shared/ui/button/button';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
-import { CompanionFace } from '../../ui/companion-face/companion-face';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 
@@ -27,7 +27,7 @@ import type { ChatDraft } from '../../model/chat';
 @Component({
   selector: 'app-chat-page',
   templateUrl: './chat.html',
-  imports: [ChatThread, UiButton, CompanionFace],
+  imports: [UiButton, CompanionFace, ChatThread],
   providers: [TravelChatStore, TripEditorStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   /*
@@ -41,15 +41,12 @@ import type { ChatDraft } from '../../model/chat';
 export class ChatPage implements OnInit {
   readonly store = inject(TravelChatStore);
   private readonly editor = inject(TripEditorStore);
-  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   /** 이미 반영한 말풍선. 그 카드에는 되돌리기만 남긴다. */
   readonly appliedMessageId = signal<string | null>(null);
   /** 사용자가 그대로 두기를 고른 초안. 카드를 접는다. */
   readonly dismissedIds = signal<readonly string[]>([]);
-  /** 담아서 만들어진 여행. 나가기 전까지 여기에 쌓인다. */
-  readonly savedTripId = signal<string | null>(null);
 
   constructor() {
     inject(PageBar).set({ title: 'AI 챗봇', back: ['/trips'], action: null });
@@ -57,6 +54,22 @@ export class ChatPage implements OnInit {
 
   ngOnInit(): void {
     this.store.open('list', null);
+  }
+
+  readonly resetting = signal(false);
+  private readonly thread = viewChild(ChatThread);
+
+  async newChat(): Promise<void> {
+    if (this.resetting() || this.editor.saveState() === 'saving') return;
+    this.resetting.set(true);
+    try {
+      await this.store.reset();
+      this.appliedMessageId.set(null);
+      this.dismissedIds.set([]);
+      this.thread()?.clearComposer();
+    } finally {
+      this.resetting.set(false);
+    }
   }
 
   send(text: string): void {
@@ -77,7 +90,7 @@ export class ChatPage implements OnInit {
     if (!next) return;
     if (!(await this.editor.commit(next)) || this.destroyRef.destroyed) return;
     this.appliedMessageId.set(event.messageId);
-    this.savedTripId.set(next.id);
+    this.store.notifyTripSaved(next.id);
   }
 
   async undo(): Promise<void> {
@@ -89,12 +102,6 @@ export class ChatPage implements OnInit {
 
   dismissDraft(messageId: string): void {
     this.dismissedIds.set([...this.dismissedIds(), messageId]);
-  }
-
-  /** 담은 여행을 보러 간다. 대화 화면은 히스토리에서 치운다. */
-  goToTrip(): void {
-    const id = this.savedTripId();
-    if (id) void this.router.navigate(['/trips', id], { replaceUrl: true });
   }
 
   /** 초안이 가리키는 지역으로 빈 여행을 세운다. 날짜는 아직 정하지 않는다. */

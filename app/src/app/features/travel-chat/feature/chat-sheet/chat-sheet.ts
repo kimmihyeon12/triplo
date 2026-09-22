@@ -1,3 +1,4 @@
+import { CompanionFace } from '../../ui/companion-face/companion-face';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,11 +8,11 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
-import { CompanionFace } from '../../ui/companion-face/companion-face';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 import type { Trip } from '../../../trips/model/trip';
@@ -26,7 +27,7 @@ import type { Trip } from '../../../trips/model/trip';
 @Component({
   selector: 'app-chat-sheet',
   templateUrl: './chat-sheet.html',
-  imports: [ChatThread, UiButton, IconComponent, CompanionFace],
+  imports: [CompanionFace, ChatThread, UiButton, IconComponent],
   providers: [TravelChatStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -57,6 +58,22 @@ export class ChatSheet {
       if (this.open()) this.store.open('trip', trip);
       else this.store.setTrip(trip);
     });
+  }
+
+  readonly resetting = signal(false);
+  private readonly thread = viewChild(ChatThread);
+
+  async newChat(): Promise<void> {
+    if (this.resetting()) return;
+    this.resetting.set(true);
+    try {
+      await this.store.reset();
+      this.appliedMessageId.set(null);
+      this.dismissedIds.set([]);
+      this.thread()?.clearComposer();
+    } finally {
+      this.resetting.set(false);
+    }
   }
 
   send(text: string): void {

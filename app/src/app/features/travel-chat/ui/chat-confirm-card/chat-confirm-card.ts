@@ -41,6 +41,6 @@ export class ChatConfirmCard {
 
   /** 전후를 나란히 놓을지. 한쪽이 비면 나란히 둘 이유가 없다. */
   readonly showsComparison = computed(
-    () => this.preview().before.length > 0 && this.preview().after.length > 0,
+    () => this.preview().before.length > 0,
   );
 }

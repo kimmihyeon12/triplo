@@ -4,22 +4,21 @@
 -->
 <div
   #scroller
-  class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
+  class="my-1.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
   data-testid="chat-messages"
 >
   <!--
     넓은 화면에서도 한 줄이 길어지지 않게 가둔다. 글줄이 화면 끝까지 늘어나면
     눈이 다음 줄 첫머리를 찾지 못해 읽기가 느려진다.
   -->
-  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-4 px-4 py-4">
+  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-3 px-4 py-2">
     <!--
       아직 아무 말도 오가지 않았을 때. 빈 화면만 두면 무엇을 물어도 되는지
-      알 수 없어 입력창 앞에서 멈춘다. 여행 친구를 크게 세워 누구와 이야기하는
-      것인지 알리고, 할 수 있는 일을 한 줄로 적는다.
+      알 수 없어 입력창 앞에서 멈춘다. 제목과 안내로 대화의 목적을
+      알리고, 할 수 있는 일을 한 줄로 적는다.
     -->
     @if (messages().length === 0 && !pending()) {
       <div class="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
-        <app-companion-face class="chat-greet" [mood]="'talking'" [size]="96" [decorative]="true" />
         <p class="text-18 font-bold tracking-tight text-ink">{{ emptyTitle() }}</p>
         <p class="max-w-68 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
       </div>
@@ -29,7 +28,7 @@
       @if (message.role === 'user') {
         <div class="flex justify-end">
           <p
-            class="chat-bubble max-w-[80%] bg-accent-deep px-3.5 py-2.5 text-14 leading-relaxed text-white"
+            class="chat-bubble max-w-[85%] whitespace-pre-line bg-accent-deep px-3.5 py-2 text-14 leading-[22px] text-white"
             data-testid="chat-user-message"
           >
             {{ message.text }}
@@ -37,28 +36,23 @@
         </div>
       } @else {
         <div class="flex flex-col items-start gap-2" data-testid="chat-assistant-message">
-          <!--
-            누가 말하는지 얼굴로 알린다. 표정은 답의 성격을 따라간다. 갈 곳을
-            찾았을 때와 그냥 답할 때가 같은 얼굴이면 그림이 아니라 아이콘이 된다.
-
-            얼굴은 첫 줄에 맞춰 위쪽에 붙인다. 답이 길어져도 가운데로 내려가지
-            않아야 누가 말하는지가 답 시작점에서 읽힌다.
-          -->
+          <!-- 캐릭터는 헤더에 한 번만 표시한다. -->
           <div class="flex w-full items-start gap-2.5">
-            <app-companion-face
-              class="mt-0.5"
-              [mood]="moodOf(message)"
-              [size]="48"
-              [decorative]="true"
-              data-testid="chat-bot-avatar"
-            />
             <div class="flex min-w-0 flex-1 flex-col items-start gap-2">
               <p
-                class="chat-bubble chat-bubble--assistant max-w-full bg-panel px-3.5 py-2.5 text-14 leading-relaxed text-ink"
+                class="chat-bubble chat-bubble--assistant max-w-full whitespace-pre-line bg-panel px-3.5 py-2 text-14 leading-[22px] text-ink"
                 [attr.data-kind]="message.kind"
               >
                 {{ message.text }}
               </p>
+
+              @if (message.localLink; as link) {
+                <a appButton class="btn border-transparent! bg-transparent! px-2! text-13! text-accent-deep! hover:bg-accent-tint!" [routerLink]="router.parseUrl(link)" [replaceUrl]="!!message.localLinkLabel" [attr.data-testid]="message.localLinkLabel ? 'chat-go-trip' : 'chat-local-link'">{{ message.localLinkLabel ?? '화면 열기' }}<app-icon name="chevron-right" [size]="14" /></a>
+              }
+              @if (message.copyText; as text) {
+                <button appButton class="btn btn--sm" type="button" (click)="copyResult(text)" data-testid="chat-copy">일정 복사</button>
+                <span class="text-12 text-ink-3" role="status">{{ copyStatus() }}</span>
+              }
 
               <!--
                 확인되지 않은 참고 정보는 답변과 같은 말풍선에 넣지 않는다.
@@ -70,34 +64,30 @@
                 </div>
               }
 
-              @if (message.draft; as draft) {
-                @if (preview(message.id, draft); as view) {
-                  <app-chat-confirm-card
-                    class="w-full"
-                    [preview]="view"
-                    [applied]="appliedMessageId() === message.id"
-                    (confirm)="apply.emit({ messageId: message.id, draft })"
-                    (dismiss)="dismissDraft.emit(message.id)"
-                    (undo)="undo.emit()"
-                  />
-                }
-              }
             </div>
           </div>
+          @if (message.draft; as draft) {
+            @if (preview(message.id, draft); as view) {
+              <app-chat-confirm-card
+                class="w-full"
+                [preview]="view"
+                [applied]="appliedMessageId() === message.id"
+                (confirm)="apply.emit({ messageId: message.id, draft })"
+                (dismiss)="dismissDraft.emit(message.id)"
+                (undo)="undo.emit()"
+              />
+            }
+          }
         </div>
       }
     }
 
-    <!--
-      기다리는 동안에도 여행 친구가 자리를 지킨다. 스피너만 돌면 방금까지
-      이야기하던 상대가 사라진 것처럼 보인다.
-    -->
+    <!-- 응답 대기는 점과 중지 동작으로 표시한다. -->
     @if (pending()) {
       <div class="flex items-start gap-2.5" role="status" data-testid="chat-pending">
-        <app-companion-face class="mt-0.5" [mood]="'talking'" [size]="48" [decorative]="true" />
-        <div class="flex flex-col items-start gap-2">
+        <div class="flex min-w-0 items-center gap-3">
           <p
-            class="chat-bubble chat-bubble--assistant flex items-center gap-1.5 bg-panel px-3.5 py-3"
+            class="chat-bubble chat-bubble--assistant flex min-h-11 items-center gap-1.5 bg-panel px-3.5 py-3"
           >
             <!-- 말 줄임표가 차례로 뛴다. 무엇을 기다리는지 스피너보다 분명하다. -->
             <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
@@ -107,12 +97,13 @@
           </p>
           <button
             appButton
-            class="btn btn--sm"
+            class="btn shrink-0 border-transparent! bg-transparent! px-2! text-12! font-medium! text-ink-2 hover:bg-ground-2!"
             type="button"
             (click)="cancel.emit()"
             data-testid="chat-cancel"
           >
-            그만두기
+            <span class="size-2 rounded-[2px] bg-current" aria-hidden="true"></span>
+            응답 중지
           </button>
         </div>
       </div>
@@ -135,13 +126,13 @@
 -->
 @if (chips().length > 0 && !pending()) {
   <div
-    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
+    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
     data-testid="chat-chips"
   >
     @for (chip of chips(); track chip) {
       <button
         type="button"
-        class="flex-none rounded-pill bg-accent-tint px-3.5 py-2 text-13 font-medium text-accent-deep [transition:background-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:bg-accent-fill active:scale-[0.97]"
+        class="relative min-h-8 flex-none rounded-pill bg-accent-tint px-3 py-1.5 text-13 font-medium text-accent-deep transition-colors after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] hover:bg-accent-fill motion-reduce:transition-none"
         (click)="pickChip(chip)"
         [attr.data-testid]="'chat-chip'"
       >
@@ -152,7 +143,7 @@
 }
 
 <div class="flex-none border-t border-border bg-panel">
-  <div class="mx-auto w-full max-w-160 p-3">
+  <div class="mx-auto w-full max-w-160 px-4 py-2">
     @if (turnsLeft() === 0) {
       <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
         이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.
@@ -166,7 +157,7 @@
       -->
       <textarea
         appInput
-        class="textarea max-h-28 flex-1 resize-none py-2.5 [&.textarea]:min-h-11! [&.textarea]:h-11 [&.textarea]:rounded-pill [&.textarea]:px-4"
+        class="textarea max-h-28 flex-1 resize-none py-2.5 [&.textarea]:min-h-11! [&.textarea]:h-11 [&.textarea]:rounded-control [&.textarea]:px-4"
         rows="1"
         placeholder="어디로 갈지 물어보세요"
         aria-label="메시지 입력"
@@ -177,7 +168,7 @@
       ></textarea>
       <button
         appButton
-        class="btn size-11 flex-none rounded-pill p-0"
+        class="btn size-11 flex-none rounded-control p-0"
         type="submit"
         variant="primary"
         [disabled]="pending() || draftText().trim().length === 0"

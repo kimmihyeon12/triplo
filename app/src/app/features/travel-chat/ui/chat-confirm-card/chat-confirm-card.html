@@ -1,9 +1,9 @@
 <!--
   카드는 말풍선과 뚜렷이 달라야 한다. 읽고 넘기는 답변과 달리 눌러서 결정해야
-  하는 것이므로, 강조색 테두리로 '여기서 무언가 해야 한다'를 알린다.
+  하는 것이므로, 변경 내용과 결정 버튼을 구분해 표시한다.
 -->
 <section
-  class="rounded-panel border-2 border-accent-fill bg-panel p-3.5 shadow-panel"
+  class="rounded-panel border border-border bg-panel p-4"
   [attr.data-testid]="'confirm-card'"
   [attr.aria-label]="preview().title"
 >
@@ -17,10 +17,10 @@
       한 줄로 자르고 번호를 앞에 붙여 어느 자리인지 알린다. 세로로 쌓으면
       '무엇이 어떻게 달라지는지'를 눈으로 맞춰 볼 수 없다.
     -->
-    <div class="mt-3 grid grid-cols-2 gap-2">
+    <div class="mt-4 grid gap-4" [class.grid-cols-2]="!preview().detailed">
       <div>
         <p class="mb-1.5 text-11 font-semibold uppercase tracking-wide text-ink-3">현재</p>
-        <ol class="flex flex-col gap-1" data-testid="confirm-before">
+        <ol class="flex flex-col gap-2" data-testid="confirm-before">
           @for (row of preview().before; track row.id; let i = $index) {
             <li
               class="flex items-baseline gap-1.5 text-13 leading-snug"
@@ -28,7 +28,7 @@
               [class.line-through]="row.removed"
             >
               <span class="w-3 flex-none text-11 tabular-nums text-ink-3">{{ i + 1 }}</span>
-              <span class="min-w-0 flex-1 truncate text-ink-2">{{ row.name }}</span>
+              <span class="min-w-0 flex-1 text-ink-2 [overflow-wrap:anywhere]" [class.truncate]="!preview().detailed">{{ row.name }}</span>
             </li>
           }
         </ol>
@@ -36,12 +36,16 @@
 
       <div>
         <p class="mb-1.5 text-11 font-semibold uppercase tracking-wide text-accent-deep">바꾼 뒤</p>
-        <ol class="flex flex-col gap-1" data-testid="confirm-after">
+        @if (preview().after.length === 0) {
+          <p class="text-13 text-ink-2">해당 항목 삭제</p>
+        }
+        <ol class="flex flex-col gap-2" data-testid="confirm-after">
           @for (row of preview().after; track row.id; let i = $index) {
             <li class="flex items-baseline gap-1.5 text-13 leading-snug">
               <span class="w-3 flex-none text-11 tabular-nums text-ink-3">{{ i + 1 }}</span>
               <span
-                class="min-w-0 flex-1 truncate"
+                class="min-w-0 flex-1 [overflow-wrap:anywhere]"
+                [class.truncate]="!preview().detailed"
                 [class.font-semibold]="row.added"
                 [class.text-accent-deep]="row.added"
                 [class.text-ink]="!row.added"
@@ -58,7 +62,7 @@
       @for (row of preview().after; track row.id) {
         <li class="flex items-baseline gap-1.5 text-13 leading-snug">
           <app-icon class="flex-none text-accent" name="plus" [size]="12" />
-          <span class="min-w-0 flex-1 truncate text-ink">{{ row.name }}</span>
+          <span class="min-w-0 flex-1 text-ink [overflow-wrap:anywhere]" [class.truncate]="!preview().detailed">{{ row.name }}</span>
         </li>
       }
     </ol>
@@ -73,14 +77,14 @@
   }
 
   @if (applied()) {
-    <div class="mt-3 flex items-center justify-between gap-2">
-      <p class="flex items-center gap-1.5 text-12 font-semibold text-ok-ink">
+    <div class="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+      <p class="flex items-center gap-1.5 text-13 font-semibold text-ok-ink" role="status">
         <app-icon name="check" [size]="13" />
-        일정에 반영했습니다
+        반영했습니다
       </p>
       <button
         appButton
-        class="btn btn--sm"
+        class="btn btn--sm text-13!"
         type="button"
         (click)="undo.emit()"
         data-testid="confirm-undo"
@@ -90,27 +94,26 @@
       </button>
     </div>
   } @else {
-    <div class="mt-3.5 flex gap-2">
+    <div class="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
       <button
         appButton
-        class="btn btn--sm flex-1"
+        class="btn btn--sm border-transparent! bg-transparent! px-2! text-13! font-medium! text-ink-2 hover:bg-ground-2!"
+        type="button"
+        (click)="dismiss.emit()"
+        data-testid="confirm-dismiss"
+      >
+        그대로 두기
+      </button>
+      <button
+        appButton
+        class="btn btn--sm px-3! text-13!"
         type="button"
         variant="primary"
         [disabled]="!preview().applicable"
         (click)="confirm.emit()"
         data-testid="confirm-apply"
       >
-        <app-icon name="check" [size]="14" />
-        반영하기
-      </button>
-      <button
-        appButton
-        class="btn btn--sm flex-1"
-        type="button"
-        (click)="dismiss.emit()"
-        data-testid="confirm-dismiss"
-      >
-        그대로 두기
+        변경 적용
       </button>
     </div>
 

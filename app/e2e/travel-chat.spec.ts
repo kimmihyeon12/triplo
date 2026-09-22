@@ -56,18 +56,6 @@ test('일정 짜기와 AI 챗봇은 서로 다른 진입점을 쓴다', async ({
   await expect(page.getByTestId('chat-input')).toBeVisible();
 });
 
-test('대화 말풍선에 누가 말하는지 아이콘으로 표시한다', async ({ page }) => {
-  await resetApp(page);
-  await openChat(page);
-
-  await say(page, '3일 쉬는데 어디 가지');
-  await expect(page.getByTestId('chat-bot-avatar').last()).toBeVisible();
-  // 사용자 말풍선에는 붙이지 않는다. 누가 말하는지 이미 자리로 알 수 있다.
-  const avatars = await page.getByTestId('chat-bot-avatar').count();
-  const replies = await page.getByTestId('chat-assistant-message').count();
-  expect(avatars).toBe(replies);
-});
-
 test('대화로 찾아 담으면 새 여행이 만들어진다', async ({ page }) => {
   await resetApp(page);
   await openChat(page);
@@ -80,7 +68,7 @@ test('대화로 찾아 담으면 새 여행이 만들어진다', async ({ page }
   await expect(page.getByTestId('confirm-after')).not.toContainText('없는장소테스트');
 
   await page.getByTestId('confirm-apply').click();
-  await expect(page.getByTestId('chat-saved-bar')).toBeVisible();
+  await expect(page.getByTestId('chat-assistant-message').filter({hasText: '여행에 담았어요'})).toBeVisible();
 
   const trips = await savedTrips(page);
   expect(trips).toHaveLength(1);
@@ -97,7 +85,7 @@ test('담은 뒤 되돌리면 일정에서 빠진다', async ({ page }) => {
   await openChat(page);
   await say(page, '강릉으로 일정 짜줘');
   await page.getByTestId('confirm-apply').click();
-  await expect(page.getByTestId('chat-saved-bar')).toBeVisible();
+  await expect(page.getByTestId('chat-assistant-message').filter({hasText: '여행에 담았어요'})).toBeVisible();
 
   await page.getByTestId('confirm-undo').click();
   await expect(page.getByTestId('confirm-apply')).toBeVisible();

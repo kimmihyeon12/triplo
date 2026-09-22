@@ -11,15 +11,17 @@ import {
   viewChild,
 } from '@angular/core';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { Router, RouterLink } from '@angular/router';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiDisclaimer } from '../ai-disclaimer/ai-disclaimer';
-import { CompanionFace, type CompanionMood } from '../companion-face/companion-face';
+
 import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
 import { previewDraft, type DraftPreview } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
+import { copyText } from '../../../places/data/map-links';
 
 /** 대상 여행이 아직 없을 때 미리보기의 기준이 되는 빈 여행. */
 const EMPTY_TRIP: Trip = {
@@ -47,11 +49,12 @@ const EMPTY_TRIP: Trip = {
   selector: 'app-chat-thread',
   templateUrl: './chat-thread.html',
   styleUrl: './chat-thread.css',
-  imports: [UiButton, UiInput, UiNotice, IconComponent, AiDisclaimer, ChatConfirmCard, CompanionFace],
+  imports: [RouterLink, UiButton, UiInput, UiNotice, IconComponent, AiDisclaimer, ChatConfirmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
 export class ChatThread {
+  readonly router = inject(Router);
   readonly messages = input.required<readonly ChatMessage[]>();
   readonly chips = input.required<readonly string[]>();
   readonly pending = input(false);
@@ -71,6 +74,16 @@ export class ChatThread {
   readonly cancel = output<void>();
 
   readonly draftText = signal('');
+  readonly copyStatus = signal('');
+
+  clearComposer(): void {
+    this.draftText.set('');
+    this.copyStatus.set('');
+  }
+
+  async copyResult(text: string): Promise<void> {
+    this.copyStatus.set(await copyText(text) ? '일정을 복사했어요.' : '복사하지 못했어요. 답변의 텍스트를 선택해 복사해 주세요.');
+  }
 
   /** 빈 화면의 안내. 어디서 열었는지에 따라 할 수 있는 일이 다르다. */
   readonly emptyTitle = computed(() =>
@@ -108,12 +121,6 @@ export class ChatThread {
   preview(messageId: string, draft: ChatDraft): DraftPreview | null {
     if (this.dismissedIds().includes(messageId)) return null;
     return previewDraft(this.trip() ?? EMPTY_TRIP, draft);
-  }
-
-  /** 대화에는 승인된 작은 미소를 쓴다. 졸림은 진입 버튼 전용이다. */
-  moodOf(message: ChatMessage): CompanionMood {
-    if (message.draft) return 'found';
-    return 'talking';
   }
 
   submit(): void {
