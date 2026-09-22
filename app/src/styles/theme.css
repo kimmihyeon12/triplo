@@ -1,4 +1,4 @@
-/* Triplo design tokens. Product and laboratory share this source. */
+﻿/* Triplo design tokens. Product and laboratory share this source. */
 @theme static {
   --spacing: 4px;
   --breakpoint-sm: 420px;
@@ -18,6 +18,14 @@
   --color-accent-deep: #2f5fdb;
   --color-accent-deep-hover: #2650bd;
   --color-accent-tint: #eaf0fe;
+  /*
+    떠 있는 챗봇 버튼의 색. 화면에 파란 계열이 다섯이라(상단 버튼 그라데이션,
+    지도 카드, 지역·장소·숙소 배지) 버튼까지 파랑이면 상단 버튼과 형제로 읽혀
+    눈에 걸리지 않는다. 색을 더하지 않고 명도로만 세운다(2026-09-22 결정).
+    흰 글자 대비 17.76, 바탕 대비 17.15로 파랑(5.55/5.36)보다 훨씬 또렷하다.
+  */
+  --color-float: #16181d;
+  --color-float-hover: #2b2f38;
   --color-naver-brand: #03c75a;
   --color-kakao-brand: #fee500;
   --color-kakao-brand-ink: #3c1e1e;
@@ -35,6 +43,19 @@
     초록(H86)이라 옆의 장소(파랑)·숙소(보라) 배지와 나란히 놓이면 혼자
     바랜 것처럼 보였다. 청록은 ok(H151)와 색상각이 37도 벌어져 구분되면서
     기록 지도의 방문색과 계열이 이어진다.
+  */
+  /*
+    지역 배지. 청록을 유지한다.
+
+    2026-09-22에 진초록(#dceccd)으로 옮겨 봤으나 되돌렸다. 채도가 45%여서
+    채도 82~100%인 다른 배지들 사이에서 혼자 바랜 것처럼 보였다(사용자 확인).
+
+    장소(파랑)와 거리 14로 가까운 것은 남은 문제다. 명도 93% 구간을 기존 배지
+    다섯이 이미 채우고 있어, 그 밝기를 지키면서 25 이상 벌리는 색은 없다.
+    선명함과 구분 가운데 선명함을 택했다.
+
+    지도 방문색(--color-map-visit-low #c9eaf0)과 같은 청록이라 통계 화면과
+    이어져 보이는 이점도 유지된다.
   */
   --color-region-ink: #0f6f7d;
   --color-region-tint: #e0f2f5;

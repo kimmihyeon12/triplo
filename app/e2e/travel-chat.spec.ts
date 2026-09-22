@@ -41,7 +41,7 @@ async function say(page: Page, text: string): Promise<void> {
   await page.getByTestId('chat-send').click();
 }
 
-test('AI 일정 만들기와 대화는 서로 다른 진입점을 쓴다', async ({ page }) => {
+test('일정 짜기와 AI 챗봇은 서로 다른 진입점을 쓴다', async ({ page }) => {
   await resetApp(page);
 
   // 목록의 AI 카드는 조건을 고르는 단계형으로 바로 간다.

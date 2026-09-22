@@ -20,7 +20,7 @@ export class AiPlanPage {
   private readonly pageBar = inject(PageBar);
 
   constructor() {
-    this.pageBar.set({ title: 'AI 일정 만들기', back: ['/trips'], action: null });
+    this.pageBar.set({ title: '일정 짜기', back: ['/trips'], action: null });
   }
 
   leave(): void {

@@ -1,4 +1,4 @@
-<div
+﻿<div
   class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
 >
   <!--
@@ -23,7 +23,7 @@
         data-testid="new-trip-ai"
       >
         <app-icon name="sparkle" [size]="16" />
-        AI 일정 만들기
+        일정 짜기
       </a>
       <a
         appButton
@@ -270,19 +270,23 @@
 </div>
 
 <!--
-  대화로 여행을 찾는 진입점. 위의 'AI 일정 만들기'와는 다른 기능이라 따로
-  둔다(2026-09-22 결정). 그쪽은 지역·날짜가 정해진 사람이 조건을 골라 만드는
+  대화로 여행을 찾는 진입점. 위의 '일정 짜기'와는 다른 기능이라 따로 둔다
+  (2026-09-22 결정). 그쪽은 지역·날짜가 정해진 사람이 조건을 골라 만드는
   곳이고, 이쪽은 어디로 갈지 정하지 못한 사람이 물어보는 곳이다.
+
+  이름을 '일정 짜기'와 'AI 챗봇'으로 나눈 까닭은 둘 다 'AI 일정 만들기'·
+  'AI 채팅'처럼 시작하면 차이가 드러나지 않기 때문이다. 조건을 골라 만드는
+  쪽은 하는 일로, 대화하는 쪽은 그 방식으로 적는다.
 
   이 화면에는 하단 동작 바가 없으므로 안전 영역 위 16px에 바로 띄운다.
   공통 appButton을 쓰지 않는 이유는 그 호스트 클래스의 relative가 템플릿
   class보다 나중에 적용되어 fixed를 덮기 때문이다.
 -->
 <a
-  class="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-accent-deep pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-accent-deep-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+  class="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
   routerLink="/trips/chat"
-  aria-label="AI 채팅 열기"
+  aria-label="AI 챗봇 열기"
   data-testid="open-chat"
 >
-  <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 채팅</span>
+  <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 챗봇</span>
 </a>

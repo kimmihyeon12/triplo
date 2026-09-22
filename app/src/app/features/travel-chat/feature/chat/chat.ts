@@ -52,7 +52,7 @@ export class ChatPage implements OnInit {
   readonly savedTripId = signal<string | null>(null);
 
   constructor() {
-    inject(PageBar).set({ title: 'AI 채팅', back: ['/trips'], action: null });
+    inject(PageBar).set({ title: 'AI 챗봇', back: ['/trips'], action: null });
   }
 
   ngOnInit(): void {

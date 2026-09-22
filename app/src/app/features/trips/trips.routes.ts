@@ -19,7 +19,7 @@ export const TRIPS_ROUTES: Routes = [
     ],
   },
   /*
-    AI 일정 만들기와 대화형 탐색은 서로 다른 기능이므로 진입점을 나눈다
+    일정 짜기와 대화형 탐색은 서로 다른 기능이므로 진입점을 나눈다
     (2026-09-22 사용자 결정). 조건이 정해진 사용자는 단계를 밟아 만들고,
     정하지 못한 사용자는 떠 있는 버튼으로 대화를 연다. 한쪽을 다른 쪽
     안에 넣으면 찾는 기능이 어디 있는지 알 수 없다.
@@ -27,7 +27,7 @@ export const TRIPS_ROUTES: Routes = [
   {
     path: 'ai',
     loadComponent: () => import('./feature/ai-plan/ai-plan').then((m) => m.AiPlanPage),
-    title: 'AI 일정 만들기',
+    title: '일정 짜기',
   },
   {
     path: 'chat',

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>플로팅 버튼 색 비교</title>
+<!--
+  여행 목록의 'AI 챗봇' 플로팅 버튼 색을 고르기 위한 비교판이다.
+
+  지금 문제: 화면에 파란 계열이 넷이다. 상단 '일정 짜기'의 보라-파랑
+  그라데이션, 지도 카드의 옅은 파랑, 장소 배지의 연파랑, 그리고 이 버튼의
+  accent-deep. 버튼이 파랑이면 상단 버튼과 형제로 읽혀 눈에 걸리지 않는다.
+
+  실제 화면에서 잰 색(app/src/styles/theme.css):
+    지역 배지 #e0f2f5(청록) · 장소 배지 #eaf0fe(파랑) · 숙소 배지 #efe9fb(보라)
+    상단 버튼 linear-gradient(135deg,#3b6fef,#6d4fd6)
+-->
+<style>
+  :root {
+    --color-ground: #fbfbfa;
+    --color-ground-2: #f0f0ee;
+    --color-panel: #ffffff;
+    --color-accent-deep: #2f5fdb;
+    --color-accent-tint: #eaf0fe;
+    --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+    --color-ink: #16181d;
+    --color-ink-2: #4a4f58;
+    --color-ink-3: #6b7280;
+    --color-border: #e8eaef;
+    --radius-panel: 16px;
+    --radius-control: 10px;
+    --shadow-panel: 0 0 0 1px rgba(28, 25, 23, 0.025), 0 2px 10px rgba(28, 25, 23, 0.07);
+    --shadow-float: 0 0 0 1px rgba(28, 25, 23, 0.03), 0 4px 20px rgba(28, 25, 23, 0.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 24px 64px;
+    background: var(--color-ground-2); color: var(--color-ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+  }
+  h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .lede { max-width: 70ch; margin: 0 0 8px; color: var(--color-ink-2); }
+  .problem {
+    max-width: 70ch; margin: 0 0 28px; padding: 12px 14px;
+    border-radius: var(--radius-control); background: #fff7ed; color: #7c2d12;
+    font-size: 13px; line-height: 1.6;
+  }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .sw { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #7c2d12; }
+  .sw i { width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 24px; max-width: 1180px; }
+  .option > h2 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+  .tag { padding: 2px 7px; border-radius: 999px; background: var(--color-accent-tint); color: var(--color-accent-deep); font-size: 11px; font-weight: 700; }
+  .tag--pick { background: #dcfce7; color: #166534; }
+  .tag--now { background: var(--color-ground-2); color: var(--color-ink-3); }
+  .option > p { margin: 0 0 12px; color: var(--color-ink-2); font-size: 13px; line-height: 1.6; }
+
+  .phone {
+    position: relative; width: 340px; height: 430px; overflow: hidden;
+    border: 1px solid var(--color-border); border-radius: 20px;
+    background: var(--color-ground); box-shadow: var(--shadow-panel);
+  }
+  .bar {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    height: 48px; border-bottom: 1px solid var(--color-border);
+    background: var(--color-panel); font-size: 14px; font-weight: 700;
+  }
+  .bar .sym { position: absolute; left: 14px; color: var(--color-accent-deep); font-weight: 800; }
+  .bar .me {
+    position: absolute; right: 14px; display: grid; place-items: center;
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--color-accent-tint); color: var(--color-accent-deep);
+    font-size: 11px; font-weight: 700;
+  }
+  .body { padding: 12px; }
+  .make { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px; height: 40px;
+    border: 1px solid var(--color-border); border-radius: var(--radius-control);
+    background: var(--color-panel); font-size: 12px; font-weight: 600;
+  }
+  .btn--ai { border-color: transparent; background: var(--ai-fill); color: #fff; }
+
+  /* 다녀온 곳 지도 카드. 옅은 파랑 섬네일이 들어간다. */
+  .mapcard {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px;
+    border-radius: var(--radius-panel); background: var(--color-panel); box-shadow: var(--shadow-panel);
+  }
+  .mapcard i { width: 42px; height: 42px; border-radius: 10px; background: radial-gradient(at 50% 25%, #f0f8ff, #dceefb); }
+  .mapcard b { display: block; font-size: 13px; }
+  .mapcard small { display: block; margin-top: 2px; color: var(--color-ink-3); font-size: 11px; }
+
+  .card { margin-bottom: 8px; padding: 10px 12px; border-radius: var(--radius-panel); background: var(--color-panel); box-shadow: var(--shadow-panel); }
+  .card b { display: block; font-size: 13px; }
+  .card small { display: block; margin-top: 2px; color: var(--color-ink-3); font-size: 11px; }
+  .chips { display: flex; gap: 5px; margin-top: 7px; }
+  .chip { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  /* 실제 화면에서 잰 배지 색 세 가지 */
+  .chip--region { background: #e0f2f5; color: #0f6b7a; }
+  .chip--place { background: #eaf0fe; color: #2f5fdb; }
+  .chip--stay { background: #efe9fb; color: #6d4fd6; }
+
+  .fab {
+    position: absolute; right: 12px; bottom: 12px;
+    display: flex; align-items: center; height: 44px; padding: 0 14px 0 46px;
+    border-radius: 999px; color: #fff; font-size: 13px; font-weight: 700;
+    white-space: nowrap; box-shadow: var(--shadow-float);
+  }
+  .fab .face {
+    position: absolute; left: 2px; bottom: 0; width: 46px; height: 46px;
+    border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+  .fab .face::after {
+    content: '☁'; position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--color-accent-deep); font-size: 20px;
+  }
+
+  /* 후보 색 */
+  .fab--now     { background: #2f5fdb; }
+  .fab--ink     { background: #16181d; }
+  .fab--teal    { background: #0f6b7a; }
+  .fab--white   { background: #fff; color: var(--color-ink); box-shadow: var(--shadow-float), inset 0 0 0 1px var(--color-border); }
+  .fab--coral   { background: #e0533d; }
+  .fab--violet  { background: #6d4fd6; }
+
+  .note { margin: 10px 0 0; padding-left: 14px; color: var(--color-ink-2); font-size: 12px; line-height: 1.7; }
+  .note li + li { margin-top: 3px; }
+  .note .bad { color: #b91c1c; }
+  .note .good { color: #166534; }
+</style>
+</head>
+<body>
+
+<h1>플로팅 버튼 색 비교</h1>
+<p class="lede">여행 목록(340px)에서 <strong>AI 챗봇</strong> 버튼을 무슨 색으로 둘지 고르기 위한 비교판이다.</p>
+<div class="problem">
+  <strong>지금 화면에 파란 계열이 넷이다.</strong>
+  상단 <em>일정 짜기</em>의 보라-파랑 그라데이션, 지도 카드의 옅은 파랑 섬네일,
+  장소 배지의 연파랑, 그리고 이 버튼의 딥 블루. 버튼이 파랑이면 상단 버튼과
+  형제로 읽혀 눈에 걸리지 않는다.
+  <div class="swatches">
+    <span class="sw"><i style="background:linear-gradient(135deg,#3b6fef,#6d4fd6)"></i>일정 짜기</span>
+    <span class="sw"><i style="background:#dceefb"></i>지도 카드</span>
+    <span class="sw"><i style="background:#e0f2f5"></i>지역 배지</span>
+    <span class="sw"><i style="background:#eaf0fe"></i>장소 배지</span>
+    <span class="sw"><i style="background:#efe9fb"></i>숙소 배지</span>
+    <span class="sw"><i style="background:#2f5fdb"></i>지금 버튼</span>
+  </div>
+</div>
+
+<div class="grid">
+
+  <section class="option">
+    <h2>1. 지금 색 <span class="tag tag--now">현재</span></h2>
+    <p>딥 블루 <code>#2f5fdb</code>. 상단 버튼과 같은 계열이다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--now"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note"><li class="bad">파란 것이 다섯 개가 되어 어느 것이 무엇인지 흐려진다.</li></ul>
+  </section>
+
+  <section class="option">
+    <h2>2. 잉크 <span class="tag tag--pick">추천</span></h2>
+    <p>글자색과 같은 <code>#16181d</code>. 색을 더하지 않고 명도로만 세운다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--ink"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note">
+      <li class="good">연한 화면에서 가장 또렷하게 선다.</li>
+      <li class="good">색을 늘리지 않아 배지들의 뜻이 흐려지지 않는다.</li>
+      <li class="good">흰 구름이가 가장 잘 보인다.</li>
+    </ul>
+  </section>
+
+  <section class="option">
+    <h2>3. 청록 <span class="tag">대안</span></h2>
+    <p>지도의 방문색 계열 <code>#0f6b7a</code>. 지역 배지와 같은 뿌리다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--teal"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note">
+      <li class="good">파랑과 갈라지면서 앱의 지도 색과는 이어진다.</li>
+      <li class="bad">지역 배지와 같은 계열이라 그 뜻과 섞일 수 있다.</li>
+    </ul>
+  </section>
+
+  <section class="option">
+    <h2>4. 흰 바탕 <span class="tag">대안</span></h2>
+    <p>패널과 같은 흰색에 테두리. 구름이가 주인공이 된다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--white"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note">
+      <li class="good">색을 하나도 늘리지 않는다.</li>
+      <li class="bad">흰 카드 위에서 경계가 약해 눈에 덜 걸린다.</li>
+      <li class="bad">구름이도 흰색이라 얼굴이 바탕에 묻힌다.</li>
+    </ul>
+  </section>
+
+  <section class="option">
+    <h2>5. 코랄 <span class="tag">대안</span></h2>
+    <p>보색에 가까운 <code>#e0533d</code>. 가장 크게 튄다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--coral"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note">
+      <li class="good">한눈에 들어온다.</li>
+      <li class="bad">앱에서 붉은색은 삭제·오류를 뜻해 뜻이 어긋난다.</li>
+      <li class="bad">차분한 화면에서 혼자 들뜬다.</li>
+    </ul>
+  </section>
+
+  <section class="option">
+    <h2>6. 보라 <span class="tag">대안</span></h2>
+    <p>그라데이션 끝색 <code>#6d4fd6</code>. AI라는 뜻은 잇는다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make"><span class="btn btn--ai">✦ 일정 짜기</span><span class="btn">＋ 직접 만들기</span></div>
+        <div class="mapcard"><i></i><span><b>다녀온 곳 지도</b><small>230개 지역 중 5곳</small></span></div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월)</small>
+          <div class="chips"><span class="chip chip--region">전북</span><span class="chip chip--place">장소 8</span><span class="chip chip--stay">숙소 2</span></div>
+        </div>
+      </div>
+      <span class="fab fab--violet"><i class="face"></i>AI 챗봇</span>
+    </div>
+    <ul class="note">
+      <li class="good">AI를 뜻하는 색이라 두 버튼이 같은 갈래로 읽힌다.</li>
+      <li class="bad">숙소 배지와 같은 계열이라 또 겹친다.</li>
+      <li class="bad">상단 버튼과 구분하려던 목적에서 멀어진다.</li>
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>

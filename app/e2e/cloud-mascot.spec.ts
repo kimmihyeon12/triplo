@@ -3,8 +3,8 @@ import { createTrip, expectNoHorizontalScroll, resetApp } from './helpers';
 
 async function checkEntry(page: Page) {
   const entry = page.getByTestId('open-chat');
-  await expect(entry).toHaveText('AI 채팅');
-  await expect(entry).toHaveAccessibleName('AI 채팅 열기');
+  await expect(entry).toHaveText('AI 챗봇');
+  await expect(entry).toHaveAccessibleName('AI 챗봇 열기');
   await expect(entry.locator('svg')).toHaveCount(0);
   const image = entry.locator('img');
   await expect(image).toHaveAttribute('src', '/brand/companion-cloud-sleepy-v1.png');
@@ -16,7 +16,7 @@ async function checkEntry(page: Page) {
   await expectNoHorizontalScroll(page);
 }
 
-test('구름이 전신과 작은 AI 채팅 버튼을 목록·상세에서 사용한다', async ({ page }, testInfo) => {
+test('구름이 전신과 작은 AI 챗봇 버튼을 목록·상세에서 사용한다', async ({ page }, testInfo) => {
   await resetApp(page);
   await checkEntry(page);
   await page.screenshot({ path: `../output/playwright/cloud-${testInfo.project.name}-list.png` });

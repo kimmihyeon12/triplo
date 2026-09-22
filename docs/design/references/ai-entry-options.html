@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 진입점 비교 시안</title>
+<!--
+  여행 목록 화면의 AI 진입점을 어디에 어떻게 둘지 고르기 위한 비교판이다.
+  실제 앱과 같은 토큰 값을 쓴다(app/src/styles/theme.css).
+
+  지금 문제는 위치가 아니라 이름이다. 'AI 일정 만들기'와 'AI 채팅'이 둘 다
+  AI로 시작해 같아 보이는데, 실제로는 하나가 조건을 골라 만드는 곳이고
+  다른 하나가 어디로 갈지 물어보는 곳이다.
+-->
+<style>
+  :root {
+    --color-ground: #fbfbfa;
+    --color-ground-2: #f0f0ee;
+    --color-panel: #ffffff;
+    --color-accent-deep: #2f5fdb;
+    --color-accent-tint: #eaf0fe;
+    --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+    --color-ink: #16181d;
+    --color-ink-2: #4a4f58;
+    --color-ink-3: #6b7280;
+    --color-border: #e8eaef;
+    --radius-panel: 16px;
+    --radius-control: 10px;
+    --shadow-panel: 0 0 0 1px rgba(28, 25, 23, 0.025), 0 2px 10px rgba(28, 25, 23, 0.07);
+    --shadow-float: 0 0 0 1px rgba(28, 25, 23, 0.03), 0 4px 20px rgba(28, 25, 23, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 32px 24px 64px;
+    background: var(--color-ground-2);
+    color: var(--color-ink);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+  }
+
+  h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .lede { margin: 0 0 8px; max-width: 70ch; color: var(--color-ink-2); }
+  .problem {
+    max-width: 70ch;
+    margin: 0 0 32px;
+    padding: 12px 14px;
+    border-radius: var(--radius-control);
+    background: #fff7ed;
+    color: #7c2d12;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    max-width: 1200px;
+  }
+
+  .option > h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .tag {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--color-accent-tint);
+    color: var(--color-accent-deep);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tag--pick { background: #dcfce7; color: #166534; }
+  .option > p { margin: 0 0 12px; color: var(--color-ink-2); font-size: 13px; line-height: 1.6; }
+
+  /* 기기 틀. 실제 모바일 폭(360px)으로 본다. */
+  .phone {
+    position: relative;
+    width: 360px;
+    height: 560px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: var(--color-ground);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-panel);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .bar .sym { position: absolute; left: 16px; color: var(--color-accent-deep); font-weight: 800; }
+  .bar .me {
+    position: absolute; right: 16px;
+    display: grid; place-items: center;
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    background: var(--color-accent-tint);
+    color: var(--color-accent-deep);
+    font-size: 12px; font-weight: 700;
+  }
+  /* 헤더 안에 AI 버튼을 넣는 안에서만 쓴다. */
+  .bar .ai-in-bar {
+    position: absolute; right: 52px;
+    display: flex; align-items: center; gap: 4px;
+    height: 32px; padding: 0 10px;
+    border-radius: 999px;
+    background: var(--ai-fill);
+    color: #fff;
+    font-size: 12px; font-weight: 700;
+  }
+
+  .body { padding: 14px; }
+
+  .make { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-panel);
+    font-size: 13px; font-weight: 600;
+  }
+  .btn--ai { border-color: transparent; background: var(--ai-fill); color: #fff; }
+  .btn--wide { grid-column: 1 / -1; }
+
+  .card {
+    margin-bottom: 8px;
+    padding: 12px 14px;
+    border-radius: var(--radius-panel);
+    background: var(--color-panel);
+    box-shadow: var(--shadow-panel);
+  }
+  .card b { display: block; font-size: 14px; }
+  .card small { display: block; margin-top: 3px; color: var(--color-ink-3); font-size: 12px; }
+
+  /* 떠 있는 버튼. 실제 구현과 같은 44px 높이·알약 모양이다. */
+  .fab {
+    position: absolute; right: 14px; bottom: 14px;
+    display: flex; align-items: center;
+    height: 44px; padding: 0 14px 0 46px;
+    border-radius: 999px;
+    background: var(--color-accent-deep);
+    color: #fff;
+    font-size: 13px; font-weight: 700;
+    white-space: nowrap;
+    box-shadow: var(--shadow-float);
+  }
+  .fab .face {
+    position: absolute; left: 2px; bottom: 0;
+    width: 46px; height: 46px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+  /* 구름이 얼굴 자리. 실제로는 이미지가 들어간다. */
+  .fab .face::after {
+    content: '☁';
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    color: var(--color-accent-deep);
+    font-size: 20px;
+  }
+
+  .note {
+    margin: 10px 0 0;
+    padding-left: 14px;
+    color: var(--color-ink-2);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .note li + li { margin-top: 3px; }
+  .note .bad { color: #b91c1c; }
+  .note .good { color: #166534; }
+
+  .scrolled {
+    position: absolute; left: 0; right: 0; top: 52px;
+    padding: 6px 14px;
+    background: color-mix(in srgb, var(--color-ground) 92%, transparent);
+    color: var(--color-ink-3);
+    font-size: 11px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>AI 진입점 비교</h1>
+<p class="lede">여행 목록 화면(360px)에서 AI로 들어가는 길을 어디에 어떻게 둘지 고르기 위한 비교판이다.</p>
+<p class="problem">
+  <strong>지금 문제는 위치가 아니라 이름이다.</strong>
+  상단 <em>AI 일정 만들기</em>와 떠 있는 <em>AI 채팅</em>이 둘 다 'AI'로 시작해 같아 보인다.
+  실제로는 하나가 지역·날짜가 정해진 사람이 조건을 골라 만드는 곳이고,
+  다른 하나는 어디로 갈지 정하지 못한 사람이 물어보는 곳이다.
+</p>
+
+<div class="grid">
+
+  <!-- A: 지금 상태 -->
+  <section class="option">
+    <h2>A. 지금 상태 <span class="tag">현재</span></h2>
+    <p>상단에 AI 버튼, 오른쪽 아래에 AI 채팅. 둘 다 'AI'로 시작한다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make">
+          <span class="btn btn--ai">✦ AI 일정 만들기</span>
+          <span class="btn">＋ 직접 만들기</span>
+        </div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월) · 0박 1일</small></div>
+        <div class="card"><b>서울 자주 가는 곳</b><small>8월 10일(월) · 0박 1일</small></div>
+        <div class="card"><b>제주 3박 4일</b><small>7월 3일(금) · 0박 1일</small></div>
+        <div class="card"><b>광주 주말 여행</b><small>8월 17일(월) · 0박 1일</small></div>
+      </div>
+      <span class="fab"><i class="face"></i>AI 채팅</span>
+    </div>
+    <ul class="note">
+      <li class="bad">이름이 둘 다 'AI'라 차이가 드러나지 않는다.</li>
+      <li class="good">스크롤해도 채팅은 늘 손 닿는 자리에 있다.</li>
+    </ul>
+  </section>
+
+  <!-- B: 이름으로 역할 나누기 -->
+  <section class="option">
+    <h2>B. 이름으로 역할 나누기 <span class="tag tag--pick">권장</span></h2>
+    <p>위치는 그대로 두고 이름만 바꾼다. 만드는 곳과 물어보는 곳이 갈린다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make">
+          <span class="btn btn--ai">✦ 일정 짜기</span>
+          <span class="btn">＋ 직접 만들기</span>
+        </div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월) · 0박 1일</small></div>
+        <div class="card"><b>서울 자주 가는 곳</b><small>8월 10일(월) · 0박 1일</small></div>
+        <div class="card"><b>제주 3박 4일</b><small>7월 3일(금) · 0박 1일</small></div>
+        <div class="card"><b>광주 주말 여행</b><small>8월 17일(월) · 0박 1일</small></div>
+      </div>
+      <span class="fab"><i class="face"></i>어디 갈까?</span>
+    </div>
+    <ul class="note">
+      <li class="good">'일정 짜기'는 만드는 일, '어디 갈까?'는 고르는 일로 읽힌다.</li>
+      <li class="good">구름이가 말을 거는 모양이라 대화 진입이 자연스럽다.</li>
+      <li>코드 변경은 글자 두 곳뿐이다.</li>
+    </ul>
+  </section>
+
+  <!-- C: 하나로 합치기 -->
+  <section class="option">
+    <h2>C. 하나로 합치기 <span class="tag">설계 원안</span></h2>
+    <p>상단 AI 버튼을 없애고 떠 있는 버튼 하나만 둔다. 누르면 방식을 고른다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="me">나</span></div>
+      <div class="body">
+        <div class="make">
+          <span class="btn btn--wide">＋ 직접 만들기</span>
+        </div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월) · 0박 1일</small></div>
+        <div class="card"><b>서울 자주 가는 곳</b><small>8월 10일(월) · 0박 1일</small></div>
+        <div class="card"><b>제주 3박 4일</b><small>7월 3일(금) · 0박 1일</small></div>
+        <div class="card"><b>광주 주말 여행</b><small>8월 17일(월) · 0박 1일</small></div>
+        <div class="card"><b>부산 1박 2일</b><small>6월 2일(월) · 0박 1일</small></div>
+      </div>
+      <span class="fab"><i class="face"></i>AI에게 맡기기</span>
+    </div>
+    <ul class="note">
+      <li class="good">AI로 가는 길이 하나라 고를 것이 없다.</li>
+      <li class="bad">조건만 고르려는 사람도 대화 화면을 한 번 거친다.</li>
+      <li class="bad">AI 일정 만들기의 존재가 첫 화면에서 보이지 않는다.</li>
+    </ul>
+  </section>
+
+  <!-- D: 헤더로 옮기기 -->
+  <section class="option">
+    <h2>D. 헤더로 옮기기 <span class="tag">대안</span></h2>
+    <p>떠 있는 버튼을 없애고 상단 바에 AI 버튼을 넣는다.</p>
+    <div class="phone">
+      <div class="bar"><span class="sym">T</span>내 여행<span class="ai-in-bar">☁ AI</span><span class="me">나</span></div>
+      <div class="body">
+        <div class="make">
+          <span class="btn btn--ai">✦ AI 일정 만들기</span>
+          <span class="btn">＋ 직접 만들기</span>
+        </div>
+        <div class="card"><b>전주 한옥마을 2박</b><small>9월 7일(월) · 0박 1일</small></div>
+        <div class="card"><b>서울 자주 가는 곳</b><small>8월 10일(월) · 0박 1일</small></div>
+        <div class="card"><b>제주 3박 4일</b><small>7월 3일(금) · 0박 1일</small></div>
+        <div class="card"><b>광주 주말 여행</b><small>8월 17일(월) · 0박 1일</small></div>
+        <div class="card"><b>부산 1박 2일</b><small>6월 2일(월) · 0박 1일</small></div>
+      </div>
+    </div>
+    <ul class="note">
+      <li class="good">본문을 가리지 않는다.</li>
+      <li class="bad">헤더에 심볼·제목·AI·프로필 네 개가 경쟁한다.</li>
+      <li class="bad">한 손으로 쥐었을 때 가장 먼 자리다.</li>
+      <li class="bad">구름이를 56px로 넣을 자리가 없어 캐릭터가 사라진다.</li>
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>
