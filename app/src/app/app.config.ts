@@ -75,6 +75,9 @@ export const appConfig: ApplicationConfig = {
                 const path = (segments: { toString(): string }[]) =>
                   segments.map((s) => s.toString()).join('/');
                 if (path(from.url) === path(to.url)) {
+                  // 건너뛰면 finished가 AbortError로 거부된다. 받지 않으면
+                  // 정상 동작인데도 콘솔에 오류로 찍히므로 여기서 삼킨다.
+                  transition.finished.catch(() => undefined);
                   transition.skipTransition();
                 }
               },
