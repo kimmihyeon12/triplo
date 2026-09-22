@@ -55,11 +55,23 @@
 - 각 기능 작업에는 필요한 문서를 골라 읽는다. 분석 기록·도구 설치 이력 전체를 매번 필수 입력으로 넣지 않는다.
 - MD 파일 간 동기화는 자동이 아니다. 작업하는 에이전트가 직접 관련 원본을 수정하고 링크·명세를 검증한다.
 
+## 구름이 챗봇
+
+- [실제 채팅 AI 연결](../openspec/changes/connect-chat-ai/proposal.md): 실행/테스트 제공자 분리, 인증·응답 검증 및 배포 상태.
+
+- [AI 없는 채팅 명령 사용법](local-chat-commands.md): 일정 편집·조회·경비·되돌리기 명령과 지원 범위.
+
+- [AI 없는 미배치 날짜 배정](../openspec/changes/local-chat-assignment/proposal.md): 날짜 해석·확인·되돌리기 및 검증 기록.
+
+구름이 챗봇: [확정 시안과 적용 기록](design/references/cloud-chat-preview.md), [적용 OpenSpec](../openspec/changes/apply-cloud-chat-mascot/proposal.md). 미채택 캐릭터·생성 프롬프트 기록과 낡은 비교판은 정리했으며 최종 미리보기만 유지한다.
+
 ## 입체 기록 지도
 
 - [별도 복셀 지도 제안·설계·검증](../openspec/changes/add-voxel-visit-map/proposal.md): `/stats`의 기본 3D 지도 및 `/stats/details`의 상세 통계. 구 실험 지도 라우트와 파일은 삭제.
-- [Higgsfield 지도 참고 이미지와 적용 기록](design/references/map2-higgsfield.md): 이전 시도 보관용. 현재 map2는 사용자 첨부 원본을 직접 코드로 재현하며 생성물은 디자인 기준이 아니다.
+- 현재 지도는 사용자 첨부 원본을 코드로 재현한다. 현재 기준에서 제외된 Higgsfield 생성 이미지·프롬프트 기록은 2026-09-22 미사용 파일 정리에서 삭제했다.
 
 - [map2 방문 볼륨 구현 계획](superpowers/plans/2026-09-18-map2-visit-volume.md): 첨부 요청 적용 범위, 데이터 제약과 검증 순서.
 - [map2 맞물리는 지형·장소 마커 구현 계획](superpowers/plans/2026-09-19-map2-fitted-terrain.md): 현재 지도 전용 범위, 저장 좌표와 임시 선택, 실제 브라우저 검증.
-- 2026-09-21 비교 시안(`design/references/`의 `map-concepts` · `stats-entry-options` · `stats-banner-states` · `banner-thumb-options` · `region-badge-options`): 색·배치·배너 형태를 고르기 위해 만든 비교판이다. 고른 결과는 DESIGN.md와 코드에 반영했으며 이 파일들은 선택 근거 보관용이다. 여기 남은 다른 안은 현재 기준이 아니다.
+- 2026-09-21 지도·통계·배너·지역 배지 비교판 5개는 최종 선택이 코드와 DESIGN.md에 반영되어 2026-09-22 삭제했다. 최신 작업 중인 비교판과 실제 앱의 검증 자료는 유지한다.
+
+2026-09-22 미사용 파일 정리: 참조 없는 기본 파비콘·옛 로고, 대체된 지도 이미지·생성 기록·비교판, 오래된 output 캡처·리포트 등 44개(4,678,683바이트)를 삭제했다. 삭제 경로의 현재 참조가 없음을 확인하고 앱 운영 빌드를 통과했다. 구름이 2장·현재 로그인/지도 아이콘·최신 시안과 검증 자료는 유지한다. 기존 번들 크기 및 LoginPage 미사용 import 경고는 남는다.

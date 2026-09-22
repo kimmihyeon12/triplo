@@ -1,189 +1,27 @@
 /**
- * 국내 여행 지역 목록. 광역시·도와 그 아래 시·군을 담는다.
+ * 국내 여행 지역 목록. 2026-07-01 기준 시·군·구 230개다.
  *
  * 고정 목록을 쓰는 이유는 지명만 정확히 받기 위해서다. 자유 입력은 오타와
  * 표기 흔들림('강릉'/'강릉시'/'강릉 시')을 막을 수 없고, 장소 검색은 상호까지
  * 섞여 나와 지역 단위와 맞지 않는다.
  *
- * 행정구역이 바뀌면 이 파일을 고친다. 2026-09 기준이다.
+ * 목록의 원본은 지도가 읽는 경계 파일이며 `scripts/build-region-data.mjs`가
+ * `korea-regions.data.ts`를 만든다. 한쪽에서 생성하는 이유는 둘이 어긋나면
+ * 지도에 있는 지역이 목록에 없거나 그 반대가 되기 때문이다. 행정구역이
+ * 바뀌면 경계 파일을 갈고 스크립트를 다시 돌린다.
  */
-export interface KoreaRegion {
-  /** 표시할 이름. 중복되는 시·군은 상위 지역을 붙여 구분한다. */
-  readonly name: string;
-  /** 검색에 쓰는 정식 상위 지역. 예: 강원특별자치도 */
-  readonly province: string;
-  /** 후보 목록에 붙이는 짧은 표기. 예: 강원 */
-  readonly short: string;
-  /**
-   * 집계에 쓰는 고정 키. 예: 'gangwon-gangneung'
-   *
-   * 표시 이름 대신 코드를 쓰는 이유는 두 가지다. 지명이 바뀌어도 과거 기록이
-   * 끊기지 않고, '광주(경기)'처럼 화면에서 구분하려고 붙인 괄호가 키에
-   * 섞이지 않는다.
-   */
-  readonly code: string;
-  /** 시·도 코드. code의 앞부분과 같다. 예: 'gangwon' */
-  readonly provinceCode: string;
-}
+import { PROVINCE_DATA, REGION_DATA } from './korea-regions.data';
+import type { KoreaProvince, KoreaRegion } from './korea-regions.types';
 
-/**
- * 후보 옆에 붙일 짧은 이름. '강원특별자치도'처럼 긴 정식 명칭은 지명보다
- * 길어져 정작 봐야 할 지명이 묻힌다. 통용되는 두 글자 약칭으로 줄인다.
- */
-const SHORT_PROVINCE: Record<string, string> = {
-  서울특별시: '서울',
-  부산광역시: '부산',
-  대구광역시: '대구',
-  인천광역시: '인천',
-  광주광역시: '광주',
-  대전광역시: '대전',
-  울산광역시: '울산',
-  세종특별자치시: '세종',
-  경기도: '경기',
-  강원특별자치도: '강원',
-  충청북도: '충북',
-  충청남도: '충남',
-  전북특별자치도: '전북',
-  전라남도: '전남',
-  경상북도: '경북',
-  경상남도: '경남',
-  제주특별자치도: '제주',
-};
+export type { KoreaProvince, KoreaRegion };
 
-/** 시·도별 시·군 목록. 값은 표시 이름 그대로 쓴다. */
-const BY_PROVINCE: Record<string, readonly string[]> = {
-  서울특별시: ['서울'],
-  부산광역시: ['부산'],
-  대구광역시: ['대구'],
-  인천광역시: ['인천', '강화', '옹진'],
-  광주광역시: ['광주'],
-  대전광역시: ['대전'],
-  울산광역시: ['울산'],
-  세종특별자치시: ['세종'],
-  경기도: [
-    '수원', '성남', '고양', '용인', '부천', '안산', '안양', '남양주', '화성', '평택',
-    '의정부', '시흥', '파주', '광명', '김포', '군포', '광주(경기)', '이천', '양주', '오산',
-    '구리', '안성', '포천', '의왕', '하남', '여주', '동두천', '과천', '양평', '가평', '연천',
-  ],
-  강원특별자치도: [
-    '춘천', '원주', '강릉', '동해', '태백', '속초', '삼척', '홍천', '횡성', '영월',
-    '평창', '정선', '철원', '화천', '양구', '인제', '고성(강원)', '양양',
-  ],
-  충청북도: [
-    '청주', '충주', '제천', '보은', '옥천', '영동', '증평', '진천', '괴산', '음성', '단양',
-  ],
-  충청남도: [
-    '천안', '공주', '보령', '아산', '서산', '논산', '계룡', '당진', '금산', '부여',
-    '서천', '청양', '홍성', '예산', '태안',
-  ],
-  전북특별자치도: [
-    '전주', '군산', '익산', '정읍', '남원', '김제', '완주', '진안', '무주', '장수',
-    '임실', '순창', '고창', '부안',
-  ],
-  전라남도: [
-    '목포', '여수', '순천', '나주', '광양', '담양', '곡성', '구례', '고흥', '보성',
-    '화순', '장흥', '강진', '해남', '영암', '무안', '함평', '영광', '장성', '완도',
-    '진도', '신안',
-  ],
-  경상북도: [
-    '포항', '경주', '김천', '안동', '구미', '영주', '영천', '상주', '문경', '경산',
-    '의성', '청송', '영양', '영덕', '청도', '고령', '성주', '칠곡', '예천', '봉화',
-    '울진', '울릉',
-  ],
-  경상남도: [
-    '창원', '진주', '통영', '사천', '김해', '밀양', '거제', '양산', '의령', '함안',
-    '창녕', '고성(경남)', '남해', '하동', '산청', '함양', '거창', '합천',
-  ],
-  제주특별자치도: ['제주', '서귀포'],
-};
+/** 시·도 16개. 2026-07-01에 광주와 전남이 전남광주통합특별시로 합쳐졌다. */
+export const KOREA_PROVINCES = PROVINCE_DATA;
 
-/** 시·도 코드. 정식 명칭을 키로 쓴다. */
-const PROVINCE_CODE: Record<string, string> = {
-  서울특별시: 'seoul',
-  부산광역시: 'busan',
-  대구광역시: 'daegu',
-  인천광역시: 'incheon',
-  광주광역시: 'gwangju',
-  대전광역시: 'daejeon',
-  울산광역시: 'ulsan',
-  세종특별자치시: 'sejong',
-  경기도: 'gyeonggi',
-  강원특별자치도: 'gangwon',
-  충청북도: 'chungbuk',
-  충청남도: 'chungnam',
-  전북특별자치도: 'jeonbuk',
-  전라남도: 'jeonnam',
-  경상북도: 'gyeongbuk',
-  경상남도: 'gyeongnam',
-  제주특별자치도: 'jeju',
-};
-
-/**
- * 시·군 이름의 로마자 표기. 표시 이름에서 구분용 괄호를 뗀 값을 키로 쓴다.
- * 같은 지명이 여러 도에 있어도 코드는 시·도 코드와 합쳐져 겹치지 않는다.
- */
-const CITY_ROMAN: Record<string, string> = {
-  서울: 'seoul', 부산: 'busan', 대구: 'daegu', 인천: 'incheon', 광주: 'gwangju',
-  대전: 'daejeon', 울산: 'ulsan', 세종: 'sejong', 강화: 'ganghwa', 옹진: 'ongjin',
-  수원: 'suwon', 성남: 'seongnam', 고양: 'goyang', 용인: 'yongin', 부천: 'bucheon',
-  안산: 'ansan', 안양: 'anyang', 남양주: 'namyangju', 화성: 'hwaseong', 평택: 'pyeongtaek',
-  의정부: 'uijeongbu', 시흥: 'siheung', 파주: 'paju', 광명: 'gwangmyeong', 김포: 'gimpo',
-  군포: 'gunpo', 이천: 'icheon', 양주: 'yangju', 오산: 'osan', 구리: 'guri',
-  안성: 'anseong', 포천: 'pocheon', 의왕: 'uiwang', 하남: 'hanam', 여주: 'yeoju',
-  동두천: 'dongducheon', 과천: 'gwacheon', 양평: 'yangpyeong', 가평: 'gapyeong', 연천: 'yeoncheon',
-  춘천: 'chuncheon', 원주: 'wonju', 강릉: 'gangneung', 동해: 'donghae', 태백: 'taebaek',
-  속초: 'sokcho', 삼척: 'samcheok', 홍천: 'hongcheon', 횡성: 'hoengseong', 영월: 'yeongwol',
-  평창: 'pyeongchang', 정선: 'jeongseon', 철원: 'cheorwon', 화천: 'hwacheon', 양구: 'yanggu',
-  인제: 'inje', 고성: 'goseong', 양양: 'yangyang',
-  청주: 'cheongju', 충주: 'chungju', 제천: 'jecheon', 보은: 'boeun', 옥천: 'okcheon',
-  영동: 'yeongdong', 증평: 'jeungpyeong', 진천: 'jincheon', 괴산: 'goesan', 음성: 'eumseong',
-  단양: 'danyang',
-  천안: 'cheonan', 공주: 'gongju', 보령: 'boryeong', 아산: 'asan', 서산: 'seosan',
-  논산: 'nonsan', 계룡: 'gyeryong', 당진: 'dangjin', 금산: 'geumsan', 부여: 'buyeo',
-  서천: 'seocheon', 청양: 'cheongyang', 홍성: 'hongseong', 예산: 'yesan', 태안: 'taean',
-  전주: 'jeonju', 군산: 'gunsan', 익산: 'iksan', 정읍: 'jeongeup', 남원: 'namwon',
-  김제: 'gimje', 완주: 'wanju', 진안: 'jinan', 무주: 'muju', 장수: 'jangsu',
-  임실: 'imsil', 순창: 'sunchang', 고창: 'gochang', 부안: 'buan',
-  목포: 'mokpo', 여수: 'yeosu', 순천: 'suncheon', 나주: 'naju', 광양: 'gwangyang',
-  담양: 'damyang', 곡성: 'gokseong', 구례: 'gurye', 고흥: 'goheung', 보성: 'boseong',
-  화순: 'hwasun', 장흥: 'jangheung', 강진: 'gangjin', 해남: 'haenam', 영암: 'yeongam',
-  무안: 'muan', 함평: 'hampyeong', 영광: 'yeonggwang', 장성: 'jangseong', 완도: 'wando',
-  진도: 'jindo', 신안: 'sinan',
-  포항: 'pohang', 경주: 'gyeongju', 김천: 'gimcheon', 안동: 'andong', 구미: 'gumi',
-  영주: 'yeongju', 영천: 'yeongcheon', 상주: 'sangju', 문경: 'mungyeong', 경산: 'gyeongsan',
-  의성: 'uiseong', 청송: 'cheongsong', 영양: 'yeongyang', 영덕: 'yeongdeok', 청도: 'cheongdo',
-  고령: 'goryeong', 성주: 'seongju', 칠곡: 'chilgok', 예천: 'yecheon', 봉화: 'bonghwa',
-  울진: 'uljin', 울릉: 'ulleung',
-  창원: 'changwon', 진주: 'jinju', 통영: 'tongyeong', 사천: 'sacheon', 김해: 'gimhae',
-  밀양: 'miryang', 거제: 'geoje', 양산: 'yangsan', 의령: 'uiryeong', 함안: 'haman',
-  창녕: 'changnyeong', 남해: 'namhae', 하동: 'hadong', 산청: 'sancheong', 함양: 'hamyang',
-  거창: 'geochang', 합천: 'hapcheon',
-  제주: 'jeju', 서귀포: 'seogwipo',
-};
-
-/** 표시 이름에서 구분용 괄호를 뗀다. '광주(경기)' → '광주' */
-function bareName(name: string): string {
-  return name.replace(/\(.*\)$/, '');
-}
-
-/** 검색·선택에 쓰는 평평한 목록. */
-export const KOREA_REGIONS: readonly KoreaRegion[] = Object.entries(BY_PROVINCE).flatMap(
-  ([province, names]) =>
-    names.map((name) => {
-      const provinceCode = PROVINCE_CODE[province] ?? province;
-      const city = CITY_ROMAN[bareName(name)] ?? bareName(name);
-      return {
-        name,
-        province,
-        short: SHORT_PROVINCE[province] ?? province,
-        code: `${provinceCode}-${city}`,
-        provinceCode,
-      };
-    }),
-);
+/** 검색·선택에 쓰는 평평한 목록. 시·군·구 230개다. */
+export const KOREA_REGIONS = REGION_DATA;
 
 const BY_CODE = new Map(KOREA_REGIONS.map((r) => [r.code, r]));
-const BY_NAME = new Map(KOREA_REGIONS.map((r) => [r.name, r]));
 
 /** 코드로 지역을 찾는다. 없으면 null. */
 export function findRegionByCode(code: string): KoreaRegion | null {
@@ -191,12 +29,35 @@ export function findRegionByCode(code: string): KoreaRegion | null {
 }
 
 /**
+ * 이름으로 지역을 찾는 색인.
+ *
+ * 화면 이름('중구(서울)'), 행정구역 이름('중구'), 접미사를 뗀 이름('여수')을
+ * 모두 담는다. 접미사 없는 이름을 받는 까닭은 저장된 여행 때문이다. 예전
+ * 목록은 '여수'였고 지금은 '여수시'라, 접미사를 붙인 이름만 보면 예전 여행이
+ * 통계에서 사라진다(2026-09-22 확인).
+ *
+ * 이름이 겹치는 '중구'는 먼저 담긴 하나만 남는다. 겹치는 이름으로 찾으면
+ * 어느 곳인지 확정할 수 없으므로 그런 이름은 시·도를 함께 받는 쪽을 쓴다.
+ */
+const BY_NAME = new Map<string, KoreaRegion>();
+for (const region of KOREA_REGIONS) {
+  BY_NAME.set(region.label, region);
+  if (!BY_NAME.has(region.name)) BY_NAME.set(region.name, region);
+}
+for (const region of KOREA_REGIONS) {
+  // 접미사를 뗀 이름은 나중에 담는다. 정식 이름이 먼저 자리를 잡아야
+  // '중구'로 찾았을 때 '중구'인 곳이 나오지 접미사를 뗀 딴 곳이 나오지 않는다.
+  const bare = region.name.replace(/(특별자치)?[시군구]$/, '');
+  if (bare.length >= 2 && !BY_NAME.has(bare)) BY_NAME.set(bare, region);
+}
+
+/**
  * 시·도 이름으로 찾는 보조 색인.
  *
- * 정식 명칭('광주광역시')과 짧은 이름('전남') 양쪽을 담는다. 여행이 시·군이
- * 아니라 광역시·도를 통째로 담는 경우가 있고, 그 이름이 시·군 목록에 없어
- * 통계에서 미분류로 떨어졌다(2026-09-21 확인). 대표 시·군을 돌려주되 통계는
- * provinceCode만 쓰므로 어느 시·군이 뽑히는지는 결과에 영향을 주지 않는다.
+ * 정식 명칭('전남광주통합특별시')과 짧은 이름('전남광주') 양쪽을 담는다.
+ * 여행이 시·군·구가 아니라 시·도를 통째로 담는 경우가 있고, 그 이름이
+ * 목록에 없어 통계에서 미분류로 떨어졌다(2026-09-21 확인). 그 시·도의 첫
+ * 지역을 돌려준다.
  */
 const BY_PROVINCE_NAME = new Map<string, KoreaRegion>();
 for (const region of KOREA_REGIONS) {
@@ -205,36 +66,77 @@ for (const region of KOREA_REGIONS) {
 }
 
 /**
+ * 없어진 시·도 이름. 저장된 여행이 옛 이름을 그대로 담고 있다.
+ *
+ * 2026-07-01에 광주광역시와 전라남도가 전남광주통합특별시가 되었고, 그 전에
+ * 전라북도·강원도·제주도도 이름이 바뀌었다. 옛 이름을 받지 않으면 그 여행이
+ * 통계에서 미분류로 빠진다(2026-09-22 확인).
+ */
+const LEGACY_PROVINCE_NAME: Record<string, string> = {
+  광주광역시: '12', 광주: '12', 전라남도: '12', 전남: '12',
+  전라북도: '52', 강원도: '51', 제주도: '50',
+};
+for (const [name, code] of Object.entries(LEGACY_PROVINCE_NAME)) {
+  if (BY_PROVINCE_NAME.has(name)) continue;
+  const one = KOREA_REGIONS.find((r) => r.provinceCode === code);
+  if (one) BY_PROVINCE_NAME.set(name, one);
+}
+
+/**
  * 표시 이름으로 지역을 찾는다. 없으면 null.
  *
- * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 시·군 이름을 먼저 보고
- * 없으면 시·도 이름으로 찾는다. 순서를 지키는 이유는 '광주'처럼 광역시와
- * 경기도 시·군에 같은 이름이 있기 때문이다.
+ * 코드를 갖지 않은 예전 여행을 집계할 때 쓴다. 행정구역 이름을 먼저 보고
+ * 없으면 시·도 이름으로 찾는다. 순서를 지키는 이유는 '광주'처럼 시·도와
+ * 시·군에 같은 이름이 있기 때문이다.
  */
 export function findRegionByName(name: string): KoreaRegion | null {
   const key = name.trim();
   return BY_NAME.get(key) ?? BY_PROVINCE_NAME.get(key) ?? null;
 }
 
-/** 지역 코드에서 시·도 코드를 뗀다. 'gangwon-gangneung' → 'gangwon' */
+/**
+ * 이 이름이 시·군·구를 정확히 가리키는지 본다.
+ *
+ * '서울'처럼 시·도 이름만 있으면 어느 자치구인지 알 수 없다. 그런데도 그
+ * 시·도의 첫 지역을 집계 키로 쓰면, 주소 없는 장소가 모두 강남구에 다녀온
+ * 것으로 표시된다(2026-09-22 확인). 시·도 단위로 셀 때는 어느 지역이 뽑히든
+ * 상관없었지만 시·군·구 단위에서는 틀린 값이 된다.
+ */
+export function isExactRegionName(name: string): boolean {
+  return BY_NAME.has(name.trim());
+}
+
+/** 이 이름이 가리키는 시·도 번호. 시·도 이름일 때만 값이 나온다. */
+export function provinceCodeByName(name: string): string | null {
+  const key = name.trim();
+  if (BY_NAME.has(key)) return null;
+  return BY_PROVINCE_NAME.get(key)?.provinceCode ?? null;
+}
+
+/** 지역 코드에서 시·도 번호를 뗀다. '12_여수시' → '12' */
 export function provinceCodeOf(code: string): string {
-  const cut = code.indexOf('-');
+  const cut = code.indexOf('_');
   return cut === -1 ? code : code.slice(0, cut);
 }
 
-/** 시·도 코드에 붙일 짧은 이름. 지도 라벨과 통계 집계가 같은 표를 쓴다. */
+/** 시·도 번호에 붙일 짧은 이름. */
 export const PROVINCE_SHORT_NAME: Record<string, string> = Object.fromEntries(
-  Object.entries(PROVINCE_CODE).map(([province, code]) => [code, SHORT_PROVINCE[province]]),
+  KOREA_PROVINCES.map((p) => [p.code, p.short]),
+);
+
+/** 지역 코드에 붙일 화면 이름. 지도 라벨과 통계 집계가 같은 표를 쓴다. */
+export const REGION_LABEL: Record<string, string> = Object.fromEntries(
+  KOREA_REGIONS.map((r) => [r.code, r.label]),
 );
 
 /**
  * 입력한 글자로 지역을 찾는다. 세 단계로 나누어 담는다.
  *
- * 1. 지명이 그 글자로 시작하는 곳: '강' → 강릉, 강진, 강화
- * 2. 지명 안에 그 글자가 들어 있는 곳: '천' → 춘천, 이천
- * 3. 도 이름이 걸린 곳: '강원' → 강원도 시·군 전체
+ * 1. 지명이 그 글자로 시작하는 곳: '강' → 강릉시, 강진군, 강화군
+ * 2. 지명 안에 그 글자가 들어 있는 곳: '천' → 춘천시, 이천시
+ * 3. 시·도 이름이 걸린 곳: '강원' → 강원 시·군 전체
  *
- * 도 이름은 맨 뒤에 둔다. 앞에 섞으면 '강'을 쳤을 때 이름에 '강'이 없는
+ * 시·도 이름은 맨 뒤에 둔다. 앞에 섞으면 '강'을 쳤을 때 이름에 '강'이 없는
  * 춘천·원주가 위로 올라와 무엇을 찾았는지 알기 어렵다.
  */
 export function searchRegions(query: string, limit = 8): readonly KoreaRegion[] {
@@ -244,11 +146,14 @@ export function searchRegions(query: string, limit = 8): readonly KoreaRegion[] 
   const contains: KoreaRegion[] = [];
   const byProvince: KoreaRegion[] = [];
   for (const region of KOREA_REGIONS) {
-    // 구분용 괄호('고성(강원)')는 검색 대상이 아니다. '강'을 쳤을 때
-    // 이름에 '강'이 없는 고성이 끼어들면 안 된다.
-    const name = region.name.replace(/\(.*\)$/, '').toLowerCase();
-    if (name.startsWith(q)) starts.push(region);
-    else if (name.includes(q)) contains.push(region);
+    /*
+      '시'·'군'·'구' 접미사를 뗀 이름으로도 맞춘다. 사용자는 '여수'까지만
+      치지 '여수시'라고 치지 않는다. 구분용 괄호는 검색 대상이 아니다.
+    */
+    const full = region.name.toLowerCase();
+    const bare = full.replace(/(특별자치)?[시군구]$/, '');
+    if (bare.startsWith(q) || full.startsWith(q)) starts.push(region);
+    else if (bare.includes(q)) contains.push(region);
     else if (region.province.toLowerCase().includes(q) || region.short.toLowerCase().includes(q))
       byProvince.push(region);
   }

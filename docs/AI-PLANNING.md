@@ -116,9 +116,13 @@ Flash-Lite가 하루 500회에 1.2초로 가장 실용적이라 이것을 골랐
 - 실패는 연결 실패·시간 초과·하루 한도 초과·빈 결과로 나눠 알리고 입력 조건을 보존한다. 샘플로 바꿔치지 않는다.
 - 테스트 앱은 외부 호출 없는 `FixtureAiProvider`로 검증하고 실제 호출 검사는 별도로 기록한다.
 
-## 대화형 챗봇 (2026-09-17 기획, 미구현)
+## 대화형 챗봇 (2026-09-22 실제 AI 연결)
 
-대화형 여행 탐색 챗봇도 같은 모델 `gemini-3.5-flash-lite`를 쓴다. 대화는 한 여행을 계획하는 동안 여러 번 호출되므로 무료 하루 500회 한도가 상위 모델의 품질 차이보다 중요하다. 상위 Flash는 하루 20회라 대화에 쓸 수 없다.
+실행 앱은 `EdgeChatProvider`가 `ai-chat`을 호출하며 테스트·시안 환경만 `FixtureChatProvider`를 쓴다. 로컬 편집·계산·랜덤 여행지는 AI 호출 전 처리한다. 모델은 기존 `GEMINI_MODEL` 설정을 재사용하고 미설정 시 `gemini-3.5-flash-lite`를 사용한다. 실제 모델별 한도는 공급자 설정에 따르며 고정 무료 횟수를 보장하지 않는다.
+
+배포: `npx supabase functions deploy ai-chat --project-ref wslqgfetdwcmqeztixvs`. 서버의 기존 `GEMINI_API_KEY`를 사용한다. 새 응답 계약은 `supabase/functions/ai-chat/contract.ts`에서 서버·앱이 함께 검증한다. 입력 크기와 문맥 개수 제한, 45초 모델 시간 제한, 인증·한도·실패 안내를 제공한다. 검증·배포 상태는 [OpenSpec 작업](../openspec/changes/connect-chat-ai/tasks.md)에 기록한다. 서버의 사용자별 영구 사용량 집계는 별도 미구현 사항이다.
+
+2026-09-22 `ai-chat` v1 배포 완료: ACTIVE, verify_jwt=true, Gemini 키 등록 이름 확인, 인증 없는 POST 401 확인. 로그인 사용자로 실제 모델 답변을 받는 라이브 왕복은 미검증이다. 실행 앱 변경은 로컬 소스·빌드에 반영했으며 프런트엔드 호스팅의 별도 재배포는 수행하지 않았다.
 
 호출 경로는 `ai-plan`과 별개의 Edge Function `ai-chat`으로 둔다. 지시문·응답 형식·검증 규칙이 다르고 한쪽 배포가 다른 쪽을 멈추게 하지 않아야 한다. 키 보관과 로그인 확인 방식은 같다.
 

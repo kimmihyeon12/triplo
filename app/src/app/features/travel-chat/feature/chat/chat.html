@@ -1,0 +1,23 @@
+<header class="flex flex-none items-center gap-2.5 border-b border-border bg-panel px-4 py-2">
+  <app-companion-face [mood]="'talking'" [size]="48" [decorative]="true" />
+  <div class="min-w-0 flex-1">
+    <h2 class="text-15 font-bold text-ink">여행 친구 구름이</h2>
+    <p class="text-12 text-ink-3">함께 정리하는 다음 여행</p>
+  </div>
+  <button appButton class="btn btn--sm shrink-0 text-12!" type="button" [disabled]="resetting()" (click)="newChat()" data-testid="chat-new">새 대화</button>
+</header>
+<app-chat-thread
+  [messages]="store.messages()"
+  [chips]="store.chips()"
+  [pending]="store.pending()"
+  [error]="store.error()"
+  [trip]="store.trip()"
+  [appliedMessageId]="appliedMessageId()"
+  [dismissedIds]="dismissedIds()"
+  [turnsLeft]="store.turnsLeft()"
+  (send)="send($event)"
+  (apply)="apply($event)"
+  (dismissDraft)="dismissDraft($event)"
+  (undo)="undo()"
+  (cancel)="store.cancel()"
+/>

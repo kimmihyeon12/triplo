@@ -1,5 +1,7 @@
 # 여행 앱 아키텍처·상태관리 기준
 
+대화 AI(2026-09-22): 실행 앱의 `EdgeChatProvider`는 인증된 `AuthStore.callFunction('ai-chat')`을 사용한다. 서버 프롬프트·모델 키는 `supabase/functions/ai-chat/`와 Edge 비밀값에 두며, 순수 응답 계약 `contract.ts`를 서버와 클라이언트가 공유한다. 로컬 명령은 제공자 호출 전에 끝내고 테스트·시안의 고정 응답은 별도 유지한다. 장소 확인과 저장 승인 흐름은 기존 채팅 스토어에 남는다.
+
 현재 구현은 Angular 21·NgRx Signals·Zoneless와 기능별 구조다. 실제 패치 버전은 app/package.json과 잠금 파일, 검증 기록은 OpenSpec tasks 9·11절을 따른다. 제품 요구는 기획안·OpenSpec, 시각 규칙은 docs/design/DESIGN.md에서 관리한다.
 
 ## 1. 선택과 근거

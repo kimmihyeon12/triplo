@@ -1,0 +1,12 @@
+<!-- 크롭과 확대 없이 스카프와 발까지 전신을 표시한다. -->
+<img
+  class="block object-contain"
+  [src]="src()"
+  [attr.alt]="label() ?? ''"
+  [attr.aria-hidden]="decorative() ? 'true' : null"
+  [style.width.px]="size()"
+  [style.height.px]="size()"
+  [attr.width]="size()"
+  [attr.height]="size()"
+  decoding="async"
+/>

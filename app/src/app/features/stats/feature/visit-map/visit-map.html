@@ -1,4 +1,4 @@
-<section class="mx-auto max-w-(--content-max) px-4 pb-8 pt-4 md:px-6 md:pt-6" aria-label="대한민국 방문 지도">
+﻿<section class="mx-auto max-w-(--content-max) px-4 pb-8 pt-4 md:px-6 md:pt-6" aria-label="대한민국 방문 지도">
   <header class="mb-5">
     <h2 class="text-22 font-bold leading-snug tracking-tight">여행이 쌓인 곳</h2>
     <p class="mt-2 text-14 leading-relaxed text-ink-2">다녀온 지역과 방문 기록을 한눈에 확인하세요.</p>
@@ -7,21 +7,23 @@
     <div class="min-w-0 overflow-hidden rounded-panel bg-panel shadow-panel">
       @if (state() === 'ready') {
       <div class="flex items-center gap-4 border-b border-border px-4 py-3" aria-label="방문 통계 요약" data-testid="stats-summary">
-        <span class="flex items-baseline gap-1.5">
-          <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ visitedRegions() }}</strong>
-          <span class="text-12 text-ink-3">/ {{ allRegions().length }}개 시·도</span>
-        </span>
         <!--
-          집계 단위는 여행에 담긴 장소·숙소의 개수다. 여행 횟수가 아니다.
-          오른쪽 패널의 지역별 값과 헷갈리지 않도록 '전국'을 붙인다.
+          왼쪽은 다녀온 행정구역 수, 오른쪽은 일정에 담긴 장소·숙소 수다.
+          단위가 다른 두 숫자라 '지역'과 '장소'를 각각 적는다. 예전에는
+          오른쪽이 '전국 49곳'이라 무엇을 센 값인지 읽히지 않았다.
         -->
+        <span class="flex items-baseline gap-1.5">
+          <span class="text-12 text-ink-3">다녀온 지역</span>
+          <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ visitedRegions() }}</strong>
+          <span class="text-12 text-ink-3">/ {{ allRegions().length }}</span>
+        </span>
         <span class="ml-auto flex items-baseline gap-1.5">
-          <span class="text-12 text-ink-3">전국</span>
+          <span class="text-12 text-ink-3">담은 장소</span>
           <strong class="text-17 font-bold tabular-nums">{{ total() | number }}</strong>
           <span class="text-12 text-ink-3">곳</span>
         </span>
       </div>
-      } @else { <div class="border-b border-border px-4 py-3 text-13 text-ink-3">대한민국 · 시·도별 방문 기록</div> }
+      } @else { <div class="border-b border-border px-4 py-3 text-13 text-ink-3">대한민국 · 시·군·구별 방문 기록</div> }
       <!--
         지역을 고르기 전에는 지도가 화면의 주인공이므로 크게 둔다. 고른 뒤에는
         오른쪽 기록이 길어지므로 조금 줄여 둘의 높이를 맞춘다.
@@ -53,13 +55,20 @@
                   [attr.aria-pressed]="selectedMarker() === label.id"
                   (click)="activateMarker(label.id)"
                 >
+                  <!--
+                    이름표는 이웃과 겹치면 가린다. 점은 그대로 남아 어디를
+                    다녀왔는지 보인다. 확대하면 이름이 나타난다.
+                  -->
+                  @if (!label.labelHidden) {
+                    <span
+                      class="rounded-pill px-2 py-0.5 text-12 font-semibold shadow-panel"
+                      [style.background]="selectedMarker() === label.id ? markerInk(label) : 'var(--color-panel)'"
+                      [style.color]="selectedMarker() === label.id ? 'var(--color-panel)' : markerInk(label)"
+                    >{{ label.name }}</span>
+                  }
                   <span
-                    class="rounded-pill px-2 py-0.5 text-12 font-semibold shadow-panel"
-                    [style.background]="selectedMarker() === label.id ? markerInk(label) : 'var(--color-panel)'"
-                    [style.color]="selectedMarker() === label.id ? 'var(--color-panel)' : markerInk(label)"
-                  >{{ label.name }}</span>
-                  <span
-                    class="mt-0.5 block size-2 rounded-pill ring-2 ring-panel"
+                    class="block size-2 rounded-pill ring-2 ring-panel"
+                    [style.margin-top.px]="label.labelHidden ? 0 : 2"
                     [style.background]="markerInk(label)"
                     aria-hidden="true"
                   ></span>
@@ -67,12 +76,13 @@
               </div>
             }
           </div>
-          <div class="absolute right-3 top-3 grid gap-2" role="group" aria-label="지도 조작">
+          <!-- 조작 버튼은 마커보다 위에 둔다. 마커가 덮으면 누를 수 없다. -->
+          <div class="absolute right-3 top-3 z-10 grid gap-2" role="group" aria-label="지도 조작">
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="방문 블록 레이어" [attr.aria-pressed]="layers()" (click)="toggleLayers()"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></svg></button>
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="현재 위치 지역 보기" [disabled]="locating()" (click)="locate()"><app-icon name="place" [size]="20"/></button>
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="선택 지역에 초점 맞추기" (click)="focus()"><app-icon name="search" [size]="20"/></button>
           </div>
-          <div class="absolute bottom-3 right-3 grid gap-1" role="group" aria-label="지도 확대와 초기화">
+          <div class="absolute bottom-3 right-3 z-10 grid gap-1" role="group" aria-label="지도 확대와 초기화">
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="지도 확대" (click)="zoom(1.3)"><app-icon name="plus" [size]="19"/></button>
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="지도 축소" (click)="zoom(0.77)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/></svg></button>
             <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="지도 시점 초기화" (click)="reset()"><app-icon name="refresh" [size]="18"/></button>
@@ -81,7 +91,11 @@
           @if (!layers()) {
             <p class="absolute bottom-4 left-4 text-12 text-ink-3">기본 지형 보기</p>
           } @else if (total()) {
-            <p class="absolute bottom-4 left-4 rounded-pill bg-panel/85 px-2.5 py-1 text-12 font-medium text-ink-2 shadow-panel backdrop-blur-sm">전국의 <span class="tabular-nums text-accent-deep">{{ coverage() }}%</span></p>
+            <!--
+              230개 기준이라 초반 커버리지는 2~3%다. 퍼센트를 앞세우면 다녀온
+              곳이 있어도 '거의 못 갔다'로만 읽히므로 센 수를 먼저 보여준다.
+            -->
+            <p class="absolute bottom-4 left-4 rounded-pill bg-panel/85 px-2.5 py-1 text-12 font-medium text-ink-2 shadow-panel backdrop-blur-sm"><span class="tabular-nums text-accent-deep">{{ visitedRegions() }}</span>개 지역 · 전국의 <span class="tabular-nums">{{ coverage() }}%</span></p>
           }
         }
         @if (state() === 'loading') { <div class="absolute inset-0 flex items-center justify-center gap-2 bg-ground-2 text-13 text-ink-2" role="status"><app-spinner/> 지도를 불러오는 중…</div> }
@@ -124,20 +138,24 @@
     <div class="grid min-w-0 gap-4">
     <aside class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-selection" aria-label="선택 지역 방문 기록">
       @if (selected(); as code) {
-        <div class="flex items-start justify-between gap-3">
-          <div aria-live="polite">
-            <h3 class="text-22 font-bold leading-tight">{{ names[code] }}</h3>
-            <!-- 0곳은 성과가 아니므로 주 동작색으로 강조하지 않는다. -->
-            @if (selectedCount()) {
-              <p class="mt-1.5 flex items-baseline gap-1.5">
-                <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ selectedCount() | number }}</strong>
-                <span class="text-13 text-ink-3">곳 방문</span>
-              </p>
-            } @else {
-              <p class="mt-1.5 text-13 text-ink-3">아직 다녀오지 않은 지역이에요</p>
-            }
+        <!--
+          닫기 버튼은 제목과 같은 줄에 둔다. 바깥을 items-start로 두면 44px
+          버튼이 맨 위에 붙어 22px 제목과 중심이 어긋난다.
+        -->
+        <div aria-live="polite">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="min-w-0 truncate text-22 font-bold leading-tight">{{ names[code] }}</h3>
+            <button appButton type="button" class="-mr-2 w-11 flex-none border-transparent! px-0!" aria-label="지역 선택 해제" (click)="clearSelection()"><app-icon name="x"/></button>
           </div>
-          <button appButton type="button" class="w-11 border-transparent! px-0!" aria-label="지역 선택 해제" (click)="clearSelection()"><app-icon name="x"/></button>
+          <!-- 0곳은 성과가 아니므로 주 동작색으로 강조하지 않는다. -->
+          @if (selectedCount()) {
+            <p class="mt-1 flex items-baseline gap-1.5">
+              <strong class="text-17 font-bold tabular-nums text-accent-deep">{{ selectedCount() | number }}</strong>
+              <span class="text-13 text-ink-3">곳 방문</span>
+            </p>
+          } @else {
+            <p class="mt-1 text-13 text-ink-3">아직 다녀오지 않은 지역이에요</p>
+          }
         </div>
         @if (detailState() === 'loading') { <p class="mt-6 flex items-center gap-2 text-13" role="status"><app-spinner/> 방문 기록을 불러오는 중…</p> }
         @if (detailState() === 'error') { <p class="mt-5 text-13" role="alert">방문 기록을 읽지 못했어요.</p><button appButton type="button" class="mt-2" (click)="select(code)">기록 다시 불러오기</button> }
@@ -204,11 +222,14 @@
               </li>
             }
           </ul>
+          <!--
+            다섯 곳까지는 위 목록에 다 나온다. 그때도 '전체 보기'를 띄우면
+            눌러도 같은 것만 보여 누를 이유가 없다. 넘칠 때만 낸다.
+          -->
           @if (places().length > 5) {
             <p class="mt-2 text-12 text-ink-3">최근 5곳만 보여요. 나머지 <span class="tabular-nums">{{ places().length - 5 }}</span>곳은 전체 보기에서 확인할 수 있어요.</p>
+            <a [routerLink]="['/stats/details']" [queryParams]="{ region: code }" class="mt-4 flex min-h-11 items-center justify-between rounded-control text-13 font-semibold text-accent-deep">지역 기록 전체 보기<app-icon name="arrow-right" [size]="17"/></a>
           }
-          <a [routerLink]="['/stats/details']" [queryParams]="{ region: code }" class="mt-4 flex min-h-11 items-center justify-between rounded-control text-13 font-semibold text-accent-deep">{{ code === 'seoul' ? '서울 구별 통계 보기' : '지역 기록 전체 보기' }}<app-icon name="arrow-right" [size]="17"/></a>
-          <p class="mt-2 text-12 leading-relaxed text-ink-2">전국 지도는 시·도 단위예요. 구별 보기는 서울 통계에서 지원해요.</p>
         }
       } @else if (total()) {
         <!--
@@ -219,9 +240,9 @@
         <h3 class="mt-1.5 text-17 font-semibold">어떤 여행이 쌓였을까요?</h3>
         <p class="mt-2 text-14 leading-relaxed text-ink-2">지도나 아래 목록에서 지역을 누르면 월별 방문과 최근 다녀온 장소를 볼 수 있어요.</p>
         <ul class="mt-4 flex flex-wrap gap-1.5">
-          @for (region of visitedList().slice(0, 4); track region.regionCode) {
+          @for (region of visitedList().slice(0, 4); track region.key) {
             <li>
-              <button type="button" class="flex min-h-9 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
+              <button type="button" class="flex min-h-11 items-center gap-1.5 rounded-pill border border-border px-2.5 text-12 font-medium hover:border-border-strong hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">
                 <i class="size-2 rounded-pill" [style.background]="color(region.visitCount)" aria-hidden="true"></i>
                 {{ region.name }}
                 <span class="tabular-nums text-ink-3">{{ region.visitCount }}</span>
@@ -286,10 +307,10 @@
       <section class="min-w-0 rounded-panel bg-panel p-5 shadow-panel" data-testid="map2-regions" aria-label="지역별 방문 횟수">
         <div class="flex items-baseline justify-between gap-2">
           <h3 class="text-14 font-semibold">다녀온 지역</h3>
-          <span class="text-12 tabular-nums text-ink-3">{{ visitedRegions() }} / {{ allRegions().length }}곳</span>
+          <span class="text-12 tabular-nums text-ink-3">{{ visitedList().length }}곳</span>
         </div>
         <ul class="mt-2 divide-y divide-border">
-          @for (region of visitedList(); track region.regionCode) {
+          @for (region of visitedList(); track region.key) {
             <li>
               <!--
                 선택은 행을 칠하지 않고 왼쪽 세로 막대로 표시한다. 배경을 칠하면
@@ -319,13 +340,35 @@
           </ul>
         }
 
-        @if (unvisitedList().length) {
-          <h4 class="mt-5 text-12 font-semibold text-ink-3">아직 안 간 곳 <span class="tabular-nums">{{ unvisitedList().length }}</span>곳</h4>
-          <div class="mt-2 flex flex-wrap gap-1.5">
-            @for (region of unvisitedList(); track region.regionCode) {
-              <button type="button" class="min-h-9 rounded-pill border border-border px-2.5 text-12 text-ink-3 hover:border-border-strong hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">{{ region.name }}</button>
+        <!--
+          안 간 곳은 220곳이 넘는다. 칩으로 한꺼번에 깔면 목록의 대부분을
+          차지해 실제 기록이 묻히므로 시·도로 접어 둔다. 하나씩 펼쳐 본다.
+        -->
+        @if (unvisitedCount()) {
+          <h4 class="mt-5 text-12 font-semibold text-ink-3">아직 안 간 곳 <span class="tabular-nums">{{ unvisitedCount() }}</span>곳</h4>
+          <ul class="mt-2 divide-y divide-border">
+            @for (group of unvisitedByProvince(); track group.code) {
+              <li>
+                <button
+                  type="button"
+                  class="flex min-h-11 w-full items-center gap-2 py-1.5 text-left text-13 text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
+                  [attr.aria-expanded]="openProvince() === group.code"
+                  (click)="toggleProvince(group.code)"
+                >
+                  <span class="min-w-0 flex-1 truncate">{{ group.name }}</span>
+                  <span class="text-12 tabular-nums text-ink-3">{{ group.regions.length }}곳</span>
+                  <app-icon class="flex-none text-ink-3" [name]="openProvince() === group.code ? 'arrow-down' : 'chevron-right'" [size]="15"/>
+                </button>
+                @if (openProvince() === group.code) {
+                  <div class="flex flex-wrap gap-1.5 pb-3">
+                    @for (region of group.regions; track region.regionCode) {
+                      <button type="button" class="min-h-11 rounded-pill border border-border px-2.5 text-12 text-ink-3 hover:border-border-strong hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-accent-deep" (click)="select(region.regionCode)">{{ region.name }}</button>
+                    }
+                  </div>
+                }
+              </li>
             }
-          </div>
+          </ul>
         }
       </section>
     }
@@ -333,7 +376,11 @@
   </div>
   @if (locationNotice()) { <p class="mt-3 text-13 text-ink-2" role="status">{{ locationNotice() }}</p> }
   @if (state() === 'ready' && total()) {
-    <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·도별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
+    <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·군·구별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
   }
-  <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/southkorea/southkorea-maps" target="_blank" rel="noopener noreferrer">경계: 통계청 2013 · southkorea-maps</a> · 현재 경계와 다를 수 있어요.</p>
+  <!--
+    CC BY 4.0은 출처 표시가 의무다. SGIS(통계청) 표기를 승계한다.
+    상세는 public/geo/README.md에 있다.
+  -->
+  <p class="mt-2 text-12 text-ink-3"><a class="underline underline-offset-2" href="https://github.com/vuski/admdongkor" target="_blank" rel="noopener noreferrer">경계: 통계청 SGIS · admdongkor (CC BY 4.0)</a> · 2026년 7월 1일 기준이에요.</p>
 </section>

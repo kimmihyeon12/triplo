@@ -1,5 +1,11 @@
 # 개발 범위·진행·검증 안내
 
+실제 채팅 AI 연결(2026-09-22): 실행 앱은 `EdgeChatProvider`와 별도 `ai-chat` 서버 함수를 사용한다. 로컬 명령 및 테스트 픽스처는 유지한다. 인증·입력 크기·응답 정규화·호출 오류 테스트와 앱 빌드 후 연결된 Supabase 프로젝트의 배포 상태를 별도로 확인한다. [검증 상태](../openspec/changes/connect-chat-ai/tasks.md).
+
+로컬 채팅 명령 확장(2026-09-22): 기존 확인 카드에서 일정·경비 변경을 검토·적용하고, 저장 정보 조회와 계산은 즉시 처리한다. 상태 스냅샷 비교로 오래된 초안·되돌리기를 차단한다. [사용 명령과 제한](local-chat-commands.md), [설계·검증 작업](../openspec/changes/local-chat-commands/tasks.md). 브라우저 검증은 운영 앱과 별도인 test 구성 4300에서 수행한다.
+
+로컬 채팅 날짜 배정(2026-09-22): 미배치 장소 전체 배정은 저장된 데이터만 사용하는 로컬 명령으로 처리한다. 날짜 해석·충돌 안내·초안 대상 고정·적용 직전 재검사·모델 미호출·한도 후 처리·되돌리기를 단위 및 스토어 테스트로 검증한다. [변경 범위와 검증 상태](../openspec/changes/local-chat-assignment/tasks.md).
+
 후속 검증(2026-09-18): 통계 자치구 상수의 계층 참조 오류 2건과 `/lab/map`의 사각 격자→육각 렌더러 연결 오류를 해결했다. 전체 단위 298개·구조 검사 142개 모듈·운영 빌드 통과. 4300 test 앱에서 지도 렌더·서울 예시 선택·장소 목록·360px 가로 넘침 없음을 확인했다. 초기 번들 625.63kB 예산 경고와 LoginPage 미사용 import 2건은 남는다. 상세 내역은 [OpenSpec 작업](../openspec/changes/add-voxel-visit-map/tasks.md)을 따른다. 아래 기존 lint 실패 기록은 수정 전 이력이다.
 
 현재는 Angular 21·NgRx Signals·Zoneless 기반 내부 알파다. 문서 목차는 [README](README.md), 공통 작업 규칙은 [AGENTS.md](../AGENTS.md), 구조 원본은 [아키텍처](architecture/ARCHITECTURE.md), 요구사항은 [기획안](기획안-v0.1.md)과 [OpenSpec](../openspec/changes/plan-travel-companion-mvp/tasks.md)이다.
@@ -23,7 +29,7 @@ Google·카카오 제공자 로그인 화면 도착까지 확인했다. 실제 �
 
 1. 지도·장소 검색 실데이터와 경로 조회 범위를 확인한다. 미확인 위치·영업정보·이동시간을 추측해 채우지 않는다.
 2. 실제 LLM과 선택형 AI를 연결한다. Gemini `gemini-3.5-flash-lite`를 Supabase Edge Function 경유로 연결했고 실제 호출·장소 대조를 확인했다. 모델 선택 근거와 키 설정, 검증 기록은 [AI-PLANNING.md](AI-PLANNING.md)를 따른다.
-3. 대화형 여행 탐색 챗봇의 화면을 만든다. DB 없이 고정 응답으로 진행하며 시트·확인 카드·칩 배치를 실제 화면에서 확인한다. 설계는 [챗봇 설계 문서](superpowers/specs/2026-09-17-travel-chat-design.md)와 기획안 35절, 작업 항목은 OpenSpec tasks 13-A를 따른다.
+3. 대화형 여행 탐색 챗봇의 화면을 만든다. DB 없이 고정 응답으로 진행하며 시트·확인 카드·칩 배치를 실제 화면에서 확인한다. 설계는 [챗봇 설계 문서](superpowers/specs/2026-09-17-travel-chat-design.md)와 기획안 35절, 작업 항목은 OpenSpec tasks 13-A를 따른다. 구름이 전신·44px AI 채팅 버튼의 적용 및 정리 범위는 [별도 변경](../openspec/changes/apply-cloud-chat-mascot/proposal.md)에 기록하며, 4300 테스트 앱의 데스크톱·360px 검증으로 이미지 로드·버튼 크기·일정 추가 바와의 비중첩을 확인한다.
 4. Supabase 여행 저장·사용자별 RLS·저장 충돌 처리와 회원탈퇴 배포를 검증한다. Auth 연결만으로 이 단계를 완료하지 않는다.
 5. 챗봇을 서버에 연결한다. `ai-chat` 함수, 서버측 호출 제한, 대화 저장을 붙인다(tasks 13-B). 호출 제한은 기기에서 세면 지울 수 있으므로 서버가 센다.
 6. 서버 권한 검증 후 동행·읽기 전용 공유, 경비·정산을 구현한다. 화면은 12절에서 만들었고 남은 것은 서버 권한이다. 사진·기록·캐릭터는 후속 범위다.

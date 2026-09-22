@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import type { Trip } from '../../trips/model/trip';
-import { tallyVisits } from './visit-tally';
+import { tallyVisits, visitedPlacesIn } from './visit-tally';
 import { mappedTotal } from './visit-total';
 
 const TODAY = '2026-09-21';
@@ -20,13 +20,13 @@ function trip(id: string, region: { name: string; code?: string } | null, names:
 
 describe('mappedTotal', () => {
   it('지도에 올린 장소만 센다', () => {
-    const summary = tallyVisits([trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b'])], TODAY);
+    const summary = tallyVisits([trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b'])], TODAY);
     expect(mappedTotal(summary)).toBe(2);
   });
 
   it('지역을 분류하지 못한 장소는 빼고 센다', () => {
     const trips = [
-      trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b']),
+      trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b']),
       trip('t2', null, ['c', 'd', 'e']),
     ];
     const summary = tallyVisits(trips, TODAY);
@@ -38,7 +38,7 @@ describe('mappedTotal', () => {
 
   it('지역별 합계와 항상 같다', () => {
     const trips = [
-      trip('t1', { name: '서울', code: 'seoul' }, ['a', 'b']),
+      trip('t1', { name: '종로구', code: '11_종로구' }, ['a', 'b']),
       trip('t2', { name: '부산', code: 'busan' }, ['c']),
       trip('t3', null, ['d']),
     ];
@@ -70,11 +70,59 @@ describe('mappedTotal', () => {
   });
 
   it('누적이 0보다 크면 지역도 하나 이상이다', () => {
+    // 지역을 아는 여행과 모르는 여행이 섞여도 합계와 지역 수가 어긋나면 안 된다.
     const summary = tallyVisits([
-      trip('t1', { name: '광주광역시' }, ['죽녹원']),
+      trip('t1', { name: '담양군' }, ['죽녹원']),
       trip('t2', null, ['어딘가']),
     ], TODAY);
     expect(mappedTotal(summary)).toBeGreaterThan(0);
     expect(summary.regions.length).toBeGreaterThan(0);
+  });
+});
+
+/*
+  여행에 담은 지역과 장소의 실제 위치가 다른 경우. 광주 여행에 나주 장소를
+  넣으면 여행 지역 목록에 나주가 없어 지역이 비고, 그 장소가 통계에서
+  조용히 빠졌다(2026-09-21 확인). 저장된 주소로 시·도를 읽어 채운다.
+*/
+describe('여행 지역과 다른 장소', () => {
+  function mixed(): Trip {
+    return {
+      id: 't1', title: '광주 여행', startDate: '2024-05-01', endDate: '2024-05-03',
+      regions: [{ id: 'r1', name: '동구(전남광주)', regionCode: '12_동구', order: 0 }],
+      stops: [
+        {
+          id: 's1', name: '충장로', address: '광주 동구 충장로 1', regionId: 'r1', kind: 'place',
+          excluded: false, location: null, date: '2024-05-01', order: 0,
+          stayMinutes: null, memo: '', fixedTime: null, locationStatus: 'unverified', placeRef: null,
+        },
+        {
+          // 여행 지역에 없는 곳. 주소로만 알 수 있다.
+          id: 's2', name: '죽녹원', address: '전남 담양군 담양읍 1', regionId: null, kind: 'place',
+          excluded: false, location: null, date: '2024-05-02', order: 1,
+          stayMinutes: null, memo: '', fixedTime: null, locationStatus: 'unverified', placeRef: null,
+        },
+      ],
+      stays: [],
+    } as unknown as Trip;
+  }
+
+  it('주소로 시·군·구를 찾아 집계한다', () => {
+    const s = tallyVisits([mixed()], TODAY);
+    expect(s.unclassifiedCount).toBe(0);
+    expect(s.regions.find((r) => r.regionCode === '12_동구')?.visitCount).toBe(1);
+    expect(s.regions.find((r) => r.regionCode === '12_담양군')?.visitCount).toBe(1);
+  });
+
+  it('지역을 누르면 그 장소가 목록에 나온다', () => {
+    const places = visitedPlacesIn([mixed()], TODAY, '12_담양군');
+    expect(places.map((p) => p.name)).toEqual(['죽녹원']);
+  });
+
+  it('집계와 목록의 개수가 같다', () => {
+    const s = tallyVisits([mixed()], TODAY);
+    for (const r of s.regions) {
+      expect(visitedPlacesIn([mixed()], TODAY, r.regionCode).length).toBe(r.visitCount);
+    }
   });
 });

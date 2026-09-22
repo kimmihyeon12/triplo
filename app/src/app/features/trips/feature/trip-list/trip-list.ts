@@ -19,11 +19,21 @@ import { AuthStore } from '../../../auth/data/auth-store';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { VisitMapBanner } from '../../../stats/ui/visit-map-banner/visit-map-banner';
+import { CompanionFace } from '../../../travel-chat/companion';
 
 @Component({
   selector: 'app-trip-list',
   providers: [TripListStore],
-  imports: [UiButton, UiNotice, UiBadge, RouterLink, IconComponent, UiRowMenu, VisitMapBanner],
+  imports: [
+    UiButton,
+    UiNotice,
+    UiBadge,
+    RouterLink,
+    IconComponent,
+    UiRowMenu,
+    VisitMapBanner,
+    CompanionFace,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-list.html',
 })

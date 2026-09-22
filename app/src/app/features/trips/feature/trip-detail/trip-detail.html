@@ -1,4 +1,4 @@
-@if (store.currentState() === 'loading' && !trip()) {
+﻿@if (store.currentState() === 'loading' && !trip()) {
   <div
     class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   >
@@ -999,5 +999,36 @@
         </details>
       </div>
     </div>
+
+    <!--
+      대화로 일정을 고치는 진입점. 하단 전폭 바는 '일정 추가'가 이미 쓰고 있어
+      바를 하나 더 둘 자리가 없고, 기존 바에 버튼을 끼우면 360px에서 줄바꿈된다.
+      오른쪽 아래 구석은 앱 전체에서 쓰이지 않아 기존 동작과 다른 종류라는
+      신호가 자연스럽게 전달된다.
+
+      z 값은 동작 바(10002)와 상단 바(10006) 사이에 둔다. 동작 바가 안전 영역을
+      이미 처리하므로 그 위로 12px 띄우기만 한다.
+    -->
+    <!--
+      공통 appButton을 쓰지 않는다. 그 호스트 클래스에 relative가 들어 있고
+      템플릿 class보다 나중에 적용되어 fixed를 덮는다. 떠 있는 버튼은 화면에
+      고정되는 것이 핵심이므로 여기서는 스타일을 직접 준다.
+    -->
+    <button
+      type="button"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+      (click)="chatOpen.set(true)"
+      aria-label="AI 챗봇 열기"
+      data-testid="open-chat"
+    >
+      <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 챗봇</span>
+    </button>
+
+    <app-chat-sheet
+      [trip]="trip()!"
+      [open]="chatOpen()"
+      (close)="chatOpen.set(false)"
+      (applied)="onChatApplied($event)"
+    />
   </div>
 }

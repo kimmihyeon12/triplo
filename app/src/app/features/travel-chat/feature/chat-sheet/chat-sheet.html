@@ -1,0 +1,73 @@
+@if (open()) {
+  <!--
+    배경은 상단 바(10006)와 하단 동작 바(10002)까지 덮어야 하므로 그보다
+    높은 값을 쓰고, 시트 자신은 다시 그 위에 올린다. theme.css의 팝오버
+    z 층위 규약과 같은 자리다.
+  -->
+  <div
+    class="chat-sheet-backdrop fixed inset-0 z-[10010] bg-[rgba(15,23,42,0.28)] [backdrop-filter:blur(4px)]"
+    (click)="onBackdrop()"
+    aria-hidden="true"
+    data-testid="chat-sheet-backdrop"
+  ></div>
+
+  <section
+    class="chat-sheet fixed inset-x-0 bottom-0 z-[10011] mx-auto flex max-w-(--content-max) flex-col rounded-t-panel bg-panel shadow-float [animation:sheet-rise_200ms_var(--ease-out)_both] [transition:height_var(--dur)_var(--ease-out)]"
+    [class]="heightClass()"
+    role="dialog"
+    aria-modal="true"
+    aria-label="여행 대화"
+    data-testid="chat-sheet"
+  >
+    <!--
+      손잡이를 눌러 절반과 전체를 오간다. 끌어올리는 동작은 터치에서만 되고
+      키보드로는 쓸 수 없으므로 버튼으로도 같은 일을 할 수 있게 둔다.
+    -->
+    <button
+      type="button"
+      class="flex flex-none flex-col items-center gap-1 px-4 pt-2.5 pb-1"
+      (click)="toggleExpand()"
+      [attr.aria-expanded]="expanded()"
+      aria-label="시트 높이 바꾸기"
+      data-testid="chat-sheet-handle"
+    >
+      <span class="h-1 w-9 rounded-pill bg-border-strong" aria-hidden="true"></span>
+    </button>
+
+    <header class="flex flex-none items-center justify-between gap-2 px-4 pt-1 pb-2">
+      <app-companion-face [mood]="'talking'" [size]="48" [decorative]="true" />
+      <div class="min-w-0 flex-1">
+        <h2 class="truncate text-15 font-bold text-ink">AI 챗봇 · 구름이</h2>
+        <p class="truncate text-12 text-ink-3">{{ trip().title }}</p>
+      </div>
+      <button appButton class="btn btn--sm shrink-0 text-12!" type="button" [disabled]="resetting()" (click)="newChat()" data-testid="chat-new">새 대화</button>
+      <button
+        appButton
+        class="btn btn--sm"
+        type="button"
+        variant="icon"
+        (click)="close.emit()"
+        aria-label="닫기"
+        data-testid="chat-sheet-close"
+      >
+        <app-icon name="x" [size]="16" />
+      </button>
+    </header>
+
+    <app-chat-thread
+      [messages]="store.messages()"
+      [chips]="store.chips()"
+      [pending]="store.pending()"
+      [error]="store.error()"
+      [trip]="store.trip()"
+      [appliedMessageId]="appliedMessageId()"
+      [dismissedIds]="dismissedIds()"
+      [turnsLeft]="store.turnsLeft()"
+      (send)="send($event)"
+      (apply)="apply($event)"
+      (dismissDraft)="dismissDraft($event)"
+      (undo)="undo()"
+      (cancel)="store.cancel()"
+    />
+  </section>
+}
