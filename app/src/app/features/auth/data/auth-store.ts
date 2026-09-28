@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
-import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { nicknameFrom, normalizeNickname } from '../util/nickname';
@@ -105,6 +105,12 @@ export class AuthStore {
         config.publishableKey.includes('REPLACE_ME')
       )
         throw new Error('config');
+      /*
+        Supabase 묶음은 230KB로 첫 화면 번들에서 가장 크다. 설정 파일을 읽고
+        값이 올바를 때만 필요하므로 여기서 불러온다. 위에서 정적으로 가져오면
+        키가 없는 기기에서도 내려받게 되고, 첫 화면이 그만큼 늦어진다.
+      */
+      const { createClient } = await import('@supabase/supabase-js');
       this.client = createClient(url.origin, config.publishableKey, {
         auth: {
           flowType: 'pkce',

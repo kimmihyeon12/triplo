@@ -10,7 +10,7 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { LocalVisitStats } from '../../data/local-visit-stats';
-import { KOREA_REGIONS } from '../../../../shared/util/korea-regions';
+import { REGION_COUNT } from '../../../../shared/util/korea-regions.count';
 import type { VisitPalette } from '../../util/visit-style';
 import { mappedTotal } from '../../util/visit-total';
 import {
@@ -27,8 +27,10 @@ import {
  * 통계 화면과 같은 기준을 쓴다. 한쪽은 시·도, 다른 쪽은 시·군·구로 세면
  * 같은 기록인데 화면마다 다른 숫자가 나와 어느 쪽이 맞는지 알 수 없다
  * (2026-09-22 확인).
+ *
+ * 개수만 담은 파일에서 가져온다. 목록 파일을 가져오면 230개 배열(41KB)이
+ * 첫 화면 번들에 딸려 온다. 이 배너는 여행 목록 맨 위에 있다.
  */
-const REGION_COUNT = KOREA_REGIONS.length;
 
 /**
  * 서버 렌더링에는 계산된 스타일이 없다. 토큰을 읽기 전까지 쓸 기본값을 둔다.
