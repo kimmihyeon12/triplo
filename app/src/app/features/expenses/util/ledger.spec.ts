@@ -6,6 +6,7 @@ import {
   transferSuggestions,
   validateLedger,
   newLedger,
+  settlementText,
 } from './ledger';
 import type { Expense } from '../model/ledger';
 
@@ -108,5 +109,39 @@ describe('공동 가계부', () => {
     ledger.expenses[0].amount = 1.5;
     expect(validateLedger(ledger)).toContain('정수');
     expect(() => allocateEvenly(10, ['a', 'a'])).toThrow();
+  });
+});
+
+describe('정산 내용 복사', () => {
+  const people = [
+    { id: 'me', name: '미현' },
+    { id: 'a', name: '민지' },
+    { id: 'b', name: '준호' },
+  ];
+
+  it('총금액과 보낼 사람·받을 사람·금액만 한 줄씩 적는다', () => {
+    const text = settlementText({
+      ...newLedger(),
+      people,
+      expenses: [
+        {
+          ...expense('e1', '저녁'),
+          amount: 30000,
+          paidBy: 'me',
+          personal: false,
+          splits: allocateEvenly(30000, ['me', 'a', 'b']),
+        },
+        { ...expense('e2', '기념품'), amount: 5000, paidBy: 'a' },
+      ],
+    });
+    expect(text).toBe(
+      ['총금액 30,000원', '민지 → 미현 10,000원', '준호 → 미현 10,000원'].join('\n'),
+    );
+  });
+
+  it('남은 정산이 없으면 그렇다고 적는다', () => {
+    expect(settlementText({ ...newLedger(), people })).toBe(
+      ['총금액 0원', '남은 정산 금액이 없어요.'].join('\n'),
+    );
   });
 });

@@ -25,7 +25,13 @@ import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LocalLedger } from '../../data/local-ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import type { Expense, Ledger } from '../../model/ledger';
-import { duplicateTitleIds, newLedger, transferSuggestions } from '../../util/ledger';
+import {
+  duplicateTitleIds,
+  newLedger,
+  settlementText,
+  transferSuggestions,
+} from '../../util/ledger';
+import { copyText } from '../../../places/data/map-links';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 
 @Component({
@@ -66,6 +72,7 @@ export class Expenses {
   readonly receiptAmount = signal<number | null>(null);
   readonly cancelling = signal('');
   readonly cancelReason = signal('');
+  readonly copyStatus = signal('');
   readonly actual = computed(() => this.ledger().expenses.reduce((n, e) => n + e.amount, 0));
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
@@ -214,6 +221,15 @@ export class Expenses {
       })
     )
       this.receiving.set(null);
+  }
+
+  async copySettlement(): Promise<void> {
+    const text = settlementText(this.ledger());
+    this.copyStatus.set(
+      (await copyText(text))
+        ? '복사했어요. 메신저에 붙여 넣어 보내 주세요.'
+        : '복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.',
+    );
   }
 
   /** 남은 정산을 한 번에 전액 수령으로 남긴다. 부분 수령은 개별 기록을 쓴다. */

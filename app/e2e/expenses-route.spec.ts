@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createTrip, resetApp } from './helpers';
+import { createTrip, resetApp, STORAGE_KEY } from './helpers';
 
 /**
  * 정산 화면은 여행 기능의 라우트에서 다른 기능의 화면을 붙이는 자리다.
@@ -13,7 +13,7 @@ test.describe('정산 화면 진입', () => {
       title: '정산 확인',
       start: '2026-05-01',
       end: '2026-05-02',
-      regions: ['강릉'],
+      regions: ['강릉시'],
     });
 
     await page.getByTestId('go-expenses').click();
@@ -26,7 +26,7 @@ test.describe('정산 화면 진입', () => {
       title: '정산 직접 진입',
       start: '2026-05-01',
       end: '2026-05-02',
-      regions: ['강릉'],
+      regions: ['강릉시'],
     });
 
     await page.goto(`/trips/${id}/expenses`);
@@ -38,7 +38,7 @@ test.describe('정산 화면 진입', () => {
       title: '입력 보존',
       start: '2026-05-01',
       end: '2026-05-02',
-      regions: ['강릉'],
+      regions: ['강릉시'],
     });
 
     await page.goto(`/trips/${id}/expenses`);
@@ -57,7 +57,7 @@ test.describe('정산 화면 진입', () => {
       title: '좁은 화면',
       start: '2026-05-01',
       end: '2026-05-02',
-      regions: ['강릉'],
+      regions: ['강릉시'],
     });
 
     await page.setViewportSize({ width: 360, height: 740 });
@@ -69,5 +69,52 @@ test.describe('정산 화면 진입', () => {
     expect(dateBox).not.toBeNull();
     expect(categoryBox).not.toBeNull();
     expect(Math.abs(dateBox!.y - categoryBox!.y)).toBeGreaterThanOrEqual(40);
+  });
+
+  test('정산 내용을 이름과 금액이 담긴 글로 복사한다', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    const id = await createTrip(page, {
+      title: '복사 확인',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+    const ledger = {
+      people: [
+        { id: 'me', name: '미현' },
+        { id: 'a', name: '민지' },
+      ],
+      expenses: [
+        {
+          id: 'e1',
+          title: '저녁',
+          date: '2026-05-01',
+          category: 'food',
+          amount: 20000,
+          paidBy: 'me',
+          splits: [
+            { personId: 'me', amount: 10000 },
+            { personId: 'a', amount: 10000 },
+          ],
+          memo: '',
+          linkId: null,
+        },
+      ],
+      receipts: [],
+      budget: null,
+    };
+    await page.evaluate(
+      ([key, value]) => localStorage.setItem(key, value),
+      [`${STORAGE_KEY}.ledger.${id}`, JSON.stringify(ledger)],
+    );
+
+    await page.goto(`/trips/${id}/expenses`);
+    await page.getByRole('tab', { name: '정산 현황' }).click();
+    await page.getByTestId('copy-settlement').click();
+
+    await expect(page.getByTestId('copy-status')).toContainText('복사했어요');
+    // Windows 클립보드는 줄바꿈을 CRLF로 바꿔 돌려준다.
+    const text = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
+    expect(text).toBe(['총금액 20,000원', '민지 → 미현 10,000원'].join('\n'));
   });
 });

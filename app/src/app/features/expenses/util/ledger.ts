@@ -115,3 +115,21 @@ export function transferSuggestions(
     }
   return result;
 }
+
+/**
+ * 메신저에 붙여 넣을 정산 안내. 친구들은 앱을 열지 않고 이 글만 보므로
+ * 총금액과 누가 누구에게 얼마를 보내면 되는지만 적는다. 여행 이름 같은
+ * 머리글은 붙이지 않는다. 개인 지출은 총금액에서 뺀다.
+ */
+export function settlementText(ledger: Ledger): string {
+  const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
+  const name = (id: string) => ledger.people.find((p) => p.id === id)?.name ?? '알 수 없음';
+  const shared = ledger.expenses.filter((e) => !e.personal).reduce((n, e) => n + e.amount, 0);
+  const transfers = transferSuggestions(ledger);
+  return [
+    `총금액 ${won(shared)}`,
+    ...(transfers.length
+      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${won(t.amount)}`)
+      : ['남은 정산 금액이 없어요.']),
+  ].join('\n');
+}
