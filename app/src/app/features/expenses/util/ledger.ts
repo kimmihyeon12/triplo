@@ -133,3 +133,16 @@ export function settlementText(ledger: Ledger): string {
       : ['남은 정산 금액이 없어요.']),
   ].join('\n');
 }
+
+/** 요약 막대에 쓸 분류별 합계. 개인 지출도 실제로 쓴 돈이므로 포함한다. */
+export function categoryBreakdown(
+  expenses: readonly Expense[],
+): { category: string; amount: number; ratio: number }[] {
+  const total = expenses.reduce((n, e) => n + e.amount, 0);
+  if (!total) return [];
+  const sums = new Map<string, number>();
+  for (const e of expenses) sums.set(e.category, (sums.get(e.category) ?? 0) + e.amount);
+  return [...sums]
+    .map(([category, amount]) => ({ category, amount, ratio: amount / total }))
+    .sort((a, b) => b.amount - a.amount);
+}

@@ -24,8 +24,10 @@ import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LocalLedger } from '../../data/local-ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
+import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
 import {
+  categoryBreakdown,
   duplicateTitleIds,
   newLedger,
   settlementText,
@@ -174,6 +176,22 @@ export class Expenses {
   readonly receiptMenu: readonly RowMenuItem[] = [
     { id: 'cancel', label: '기록 취소', icon: 'x', danger: true },
   ];
+
+  readonly style = categoryStyle;
+  readonly breakdown = computed(() => categoryBreakdown(this.ledger().expenses));
+  readonly breakdownLabel = computed(
+    () =>
+      '분류별 지출: ' +
+      this.breakdown()
+        .map((r) => `${this.categoryLabel(r.category)} ${r.amount.toLocaleString('ko-KR')}원`)
+        .join(', '),
+  );
+
+  /** 목록에서는 연도를 빼고 '5/1'처럼 줄여 쓴다. 여행 안의 지출이라 연도가 같다. */
+  shortDate(date: string): string {
+    const [, m, d] = date.split('-');
+    return m && d ? `${Number(m)}/${Number(d)}` : date;
+  }
 
   categoryLabel(key: string): string {
     return (EXPENSE_CATEGORIES as Record<string, string>)[key] ?? '기타';

@@ -213,8 +213,23 @@
                   @if (trip.regions.length > 0) {
                     <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
-                  <span [attr.data-testid]="'trip-counts-' + trip.id">
-                    장소 {{ trip.stops.length }} · 숙소 {{ trip.stays.length }}
+                  <!--
+                    수량은 배지가 아니지만 회색 글자만 두면 카드가 밋밋하다.
+                    일정 목록의 장소·숙소 색 아이콘을 붙여 무엇의 수인지
+                    한눈에 읽히게 한다. 숫자와 이름은 글자로 그대로 둔다.
+                  -->
+                  <span
+                    class="ml-1 inline-flex items-center gap-2.5 text-ink-2"
+                    [attr.data-testid]="'trip-counts-' + trip.id"
+                  >
+                    <span class="inline-flex items-center gap-1">
+                      <app-icon class="text-place-ink" name="place" [size]="14" />
+                      장소 {{ trip.stops.length }}
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                      <app-icon class="text-stay-ink" name="bed" [size]="14" />
+                      숙소 {{ trip.stays.length }}
+                    </span>
                   </span>
                 </p>
                 </a>

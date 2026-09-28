@@ -7,6 +7,7 @@ import {
   validateLedger,
   newLedger,
   settlementText,
+  categoryBreakdown,
 } from './ledger';
 import type { Expense } from '../model/ledger';
 
@@ -143,5 +144,23 @@ describe('정산 내용 복사', () => {
     expect(settlementText({ ...newLedger(), people })).toBe(
       ['총금액 0원', '남은 정산 금액이 없어요.'].join('\n'),
     );
+  });
+});
+
+describe('분류별 지출', () => {
+  it('분류마다 합계와 비율을 큰 순서로 낸다', () => {
+    const rows = categoryBreakdown([
+      { ...expense('a', '점심'), category: 'food', amount: 3000 },
+      { ...expense('b', '택시'), category: 'transport', amount: 1000 },
+      { ...expense('c', '저녁'), category: 'food', amount: 4000 },
+    ]);
+    expect(rows).toEqual([
+      { category: 'food', amount: 7000, ratio: 0.875 },
+      { category: 'transport', amount: 1000, ratio: 0.125 },
+    ]);
+  });
+
+  it('지출이 없으면 빈 목록이다', () => {
+    expect(categoryBreakdown([])).toEqual([]);
   });
 });
