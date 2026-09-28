@@ -42,20 +42,7 @@
         (click)="goBack($event)"
         aria-label="뒤로"
       >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M15 5l-7 7 7 7" />
-        </svg>
+        <app-icon name="chevron-left" [size]="24" />
       </a>
     } @else {
       <a
@@ -92,19 +79,7 @@
             [attr.data-testid]="act.testId"
             [attr.aria-label]="act.ariaLabel ?? act.label"
             class="flex size-11 shrink-0 items-center justify-center rounded-control text-ink-3 hover:bg-ground-2 focus-visible:outline-2"
-            ><svg
-              aria-hidden="true"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m15 5 4 4M4.5 19.5l4.3-1 10.7-10.7a2.8 2.8 0 0 0-4-4L4.8 14.5l-.3 5Z" /></svg
-          ></a>
+            ><app-icon name="edit" [size]="17" /></a>
         }
       </div>
       <app-page-tools [tools]="tools" />
