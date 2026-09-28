@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { IconComponent, type IconName } from '../icon/icon';
 import { EMPTY_STATE_CLASSES } from './empty-state.styles';
 
 /**
@@ -14,10 +13,12 @@ import { EMPTY_STATE_CLASSES } from './empty-state.styles';
  * 쓰는 쪽 사정이지만, 빈 상태는 어느 화면에서나 본문 안의 한 자리이므로
  * `p`로 두고 굵기로 위계를 준다. heading을 늘리면 화면의 목차가 실제
  * 구조와 어긋난다.
+ *
+ * 아이콘을 받지 않는다. 큰 빈칸에만 아이콘을 두게 했더니 같은 카드가
+ * 화면에 따라 아이콘이 있기도 하고 없기도 해서 두 종류로 읽혔다.
  */
 @Component({
   selector: 'app-empty-state',
-  imports: [IconComponent],
   templateUrl: './empty-state.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class]': 'classes' },
@@ -30,12 +31,4 @@ export class UiEmptyState {
 
   /** 왜 비었는지, 무엇을 하면 채워지는지. 한두 문장. */
   readonly hint = input<string>('');
-
-  /**
-   * 왼쪽 위 아이콘. 없으면 글자만 둔다.
-   *
-   * 화면 가운데를 크게 차지하는 빈 상태(첫 방문 등)에만 넣는다. 목록
-   * 안쪽의 작은 빈칸에까지 아이콘을 두면 장식이 내용보다 눈에 띈다.
-   */
-  readonly icon = input<IconName | null>(null);
 }

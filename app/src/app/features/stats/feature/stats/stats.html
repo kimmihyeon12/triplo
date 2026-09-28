@@ -14,19 +14,17 @@
       기록이 없을 때는 결과가 아니라 다음에 할 일을 보여준다.
       지도 화면의 빈 상태와 같은 말투를 쓴다.
     -->
-    <div class="rounded-panel bg-panel p-5 text-center shadow-panel" data-testid="stats-empty">
-      <span class="mx-auto flex size-12 items-center justify-center rounded-control-lg bg-accent-tint text-accent-deep">
-        <app-icon name="luggage" [size]="24"/>
-      </span>
-      <h2 class="mt-4 text-17 font-semibold">아직 다녀온 여행이 없어요</h2>
-      <p class="mt-2 text-14 leading-relaxed text-ink-2">
-        여행 날짜가 지나면 그 일정에 담은 장소가 여기에 쌓여요.
-      </p>
-      <a appButton variant="primary" routerLink="/trips/new" class="mt-5 w-full">
-        <app-icon name="plus" [size]="16"/>
-        여행 만들기
-      </a>
-    </div>
+    <section class="panel rounded-panel bg-panel p-5 shadow-panel" data-testid="stats-empty">
+      <app-empty-state
+        title="아직 다녀온 여행이 없어요"
+        hint="여행 날짜가 지나면 그 일정에 담은 장소가 여기에 쌓여요."
+      >
+        <a appButton variant="primary" routerLink="/trips/new" class="mt-3 w-full">
+          <app-icon name="plus" [size]="16"/>
+          여행 만들기
+        </a>
+      </app-empty-state>
+    </section>
   } @else {
     @switch (view()) {
       @case ('country') {

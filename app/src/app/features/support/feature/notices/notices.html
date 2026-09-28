@@ -7,9 +7,9 @@
       <app-spinner />
     </div>
   } @else if (notices().length === 0) {
-    <p class="py-16 text-center text-14 text-ink-3" data-testid="empty-notices">
-      아직 공지사항이 없어요.
-    </p>
+    <section class="panel rounded-panel bg-panel p-5 shadow-panel" data-testid="empty-notices">
+      <app-empty-state title="아직 공지사항이 없어요" />
+    </section>
   } @else {
     <ul class="flex list-none flex-col gap-2 p-0" data-testid="notice-list">
       @for (notice of notices(); track notice.id) {

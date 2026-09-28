@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import {
   KOREA_PROVINCES,
@@ -35,7 +36,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-stats',
   providers: [{ provide: VISIT_STATS_REPOSITORY, useClass: LocalVisitStats }],
-  imports: [RouterLink, IconComponent, UiButton, UiSpinner],
+  imports: [RouterLink, IconComponent, UiButton, UiSpinner, UiEmptyState],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stats.html',
 })
