@@ -4,6 +4,7 @@ import { UiButton } from '../../../../shared/ui/button/button';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { formatKoreanDate } from '../../../../shared/util/dates';
@@ -13,7 +14,7 @@ import { nightCoverage, stayIssues, stayNightCount } from '../../util/stays';
 @Component({
   host: { class: 'block' },
   selector: 'app-trip-stays',
-  imports: [UiButton, UiBadge, UiNotice, IconComponent, UiRowMenu],
+  imports: [UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-stays.html',
 })

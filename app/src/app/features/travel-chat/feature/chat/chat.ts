@@ -1,10 +1,9 @@
-import { UiButton } from '../../../../shared/ui/button/button';
-import { CompanionFace } from '../../ui/companion-face/companion-face';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   OnInit,
+  effect,
   inject,
   signal,
   viewChild,
@@ -27,7 +26,7 @@ import type { ChatDraft } from '../../model/chat';
 @Component({
   selector: 'app-chat-page',
   templateUrl: './chat.html',
-  imports: [UiButton, CompanionFace, ChatThread],
+  imports: [ChatThread],
   providers: [TravelChatStore, TripEditorStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   /*
@@ -47,16 +46,33 @@ export class ChatPage implements OnInit {
   readonly appliedMessageId = signal<string | null>(null);
   /** 사용자가 그대로 두기를 고른 초안. 카드를 접는다. */
   readonly dismissedIds = signal<readonly string[]>([]);
+  readonly resetting = signal(false);
 
   constructor() {
-    inject(PageBar).set({ title: 'AI 챗봇', back: ['/trips'], action: null });
+    /*
+      '새 대화'를 상단 바에 둔다. 전에는 본문 맨 위에 헤더를 하나 더 만들어
+      넣었고, 그 탓에 이 화면만 제목이 'AI 챗봇'과 '여행 친구 구름이'로 두 번
+      나왔다. 처리 중 상태를 따라가야 하므로 effect 안에서 지정한다.
+    */
+    const bar = inject(PageBar);
+    effect(() => {
+      bar.set({
+        title: 'AI 챗봇',
+        back: ['/trips'],
+        action: {
+          label: '새 대화',
+          run: () => void this.newChat(),
+          disabled: this.resetting(),
+          testId: 'chat-new',
+        },
+      });
+    });
   }
 
   ngOnInit(): void {
     this.store.open('list', null);
   }
 
-  readonly resetting = signal(false);
   private readonly thread = viewChild(ChatThread);
 
   async newChat(): Promise<void> {

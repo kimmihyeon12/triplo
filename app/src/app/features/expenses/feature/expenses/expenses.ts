@@ -16,6 +16,7 @@ import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
@@ -39,6 +40,7 @@ import { ExpenseForm } from '../../ui/expense-form/expense-form';
     UiNotice,
     UiActionBar,
     IconComponent,
+    UiEmptyState,
     UiRowMenu,
     UiTabs,
     ErrorToast,

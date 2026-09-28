@@ -5,14 +5,14 @@
 -->
 <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-stays">
   @if (overview().undecidedDates) {
-    <div appNotice class="notice notice--warn">
+    <div appNotice tone="warn">
       <app-icon name="calendar" />
       <div class="notice__body flex-1 min-w-0">
         여행 날짜 미정: 등록한 숙박 날짜는 여행 날짜를 정한 뒤 확인 대상이 됩니다.
       </div>
     </div>
   } @else if (nights().length === 0) {
-    <div appNotice class="notice notice--ok" data-testid="no-nights">
+    <div appNotice tone="ok" data-testid="no-nights">
       <app-icon name="check" />
       <div class="notice__body flex-1 min-w-0">
         당일 여행은 숙박이 없습니다. 숙소 등록 없이 일정을 작성할 수 있습니다.
@@ -67,11 +67,14 @@
 
   @if (trip().stays.length === 0) {
     <section
-      class="panel empty bg-panel rounded-panel shadow-panel p-4"
+      class="panel empty bg-panel rounded-panel shadow-panel p-5"
       data-testid="empty-stays"
     >
-      <h3 class="text-16 font-bold">등록된 숙소가 없습니다</h3>
-      <p class="text-12 leading-normal text-ink-3">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
+      <app-empty-state
+        icon="bed"
+        title="아직 등록한 숙소가 없어요"
+        hint="숙소 미정인 밤이 있어도 일정은 저장돼요."
+      />
     </section>
   } @else {
     <ul class="flex flex-col gap-3" data-testid="stay-list">

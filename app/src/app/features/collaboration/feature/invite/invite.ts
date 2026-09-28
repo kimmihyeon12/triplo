@@ -43,6 +43,9 @@ export class Invite {
   readonly regionPath = computed(() => this.ticket()?.region ?? '지역 미정');
   readonly fromLabel = computed(() => this.ticket()?.from ?? '어딘가');
   readonly toLabel = computed(() => this.ticket()?.to ?? '어딘가');
+
+  /** 지역이 한 곳뿐이면 출발·도착을 나누지 않는다. 판단은 티켓이 한다. */
+  readonly singleRegion = computed(() => this.ticket()?.singleRegion ?? true);
   readonly dateLine = computed(() => this.ticket()?.date ?? '날짜 미정');
   readonly dateEndLine = computed(() => this.ticket()?.dateEnd ?? '');
   readonly nights = computed(() => this.ticket()?.period ?? '기간 미정');

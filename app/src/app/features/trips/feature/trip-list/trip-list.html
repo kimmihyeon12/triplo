@@ -46,7 +46,7 @@
   }
 
   @if (store.skippedCount() > 0) {
-    <div appNotice class="notice notice--warn" role="status">
+    <div appNotice tone="warn" role="status">
       <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         읽을 수 없는 항목 {{ store.skippedCount() }}개를 건너뛰었습니다.
@@ -59,7 +59,7 @@
       <p class="text-ink-3" role="status">불러오는 중…</p>
     }
     @case ('error') {
-      <div appNotice class="notice notice--danger" role="alert">
+      <div appNotice tone="danger" role="alert">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           <strong class="in-[.notice]:font-bold">기기 저장소를 읽지 못했습니다.</strong>
@@ -202,28 +202,20 @@
                   <span>{{ period(trip) }}</span>
                 </p>
 
-                <!-- 메타는 칩을 벗기고 가운뎃점으로 이어 붙인 옅은 한 줄 -->
-                <p class="card__meta flex flex-wrap items-center gap-1.5 mt-3 text-12 text-ink-3">
-<!--
-                    색 규칙은 상세 화면과 같다. 지역은 분류라서 회색,
-                    장소는 place(파랑), 숙소는 stay(보라)다.
-                  -->
+                <!--
+                  배지는 지역 하나뿐이다. 장소·숙소 수는 값에 따라 뜻이
+                  달라지는 상태가 아니라 세어 본 결과이므로 본문으로 적는다.
+                  전에는 셋을 나란히 배지로 두어 분류와 수량이 같은 무게로
+                  보였다. '지출 미설정'·'동행 준비 중'은 어느 여행에서나
+                  똑같이 나와 알려 주는 것이 없으므로 뺐다.
+                -->
+                <p class="card__meta flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-12 text-ink-3">
                   @if (trip.regions.length > 0) {
                     <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
-                  <span appBadge class="cell cell--place">장소 {{ trip.stops.length }}</span>
-                  <span appBadge class="cell cell--stay">숙소 {{ trip.stays.length }}</span>
-                  <span
-                    class="card__quiet text-ink-3"
-                    [attr.data-testid]="'trip-expense-' + trip.id"
-                    >지출 미설정</span
-                  >
-                  <span class="card__dot text-border-strong" aria-hidden="true">·</span>
-                  <span
-                    class="card__quiet text-ink-3"
-                    [attr.data-testid]="'trip-companions-' + trip.id"
-                    >동행 준비 중</span
-                  >
+                  <span [attr.data-testid]="'trip-counts-' + trip.id">
+                    장소 {{ trip.stops.length }} · 숙소 {{ trip.stays.length }}
+                  </span>
                 </p>
                 </a>
                 @if (deleteTripId() === trip.id) {
@@ -283,7 +275,7 @@
   class보다 나중에 적용되어 fixed를 덮기 때문이다.
 -->
 <a
-  class="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+  class="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-10004 flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
   routerLink="/trips/chat"
   aria-label="AI 챗봇 열기"
   data-testid="open-chat"

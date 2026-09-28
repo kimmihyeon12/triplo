@@ -8,7 +8,7 @@
   <div
     class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   >
-    <div appNotice class="notice notice--danger" role="alert">
+    <div appNotice tone="danger" role="alert">
       <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         <strong class="in-[.notice]:font-bold">여행을 찾을 수 없습니다.</strong>
@@ -34,7 +34,7 @@
     />
 
     @if (deleteTripOpen()) {
-      <div appNotice class="notice notice--danger" role="alert">
+      <div appNotice tone="danger" role="alert">
         <app-icon name="alert" />
         <div class="notice__body min-w-0 flex-1">
           <strong class="in-[.notice]:font-bold">‘{{ trip()!.title }}’을 삭제할까요?</strong>
@@ -75,7 +75,7 @@
     @if (activeTab() === 'days') {
       <section role="tabpanel" data-testid="panel-days">
         @if (overview().undecidedDates) {
-          <div appNotice class="notice notice--warn">
+          <div appNotice tone="warn">
             <app-icon name="calendar" />
             <div class="notice__body flex-1 min-w-0">
               날짜를 정하면 날짜별 일정을 만들 수 있습니다.
@@ -198,8 +198,7 @@
 
               @if (conflicts().length > 0) {
                 <div
-                  appNotice
-                  class="notice notice--danger"
+                  appNotice tone="danger"
                   role="alert"
                   data-testid="fixed-conflict"
                 >
@@ -213,14 +212,15 @@
 
               <!-- 시간순 항목 -->
               @if (segments().length === 0) {
+                <!-- 추가 버튼은 하단 고정 바가 맡으므로 여기서는 알리기만 한다. -->
                 <section
-                  class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
+                  class="panel empty bg-panel rounded-panel shadow-panel p-5"
                   data-testid="empty-day"
                 >
-                  <h3 class="text-16 font-bold">이 날 일정이 없습니다</h3>
-                  <p class="text-ink-3 text-12 leading-normal">
-                    장소나 식사·휴식을 추가하면 순서대로 정리됩니다.
-                  </p>
+                  <app-empty-state
+                    title="이 날 일정이 없어요"
+                    hint="장소나 식사·휴식을 추가하면 순서대로 정리돼요."
+                  />
                 </section>
               } @else {
                 <!--
@@ -759,19 +759,21 @@
                 data-testid="day-totals"
               >
                 <span class="totals__label text-16 font-bold">하루 합계</span>
-                <span class="flex flex-wrap items-center gap-2">
-                  <span appBadge class="cell cell--place"
-                    >체류 {{ minutes(totals().stayMinutes) }}</span
-                  >
+                <!--
+                  합계는 세어 본 값이라 본문으로 적는다. 전에는 체류 시간을
+                  place 배지로 두어 바로 위 일정의 '장소' 분류 배지와 같은
+                  색이 됐다. 배지는 '체류 미정'처럼 사용자가 아직 넣지 않은
+                  값이 있다는 상태에만 쓴다.
+                -->
+                <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-13 text-ink-2">
+                  <span>체류 {{ minutes(totals().stayMinutes) }}</span>
+                  <span class="text-border-strong" aria-hidden="true">·</span>
+                  <span>이동 {{ totals().legCount }}구간 · 시간 미확인</span>
                   @if (totals().unknownStayCount > 0) {
-                    <span appBadge class="cell cell--ghost"
+                    <span appBadge class="cell cell--warn"
                       >체류 미정 {{ totals().unknownStayCount }}개</span
                     >
                   }
-                  <!-- The badge already states the gap; the sentence repeated it every day. -->
-                  <span appBadge class="cell cell--ghost"
-                    >이동 {{ totals().legCount }}구간 · 시간 미확인</span
-                  >
                 </span>
               </div>
 
@@ -788,13 +790,14 @@
       <section class="flex flex-col gap-3" data-testid="panel-overview">
         @if (isEmptyTrip() && !overview().undecidedDates) {
           <section
-            class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
+            class="panel empty bg-panel rounded-panel shadow-panel p-5"
             data-testid="empty-trip"
           >
-            <h2 class="text-16 font-bold">장소와 숙소를 추가해 보세요</h2>
-            <p class="text-12 leading-normal text-ink-3">
-              날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
-            </p>
+            <app-empty-state
+              icon="luggage"
+              title="아직 담은 곳이 없어요"
+              hint="날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장돼요."
+            />
           </section>
         }
 
@@ -934,12 +937,14 @@
                     >{{ i.count }}</span
                   >
                   <span class="grow flex-1 min-w-0 text-14 wrap-anywhere">{{ i.label }}</span>
+                  <!-- 탭 전환이므로 공통 탭과 같이 히스토리를 쌓지 않는다. -->
                   <a
                     appButton
                     class="btn btn--sm"
                     [routerLink]="[]"
                     [queryParams]="{ tab: i.tab }"
                     queryParamsHandling="merge"
+                    [replaceUrl]="true"
                     variant="ghost"
                     >보기</a
                   >
@@ -964,7 +969,7 @@
       한 버튼으로 모든 추가를 받는다. 장소·식사·휴식·여유시간은 같은 폼의 kind만 다르고
       숙소만 다른 폼이므로, 흩어 두면 규칙이 보이지 않는다.
     -->
-    <div appActionBar class="action-bar z-[10002]">
+    <div appActionBar class="action-bar z-10002">
       <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
         <details
           #addSheet
@@ -972,14 +977,14 @@
           class="menu-sheet relative w-full"
         >
           <summary
-            class="btn relative z-[10001] flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
+            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
             data-testid="add-open"
           >
             일정 추가
           </summary>
-          <button type="button" class="menu-backdrop fixed inset-0 z-[30] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
+          <button type="button" class="menu-backdrop fixed inset-0 z-30 cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-xs" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
           <div
-            class="absolute bottom-full left-0 right-0 z-[10001] mb-2 grid gap-1 rounded-panel border border-border bg-panel p-1.5 shadow-float [@media(min-width:_720px)]:left-auto [@media(min-width:_720px)]:w-56"
+            class="absolute bottom-full left-0 right-0 z-10001 mb-2 grid gap-1 rounded-panel border border-border bg-panel p-1.5 shadow-float [@media(min-width:_720px)]:left-auto [@media(min-width:_720px)]:w-56"
             role="menu"
           >
             @for (o of addOptions(); track o.testId) {
@@ -1016,7 +1021,7 @@
     -->
     <button
       type="button"
-      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-10004 flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
       (click)="chatOpen.set(true)"
       aria-label="AI 챗봇 열기"
       data-testid="open-chat"

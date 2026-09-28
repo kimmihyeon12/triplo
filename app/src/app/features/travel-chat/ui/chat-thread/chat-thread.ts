@@ -16,6 +16,7 @@ import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiDisclaimer } from '../ai-disclaimer/ai-disclaimer';
+import { CompanionFace } from '../companion-face/companion-face';
 
 import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
@@ -49,7 +50,16 @@ const EMPTY_TRIP: Trip = {
   selector: 'app-chat-thread',
   templateUrl: './chat-thread.html',
   styleUrl: './chat-thread.css',
-  imports: [RouterLink, UiButton, UiInput, UiNotice, IconComponent, AiDisclaimer, ChatConfirmCard],
+  imports: [
+    RouterLink,
+    UiButton,
+    UiInput,
+    UiNotice,
+    IconComponent,
+    AiDisclaimer,
+    CompanionFace,
+    ChatConfirmCard,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'flex min-h-0 flex-1 flex-col' },
 })

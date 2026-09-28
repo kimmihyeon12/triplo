@@ -79,10 +79,11 @@
             }
           </div>
 
+          <!-- 지도 화면의 같은 안내와 글자·아이콘을 맞춘다. -->
           @if (unclassifiedCount() > 0) {
-            <p class="mt-4 flex items-start gap-1.5 border-t border-border pt-3 text-12 leading-relaxed text-ink-3" data-testid="stats-unclassified">
-              <app-icon class="mt-0.5 flex-none text-warn-ink" name="alert" [size]="13"/>
-              <span>지역을 알 수 없는 <span class="tabular-nums">{{ unclassifiedCount() }}</span>곳은 목록에서 빠졌어요. 여행에서 장소의 지역을 지정하면 들어와요.</span>
+            <p class="mt-4 flex items-start gap-2 border-t border-border pt-3 text-13 leading-normal text-ink-2" data-testid="stats-unclassified">
+              <app-icon class="mt-px flex-none text-ink-3" name="alert" [size]="15"/>
+              <span class="min-w-0 flex-1">지역을 알 수 없는 <span class="tabular-nums">{{ unclassifiedCount() }}</span>곳은 목록에서 빠졌어요. 여행에서 장소의 지역을 지정하면 들어와요.</span>
             </p>
           }
         </section>
@@ -135,10 +136,16 @@
                   >{{ $index + 1 }}</span>
                   <span class="min-w-0 flex-1">
                     <strong class="block truncate text-14 font-medium">{{ place.name }}</strong>
+                    <!--
+                      여기 없는 것은 주소지 좌표가 아니다. '위치 미확인'은
+                      상세 화면에서 좌표가 없다는 뜻의 노란 배지로 쓰므로,
+                      같은 말을 회색 글씨로 또 쓰면 한 문구가 두 가지를
+                      가리킨다. 이 자리는 주소 칸이므로 그대로 적는다.
+                    -->
                     @if (place.address) {
                       <small class="mt-0.5 block truncate text-12 text-ink-3">{{ place.address }}</small>
                     } @else {
-                      <small class="mt-0.5 block text-12 text-ink-3">위치 미확인</small>
+                      <small class="mt-0.5 block text-12 text-ink-3">주소 없음</small>
                     }
                     <small class="mt-0.5 block truncate text-12 text-ink-3">{{ place.visitedOn }} · {{ place.tripTitle }}</small>
                   </span>
@@ -146,7 +153,7 @@
                 </button>
               </li>
             } @empty {
-              <li class="py-6 text-center text-13 text-ink-2">이 지역에서 방문한 장소가 없어요.</li>
+              <li class="py-6 text-13 text-ink-2">이 지역에서 방문한 장소가 없어요.</li>
             }
           </ul>
         </section>
