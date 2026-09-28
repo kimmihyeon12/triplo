@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 /** 한 가지 선 굵기(2px, round)로 그린 아이콘 세트. 이모지·유니코드 대체 없이 SVG만 사용한다. */
-const PATHS: Record<string, string> = {
+const PATHS = {
   // 여행 가방: 손잡이·몸통·잠금 걸쇠·바퀴를 24 뷰박스 안에서 좌우 대칭으로 맞췄다.
   luggage:
     'M6 7.5h12a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V9A1.5 1.5 0 0 1 6 7.5zM9 7.5V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2.5M7.5 19.5V21M16.5 19.5V21M9.5 11.5v4M14.5 11.5v4',
@@ -62,8 +62,20 @@ const PATHS: Record<string, string> = {
   document:
     'M14 3.5H6.5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8zM14 3.5V8h4.5M9 12.5h6M9 16h6',
 
+  // 정렬 바꾸기: 위아래 화살표를 나란히 두어 두 방향을 오간다는 것을 보인다.
+  sort: 'M8.5 4.5v15M8.5 4.5 5 8M8.5 4.5 12 8M15.5 19.5v-15M15.5 19.5 12 16M15.5 19.5 19 16',
+
   // 정보 없음: 구름 실루엣 + 물음표 자리의 점선 느낌 대신 가운데 대시 하나
-};
+} as const satisfies Record<string, string>;
+
+/**
+ * 그릴 수 있는 아이콘 이름.
+ *
+ * `string`으로 두면 없는 이름을 적어도 컴파일이 지나가고 화면에는 조용히
+ * 경고 아이콘(⚠️)이 나타난다. 2026-09-21에 `chevron-left`·`chevron-down`을
+ * 적어 실제로 그렇게 됐다. 이름을 좁혀 두면 빌드가 먼저 막는다.
+ */
+export type IconName = keyof typeof PATHS;
 
 @Component({
   host: { class: 'inline-flex leading-[0] flex-none' },
@@ -72,7 +84,7 @@ const PATHS: Record<string, string> = {
   templateUrl: './icon.html',
 })
 export class IconComponent {
-  readonly name = input.required<string>();
+  readonly name = input.required<IconName>();
   readonly size = input(18);
   readonly d = computed(() => PATHS[this.name()] ?? PATHS['alert']);
 }

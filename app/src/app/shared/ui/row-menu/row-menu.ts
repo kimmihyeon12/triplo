@@ -7,13 +7,13 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { IconComponent } from '../icon/icon';
+import { IconComponent, type IconName } from '../icon/icon';
 import { UiDismissible } from '../dismissible/dismissible';
 
 export interface RowMenuItem {
   readonly id: string;
   readonly label: string;
-  readonly icon?: string;
+  readonly icon?: IconName;
   /** 파괴적 동작이면 true. 목록 끝에 두고 로즈 계열로 그린다. */
   readonly danger?: boolean;
   readonly testId?: string;

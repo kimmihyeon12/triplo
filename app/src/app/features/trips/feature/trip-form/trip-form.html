@@ -4,7 +4,7 @@
   @if (isEdit() && store.currentState() === 'loading') {
     <p class="text-ink-3" role="status">불러오는 중…</p>
   } @else if (isEdit() && !original()) {
-    <div appNotice class="notice notice--danger" role="alert">
+    <div appNotice tone="danger" role="alert">
       <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         <strong class="in-[.notice]:font-bold">여행을 찾을 수 없습니다.</strong>
@@ -167,7 +167,7 @@
                 >
                   <app-icon name="plus" [size]="14" />
                   <span class="font-medium">{{ m.name }}</span>
-                  <span class="text-11 text-hint">{{ m.short }}</span>
+                  <span class="text-12 text-hint">{{ m.short }}</span>
                 </button>
               </li>
             }
@@ -235,7 +235,7 @@
       </fieldset>
 
       @if (impactLines().length > 0) {
-        <div appNotice class="notice notice--warn" data-testid="impact-box">
+        <div appNotice tone="warn" data-testid="impact-box">
           <app-icon name="alert" />
           <div class="notice__body flex-1 min-w-0">
             <strong class="in-[.notice]:font-bold"
@@ -260,7 +260,7 @@
       }
 
       @if (store.saveState() === 'error') {
-        <div appNotice class="notice notice--danger" role="alert">
+        <div appNotice tone="danger" role="alert">
           <app-icon name="alert" />
           <div class="notice__body flex-1 min-w-0">
             <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은

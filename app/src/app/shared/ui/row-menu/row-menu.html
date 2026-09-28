@@ -2,7 +2,7 @@
 <details
   #menu
   appDismissible
-  class="relative [&[open]]:z-[10020]"
+  class="relative [&[open]]:z-10020"
   (toggle)="onToggle(menu.open)"
 >
   <summary
@@ -21,7 +21,7 @@
     화면 기준으로 띄우고 위치는 버튼 좌표로 직접 계산한다.
   -->
   <div
-    class="fixed z-[10020] grid w-44 gap-0.5 rounded-panel border border-border bg-panel p-1 shadow-float"
+    class="fixed z-10020 grid w-44 gap-0.5 rounded-panel border border-border bg-panel p-1 shadow-float"
     [style.top.px]="position().top"
     [style.left.px]="position().left"
     role="menu"

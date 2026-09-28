@@ -62,7 +62,12 @@
   --color-warn-ink: #7f5400;
   --color-warn-tint: #fff4d1;
   --color-warn-fill: #ffe08a;
-  --color-danger-ink: #d92d20;
+  /*
+    2026-09-28 글자색만 한 단계 내렸다(#d92d20 -> #c8281d). 대비가 4.23으로
+    가장 낮았는데, 오류는 반드시 읽혀야 하는 자리다. 색상(H4)과 배경은
+    그대로 두고 명도만 4% 낮췄다. 지금은 4.86이다.
+  */
+  --color-danger-ink: #c8281d;
   --color-danger-tint: #fdeceb;
   --color-danger-fill: #fbcfcb;
   --color-ok-ink: #1e7a4e;
@@ -87,7 +92,12 @@
     카페에는 원두를 떠올리는 갈색이 어울리지만 식사의 주황과 나란히 두면
     거의 같은 색으로 보인다. 그래서 색상환에서 확실히 떨어진 청록으로 옮겼다.
   */
-  --color-meal-ink: #b4530c;
+  /*
+    2026-09-28 글자색만 한 단계 내렸다(#b4530c -> #a94d0b). 배경과의 대비가
+    4.42라 작은 글자 기준 4.5에 못 미쳤다. 색상(H25)과 배경은 그대로 두어
+    보이는 색감은 유지하고 명도만 3% 낮췄다. 지금은 4.93이다.
+  */
+  --color-meal-ink: #a94d0b;
   --color-meal-tint: #fdeee1;
   --color-cafe-ink: #0e7490;
   --color-cafe-tint: #dcf0f7;

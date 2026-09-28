@@ -5,14 +5,14 @@
     z 층위 규약과 같은 자리다.
   -->
   <div
-    class="chat-sheet-backdrop fixed inset-0 z-[10010] bg-[rgba(15,23,42,0.28)] [backdrop-filter:blur(4px)]"
+    class="chat-sheet-backdrop fixed inset-0 z-10010 bg-[rgba(15,23,42,0.28)] [backdrop-filter:blur(4px)]"
     (click)="onBackdrop()"
     aria-hidden="true"
     data-testid="chat-sheet-backdrop"
   ></div>
 
   <section
-    class="chat-sheet fixed inset-x-0 bottom-0 z-[10011] mx-auto flex max-w-(--content-max) flex-col rounded-t-panel bg-panel shadow-float [animation:sheet-rise_200ms_var(--ease-out)_both] [transition:height_var(--dur)_var(--ease-out)]"
+    class="chat-sheet fixed inset-x-0 bottom-0 z-10011 mx-auto flex max-w-(--content-max) flex-col rounded-t-panel bg-panel shadow-float [animation:sheet-rise_200ms_var(--ease-out)_both] [transition:height_var(--dur)_var(--ease-out)]"
     [class]="heightClass()"
     role="dialog"
     aria-modal="true"
