@@ -102,6 +102,20 @@
       </section>
     }
 
+    @if (scanOpen()) {
+      <section [class.hidden]="tab() !== 'expenses'" [attr.aria-hidden]="tab() !== 'expenses'">
+        <app-receipt-scan
+          [people]="ledger().people"
+          [fallbackDate]="store.current()?.startDate ?? today"
+          (saved)="saveScanned($event)"
+          (cancelled)="scanOpen.set(false)"
+        />
+      </section>
+    }
+    @if (scanStatus()) {
+      <p class="text-13 text-ink-2" role="status" data-testid="scan-status">{{ scanStatus() }}</p>
+    }
+
     @if (tab() === 'expenses') {
       <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-expenses">
         @if (ledger().expenses.length > 0) {
@@ -208,7 +222,7 @@
             }
           </article>
         } @empty {
-          @if (!formOpen()) {
+          @if (!formOpen() && !scanOpen()) {
             <!-- 버튼은 하단 고정 바의 '지출 기록'이 이미 맡으므로 넣지 않는다. -->
             <section
               class="panel rounded-panel bg-panel p-5 shadow-panel"
@@ -359,13 +373,23 @@
 </div>
 
 <!-- 지출 기록은 여행 상세의 [일정 추가]와 같은 자리에 둔다. -->
-@if (!blocked() && tab() === 'expenses' && !formOpen()) {
+@if (!blocked() && tab() === 'expenses' && !formOpen() && !scanOpen()) {
   <div appActionBar class="action-bar">
-    <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
+    <!--
+      사진 입력은 직접 기록의 다른 방법이라 같은 줄에 나란히 둔다. 기본
+      동작은 여전히 직접 기록이므로 그쪽만 채운 버튼이다.
+    -->
+    <div
+      class="action-bar__inner mx-auto my-0 grid max-w-(--content-max) grid-cols-[auto_1fr] gap-2 [@media(min-width:_720px)]:flex [@media(min-width:_720px)]:justify-center"
+    >
+      <button appButton (click)="openScan()" data-testid="scan-expense">
+        <app-icon name="camera" [size]="18" />
+        사진으로 입력
+      </button>
       <button
         appButton
         variant="primary"
-        class="w-full [@media(min-width:_720px)]:w-auto [@media(min-width:_720px)]:px-8"
+        class="[@media(min-width:_720px)]:px-8"
         (click)="openExpense()"
         data-testid="add-expense"
       >

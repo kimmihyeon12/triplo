@@ -31,6 +31,9 @@ import { MapConfig } from './features/places/data/map-config';
 import { MAP_PROVIDER } from './features/places/data/map-provider';
 import { PLACE_SEARCH } from './features/places/data/place-search';
 import { AI_PLAN_PROVIDER } from './features/ai-planning/data/ai-plan-provider';
+import { RECEIPT_SCANNER } from './features/expenses/data/receipt-scanner';
+import { EdgeReceiptScanner } from './features/expenses/data/edge-receipt-scanner';
+import { FixtureReceiptScanner } from './features/expenses/data/fixture-receipt-scanner';
 import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
 import { FixtureAiProvider } from './features/ai-planning/data/fixture-ai-provider';
 import {
@@ -115,6 +118,11 @@ export const appConfig: ApplicationConfig = {
     { provide: AI_PLAN_PROVIDER, useExisting: useFixture ? FixtureAiProvider : EdgeAiProvider },
     // 실제 실행은 로그인된 Edge AI, 테스트·시안은 외부 호출 없는 고정 응답.
     { provide: CHAT_PROVIDER, useExisting: useFixture ? FixtureChatProvider : EdgeChatProvider },
+    // 사진으로 지출 입력도 같은 Edge 구성을 쓴다. 사진은 저장하지 않는다.
+    {
+      provide: RECEIPT_SCANNER,
+      useExisting: useFixture ? FixtureReceiptScanner : EdgeReceiptScanner,
+    },
     // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
     {
       provide: CHAT_HISTORY,

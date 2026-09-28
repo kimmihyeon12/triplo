@@ -33,6 +33,7 @@ import {
 } from '../../util/ledger';
 import { copyText } from '../../../places/data/map-links';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
+import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
 
 @Component({
   selector: 'app-expenses',
@@ -51,6 +52,7 @@ import { ExpenseForm } from '../../ui/expense-form/expense-form';
     UiTabs,
     ErrorToast,
     ExpenseForm,
+    ReceiptScan,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -64,6 +66,10 @@ export class Expenses {
   readonly error = signal('');
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
+  readonly scanOpen = signal(false);
+  readonly scanStatus = signal('');
+  /** 여행 날짜가 없을 때 사진 항목에 채울 날짜. */
+  readonly today = new Date().toLocaleDateString('sv-SE');
   readonly editing = signal<Expense | null>(null);
   readonly deleteId = signal('');
   readonly personName = signal('');
@@ -181,6 +187,20 @@ export class Expenses {
   openExpense(expense: Expense | null = null): void {
     this.editing.set(expense);
     this.formOpen.set(true);
+  }
+
+  openScan(): void {
+    this.scanStatus.set('');
+    this.scanOpen.set(true);
+  }
+
+  /** 사진에서 확인한 지출을 한 번에 더한다. 하나라도 저장하지 못하면 모두 남기지 않는다. */
+  saveScanned(expenses: Expense[]): void {
+    const previous = this.ledger();
+    if (this.persist({ ...previous, expenses: [...previous.expenses, ...expenses] })) {
+      this.scanOpen.set(false);
+      this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
+    }
   }
 
   saveExpense(expense: Expense): void {

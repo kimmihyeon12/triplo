@@ -1,0 +1,287 @@
+<section
+  class="flex flex-col gap-4 rounded-panel bg-panel p-5 shadow-panel"
+  aria-labelledby="receipt-scan-title"
+  data-testid="receipt-scan"
+>
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h2 id="receipt-scan-title" class="text-18 font-bold">사진으로 입력</h2>
+      <p class="mt-1 text-13 leading-normal text-ink-2">
+        영수증이나 결제 내역 캡처를 올리면 항목을 읽어 드려요. 저장 전에 모두 확인할 수 있어요.
+      </p>
+    </div>
+  </div>
+
+  @if (unavailable) {
+    <div appNotice tone="muted" data-testid="receipt-unavailable">
+      <app-icon name="alert" />
+      <div class="notice__body min-w-0 flex-1">{{ unavailable }}</div>
+    </div>
+  } @else {
+    @switch (step()) {
+      @case ('pick') {
+        <!--
+          label로 감싼 파일 입력. 휴대폰에서는 사진 보관함과 카메라를 함께
+          고를 수 있도록 capture를 붙이지 않는다.
+        -->
+        <label
+          class="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-control border-2 border-dashed border-border-strong px-4 py-6 text-center [transition:border-color_var(--dur)_var(--ease-out),background-color_var(--dur)_var(--ease-out)] hover:border-accent-deep hover:bg-accent-tint focus-within:border-accent-deep"
+        >
+          <span class="text-15 font-bold">사진 고르기</span>
+          <span class="text-12 leading-[1.45] text-hint">영수증 · 카드 알림 · 결제 앱 캡처</span>
+          <input
+            class="sr-only"
+            type="file"
+            accept="image/*"
+            (change)="choose($event)"
+            data-testid="receipt-file"
+          />
+        </label>
+      }
+      @case ('scanning') {
+        <div class="flex flex-col items-center gap-3 py-8" role="status">
+          <app-spinner />
+          <p class="text-14 text-ink-2">사진을 읽고 있어요</p>
+          <button appButton class="btn btn--sm" type="button" (click)="stopScan()">중지</button>
+        </div>
+      }
+      @case ('mark') {
+        <div class="flex flex-col gap-3">
+          <p class="text-13 leading-normal text-ink-2">
+            항목이 많으면 읽을 줄에만 형광펜을 칠해 주세요. 칠하지 않으면 사진 전체를 읽어요.
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              appButton
+              class="btn btn--sm"
+              type="button"
+              [attr.aria-pressed]="marking()"
+              [variant]="marking() ? 'primary' : 'default'"
+              (click)="marking.set(!marking())"
+              data-testid="receipt-marker"
+            >
+              <app-icon name="edit" [size]="16" />
+              {{ marking() ? '형광펜 끄기' : '형광펜 칠하기' }}
+            </button>
+            @if (strokes().length) {
+              <button
+                appButton
+                class="btn btn--sm"
+                type="button"
+                (click)="undoStroke()"
+                data-testid="receipt-undo"
+              >
+                한 번 지우기
+              </button>
+              <button appButton class="btn btn--sm" type="button" (click)="strokes.set([])">
+                모두 지우기
+              </button>
+            }
+          </div>
+          <!--
+            형광펜이 켜져 있을 때만 끌기를 가로챈다. 꺼 있으면 긴 영수증을
+            손가락으로 스크롤할 수 있어야 한다.
+          -->
+          <div class="max-h-[60vh] overflow-auto rounded-control border border-border bg-ground-2">
+            <canvas
+              #canvas
+              class="block h-auto w-full"
+              [class.touch-none]="marking()"
+              [class.cursor-crosshair]="marking()"
+              role="img"
+              [attr.aria-label]="
+                strokes().length
+                  ? '고른 사진, 형광펜 ' + strokes().length + '줄'
+                  : '고른 사진'
+              "
+              (pointerdown)="startStroke($event)"
+              (pointermove)="moveStroke($event)"
+              (pointerup)="endStroke()"
+              (pointercancel)="endStroke()"
+              data-testid="receipt-canvas"
+            ></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button appButton type="button" (click)="otherFile.click()">다른 사진</button>
+            <input
+              #otherFile
+              class="sr-only"
+              type="file"
+              accept="image/*"
+              tabindex="-1"
+              aria-hidden="true"
+              (change)="choose($event)"
+            />
+            <button
+              appButton
+              variant="primary"
+              type="button"
+              (click)="scan()"
+              data-testid="receipt-scan-run"
+            >
+              {{ strokes().length ? '칠한 줄 읽기' : '사진 읽기' }}
+            </button>
+          </div>
+        </div>
+      }
+      @case ('review') {
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <app-checkbox
+              [label]="'전체 선택 · ' + checkedCount() + '/' + drafts().length"
+              inputId="receipt-all"
+              testId="receipt-all"
+              [checked]="allChecked()"
+              (checkedChange)="toggleAll()"
+            />
+            <strong class="text-15 tabular-nums">{{ checkedSum() | number }}원</strong>
+          </div>
+          @if (dropped()) {
+            <div appNotice tone="muted" data-testid="receipt-dropped">
+              <app-icon name="alert" />
+              <div class="notice__body min-w-0 flex-1">
+                금액이나 이름을 읽지 못한 {{ dropped() }}건은 뺐어요. 필요하면 직접 추가해 주세요.
+              </div>
+            </div>
+          }
+          @if (totalMismatch()) {
+            <div appNotice tone="warn" data-testid="receipt-total-mismatch">
+              <app-icon name="alert" />
+              <div class="notice__body min-w-0 flex-1">
+                영수증 합계 {{ total() | number }}원과 항목 합이 달라요. 빠진 줄이 있는지 확인해 주세요.
+              </div>
+            </div>
+          }
+
+          <ul class="flex list-none flex-col gap-2 p-0" data-testid="receipt-drafts">
+            @for (d of drafts(); track $index; let i = $index) {
+              <li
+                class="rounded-control border p-3 [transition:border-color_var(--dur)_var(--ease-out),opacity_var(--dur)_var(--ease-out)]"
+                [class]="d.checked ? 'border-accent-fill' : 'border-border opacity-60'"
+                [attr.data-testid]="'receipt-draft-' + i"
+              >
+                <div class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    class="size-5 flex-none accent-(--color-accent-deep)"
+                    [checked]="d.checked"
+                    (change)="patch(i, { checked: !d.checked })"
+                    [attr.aria-label]="d.title + ' 저장'"
+                    [attr.data-testid]="'receipt-check-' + i"
+                  />
+                  <input
+                    appInput
+                    class="min-w-0 flex-1"
+                    maxlength="40"
+                    [attr.aria-label]="i + 1 + '번째 항목 이름'"
+                    [ngModel]="d.title"
+                    (ngModelChange)="patch(i, { title: $event })"
+                    [name]="'title-' + i"
+                  />
+                </div>
+                <div class="mt-2 grid grid-cols-[1fr_1fr] gap-2 [@media(min-width:_480px)]:grid-cols-[1.1fr_1fr_1fr]">
+                  <input
+                    appInput
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputmode="numeric"
+                    class="tabular-nums"
+                    [attr.aria-label]="i + 1 + '번째 항목 금액'"
+                    [ngModel]="d.amount"
+                    (ngModelChange)="patch(i, { amount: $event })"
+                    [name]="'amount-' + i"
+                    [attr.data-testid]="'receipt-amount-' + i"
+                  />
+                  <select
+                    appInput
+                    [attr.aria-label]="i + 1 + '번째 항목 분류'"
+                    [ngModel]="d.category"
+                    (ngModelChange)="patch(i, { category: $event })"
+                    [name]="'category-' + i"
+                  >
+                    @for (c of categories; track c[0]) {
+                      <option [value]="c[0]">{{ c[1] }}</option>
+                    }
+                  </select>
+                  <input
+                    appInput
+                    type="date"
+                    class="col-span-2 [@media(min-width:_480px)]:col-span-1"
+                    [attr.aria-label]="i + 1 + '번째 항목 날짜'"
+                    [ngModel]="d.date || fallbackDate()"
+                    (ngModelChange)="patch(i, { date: $event })"
+                    [name]="'date-' + i"
+                  />
+                </div>
+              </li>
+            }
+          </ul>
+
+          <div class="flex flex-col gap-1 border-t border-border pt-3">
+            <app-field label="결제한 사람" inputId="receipt-payer"
+              ><select
+                appInput
+                id="receipt-payer"
+                name="receipt-payer"
+                [ngModel]="paidBy()"
+                (ngModelChange)="paidBy.set($event)"
+              >
+                @for (p of people(); track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select></app-field
+            >
+            <app-checkbox
+              label="개인 지출 · 함께 정산하지 않아요"
+              hint="끄면 정산할 사람 모두가 똑같이 나눠요."
+              inputId="receipt-personal"
+              [(checked)]="personal"
+            />
+            <app-checkbox
+              label="한 건으로 합치기"
+              hint="체크한 항목의 합계를 지출 하나로 기록해요."
+              inputId="receipt-merge"
+              testId="receipt-merge"
+              [(checked)]="merge"
+            />
+            @if (merge()) {
+              <app-field label="합친 지출명" inputId="receipt-merged-title"
+                ><input
+                  appInput
+                  id="receipt-merged-title"
+                  name="receipt-merged-title"
+                  maxlength="40"
+                  placeholder="예: 편의점"
+                  [ngModel]="mergedTitle()"
+                  (ngModelChange)="mergedTitle.set($event)"
+              /></app-field>
+            }
+          </div>
+        </div>
+      }
+    }
+  }
+
+  @if (error()) {
+    <p role="alert" class="text-13 font-medium text-danger-ink" data-testid="receipt-error">
+      {{ error() }}
+    </p>
+  }
+
+  <div class="grid gap-2" [class.grid-cols-2]="step() === 'review'">
+    <button appButton type="button" (click)="cancelled.emit()">닫기</button>
+    @if (step() === 'review') {
+      <button
+        appButton
+        variant="primary"
+        type="button"
+        [disabled]="!checkedCount()"
+        (click)="save()"
+        data-testid="receipt-save"
+      >
+        {{ merge() ? '1건으로 저장' : checkedCount() + '건 저장' }}
+      </button>
+    }
+  </div>
+</section>
