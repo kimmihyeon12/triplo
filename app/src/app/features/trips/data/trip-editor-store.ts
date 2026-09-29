@@ -99,6 +99,7 @@ export class TripEditorStore {
     if (!id) return false;
     try {
       await this.repo.remove(id);
+      this.pending.discard(id);
       return true;
     } catch (error) {
       patchState(this.state, { currentError: errorMessage(error) });

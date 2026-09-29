@@ -58,6 +58,8 @@ export class TripListStore {
   async removeTrip(id: string): Promise<boolean> {
     try {
       await this.repo.remove(id);
+      // 저장에 실패해 남은 초안이 있으면 목록이 그것을 앞에 붙여 지운 여행이 되살아난다.
+      this.pending.discard(id);
       await this.loadList();
       return true;
     } catch (error) {

@@ -234,4 +234,21 @@ describe('trip editing async contract', () => {
     await done;
     expect(list.view()).toBe('empty');
   });
+
+  it('저장에 실패한 초안이 있는 여행을 지우면 목록에 다시 나타나지 않는다', async () => {
+    let failing = true;
+    const { store, list, records } = setup({
+      save: async (trip) => {
+        if (failing) throw new Error('offline');
+        records.set(trip.id, trip);
+      },
+    });
+    const trip = createTrip({ title: '지울 여행' });
+    await store.commit(trip);
+    await list.loadList();
+    expect(list.trips().map((t) => t.id)).toContain(trip.id);
+    failing = false;
+    await list.removeTrip(trip.id);
+    expect(list.trips().map((t) => t.id)).not.toContain(trip.id);
+  });
 });
