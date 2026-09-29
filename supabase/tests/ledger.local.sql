@@ -15,6 +15,7 @@ insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('222222
 \ir ../migrations/20260929000000_trip_version_and_save.sql
 \ir ../migrations/20260929000001_trip_grants.sql
 \ir ../migrations/20260929000002_ledger_tables.sql
+\ir ../migrations/20260929000003_remove_ledger_person.sql
 \set ON_ERROR_STOP 0
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
@@ -37,7 +38,13 @@ select set_budget('t1', 100000);
 select 'budget set' as t, budget from trip_ledgers;
 select set_budget('t1', null);
 select 'budget cleared' as t, coalesce(budget::text, 'null') from trip_ledgers;
+select add_ledger_person('t1', '{"id":"p3","name":"준호"}'::jsonb);
+select 'remove used' as t, remove_ledger_person('t1', 'p2');
+select 'remove self' as t, remove_ledger_person('t1', 'self');
+select 'remove p3' as t, remove_ledger_person('t1', 'p3');
+select 'people after remove' as t, string_agg(id, ',' order by "order") from ledger_people;
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select 'B remove' as t, remove_ledger_person('t1', 'self');
 select 'B save' as t, save_expense('t1', '{"id":"e9","title":"x","date":"2026-10-10","category":"food","amount":1000,"paidBy":"self","splits":[{"personId":"self","amount":1000}],"memo":"","linkId":null,"personal":false}'::jsonb, 0);
 select 'B budget' as t, set_budget('t1', 1);
 select 'B sees' as t, (select count(*) from expenses) + (select count(*) from ledger_people) + (select count(*) from settlement_receipts) as rows;

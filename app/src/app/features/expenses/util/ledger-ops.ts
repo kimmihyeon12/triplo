@@ -6,6 +6,7 @@ import type { Expense, ExpensePerson, Ledger, SettlementReceipt } from '../model
  */
 export type LedgerOp =
   | { kind: 'addPerson'; person: ExpensePerson }
+  | { kind: 'removePerson'; id: string }
   | { kind: 'saveExpense'; expense: Expense; isNew: boolean }
   | { kind: 'deleteExpense'; id: string }
   | { kind: 'addReceipt'; receipt: SettlementReceipt }
@@ -30,11 +31,12 @@ export function sameLedger(a: Ledger, b: Ledger): boolean {
 
 /**
  * 바꾸기 전/후 가계부의 차이를 동작 목록으로 바꾼다. 지출 화면의 저장과
- * 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람·수령을 지우는 동작은 앱에
- * 없으므로 만들지 않는다.
+ * 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 수령을 지우는 동작은 앱에
+ * 없으므로 만들지 않는다(취소만 있다).
  *
- * 순서: 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가.
- * 지출과 수령이 가리키는 사람이 먼저 있어야 서버의 외래 키가 맞는다.
+ * 순서: 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가 → 사람 삭제.
+ * 지출과 수령이 가리키는 사람이 먼저 있어야 서버의 외래 키가 맞고,
+ * 지우는 사람은 그를 가리키던 기록이 모두 정리된 뒤에 지워야 한다.
  */
 export function ledgerOps(before: Ledger, after: Ledger): LedgerOp[] {
   const ops: LedgerOp[] = [];
@@ -63,6 +65,9 @@ export function ledgerOps(before: Ledger, after: Ledger): LedgerOp[] {
   }
   for (const receipt of after.receipts)
     if (!receipts.has(receipt.id)) ops.push({ kind: 'addReceipt', receipt });
+  const remaining = new Set(after.people.map((p) => p.id));
+  for (const person of before.people)
+    if (!remaining.has(person.id)) ops.push({ kind: 'removePerson', id: person.id });
   return ops;
 }
 
@@ -80,6 +85,8 @@ export function applyOp(ledger: Ledger, op: LedgerOp): Ledger {
             expenses: ledger.expenses.map((e) => (e.id === op.expense.id ? op.expense : e)),
           }
         : { ...ledger, expenses: [...ledger.expenses, op.expense] };
+    case 'removePerson':
+      return { ...ledger, people: ledger.people.filter((p) => p.id !== op.id) };
     case 'deleteExpense':
       return { ...ledger, expenses: ledger.expenses.filter((e) => e.id !== op.id) };
     case 'addReceipt':

@@ -9,11 +9,16 @@ export interface LedgerDataClient {
   call(fn: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
-/** 가계부 함수의 오류 코드: P0409 충돌, P0422 분담 합계 불일치. */
+/**
+ * 가계부 함수의 오류 코드: P0409 충돌, P0422 분담 합계 불일치,
+ * 23503 지우려는 사람을 다른 기기의 기록이 가리킴.
+ */
 export function toLedgerError(error: { code?: string } | null): Error {
   if (error?.code === 'P0409') return new TripConflictError();
   if (error?.code === 'P0422')
     return new TripSaveError('분담 금액 합계가 실제 지출과 일치해야 합니다.');
+  if (error?.code === '23503')
+    return new TripSaveError('지출·수령 기록에 있는 사람이라 지울 수 없어요. 새로 불러와 확인해 주세요.');
   return new TripSaveError();
 }
 

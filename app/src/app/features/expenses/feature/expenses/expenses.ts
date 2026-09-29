@@ -29,6 +29,7 @@ import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
 import {
+  personRemovalBlock,
   validateLedger,
   categoryBreakdown,
   duplicateTitleIds,
@@ -173,6 +174,16 @@ export class Expenses {
     }).then((ok) => {
       if (ok) this.personName.set('');
     });
+  }
+
+  /** 정산할 사람을 지운다. 기록에 있는 사람이면 지우지 않고 이유를 알린다. */
+  removePerson(id: string): void {
+    const blocked = personRemovalBlock(this.ledger(), id);
+    if (blocked) {
+      this.error.set(blocked);
+      return;
+    }
+    void this.persist({ ...this.ledger(), people: this.ledger().people.filter((p) => p.id !== id) });
   }
 
   /** 행마다 버튼을 늘어놓지 않고 더보기 한 곳에 모은다. */

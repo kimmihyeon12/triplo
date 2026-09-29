@@ -161,11 +161,12 @@ create function owns_trip(target text) returns boolean ...
 
 여행은 한 번에 통째로 저장하지만, 가계부는 **동작 하나씩** 저장한다(2026-09-29 사용자 결정). 친구 여럿이 동시에 지출을 더하는 경우가 흔하기 때문이다. 가계부 전체를 한 버전으로 묶으면 서로 다른 지출을 더해도 매번 충돌이 난다.
 
-앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가다.
+앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가 → 사람 삭제다. 지우는 사람은 그를 가리키던 기록이 정리된 뒤에 지운다.
 
 | 함수 | 하는 일 |
 | --- | --- |
 | `add_ledger_person(trip, person)` | 사람을 더하거나 이름을 바꾼다 |
+| `remove_ledger_person(trip, person_id)` | 사람을 지운다. '나'는 거절(`P0422`), 기록이 가리키는 사람은 외래 키가 막는다(`23503`). `20260929000003` |
 | `save_expense(trip, expense, base_version) → integer` | 지출과 분담을 한 트랜잭션으로 저장하고 새 버전을 돌려준다 |
 | `delete_expense(trip, id, base_version)` | 지출을 지운다 |
 | `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다 |

@@ -111,11 +111,13 @@ describe('SupabaseLedgerRepository', () => {
       { kind: 'setBudget', budget: null },
       { kind: 'cancelReceipt', id: 'r1', reason: '실수' },
       { kind: 'addPerson', person: { id: 'p3', name: '준호' } },
+      { kind: 'removePerson', id: 'p3' },
     ]);
     expect(calls).toEqual([
       { fn: 'set_budget', args: { p_trip_id: 't1', p_budget: null } },
       { fn: 'cancel_receipt', args: { p_trip_id: 't1', p_receipt_id: 'r1', p_reason: '실수' } },
       { fn: 'add_ledger_person', args: { p_trip_id: 't1', p_person: { id: 'p3', name: '준호' } } },
+      { fn: 'remove_ledger_person', args: { p_trip_id: 't1', p_person_id: 'p3' } },
     ]);
   });
 });

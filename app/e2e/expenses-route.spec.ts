@@ -34,6 +34,26 @@ test.describe('정산 화면 진입', () => {
     await expect(page.locator('#expense-share-self')).toBeChecked();
   });
 
+  test('정산할 사람은 이름 옆 X로 지우고, 나에게는 X가 없다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '사람 지우기',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+
+    await page.goto(`/trips/${id}/expenses`);
+    await page.getByText(/정산할 사람 ·/).click();
+    await page.getByLabel('정산할 사람 이름').fill('민지');
+    await page.getByRole('button', { name: '추가', exact: true }).click();
+    await expect(page.getByRole('button', { name: '민지 지우기' })).toBeVisible();
+    await expect(page.getByTestId('remove-person-self')).toHaveCount(0);
+
+    await page.getByRole('button', { name: '민지 지우기' }).click();
+    await expect(page.getByRole('button', { name: '민지 지우기' })).toHaveCount(0);
+    await expect(page.getByText(/정산할 사람 · 1명/)).toBeVisible();
+  });
+
   test('열린 선택 목록을 터치로 다시 누르면 닫힌다', async ({ page }, info) => {
     test.skip(!info.project.use.hasTouch, '터치 기기에서만 생기는 문제다');
     const id = await createTrip(page, {
