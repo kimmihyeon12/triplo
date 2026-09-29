@@ -25,7 +25,7 @@
     @for (link of note().links; track link.url) {
       <a
         class="inline-flex items-center gap-1 rounded-pill border border-border-strong bg-panel px-3 py-1.5 text-12 font-semibold text-ink-2 no-underline transition-colors hover:border-accent hover:text-accent-deep"
-        [href]="link.url"
+        appMapLink [href]="link.url"
         target="_blank"
         rel="noopener noreferrer"
         [attr.data-testid]="'reference-link-' + link.label"

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import type { ReferenceNote } from '../../model/chat';
+import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
 
 /**
  * 확인되지 않은 참고 정보를 확인된 사실과 구분해 보여준다.
@@ -15,7 +16,8 @@ import type { ReferenceNote } from '../../model/chat';
 @Component({
   selector: 'app-ai-disclaimer',
   templateUrl: './ai-disclaimer.html',
-  imports: [IconComponent],
+  imports: [
+    UiMapLink,IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })

@@ -96,7 +96,7 @@
               <span class="absolute right-0 -top-0.5 inline-flex gap-1">
                 <a
                   class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                  [href]="naverUrl(s)"
+                  appMapLink [href]="naverUrl(s)"
                   target="_blank"
                   rel="noopener noreferrer"
                   [attr.aria-label]="s.name + ' 네이버지도에서 검색'"
@@ -110,7 +110,7 @@
                 /></a>
                 <a
                   class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                  [href]="kakaoUrl(s)"
+                  appMapLink [href]="kakaoUrl(s)"
                   target="_blank"
                   rel="noopener noreferrer"
                   [attr.aria-label]="s.name + ' 카카오맵에서 검색'"

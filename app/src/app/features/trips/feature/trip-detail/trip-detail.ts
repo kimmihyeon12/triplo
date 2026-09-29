@@ -57,6 +57,7 @@ import { ToastService } from '../../../../core/toast-service';
 import { canDeleteTrip, tripPeople } from '../../util/sharing';
 import { memberSummary } from '../../util/sharing';
 import { UiMemberStack } from '../../../../shared/ui/member-stack/member-stack';
+import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -67,6 +68,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
+    UiMapLink,
     UiMemberStack,
     UiButton,
     UiBadge,

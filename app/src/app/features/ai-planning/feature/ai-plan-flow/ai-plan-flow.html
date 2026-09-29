@@ -439,7 +439,7 @@
                     <span class="item__maps ml-auto inline-flex flex-none gap-1">
                       <a
                         class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                        [href]="naverLink(item.name, item.address)"
+                        appMapLink [href]="naverLink(item.name, item.address)"
                         target="_blank"
                         rel="noopener noreferrer"
                         [attr.aria-label]="item.name + ' 네이버지도에서 검색'"
@@ -456,7 +456,7 @@
                       </a>
                       <a
                         class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                        [href]="kakaoLink(item.name, item.address)"
+                        appMapLink [href]="kakaoLink(item.name, item.address)"
                         target="_blank"
                         rel="noopener noreferrer"
                         [attr.aria-label]="item.name + ' 카카오맵에서 검색'"
