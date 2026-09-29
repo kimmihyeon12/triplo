@@ -24,6 +24,7 @@ insert into auth.users values
 \ir ../migrations/20260929000003_remove_ledger_person.sql
 \ir ../migrations/20260929000005_trip_members.sql
 \ir ../migrations/20260929000006_drop_redundant_split_fkey.sql
+\ir ../migrations/20260929000007_preview_my_role.sql
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
 \set B '22222222-2222-2222-2222-222222222222'
@@ -38,6 +39,7 @@ select add_ledger_person('t1', '{"id":"self","name":"나"}'::jsonb);
 select 'A shared e1 (1)' as t, save_expense('t1', '{"id":"e1","title":"저녁","date":"2026-10-10","category":"food","amount":1000,"paidBy":"self","splits":[{"personId":"self","amount":1000}],"memo":"","linkId":null,"personal":false}'::jsonb, 0);
 select 'A personal e2 (1)' as t, save_expense('t1', '{"id":"e2","title":"선물","date":"2026-10-10","category":"shopping","amount":500,"paidBy":"self","splits":[{"personId":"self","amount":500}],"memo":"","linkId":null,"personal":true}'::jsonb, 0);
 select create_trip_invite('t1') as code \gset
+select 'A preview myRole (owner)' as t, preview_trip_invite(:'code')->>'myRole';
 select 'code shape (t)' as t, :'code' ~ '^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$';
 
 -- 로그인 전(anon) 미리보기: 민감 정보가 없다.
@@ -47,6 +49,7 @@ select 'anon preview title (강릉)' as t, preview_trip_invite(:'code')->>'title
 select 'anon preview owner (주인)' as t, preview_trip_invite(:'code')->>'ownerNickname';
 select 'anon preview stops (1 경포대)' as t, jsonb_array_length(p->'stops'), p->'stops'->0->>'name' from (select preview_trip_invite(:'code') p) x;
 select 'anon preview leaks (f)' as t, preview_trip_invite(:'code')::text ~ '(비밀 메모|예약번호|경포로|reserved|memo|address|tripId|budget)';
+select 'anon preview myRole (null)' as t, coalesce(preview_trip_invite(:'code')->>'myRole', 'null');
 select 'anon preview bad code (invite_invalid)' as t, preview_trip_invite('AAAA-AAAA');
 select 'anon trips (denied)' as t, count(*) from trips;
 select 'anon save_trip (denied)' as t, save_trip('{"id":"x"}'::jsonb, 0);
@@ -55,10 +58,12 @@ select 'anon join (denied)' as t, join_trip(:'code');
 -- 친구 B: 합류 전에는 아무것도 안 보이고, 소문자·하이픈 코드로 합류한다.
 set role authenticated;
 set request.jwt.claim.sub = :'B';
+select 'B preview myRole before join (null)' as t, coalesce(preview_trip_invite(:'code')->>'myRole', 'null');
 select 'B trips before join (0)' as t, count(*) from trips;
 select 'B join (t1)' as t, join_trip(lower(substr(:'code', 1, 4) || '-' || substr(:'code', 5)));
 select 'B join again (t1)' as t, join_trip(:'code');
 select 'B trips (1)' as t, count(*) from trips;
+select 'B preview myRole after join (editor)' as t, preview_trip_invite(:'code')->>'myRole';
 select 'B members (2)' as t, count(*) from trip_members where trip_id = 't1';
 select 'B ledger person added (민지)' as t, name from ledger_people where trip_id = 't1' and id = 'member-' || :'B';
 select 'self renamed to owner nickname (주인)' as t, name from ledger_people where trip_id = 't1' and id = 'self';

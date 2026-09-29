@@ -42,6 +42,9 @@ export class Join {
   readonly preview = signal<InvitePreview | null>(null);
   readonly busy = signal(false);
   readonly signedIn = computed(() => !!this.auth.user());
+  readonly nickname = computed(() => this.auth.nickname() ?? '');
+  /** 이미 이 여행의 멤버면 [함께하기] 대신 여행으로 보낸다. 주인이 자기 링크로 합류하지 않게. */
+  readonly myRole = computed(() => this.preview()?.myRole ?? null);
   /** 세션을 불러오는 동안에는 버튼을 보이지 않는다. 로그인 버튼이 잠깐 스치면 헷갈린다. */
   readonly authReady = computed(() => !this.auth.loading());
 
@@ -69,6 +72,9 @@ export class Join {
         active = false;
       });
       bar.set({ title: '여행 초대', back: null, action: null });
+      // 로그인 세션을 불러온 뒤에 미리보기를 받아야 이미 멤버인지(myRole)를 안다.
+      if (!this.authReady()) return;
+      this.auth.user();
       this.state.set('loading');
       void this.members
         .preview(this.code())
@@ -103,6 +109,26 @@ export class Join {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** 이미 멤버인 여행으로 간다. 합류는 멤버에게 아무것도 바꾸지 않고 여행 id만 돌려준다. */
+  async openTrip(): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true);
+    try {
+      const tripId = await this.members.join(this.code());
+      await this.router.navigateByUrl(`/trips/${tripId}`, { replaceUrl: true });
+    } catch (error) {
+      this.toast.error(error instanceof Error ? error.message : '여행을 열지 못했어요.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** 다른 계정으로 합류하려면 로그아웃한 뒤 계정을 골라 로그인한다. */
+  async switchAccount(): Promise<void> {
+    await this.auth.signOut();
+    await this.loginToJoin();
   }
 
   async loginToJoin(): Promise<void> {

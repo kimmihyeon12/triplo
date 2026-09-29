@@ -189,9 +189,6 @@
                   알려 주는 것이 없으므로 뺐다.
                 -->
                 <p class="card__meta flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-12 text-ink-3">
-                  @if (sharedLabel(trip); as label) {
-                    <span appBadge tone="accent" [attr.data-testid]="'trip-shared-' + trip.id">{{ label }}</span>
-                  }
                   @if (trip.regions.length > 0) {
                     <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
@@ -203,6 +200,15 @@
                     >장소 {{ trip.stops.length }}</span
                   ><span appBadge tone="stay">숙소 {{ trip.stays.length }}</span>
                 </p>
+                @if (members(trip); as m) {
+                  <app-member-stack
+                    class="mt-2.5"
+                    [me]="m.me"
+                    [others]="m.others"
+                    [label]="m.label"
+                    [attr.data-testid]="'trip-shared-' + trip.id"
+                  />
+                }
                 </a>
                 @if (deleteTripId() === trip.id) {
                   <div

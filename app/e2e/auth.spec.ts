@@ -104,6 +104,8 @@ for (const provider of ['google', 'kakao'])
         expect(url.searchParams.get('scope')).toBe(
           provider === 'kakao' ? 'profile_nickname' : null,
         );
+        // 로그아웃한 뒤 다른 계정으로 들어올 수 있게 늘 계정 선택을 띄운다.
+        expect(url.searchParams.get('prompt')).toBe('select_account');
         await route.fulfill({
           status: 302,
           headers: { location: url.searchParams.get('redirect_to')! + '?code=new-code' },

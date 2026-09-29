@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createTrip } from './factories';
-import { canDeleteTrip, myLedgerPersonId, sharedLabel, tripPeople } from './sharing';
+import { canDeleteTrip, memberSummary, myLedgerPersonId, sharedLabel, tripPeople } from './sharing';
 
 const shared = {
   ...createTrip(),
@@ -38,5 +38,28 @@ describe('sharing', () => {
     expect(myLedgerPersonId({ ...shared, sharing: { ...shared.sharing, role: 'owner' as const } }, 'u1')).toBe('self');
     expect(myLedgerPersonId(createTrip(), 'u1')).toBe('self');
     expect(myLedgerPersonId(shared, null)).toBe('self');
+  });
+
+  it('여러 명이 함께하면 나와 나를 뺀 나머지 수를 보인다', () => {
+    expect(memberSummary(shared, 'u2')).toEqual({
+      me: { initial: '민', seed: 'u2' },
+      others: 1,
+      label: '나 외 1명',
+    });
+    const many = {
+      ...shared,
+      sharing: {
+        ...shared.sharing,
+        members: [
+          ...shared.sharing.members,
+          { userId: 'u3', nickname: '준호', role: 'editor' as const },
+          { userId: 'u4', nickname: '', role: 'editor' as const },
+        ],
+      },
+    };
+    expect(memberSummary(many, 'u1')).toMatchObject({ me: { initial: '주', seed: 'u1' }, others: 3 });
+    // 로그인 정보가 없으면 첫 사람(주인)을 대표로 둔다.
+    expect(memberSummary(many, null)).toMatchObject({ me: { seed: 'u1' }, others: 3, label: '주인 외 3명' });
+    expect(memberSummary(createTrip(), 'u1')).toBeNull();
   });
 });

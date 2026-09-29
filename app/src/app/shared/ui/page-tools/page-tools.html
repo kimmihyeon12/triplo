@@ -7,7 +7,9 @@
     @for (person of tools().people.slice(0, 2); track person.id) {
       <span
         [title]="person.name"
-        class="flex size-8 items-center justify-center rounded-full border-2 border-panel bg-accent-tint text-12 font-semibold text-accent-deep"
+        class="flex size-8 items-center justify-center rounded-full border-2 border-panel text-12 font-semibold"
+        [style.background]="tone(person.id).bg"
+        [style.color]="tone(person.id).fg"
         >{{ person.name.slice(0, 1) }}</span
       >
     }
