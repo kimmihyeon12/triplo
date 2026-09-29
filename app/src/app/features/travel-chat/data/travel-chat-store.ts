@@ -7,7 +7,7 @@ import { verifyPlaces } from '../../ai-planning/data/verify-places';
 import { newId } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
 import { LEDGER_REPOSITORY } from '../../expenses/data/ledger-repository';
-import { ledgerOps } from '../../expenses/util/ledger-ops';
+import { ledgerOps, sameLedger } from '../../expenses/util/ledger-ops';
 import type { Ledger } from '../../expenses/model/ledger';
 import { localCommand } from '../util/local-commands';
 import { isLedgerCommand, ledgerCommand } from '../util/local-ledger-commands';
@@ -230,7 +230,7 @@ export class TravelChatStore {
     if (ledgerChange) {
       try {
         // 가계부는 동작 한 건씩 저장한다. 미리보기 뒤 다른 곳에서 바뀌었으면 적용하지 않는다.
-        if (JSON.stringify(await this.ledger.read(current.id)) !== JSON.stringify(ledgerChange.before)) throw new Error('가계부가 변경되었어요. 다시 요청해 주세요.');
+        if (!sameLedger(await this.ledger.read(current.id), ledgerChange.before)) throw new Error('가계부가 변경되었어요. 다시 요청해 주세요.');
         await this.ledger.apply(current.id, ledgerOps(ledgerChange.before, ledgerChange.after));
       } catch (error) {
         patchState(this.state, {error: toChatError(error)});
@@ -254,7 +254,7 @@ export class TravelChatStore {
     }
     if (this.undoLedger) {
       try {
-        if (JSON.stringify(await this.ledger.read(current.id)) !== JSON.stringify(this.undoLedger.after)) throw new Error('이후 가계부가 변경되어 되돌릴 수 없어요.');
+        if (!sameLedger(await this.ledger.read(current.id), this.undoLedger.after)) throw new Error('이후 가계부가 변경되어 되돌릴 수 없어요.');
         await this.ledger.apply(current.id, ledgerOps(this.undoLedger.after, this.undoLedger.before));
       } catch (error) {
         patchState(this.state, {error: toChatError(error)});

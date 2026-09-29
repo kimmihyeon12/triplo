@@ -12,7 +12,21 @@ export type LedgerOp =
   | { kind: 'cancelReceipt'; id: string; reason: string }
   | { kind: 'setBudget'; budget: number | null };
 
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** 필드 순서와 빠진 기본값을 맞춘 지출. 서버에서 다시 읽은 값과 비교할 때 쓴다. */
+function canonical(e: Expense): Expense {
+  return {
+    id: e.id, title: e.title, date: e.date, category: e.category, amount: e.amount, paidBy: e.paidBy,
+    splits: e.splits.map((s) => ({ personId: s.personId, amount: s.amount })),
+    memo: e.memo, linkId: e.linkId, personal: e.personal ?? false,
+  };
+}
+
+const same = (a: Expense, b: Expense) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+
+/** 두 가계부가 저장할 차이 없이 같은지. 필드 순서·기본값 차이는 무시한다. */
+export function sameLedger(a: Ledger, b: Ledger): boolean {
+  return ledgerOps(a, b).length === 0 && ledgerOps(b, a).length === 0;
+}
 
 /**
  * 바꾸기 전/후 가계부의 차이를 동작 목록으로 바꾼다. 지출 화면의 저장과

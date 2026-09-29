@@ -77,6 +77,15 @@ describe('local command routing', () => {
     await store.undo();
     expect(ledger.get().expenses).toHaveLength(0);
   });
+  it('undoes a chat expense when the server reads it back with defaults filled in', async () => {
+    const ledger = fakeLedger(undefined, false, true);
+    const store = setup(fakeChat(), ledger.repo);
+    store.open('trip', trip());
+    await store.send('점심값 2만원 추가해');
+    await store.applyDraft(store.messages().at(-1)!.draft!);
+    expect(await store.undo()).not.toBeNull();
+    expect(ledger.get().expenses).toHaveLength(0);
+  });
 });
 
 describe('local assignment integration', () => {
@@ -172,10 +181,18 @@ function memoryStorage(): KeyValueStorage {
 }
 
 /** 기기·서버 구현과 같은 계약의 가짜 가계부. 동작을 차례로 적용한다. */
-function fakeLedger(initial: Ledger = {...newLedger(), people: [{id:'self', name:'나'}]}, fail = false) {
+/** serverLike면 서버 읽기처럼 지출 필드를 정해진 순서로 채워 돌려준다. */
+function fakeLedger(initial: Ledger = {...newLedger(), people: [{id:'self', name:'나'}]}, fail = false, serverLike = false) {
   let saved = structuredClone(initial);
+  const asServer = (ledger: Ledger): Ledger => ({
+    people: ledger.people, budget: ledger.budget, receipts: ledger.receipts,
+    expenses: ledger.expenses.map(e => ({
+      id: e.id, title: e.title, date: e.date, category: e.category, amount: e.amount, paidBy: e.paidBy,
+      splits: e.splits, memo: e.memo, linkId: e.linkId, personal: e.personal ?? false,
+    })),
+  });
   const repo: LedgerRepository = {
-    read: async () => structuredClone(saved),
+    read: async () => structuredClone(serverLike ? asServer(saved) : saved),
     apply: async (_id, ops) => {
       if (fail) throw new Error('저장 실패');
       saved = ops.reduce(applyOp, saved);
