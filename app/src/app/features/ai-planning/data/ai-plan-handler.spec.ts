@@ -207,4 +207,10 @@ describe('createAiPlanHandler', () => {
     expect(callModel).not.toHaveBeenCalled();
     expect(refundQuota).not.toHaveBeenCalled();
   });
+
+  it('모델이 빈 답을 주면 실패로 알리고 되돌린다', async () => {
+    const { handler, refundQuota } = setup({ callModel: async () => '  ' });
+    expect((await handler(post(BODY))).status).toBe(500);
+    expect(refundQuota).toHaveBeenCalledWith('u1');
+  });
 });

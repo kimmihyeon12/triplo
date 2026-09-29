@@ -55,6 +55,8 @@ export function createAiPlanHandler(deps: AiPlanDeps) {
       let content: string;
       try {
         content = await deps.callModel({ system: SYSTEM_PROMPT, user: buildUserPrompt(input) });
+        // 안전 차단 등으로 빈 답이 오면 쓸 수 없는 결과다. 실패로 보고 되돌린다.
+        if (!content.trim()) throw new Error('empty_response');
       } catch (error) {
         await deps.refundQuota(user.id).catch(() => {});
         throw error;
