@@ -38,12 +38,9 @@
   --color-stay-tint: #efe9fb;
   --color-stay-fill: #ddd2f5;
   /*
-    지출 분류 전용 색. 요약 카드의 분류별 막대와 필터 칩·목록 라벨의 작은 점에만
-    쓴다. 라벨 자체는 분류와 상관없이 한 모양이다. 분류마다 라벨 바탕색을 달리
-    했더니 한 목록 안에서 알록달록했다(2026-09-29 사용자 결정). 글자색을 그대로
-    칠하면 무겁고 파스텔까지 올리면 흐려 보여, 두 색의 중간 명도로 맞췄다.
-    분류 이름은 옆에 글자로 있으므로 색만으로 읽지 않는다. 숙박은 숙소와 같은
-    보라 계열이다.
+    지출 분류의 막대 색. 요약 카드의 분류별 막대와 필터 칩의 점에 쓴다. 글자색을
+    그대로 칠하면 무겁고 파스텔까지 올리면 흐려 보여, 두 색의 중간 명도로
+    맞췄다. 분류 이름은 옆에 글자로 있으므로 색만으로 읽지 않는다.
   */
   --color-exp-food-bar: #d47a54;
   --color-exp-stay-bar: #947ad0;
@@ -51,6 +48,19 @@
   --color-exp-activity-bar: #5aa278;
   --color-exp-shopping-bar: #cc6c9a;
   --color-exp-other-bar: #8c94a1;
+  /*
+    지출 분류 라벨(글자·바탕). 식비·숙박은 여행 상세의 식사·숙소 라벨(meal·stay)을
+    그대로 쓰고, 여행 상세에 없는 분류만 여기서 정한다. 글자색은 바탕 위 4.7:1
+    이상이다(2026-09-28 측정값).
+  */
+  --color-exp-transport-ink: #1f5fb0;
+  --color-exp-transport-tint: #e4eefb;
+  --color-exp-activity-ink: #237548;
+  --color-exp-activity-tint: #e2f3e8;
+  --color-exp-shopping-ink: #a8316b;
+  --color-exp-shopping-tint: #fbe7f0;
+  --color-exp-other-ink: #4a5568;
+  --color-exp-other-tint: #eef0f3;
   /*
     지역 전용. ok(완료·확인됨)와 뜻이 겹치면 안 되므로 초록을 피한다.
     2026-09-21 올리브(#3f6212)에서 청록으로 옮겼다. 올리브는 색상이 누런

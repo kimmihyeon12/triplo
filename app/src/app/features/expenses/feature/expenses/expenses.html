@@ -219,19 +219,10 @@
               </p>
               <p class="mt-2 flex flex-wrap gap-1.5">
                 <!--
-                  여행 상세의 분류 라벨과 같은 모양(테두리 없는 채움)이다. 분류마다
-                  바탕색을 달리했더니 한 목록 안에서 알록달록해 바탕은 한 가지로
-                  두고, 분류색은 요약 막대와 같은 작은 점에만 남긴다(2026-09-29
-                  사용자 결정).
+                  여행 상세의 분류 라벨과 같은 모양·색이다. 식비는 식사, 숙박은 숙소
+                  라벨 색을 그대로 쓴다(2026-09-29 사용자 결정).
                 -->
-                <span appBadge class="gap-1.5 bg-ground-2 text-ink-2"
-                  ><span
-                    class="size-1.5 flex-none rounded-full"
-                    [class]="style(e.category).fill"
-                    aria-hidden="true"
-                  ></span
-                  >{{ categoryLabel(e.category) }}</span
-                >
+                <span appBadge [class]="style(e.category).label">{{ categoryLabel(e.category) }}</span>
                 @if (e.personal) {
                   <span appBadge class="cell cell--ghost">정산 제외</span>
                 }
