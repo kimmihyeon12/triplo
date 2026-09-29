@@ -113,6 +113,7 @@ export const appConfig: ApplicationConfig = {
             new SafeLocalStorage(),
             environment.storageKey,
             environment.isTest ? `${environment.storageKey}.failSave` : null,
+            environment.isTest ? `${environment.storageKey}.conflictSave` : null,
           );
         try {
           clearLegacyLocalTrips(localStorage, environment.storageKey);
