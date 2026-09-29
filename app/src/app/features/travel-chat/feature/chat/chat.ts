@@ -15,6 +15,7 @@ import type { Trip } from '../../../trips/model/trip';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
+import { AiQuota } from '../../../../core/ai-quota';
 
 /**
  * 여행 목록에서 연 대화. 아직 대상 여행이 없으므로 전체 화면으로 연다.
@@ -38,6 +39,7 @@ import type { ChatDraft } from '../../model/chat';
   host: { class: 'flex h-[calc(100dvh-53px)] flex-col' },
 })
 export class ChatPage implements OnInit {
+  readonly aiHint = inject(AiQuota).hint('chat');
   readonly store = inject(TravelChatStore);
   private readonly editor = inject(TripEditorStore);
   private readonly destroyRef = inject(DestroyRef);

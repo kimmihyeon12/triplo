@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { createReceiptScanHandler } from './handler.ts';
+import { limitFromEnv, quotaDeps } from '../_shared/quota.ts';
 import { RESPONSE_SCHEMA } from './prompt.ts';
 
 /**
@@ -18,6 +19,7 @@ const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 Deno.serve(
   createReceiptScanHandler({
+    ...quotaDeps(admin, 'receipt', limitFromEnv(Deno.env.get('AI_LIMIT_RECEIPT'), 10)),
     async getUser(token) {
       const { data, error } = await admin.auth.getUser(token);
       return error ? null : data.user;

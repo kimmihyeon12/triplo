@@ -11,7 +11,7 @@ import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiSwitch } from '../../../../shared/ui/switch/switch';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 
 /**
@@ -33,7 +33,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
     UiNotice,
     UiSpinner,
     UiSwitch,
-    ErrorToast,
+    UiToast,
     IconComponent,
     RouterLink,
   ],

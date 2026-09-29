@@ -82,6 +82,7 @@
   --color-danger-fill: #fbcfcb;
   --color-ok-ink: #067d5f;
   --color-ok-tint: #defcef;
+  --color-ok-fill: #b3edd5;
   /*
     기록 지도 전용: 원본 2.5D 블록 시각화의 바다와 방문 빈도.
     지형은 순백에 가깝게 두므로 바다가 너무 옅으면 한반도 윤곽이 사라진다.

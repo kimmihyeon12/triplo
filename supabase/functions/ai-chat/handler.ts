@@ -1,9 +1,14 @@
 import { normalizeChatResponse } from './contract.ts';
 import { SYSTEM_PROMPT } from './prompt.ts';
+import { UserLimitError } from '../_shared/quota.ts';
 
 export interface ChatDeps {
   getUser(token: string): Promise<{id: string} | null>;
   callModel(prompt: {system: string; user: string}): Promise<string>;
+  /** 오늘 한 번을 차감하고 남은 횟수를 돌려준다. 한도를 넘으면 UserLimitError. */
+  consumeQuota(userId: string): Promise<number>;
+  /** 모델 호출이 실패했을 때 차감한 한 번을 돌려준다. */
+  refundQuota(userId: string): Promise<void>;
 }
 
 function validate(value: unknown): object | null {
@@ -39,16 +44,27 @@ export function createAiChatHandler(deps: ChatDeps) {
     const token = /^Bearer\s+(\S+)$/i.exec(request.headers.get('authorization') ?? '')?.[1];
     if (!token) return reply(401,{error:'authentication_required'});
     try {
-      if (!(await deps.getUser(token))) return reply(401,{error:'authentication_required'});
+      const user = await deps.getUser(token);
+      if (!user) return reply(401,{error:'authentication_required'});
       const raw = await request.text();
       if (raw.length > 80000) return reply(400,{error:'invalid_request'});
       let input: object | null;
       try { input = validate(JSON.parse(raw)); } catch { input = null; }
       if (!input) return reply(400,{error:'invalid_request'});
-      const result = normalizeChatResponse(await deps.callModel({system:SYSTEM_PROMPT,user:JSON.stringify(input)}));
-      return reply(200,{content:JSON.stringify(result)});
+      // 검증을 통과한 질문만 센다. 모델이 실패하거나 쓸 수 없는 답을 주면 되돌린다.
+      const remaining = await deps.consumeQuota(user.id);
+      let result;
+      try {
+        result = normalizeChatResponse(await deps.callModel({system:SYSTEM_PROMPT,user:JSON.stringify(input)}));
+      } catch (error) {
+        await deps.refundQuota(user.id).catch(()=>{});
+        throw error;
+      }
+      return reply(200,{content:JSON.stringify(result),remaining});
     } catch (error) {
+      if (error instanceof UserLimitError) return reply(429,{error:'user_limit',limit:error.limit});
       const code = error instanceof Error ? error.message : '';
+      if (code === 'quota_check_failed') return reply(503,{error:'server_unavailable'});
       if (code === 'quota_exceeded') return reply(429,{error:code});
       if (code === 'server_unavailable') return reply(503,{error:code});
       if (code === 'model_timeout') return reply(504,{error:code});

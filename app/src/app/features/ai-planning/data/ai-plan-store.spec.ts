@@ -155,6 +155,17 @@ describe('AiPlanStore 생성', () => {
     expect(store.error()?.message).toContain('오늘 사용량');
   });
 
+  it('내 한도·무료 한도 문구도 한도로 구분한다', async () => {
+    for (const message of [
+      '오늘 AI 일정 만들기를 5번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
+      '오늘 AI 무료 사용량이 모두 소진됐어요. 오후 5시쯤 다시 쓸 수 있어요.',
+    ]) {
+      const store = threeDayTrip(fakeAi({ generate: async () => { throw new Error(message); } }));
+      await store.generate();
+      expect(store.error()?.kind).toBe('quota');
+    }
+  });
+
   it('시간 초과는 따로 구분한다', async () => {
     const store = threeDayTrip(
       fakeAi({

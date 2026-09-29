@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { AuthStore } from '../../auth/data/auth-store';
+import { AiQuota, aiLimitMessage } from '../../../core/ai-quota';
 import { parseAiItems, type AiItem } from '../util/ai-response';
 import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-plan-provider';
 
@@ -14,6 +15,7 @@ import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-pla
 @Injectable({ providedIn: 'root' })
 export class EdgeAiProvider implements AiPlanProvider {
   private readonly auth = inject(AuthStore);
+  private readonly quota = inject(AiQuota);
 
   async availability(): Promise<AiPlanAvailability> {
     if (!this.auth.available())
@@ -26,7 +28,10 @@ export class EdgeAiProvider implements AiPlanProvider {
 
   async generate(request: AiPlanRequest, signal: AbortSignal): Promise<readonly AiItem[]> {
     try {
-      const { content } = await this.auth.callFunction<{ content: string }>('ai-plan', {
+      const { content, remaining } = await this.auth.callFunction<{
+        content: string;
+        remaining?: number;
+      }>('ai-plan', {
         regions: [...request.regions],
         dayCount: request.dayCount,
         companion: request.companion,
@@ -37,6 +42,7 @@ export class EdgeAiProvider implements AiPlanProvider {
         bookedStay: request.bookedStay,
         extraNote: request.extraNote,
       });
+      this.quota.record('plan', remaining);
       if (signal.aborted) return [];
       return parseAiItems(content ?? '', request.dayCount);
     } catch (error) {
@@ -48,10 +54,10 @@ export class EdgeAiProvider implements AiPlanProvider {
 
 /** 서버가 준 코드를 사용자가 읽을 문장으로 바꾼다. */
 function toUserError(error: unknown): Error {
+  const limit = aiLimitMessage('plan', error);
+  if (limit) return new Error(limit);
   const code = error instanceof Error ? error.message : '';
   switch (code) {
-    case 'quota_exceeded':
-      return new Error('오늘 사용량을 다 썼어요. 내일 다시 시도해 주세요.');
     case 'authentication_required':
       return new Error('로그인이 필요합니다. 다시 로그인해 주세요.');
     case 'invalid_request':

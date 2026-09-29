@@ -4,12 +4,12 @@ import { UiButton } from '../../../../shared/ui/button/button';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { AuthStore } from '../../data/auth-store';
 
 @Component({
   selector: 'app-onboarding',
-  imports: [UiButton, UiField, UiInput, ErrorToast],
+  imports: [UiButton, UiField, UiInput, UiToast],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.html',
 })

@@ -265,7 +265,8 @@
         <p class="text-13 font-semibold text-accent-deep">지역을 골라 보세요</p>
         <h3 class="mt-1.5 text-17 font-semibold">어떤 여행이 쌓였을까요?</h3>
         <p class="mt-2 text-14 leading-relaxed text-ink-2">지도나 아래 목록에서 지역을 누르면 월별 방문과 최근 다녀온 장소를 볼 수 있어요.</p>
-      } @else {
+      } @else if (state() === 'ready') {
+        <!-- 불러오는 동안에는 방문 수가 0이라 빈 상태처럼 보인다. 다 읽은 뒤에만 보인다. -->
         <!--
           기록이 없을 때는 결과가 아니라 다음에 할 일을 보여준다. 0회 목록과
           범례는 아직 뜻이 없으므로 감추고, 세 단계로 무엇이 쌓이는지 알린다.
@@ -378,7 +379,6 @@
     }
     </div>
   </div>
-  @if (locationNotice()) { <p class="mt-3 text-13 text-ink-2" role="status">{{ locationNotice() }}</p> }
   @if (state() === 'ready' && total()) {
     <p class="mt-4 text-12 leading-relaxed text-ink-3">종료일이 지난 여행의 장소·숙소를 일정에 담긴 횟수만큼 세어요. 색이 찬 군집은 시·군·구별 합계이며 개별 장소의 위치나 실제 방문 면적이 아니에요.</p>
   }

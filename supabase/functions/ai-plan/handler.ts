@@ -1,4 +1,5 @@
 import { buildUserPrompt, SYSTEM_PROMPT, type AiPlanInput } from './prompt.ts';
+import { UserLimitError } from '../_shared/quota.ts';
 
 /**
  * AI 일정 만들기. 브라우저가 모델을 직접 부르지 않고 이 함수를 거친다.
@@ -13,6 +14,10 @@ export interface AiPlanDeps {
   getUser(token: string): Promise<{ id: string } | null>;
   /** 모델을 부르고 응답 본문(JSON 문자열)을 돌려준다. */
   callModel(prompt: { system: string; user: string }): Promise<string>;
+  /** 오늘 한 번을 차감하고 남은 횟수를 돌려준다. 한도를 넘으면 UserLimitError. */
+  consumeQuota(userId: string): Promise<number>;
+  /** 모델 호출이 실패했을 때 차감한 한 번을 돌려준다. */
+  refundQuota(userId: string): Promise<void>;
 }
 
 /** 한 번에 만들 수 있는 여행 길이. 지나치게 길면 토큰만 쓰고 쓸모도 없다. */
@@ -45,12 +50,23 @@ export function createAiPlanHandler(deps: AiPlanDeps) {
       const input = validate(body);
       if (!input) return reply(400, { error: 'invalid_request' });
 
-      const content = await deps.callModel({
-        system: SYSTEM_PROMPT,
-        user: buildUserPrompt(input),
-      });
-      return reply(200, { content });
+      // 검증을 통과한 요청만 센다. 모델이 실패하면 되돌려 실패한 요청은 세지 않는다.
+      const remaining = await deps.consumeQuota(user.id);
+      let content: string;
+      try {
+        content = await deps.callModel({ system: SYSTEM_PROMPT, user: buildUserPrompt(input) });
+        // 안전 차단 등으로 빈 답이 오면 쓸 수 없는 결과다. 실패로 보고 되돌린다.
+        if (!content.trim()) throw new Error('empty_response');
+      } catch (error) {
+        await deps.refundQuota(user.id).catch(() => {});
+        throw error;
+      }
+      return reply(200, { content, remaining });
     } catch (error) {
+      if (error instanceof UserLimitError)
+        return reply(429, { error: 'user_limit', limit: error.limit });
+      if (error instanceof Error && error.message === 'quota_check_failed')
+        return reply(503, { error: 'server_unavailable' });
       // 하루 한도 초과는 사용자가 할 수 있는 일이 다르므로 따로 알린다.
       if (error instanceof Error && error.message === 'quota_exceeded')
         return reply(429, { error: 'quota_exceeded' });

@@ -23,6 +23,7 @@ import { STOP_KIND_LABEL } from '../../../trips/model/trip';
 import { kindTone } from '../../../trips/util/kind-tone';
 import type { KoreaRegion } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
+import { AiQuota } from '../../../../core/ai-quota';
 
 @Component({
   selector: 'app-ai-plan-flow',
@@ -43,6 +44,7 @@ import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '..
 })
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
+  readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
   readonly saveFailed = input(false);

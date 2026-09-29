@@ -53,6 +53,7 @@ import { type DayMapModel } from '../../../places/model/map';
 import { ChatSheet } from '../../../travel-chat/travel-chat';
 import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
+import { ToastService } from '../../../../core/toast-service';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -470,8 +471,7 @@ export class TripDetailPage {
     return dayStops(t, day).filter((s) => s.fixedTime === null && s.location !== null).length >= 2;
   });
 
-  /** 정렬 뒤 무엇이 자리를 지켰는지 알린다. 비면 표시하지 않는다. */
-  readonly sortNotice = signal<string | null>(null);
+  private readonly toast = inject(ToastService);
 
   async sortByNearest(): Promise<void> {
     const t = this.trip();
@@ -483,7 +483,8 @@ export class TripDetailPage {
     const kept: string[] = [];
     if (r.fixedCount > 0) kept.push(`고정 시각 ${r.fixedCount}개`);
     if (r.unlocatedCount > 0) kept.push(`위치 미확인 ${r.unlocatedCount}개`);
-    this.sortNotice.set(
+    // 정렬 뒤 무엇이 자리를 지켰는지 알린다.
+    this.toast.success(
       kept.length > 0
         ? `${r.sortedCount}개를 가까운 순으로 정렬했습니다. ${kept.join('·')}는 자리를 지켰습니다.`
         : `${r.sortedCount}개를 가까운 순으로 정렬했습니다.`,
@@ -495,6 +496,7 @@ export class TripDetailPage {
     if (ok) {
       this.copiedId.set(target.id);
       this.copyFallback.set(false);
+      this.toast.success('주소를 복사했어요.');
       setTimeout(() => this.copiedId.set(null), 1500);
     } else {
       this.copyFallback.set(true);

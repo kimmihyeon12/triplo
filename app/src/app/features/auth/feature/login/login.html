@@ -213,7 +213,7 @@
     }
   </section>
   @if (auth.error()) {
-    <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
+    <app-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
   }
   @if (!auth.available() && !auth.loading() && !auth.busy()) {
     <button appButton type="button" class="btn" (click)="reload()">다시 시도</button>

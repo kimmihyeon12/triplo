@@ -16,6 +16,7 @@ import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 import type { Trip } from '../../../trips/model/trip';
+import { AiQuota } from '../../../../core/ai-quota';
 
 /**
  * 여행 상세에서 여는 대화. 하단 시트로 연다.
@@ -38,6 +39,8 @@ export class ChatSheet {
   readonly close = output<void>();
   /** 반영한 여행. 상세 화면이 받아 저장한다. */
   readonly applied = output<Trip>();
+
+  readonly aiHint = inject(AiQuota).hint('chat');
 
   readonly store = inject(TravelChatStore);
 
