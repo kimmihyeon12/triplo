@@ -75,7 +75,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 | 배지 | `span[appBadge]` | accent/place/region/stay/warn/danger/ok/meal/cafe/neutral. 상태 텍스트 필수. meal·cafe는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
 | 안내 | `div[appNotice]` | warn/danger/ok. 동적 오류 등 필요한 경우에만 소비자가 live region 지정 |
 | 로딩 | `app-spinner` | 장식용. 독립 로딩은 부모 role=status와 접근성 이름, 버튼은 aria-busy 제공 |
-| 오류 토스트 | `app-error-toast` | message/dismissed. 하단 중앙·안전 영역·role=alert·닫기 버튼·아래로 밀어 닫기(40px 초과). 자동 소멸하지 않음 |
+| 알림 토스트 | `app-toast` | kind(success·info·error)/message/dismissed. 상단 바 아래·오류만 role=alert·닫기 버튼·위로 밀어 닫기(40px 초과). 성공·안내만 3초 뒤 닫힘 |
 | 하단 동작 바 | `div[appActionBar]` | 하단 고정·안전 영역. 내부 action-bar__inner에 주요 버튼 배치 |
 | 스위치 | `app-switch` | checked/disabled/label/changed. 누르는 즉시 반영되는 설정에 쓴다. 폼을 보내야 반영되는 자리에는 체크박스를 쓴다. 줄 전체가 버튼이면 `presentational`을 켜고 표시만 맡긴다 |
 
@@ -117,7 +117,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 
 - 버튼 로딩은 문구를 유지하고 내부 스피너·중복 실행 차단으로 표현한다. ‘화면으로 이동 중’ 같은 별도 문장을 추가하지 않는다.
 - 스피너는 `animate-spin`과 `border-r-transparent`로 열린 테두리를 회전시킨다. border shorthand가 투명 부분을 덮지 않게 한다. 모션 감소 설정은 `motion-reduce:animate-none`으로 존중한다.
-- 토스트는 연한 빨강 바탕(`danger-tint`)·연한 빨강 테두리(`danger-fill`)·옅은 그림자에 본문색 글자를 쓴다. 경고 아이콘은 원 없이 `danger-ink`로, 닫기 X는 본문색으로 둔다(2026-09-29 사용자 결정). 닫기 영역은 40px 이상 확보한다. 모든 화면에서 같은 자리(화면 아래 16px, 안전 영역 반영)에 뜨고 하단 버튼 줄·대화 버튼 위에 겹친다. 화면마다 버튼 높이만큼 올리지 않는다(2026-09-29 사용자 결정).
+- 토스트(`app-toast`, `ToastService`)는 성공·안내·오류 세 종류다(2026-09-29 사용자 결정). 성공은 연한 초록(`ok-tint`·`ok-fill`, 원 체크), 안내는 연한 파랑(`accent-tint`·`accent-fill`, 원 i), 오류는 연한 빨강(`danger-tint`·`danger-fill`, 경고 삼각형)이며 글자는 모두 본문색이다. 성공·안내는 3초 뒤 스스로 닫히고 오류는 닫을 때까지 남는다. 모든 화면에서 상단 바 바로 아래 같은 자리에 뜨고 X나 위로 밀어 닫는다. 복사·기록·정렬 완료와 위치 확인 같은 한 번의 결과 알림은 화면 안 문장 대신 토스트로 보인다. 입력 칸 옆 경고(이름 중복 등)와 불러오는 중 표시는 그 자리에 둔다.
 - 앱 안의 움직임은 무엇이 바뀌었는지 알리는 곳에만 둔다(2026-09-29). 탭 밑줄은 하나를 선택한 탭으로 옮겨 미끄러지게 하고(`app-tabs`), 접는 카드(`details.fold`)는 지원하는 브라우저에서 높이가 늘어나며 열리고, 행 더보기 메뉴는 버튼 자리에서 작게 튀어나온다. 탭 내용·날짜 목록·폼이 떠오르며 바뀌는 전환은 쓰지 않는다(사용자 결정). 규칙은 `styles/effects.css`에 있고 모션 감소 설정에서는 멈춘다.
 - 작은 아이콘 버튼도 조작 영역은 최소 44px로 확보한다. 키보드 포커스를 숨기지 않는다.
 - **상태에 따라 값이 바뀌는 자리는 `[class.left-5]`가 아니라 `[style.left.px]`를 쓴다.** Tailwind는 소스에서 클래스 문자열을 찾아 CSS를 만드는데, `[class.xxx]` 표기는 그 문자열이 나타나지 않아 규칙이 만들어지지 않는다. 화면에서는 아무 일도 일어나지 않고 오류도 나지 않는다(2026-09-17 스위치 손잡이에서 확인). 색처럼 두 값 중 하나를 고르는 경우도 `[style.background]`에 토큰을 넣는다.

@@ -26,7 +26,7 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await expect(page.getByTestId('save-status')).toHaveCount(0);
   });
 
-  test('오류 토스트는 아래로 밀어서 닫는다', async ({ page }) => {
+  test('오류 토스트는 화면 위쪽에 뜨고 위로 밀어서 닫는다', async ({ page }) => {
     await page.goto('/trips/new');
     await page.getByTestId('trip-title').fill('밀어서 닫기');
     await page.getByTestId('trip-start').fill('2026-05-01');
@@ -36,9 +36,11 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     const toast = page.getByTestId('error-toast');
     await expect(toast).toBeVisible();
     const box = (await toast.boundingBox())!;
+    // 모든 화면에서 상단 바 바로 아래 같은 자리에 뜬다.
+    expect(box.y).toBeLessThan(120);
     await page.mouse.move(box.x + 30, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(box.x + 30, box.y + box.height / 2 + 80, { steps: 5 });
+    await page.mouse.move(box.x + 30, box.y + box.height / 2 - 80, { steps: 5 });
     await page.mouse.up();
     await expect(toast).toHaveCount(0);
   });

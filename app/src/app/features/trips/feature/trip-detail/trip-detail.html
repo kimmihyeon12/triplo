@@ -244,15 +244,6 @@
                     </button>
                   }
                 </div>
-                @if (sortNotice(); as notice) {
-                  <p
-                    class="text-12 leading-normal sort-notice mb-2 rounded-control bg-ok-tint text-ok-ink leading-[1.6] py-2 px-3"
-                    role="status"
-                    data-testid="sort-nearest-notice"
-                  >
-                    {{ notice }}
-                  </p>
-                }
                 <ol
                   class="items flex flex-col bg-panel rounded-panel overflow-hidden [box-shadow:var(--shadow-panel)]"
                   data-testid="day-items"
@@ -372,11 +363,6 @@
                                   [size]="14"
                                 />
                               </button>
-                              @if (copiedId() === seg.stay.id) {
-                                <span class="flex-none text-ok-ink font-medium" role="status"
-                                  >복사됨</span
-                                >
-                              }
                             </div>
                           }
                           <div
@@ -633,13 +619,6 @@
                                   [size]="14"
                                 />
                               </button>
-                              @if (copiedId() === seg.stop.id) {
-                                <span
-                                  class="item__copied flex-none text-ok-ink font-medium"
-                                  role="status"
-                                  >복사됨</span
-                                >
-                              }
                             </div>
                           }
                           @if (seg.stop.estimatedCost != null) {

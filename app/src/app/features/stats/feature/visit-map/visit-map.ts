@@ -21,6 +21,7 @@ import { VISIT_STEPS, visitStyle, type VisitPalette } from '../../util/visit-sty
 import { monthlyVisits } from '../../util/monthly-visits';
 import type { VisitSpot } from '../../util/visit-spots';
 import type { SpotAt } from '../../util/block-layout';
+import { ToastService } from '../../../../core/toast-service';
 
 /** 경계 파일이 쓰는 속성 이름. 상세는 public/geo/README.md를 따른다. */
 const codeOf = (p: Record<string, unknown>): string => String(p['cd']);
@@ -74,7 +75,7 @@ export class VisitMapPage {
   readonly counts = this.actual;
   readonly layers = signal(true);
   readonly locating = signal(false);
-  readonly locationNotice = signal('');
+  private readonly toast = inject(ToastService);
   readonly places = signal<VisitedPlace[]>([]);
   readonly year = signal(new Date().getFullYear());
   readonly steps = VISIT_STEPS;
@@ -240,9 +241,9 @@ export class VisitMapPage {
   }
 
   locate(): void {
-    if (!navigator.geolocation) { this.locationNotice.set('이 브라우저에서는 현재 위치를 확인할 수 없어요.'); return; }
+    if (!navigator.geolocation) { this.toast.error('이 브라우저에서는 현재 위치를 확인할 수 없어요.'); return; }
     this.locating.set(true);
-    this.locationNotice.set('현재 위치를 확인하고 있어요.');
+    this.toast.info('현재 위치를 확인하고 있어요.');
     navigator.geolocation.getCurrentPosition(position => {
       if (this.destroyRef.destroyed) return;
       this.locating.set(false);
@@ -252,14 +253,14 @@ export class VisitMapPage {
         return polygons.some(rings => pointInPolygon(point, rings.map(ring => ring.map(([x, y]) => ({ x, y })))));
       });
       const code = feature ? codeOf(feature.properties) : undefined;
-      if (!code || !this.names[code]) { this.locationNotice.set('현재 위치가 지원하는 행정구역 경계 안에 없어요.'); return; }
+      if (!code || !this.names[code]) { this.toast.error('현재 위치가 지원하는 행정구역 경계 안에 없어요.'); return; }
       void this.select(code);
       this.scene?.focus(code);
-      this.locationNotice.set(`현재 위치가 속한 ${this.names[code]} 지역이에요. 위치는 저장하지 않아요.`);
+      this.toast.info(`현재 위치가 속한 ${this.names[code]} 지역이에요. 위치는 저장하지 않아요.`);
     }, () => {
       if (this.destroyRef.destroyed) return;
       this.locating.set(false);
-      this.locationNotice.set('위치를 확인하지 못했어요. 위치 권한을 확인하거나 지역을 직접 선택해 주세요.');
+      this.toast.error('위치를 확인하지 못했어요. 위치 권한을 확인하거나 지역을 직접 선택해 주세요.');
     }, { timeout: 10000, maximumAge: 60000 });
   }
 }

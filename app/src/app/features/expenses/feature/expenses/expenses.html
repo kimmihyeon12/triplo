@@ -147,9 +147,6 @@
         />
       </section>
     }
-    @if (scanStatus()) {
-      <p class="text-13 text-ink-2" role="status" data-testid="scan-status">{{ scanStatus() }}</p>
-    }
 
     @if (tab() === 'expenses') {
       <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-expenses">
@@ -299,9 +296,6 @@
             </button>
           }
         </div>
-        @if (copyStatus()) {
-          <p class="text-13 text-ink-2" role="status" data-testid="copy-status">{{ copyStatus() }}</p>
-        }
         @for (t of transfers(); track t.from + t.to) {
           <article class="panel rounded-panel bg-panel p-4 shadow-panel">
             <p class="text-14 font-bold">{{ person(t.from) }} → {{ person(t.to) }}</p>
@@ -418,7 +412,7 @@
         (click)="copySettlement()"
         data-testid="copy-settlement"
       >
-        {{ copied() ? '복사했어요' : '정산 내용 복사' }}
+        정산 내용 복사
       </button>
     </div>
   </div>

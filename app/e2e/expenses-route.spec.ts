@@ -292,7 +292,7 @@ test.describe('정산 화면 진입', () => {
     await page.getByRole('tab', { name: '정산 현황' }).click();
     await page.getByTestId('copy-settlement').click();
 
-    await expect(page.getByTestId('copy-status')).toContainText('복사했어요');
+    await expect(page.getByTestId('success-toast')).toContainText('복사했어요');
     // Windows 클립보드는 줄바꿈을 CRLF로 바꿔 돌려준다.
     const text = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
     expect(text).toBe(['총금액 20,000원', '민지 → 미현 10,000원'].join('\n'));

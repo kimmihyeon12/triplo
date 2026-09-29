@@ -40,6 +40,7 @@ import {
 import { copyText } from '../../../places/data/map-links';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
+import { ToastService } from '../../../../core/toast-service';
 
 @Component({
   selector: 'app-expenses',
@@ -80,7 +81,6 @@ export class Expenses {
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
   readonly scanOpen = signal(false);
-  readonly scanStatus = signal('');
   /** 여행 날짜가 없을 때 사진 항목에 채울 날짜. */
   readonly today = new Date().toLocaleDateString('sv-SE');
   readonly editing = signal<Expense | null>(null);
@@ -91,10 +91,8 @@ export class Expenses {
   readonly receiptAmount = signal<number | null>(null);
   readonly cancelling = signal('');
   readonly cancelReason = signal('');
-  readonly copyStatus = signal('');
   /** 하단 버튼을 누른 손가락 근처에서도 결과가 보이도록 버튼 글자를 잠시 바꾼다. */
-  readonly copied = signal(false);
-  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly toast = inject(ToastService);
   readonly actual = computed(() => this.ledger().expenses.reduce((n, e) => n + e.amount, 0));
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
@@ -253,7 +251,6 @@ export class Expenses {
   }
 
   openScan(): void {
-    this.scanStatus.set('');
     this.scanOpen.set(true);
   }
 
@@ -268,7 +265,7 @@ export class Expenses {
     void this.persist({ ...previous, expenses: [...previous.expenses, ...rest] }).then((ok) => {
       if (!ok) return;
       this.scanOpen.set(false);
-      this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
+      this.toast.success(`사진에서 ${expenses.length}건을 기록했어요.`);
     });
   }
 
@@ -314,14 +311,8 @@ export class Expenses {
 
   async copySettlement(): Promise<void> {
     const ok = await copyText(settlementText(this.ledger()));
-    clearTimeout(this.copiedTimer);
-    this.copied.set(ok);
-    if (ok) this.copiedTimer = setTimeout(() => this.copied.set(false), 2000);
-    this.copyStatus.set(
-      ok
-        ? '복사했어요. 메신저에 붙여 넣어 보내 주세요.'
-        : '복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.',
-    );
+    if (ok) this.toast.success('복사했어요. 메신저에 붙여 넣어 보내 주세요.');
+    else this.toast.error('복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.');
   }
 
   /** 남은 정산을 한 번에 전액 수령으로 남긴다. 부분 수령은 개별 기록을 쓴다. */

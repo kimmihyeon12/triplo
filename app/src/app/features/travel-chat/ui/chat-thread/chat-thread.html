@@ -57,7 +57,6 @@
               }
               @if (message.copyText; as text) {
                 <button appButton class="btn btn--sm" type="button" (click)="copyResult(text)" data-testid="chat-copy">일정 복사</button>
-                <span class="text-12 text-ink-3" role="status">{{ copyStatus() }}</span>
               }
 
               <!--
