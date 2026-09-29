@@ -77,6 +77,8 @@ export class ChatThread {
   readonly dismissedIds = input<readonly string[]>([]);
   /** 남은 호출 횟수. 0이면 새 대화를 권한다. */
   readonly turnsLeft = input(0);
+  /** 오늘 AI 질문이 거의 남지 않았을 때의 안내. 없으면 null. */
+  readonly aiHint = input<string | null>(null);
 
   readonly send = output<string>();
   readonly apply = output<{ messageId: string; draft: ChatDraft }>();

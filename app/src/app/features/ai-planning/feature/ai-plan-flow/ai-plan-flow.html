@@ -528,6 +528,12 @@
 
   <!-- 하단 고정 바: 단계별 다음 동작 -->
   <div appActionBar class="action-bar">
+    <!-- AI를 거의 다 썼을 때만 만들기 버튼 위에 남은 횟수를 알린다. -->
+    @if (phase() === 'summary' && aiHint(); as hint) {
+      <p class="mx-auto mb-2 max-w-(--content-max) text-12 text-ink-3" data-testid="ai-quota-hint">
+        {{ hint }}
+      </p>
+    }
     <div class="action-bar__inner mx-auto my-0 flex min-w-0 gap-2 max-w-(--content-max)">
       @switch (phase()) {
         @case ('step1') {

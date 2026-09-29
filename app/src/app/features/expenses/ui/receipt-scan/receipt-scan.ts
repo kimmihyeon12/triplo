@@ -24,6 +24,7 @@ import { EXPENSE_CATEGORIES, type Expense, type ExpensePerson } from '../../mode
 import { RECEIPT_SCANNER } from '../../data/receipt-scanner';
 import { draftsToExpenses, type ReceiptDraft } from '../../util/receipt';
 import { drawStrokes, fitSize, renderReceipt, type HighlightStroke } from '../../util/image';
+import { AiQuota } from '../../../../core/ai-quota';
 
 type Step = 'pick' | 'mark' | 'scanning' | 'review';
 
@@ -59,6 +60,7 @@ export class ReceiptScan {
   readonly cancelled = output<void>();
 
   private readonly scanner = inject(RECEIPT_SCANNER);
+  readonly aiHint = inject(AiQuota).hint('receipt');
   readonly unavailable = this.scanner.unavailableReason();
   readonly categories = Object.entries(EXPENSE_CATEGORIES);
 
