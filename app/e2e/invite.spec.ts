@@ -27,4 +27,26 @@ test.describe('친구 초대', () => {
     await expect(page.getByTestId('info-toast')).toContainText('초대 링크를 취소했어요');
     await expect(page.getByTestId('invite-create')).toBeVisible();
   });
+
+  test('초대 링크를 열면 일정을 미리 보고 함께하기로 여행에 들어간다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '같이 갈 여행',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+    await page.goto('/join/test-code');
+    await expect(page.getByTestId('join-page')).toContainText('같이 갈 여행');
+    await expect(page.getByTestId('join-page')).toContainText('보기만 할 수 있어요');
+    await page.getByTestId('join-accept').click();
+    await expect(page).toHaveURL(new RegExp(`/trips/${id}$`));
+    await expect(page.getByTestId('success-toast')).toContainText('여행에 함께하게 됐어요');
+  });
+
+  test('잘못된 초대 링크는 한 가지 안내만 보인다', async ({ page }) => {
+    await createTrip(page, { title: '비밀 여행', start: '2026-05-01', end: '2026-05-02', regions: ['강릉시'] });
+    await page.goto('/join/AAAA-BBBB');
+    await expect(page.getByTestId('join-invalid')).toContainText('초대 링크가 올바르지 않거나 만료됐어요');
+    await expect(page.getByText('비밀 여행')).toHaveCount(0);
+  });
 });
