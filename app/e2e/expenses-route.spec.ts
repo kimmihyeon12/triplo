@@ -163,6 +163,41 @@ test.describe('정산 화면 진입', () => {
     await expect(page.getByTestId('share-total')).toHaveText(/분담 합계 20,000원 \/ 지출\s+30,000원/);
   });
 
+  test('직접 입력 중 전체 해제 후 다시 전체 선택하면 지출만큼 다시 나뉜다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '다시 나누기',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+    await page.evaluate(
+      ([key, value]) => localStorage.setItem(key, value),
+      [
+        `${STORAGE_KEY}.ledger.${id}`,
+        JSON.stringify({
+          people: [
+            { id: 'self', name: '나' },
+            { id: 'a', name: '민지' },
+          ],
+          expenses: [],
+          receipts: [],
+          budget: null,
+        }),
+      ],
+    );
+    await page.goto(`/trips/${id}/expenses`);
+    await page.getByTestId('add-expense').click();
+    await page.getByLabel('지출명', { exact: true }).fill('저녁');
+    await page.getByLabel('실제 금액 (원)', { exact: true }).fill('30000');
+    await page.getByLabel('분담 금액 직접 입력').check();
+    await expect(page.getByTestId('share-total')).toHaveText(/분담 합계 30,000원/);
+
+    await page.getByTestId('expense-select-all').uncheck();
+    await page.getByTestId('expense-select-all').check();
+    await expect(page.getByTestId('share-total')).toHaveText(/분담 합계 30,000원 \/ 지출\s+30,000원/);
+    await expect(page.getByLabel('민지 분담 금액')).toHaveValue('15000');
+  });
+
   test('정산 내용을 이름과 금액이 담긴 글로 복사한다', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const id = await createTrip(page, {

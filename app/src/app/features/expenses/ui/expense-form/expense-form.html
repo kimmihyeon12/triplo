@@ -104,6 +104,7 @@
         inputId="expense-custom"
         name="custom"
         [(checked)]="custom"
+        (checkedChange)="redistribute()"
       />
       @if (people().length > 1) {
         <div class="border-t border-border pt-1">
