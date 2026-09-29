@@ -125,7 +125,7 @@ export class AuthStore {
         if (
           !environment.designPreview &&
           _event === 'SIGNED_OUT' &&
-          /^\/(trips|account|onboarding)(\/|\?|$)/.test(this.router.url)
+          /^\/(trips|account|onboarding|admin)(\/|\?|$)/.test(this.router.url)
         ) {
           void this.router.navigateByUrl('/login', { replaceUrl: true });
         }
@@ -262,6 +262,17 @@ export class AuthStore {
       if (parsed?.error) throw new Error(parsed.error);
     }
     throw new Error('function_failed');
+  }
+
+  /**
+   * 인자 없는 데이터베이스 함수를 부른다. 로그인 토큰은 클라이언트가 실어 보낸다.
+   * 서버 오류의 내용은 부르는 쪽이 구분할 필요가 없어 하나의 코드로 던진다.
+   */
+  async callRpc<T>(name: string): Promise<T> {
+    if (!this.client) throw new Error('server_unavailable');
+    const { data, error } = await this.client.rpc(name);
+    if (error) throw new Error('rpc_failed');
+    return data as T;
   }
 
   async deleteAccount(confirmation: string): Promise<boolean> {
