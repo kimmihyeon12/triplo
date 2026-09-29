@@ -5,21 +5,21 @@ import type { ToastKind } from '../../../core/toast-service';
 /** 종류마다 바탕·테두리·아이콘 색을 나눈다. 글자는 모두 본문색이라 읽기 쉽다. */
 const TONE: Record<ToastKind, { card: string; icon: string; close: string; glyph: IconName; label: string }> = {
   success: {
-    card: 'border-ok-fill bg-ok-tint',
+    card: 'bg-ok-tint/70',
     icon: 'text-ok-ink',
     close: 'hover:bg-ok-fill/60',
     glyph: 'circle-check',
     label: '알림 닫기',
   },
   info: {
-    card: 'border-accent-fill bg-accent-tint',
+    card: 'bg-accent-tint/70',
     icon: 'text-accent-deep',
     close: 'hover:bg-accent-fill/60',
     glyph: 'info',
     label: '알림 닫기',
   },
   error: {
-    card: 'border-danger-fill bg-danger-tint',
+    card: 'bg-danger-tint/70',
     icon: 'text-danger-ink',
     close: 'hover:bg-danger-fill/50',
     glyph: 'alert',

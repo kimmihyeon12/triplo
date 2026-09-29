@@ -19,6 +19,7 @@ insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('222222
 \ir ../migrations/20260929000002_ledger_tables.sql
 \ir ../migrations/20260929000003_remove_ledger_person.sql
 \ir ../migrations/20260929000005_trip_members.sql
+\ir ../migrations/20260929000006_drop_redundant_split_fkey.sql
 \set ON_ERROR_STOP 0
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';

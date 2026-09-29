@@ -23,6 +23,7 @@ insert into auth.users values
 \ir ../migrations/20260929000002_ledger_tables.sql
 \ir ../migrations/20260929000003_remove_ledger_person.sql
 \ir ../migrations/20260929000005_trip_members.sql
+\ir ../migrations/20260929000006_drop_redundant_split_fkey.sql
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
 \set B '22222222-2222-2222-2222-222222222222'
