@@ -21,13 +21,14 @@ test('구름이 전신과 작은 AI 챗봇 버튼을 목록·상세에서 사용
   await checkEntry(page);
   await page.screenshot({ path: `../output/playwright/cloud-${testInfo.project.name}-list.png` });
   await page.getByTestId('open-chat').click();
+  // 2026-09-28부터 제목과 [새 대화]는 상단 바가 맡고, 구름이는 대화를 시작하기 전
+  // 빈 화면에만 선다. 대화가 시작되면 말풍선만 남는다.
+  const welcome = page.locator('app-chat-thread img').first();
+  await expect.poll(() => welcome.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  expect(await welcome.evaluate(img => getComputedStyle(img).objectFit)).toBe('contain');
   await page.getByTestId('chat-input').fill('3일 쉬는데 어디 가지');
   await page.getByTestId('chat-send').click();
-  const avatar = page.locator('app-chat-page header img');
-  await expect(avatar).toHaveAttribute('src', '/brand/companion-cloud-sorry-v1.png');
-  await expect.poll(() => avatar.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
-  expect((await avatar.boundingBox())!.width).toBe(48);
-  expect(await avatar.evaluate(img => getComputedStyle(img).objectFit)).toBe('contain');
+  await expect(page.getByTestId('chat-assistant-message').first()).toBeVisible();
   await expect(page.locator('app-chat-thread img')).toHaveCount(0);
   await expectNoHorizontalScroll(page);
   await page.screenshot({ path: `../output/playwright/cloud-${testInfo.project.name}-chat.png` });

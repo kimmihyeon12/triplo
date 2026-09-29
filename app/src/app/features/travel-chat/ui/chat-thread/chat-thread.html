@@ -24,7 +24,9 @@
         화면만 머리가 두 겹이었다. 말이 오가기 시작하면 사라진다.
       -->
       <div class="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
-        <app-companion-face [mood]="'talking'" [size]="72" [decorative]="true" />
+        @if (showMascot()) {
+          <app-companion-face [mood]="'talking'" [size]="72" [decorative]="true" />
+        }
         <p class="text-18 font-bold tracking-tight text-ink">{{ emptyTitle() }}</p>
         <p class="max-w-68 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
       </div>
