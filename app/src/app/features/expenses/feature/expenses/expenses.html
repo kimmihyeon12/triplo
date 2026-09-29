@@ -282,38 +282,23 @@
       </section>
     } @else {
       <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-settlement">
-        <p class="text-13 text-ink-3">
-          공동 지출만 나눠 계산합니다. 실제 송금은 직접 진행해 주세요.
-        </p>
-        @if (transfers().length) {
-          <!--
-            친구들은 앱을 열지 않고 메신저로 금액을 받는다. 이름과 금액을
-            글로 복사해 단톡방에 바로 붙여 넣게 한다.
-          -->
-          <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center justify-between gap-3">
+          <p class="min-w-0 text-13 text-ink-3">
+            공동 지출만 나눠 계산합니다. 실제 송금은 직접 진행해 주세요.
+          </p>
+          @if (transfers().length > 1) {
             <button
               appButton
-              class="btn btn--sm"
-              (click)="copySettlement()"
-              data-testid="copy-settlement"
+              class="btn btn--sm shrink-0"
+              (click)="receiveAll()"
+              data-testid="receive-all"
             >
-              <app-icon name="copy" [size]="16" />
-              정산 내용 복사
+              전체 수령
             </button>
-            @if (transfers().length > 1) {
-              <button
-                appButton
-                class="btn btn--sm shrink-0"
-                (click)="receiveAll()"
-                data-testid="receive-all"
-              >
-                전체 수령
-              </button>
-            }
-          </div>
-          @if (copyStatus()) {
-            <p class="text-12 text-ink-2" role="status" data-testid="copy-status">{{ copyStatus() }}</p>
           }
+        </div>
+        @if (copyStatus()) {
+          <p class="text-13 text-ink-2" role="status" data-testid="copy-status">{{ copyStatus() }}</p>
         }
         @for (t of transfers(); track t.from + t.to) {
           <article class="panel rounded-panel bg-panel p-4 shadow-panel">
@@ -415,6 +400,28 @@
     </div>
   }
 </div>
+
+<!--
+  정산 현황의 주 동작은 친구에게 금액을 보내는 것이라 지출 내역의 [지출 기록]과
+  같은 하단 고정 자리에 둔다. 목록 위에 작은 버튼으로 두었더니 안내 문구와
+  카드 사이에 끼어 '전체 수령'과 같은 무게로 읽혔다.
+-->
+@if (!blocked() && tab() === 'settlement' && transfers().length) {
+  <div appActionBar class="action-bar">
+    <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
+      <button
+        appButton
+        variant="primary"
+        class="w-full [@media(min-width:_720px)]:w-auto [@media(min-width:_720px)]:px-8"
+        (click)="copySettlement()"
+        data-testid="copy-settlement"
+      >
+        <app-icon [name]="copied() ? 'check' : 'copy'" [size]="18" />
+        {{ copied() ? '복사했어요' : '정산 내용 복사' }}
+      </button>
+    </div>
+  </div>
+}
 
 <!-- 지출 기록은 여행 상세의 [일정 추가]와 같은 자리에 둔다. -->
 @if (!blocked() && tab() === 'expenses' && !formOpen() && !scanOpen()) {

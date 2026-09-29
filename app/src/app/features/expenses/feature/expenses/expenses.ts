@@ -81,6 +81,9 @@ export class Expenses {
   readonly cancelling = signal('');
   readonly cancelReason = signal('');
   readonly copyStatus = signal('');
+  /** 하단 버튼을 누른 손가락 근처에서도 결과가 보이도록 버튼 글자를 잠시 바꾼다. */
+  readonly copied = signal(false);
+  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
   readonly actual = computed(() => this.ledger().expenses.reduce((n, e) => n + e.amount, 0));
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
@@ -262,9 +265,12 @@ export class Expenses {
   }
 
   async copySettlement(): Promise<void> {
-    const text = settlementText(this.ledger());
+    const ok = await copyText(settlementText(this.ledger()));
+    clearTimeout(this.copiedTimer);
+    this.copied.set(ok);
+    if (ok) this.copiedTimer = setTimeout(() => this.copied.set(false), 2000);
     this.copyStatus.set(
-      (await copyText(text))
+      ok
         ? '복사했어요. 메신저에 붙여 넣어 보내 주세요.'
         : '복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.',
     );
