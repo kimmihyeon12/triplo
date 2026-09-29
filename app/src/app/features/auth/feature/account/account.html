@@ -212,14 +212,15 @@
     </button>
 
     <!--
-      로그아웃과 같은 생김새로 둔다. 다른 것은 글자색뿐이다. 되돌릴 수 없는
-      동작임을 색으로 알리되, 누르는 즉시 지우지 않고 확인을 한 번 받는다.
+      되돌릴 수 없는 동작이지만 자주 쓰는 동작이 아니다. 분홍 채움 버튼으로
+      두었더니 로그아웃보다 눈에 띄었다. 글자 버튼으로 낮추고 색만 빨강으로
+      알린다. 누르는 즉시 지우지 않고 확인을 한 번 받는다.
     -->
     <button
       appButton
-      variant="danger"
+      variant="ghost"
       type="button"
-      class="w-full"
+      class="mx-auto text-danger-ink! [@media(hover:_hover)]:hover:text-danger-ink!"
       (click)="toggleLeaving()"
       [attr.aria-expanded]="leaving()"
       data-testid="open-delete"
