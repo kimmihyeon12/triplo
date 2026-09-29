@@ -1,6 +1,7 @@
 -- 여행 데이터를 계정별로 저장한다.
 -- 앱 모델(app/src/app/features/trips/model/trip.ts)을 그대로 옮긴 것이며
 -- 컬럼 이름은 SQL 관례에 따라 snake_case로 적고 앱 경계에서 변환한다.
+-- id는 text다. AI 일정 담기가 중복 적용을 막으려고 UUID가 아닌 고정 id를 쓴다(2026-09-29).
 --
 -- 계정을 지우면 그 사람의 여행도 함께 지운다(2026-09-17 사용자 결정).
 -- delete-account 함수가 auth.users 행을 실제로 지우므로
@@ -12,7 +13,7 @@ create type location_status as enum ('unverified', 'verified');
 create type trip_status as enum ('draft');
 
 create table trips (
-  id uuid primary key,
+  id text primary key,
   owner_id uuid not null references auth.users (id) on delete cascade,
   title text not null,
   start_date date,
@@ -27,8 +28,8 @@ create index trips_owner_updated_idx on trips (owner_id, updated_at desc);
 
 -- 지역·장소·숙소는 여행에 딸린다. 여행을 지우면 함께 사라진다.
 create table trip_regions (
-  id uuid primary key,
-  trip_id uuid not null references trips (id) on delete cascade,
+  id text primary key,
+  trip_id text not null references trips (id) on delete cascade,
   name text not null,
   "order" integer not null
 );
@@ -36,10 +37,10 @@ create table trip_regions (
 create index trip_regions_trip_idx on trip_regions (trip_id);
 
 create table trip_stops (
-  id uuid primary key,
-  trip_id uuid not null references trips (id) on delete cascade,
+  id text primary key,
+  trip_id text not null references trips (id) on delete cascade,
   -- 지역을 지워도 장소는 남기고 연결만 끊는다. 앱 모델의 regionId도 null을 허용한다.
-  region_id uuid references trip_regions (id) on delete set null,
+  region_id text references trip_regions (id) on delete set null,
   kind stop_kind not null,
   name text not null,
   address text not null default '',
@@ -68,9 +69,9 @@ create table trip_stops (
 create index trip_stops_trip_idx on trip_stops (trip_id);
 
 create table accommodation_stays (
-  id uuid primary key,
-  trip_id uuid not null references trips (id) on delete cascade,
-  region_id uuid references trip_regions (id) on delete set null,
+  id text primary key,
+  trip_id text not null references trips (id) on delete cascade,
+  region_id text references trip_regions (id) on delete set null,
   name text not null,
   address text not null default '',
   check_in date not null,
@@ -111,7 +112,7 @@ create policy trips_owner_all on trips
 
 -- 딸린 표는 여행의 주인을 따라간다.
 -- 여행 소유 검사를 함수로 묶어 세 표에서 같은 규칙을 쓴다.
-create function owns_trip(target uuid) returns boolean
+create function owns_trip(target text) returns boolean
 language sql
 stable
 security invoker
