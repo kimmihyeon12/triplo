@@ -125,6 +125,20 @@ create function owns_trip(target uuid) returns boolean ...
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
 
+### 관리자 판별
+
+`profiles(id, role)`은 역할 전용 표다. 행이 없으면 일반 사용자다. 본인 행 조회만 허용하고 쓰기 권한과 정책은 두지 않아 사용자가 스스로 관리자가 될 수 없다. 계정을 지우면 함께 지운다.
+
+후속 공지·문의 표의 RLS는 `is_admin()`을 호출한다. `security definer`라 RLS와 무관하게 역할을 읽고, `search_path`를 비워 둔다. 실행 권한은 `authenticated`만 가진다. Supabase의 기본 권한 설정이 새 표·함수에 `anon`·`authenticated` 권한을 직접 줄 수 있어 마이그레이션에서 명시적으로 거둔다.
+
+관리자 부여는 화면이 아니라 SQL로 직접 한다. 대상 계정이 한 번 이상 로그인해 있어야 한다. 이메일은 저장소에 적지 않는다.
+
+```sql
+insert into public.profiles (id, role)
+select id, 'admin' from auth.users where email = '<관리자 이메일>'
+on conflict (id) do update set role = excluded.role;
+```
+
 ## 저장 방식
 
 여행 하나를 저장할 때 **네 표를 한 트랜잭션으로** 갱신한다(2026-09-17 사용자 결정). 앱이 표마다 나눠 호출하면 중간에 끊겼을 때 일정이 반만 저장된 상태로 남는다.
@@ -151,3 +165,4 @@ create function owns_trip(target uuid) returns boolean ...
 - 2026-09-17 마이그레이션 작성. **원격 적용 전이다.**
 - 프로젝트 `wslqgfetdwcmqeztixvs`(PostgreSQL 17.6), 적용 명령은 `npx supabase db push`.
 - 적용 후 확인할 것: 두 계정 간 접근 차단, 같은 계정 다른 기기 조회, 계정 삭제 시 여행 연쇄 삭제.
+- 2026-09-29 `20260929100000_profiles_role.sql` 작성. 로컬 PostgreSQL 임시 DB 검증 완료, 원격 적용 전이다.
