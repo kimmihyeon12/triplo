@@ -5,6 +5,11 @@ import { IconComponent } from './shared/ui/icon/icon';
 import { NavigationHistory } from './core/navigation-history';
 import { PageBar } from './core/page-bar';
 import { PageTools } from './shared/ui/page-tools/page-tools';
+import { AuthStore } from './features/auth/data/auth-store';
+import {
+  PendingDraftRegistry,
+  sessionWatcher,
+} from './features/trips/data/pending-draft-registry';
 
 @Component({
   selector: 'app-root',
@@ -55,6 +60,11 @@ export class App {
   }
 
   constructor() {
+    // 로그인 계정이 바뀌면 이전 계정의 저장 대기열과 화면 상태를 버린다.
+    const auth = inject(AuthStore);
+    const pending = inject(PendingDraftRegistry);
+    const watch = sessionWatcher((session) => pending.changeSession(session));
+    effect(() => watch(auth.loading(), auth.user()?.id ?? null));
     effect((onCleanup) => {
       const navigation = this.navigating();
       this.showNavigationLoading.set(false);

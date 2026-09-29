@@ -21,6 +21,10 @@ import {
   type KeyValueStorage,
 } from './features/trips/data/local-storage-trip-repository';
 import { TRIP_REPOSITORY } from './features/trips/data/trip-repository';
+import { SupabaseTripRepository } from './features/trips/data/supabase-trip-repository';
+import { supabaseTripDataClient } from './features/trips/data/trip-data-client';
+import { clearLegacyLocalTrips } from './features/trips/data/legacy-local-cleanup';
+import { AuthStore } from './features/auth/data/auth-store';
 import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
 import { LocalSupportRepository } from './features/support/data/local-support-repository';
 import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
@@ -97,13 +101,24 @@ export const appConfig: ApplicationConfig = {
     // 브라우저용 지도 키를 먼저 읽는다. 파일이 없어도 앱은 뜬다.
     provideAppInitializer(() => inject(MapConfig).load()),
     {
+      // 실행 앱은 Supabase에 저장한다(2026-09-29). 테스트 앱과 로그인 없는 미리보기는
+      // 외부 서버 없이 기기 저장소를 쓴다.
       provide: TRIP_REPOSITORY,
-      useFactory: () =>
-        new LocalStorageTripRepository(
-          new SafeLocalStorage(),
-          environment.storageKey,
-          environment.isTest ? `${environment.storageKey}.failSave` : null,
-        ),
+      useFactory: () => {
+        if (environment.isTest || environment.designPreview)
+          return new LocalStorageTripRepository(
+            new SafeLocalStorage(),
+            environment.storageKey,
+            environment.isTest ? `${environment.storageKey}.failSave` : null,
+          );
+        try {
+          clearLegacyLocalTrips(localStorage, environment.storageKey);
+        } catch {
+          // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
+        }
+        const auth = inject(AuthStore);
+        return new SupabaseTripRepository(supabaseTripDataClient(() => auth.dataClient()));
+      },
     },
     // 공지·문의도 같은 자리에 둔다. 서버가 붙으면 구현만 갈아 끼운다.
     {

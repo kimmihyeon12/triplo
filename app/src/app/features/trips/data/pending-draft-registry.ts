@@ -89,6 +89,23 @@ export class PendingDraftRegistry {
   }
 }
 
+/**
+ * 로그인 계정 변화를 세션 전환으로 바꾼다. 로그인 복원(loading)이 끝난 뒤 처음
+ * 본 계정은 기준으로만 삼는다. 그때 전환하면 이미 불러온 여행 목록이 이전 세션
+ * 결과로 버려져 빈 채로 멈춘다. 그 뒤 실제로 바뀔 때만 알린다.
+ */
+export function sessionWatcher(
+  change: (session: string) => void,
+): (loading: boolean, userId: string | null) => void {
+  let previous: string | undefined;
+  return (loading, userId) => {
+    if (loading) return;
+    const session = userId ?? 'signed-out';
+    if (previous !== undefined && previous !== session) change(session);
+    previous = session;
+  };
+}
+
 export function errorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : '알 수 없는 오류';
 }
