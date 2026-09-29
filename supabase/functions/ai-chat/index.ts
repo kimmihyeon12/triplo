@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { createAiChatHandler } from './handler.ts';
+import { limitFromEnv, quotaDeps } from '../_shared/quota.ts';
 import { RESPONSE_SCHEMA } from './prompt.ts';
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -7,6 +8,7 @@ const key = Deno.env.get('GEMINI_API_KEY') ?? '';
 const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite';
 
 Deno.serve(createAiChatHandler({
+  ...quotaDeps(admin,'chat',limitFromEnv(Deno.env.get('AI_LIMIT_CHAT'),30)),
   async getUser(token) {
     const {data,error} = await admin.auth.getUser(token);
     return error ? null : data.user;
