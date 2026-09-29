@@ -68,14 +68,12 @@
   --color-exp-other-ink: #606f82;
   --color-exp-other-tint: #eef4fc;
   /*
-    지역 전용. 2026-09-29 청록에서 거의 무채색인 쿨그레이로 낮췄다. 지역은 분류가
-    아니라 정보성 표시인데, 청록 바탕이 식사·식비의 주황과 보색에 가까워 여행
-    머리글(광주 → 나주 → 진도)이 분류 라벨 옆에서 겉돌았다(사용자 확인). 색을 거의
-    빼면 어떤 분류색 옆에서도 물러나 보인다. 이전 결정(올리브·진초록·청록)의
-    근거는 git 기록에 있다.
+    지역 전용. 밝은 하늘빛 슬레이트다(2026-09-29 사용자 결정). 청록은 당시 식사 주황과
+    보색이라 겉돌았고, 무채색에 가까운 쿨그레이는 어두워 보였다. 카페의 하늘색과 겹치지
+    않도록 카페는 청록으로 옮겼다. 이전 결정(올리브·진초록·청록)의 근거는 git 기록에 있다.
   */
-  --color-region-ink: #587182;
-  --color-region-tint: #edf5fb;
+  --color-region-ink: #2f759a;
+  --color-region-tint: #e3f9ff;
   --color-warn-ink: #975f03;
   --color-warn-tint: #fff3d5;
   --color-warn-fill: #ffe08a;
@@ -112,8 +110,8 @@
   */
   --color-meal-ink: #387d16;
   --color-meal-tint: #e4fcdc;
-  --color-cafe-ink: #157795;
-  --color-cafe-tint: #dff8ff;
+  --color-cafe-ink: #107c73;
+  --color-cafe-tint: #dbfcf6;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
   --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
   --ai-fill-hover: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);
