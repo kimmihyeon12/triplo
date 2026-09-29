@@ -61,7 +61,8 @@ const EMPTY_TRIP: Trip = {
     ChatConfirmCard,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex min-h-0 flex-1 flex-col' },
+  // 대화·추천 질문·입력창이 한 흰 바탕 위에 놓여 사이에 회색 띠가 생기지 않게 한다.
+  host: { class: 'flex min-h-0 flex-1 flex-col bg-panel' },
 })
 export class ChatThread {
   readonly router = inject(Router);

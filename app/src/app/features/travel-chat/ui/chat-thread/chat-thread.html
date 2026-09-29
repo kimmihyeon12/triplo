@@ -4,7 +4,7 @@
 -->
 <div
   #scroller
-  class="my-1.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
+  class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain bg-panel py-1.5"
   data-testid="chat-messages"
 >
   <!--
@@ -46,7 +46,7 @@
           <div class="flex w-full items-start gap-2.5">
             <div class="flex min-w-0 flex-1 flex-col items-start gap-2">
               <p
-                class="chat-bubble chat-bubble--assistant max-w-full whitespace-pre-line bg-panel px-3.5 py-2 text-14 leading-[22px] text-ink"
+                class="chat-bubble chat-bubble--assistant max-w-full whitespace-pre-line bg-ground-2 px-3.5 py-2 text-14 leading-[22px] text-ink"
                 [attr.data-kind]="message.kind"
               >
                 {{ message.text }}
@@ -93,7 +93,7 @@
       <div class="flex items-start gap-2.5" role="status" data-testid="chat-pending">
         <div class="flex min-w-0 items-center gap-3">
           <p
-            class="chat-bubble chat-bubble--assistant flex min-h-11 items-center gap-1.5 bg-panel px-3.5 py-3"
+            class="chat-bubble chat-bubble--assistant flex min-h-11 items-center gap-1.5 bg-ground-2 px-3.5 py-3"
           >
             <!-- 말 줄임표가 차례로 뛴다. 무엇을 기다리는지 스피너보다 분명하다. -->
             <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
