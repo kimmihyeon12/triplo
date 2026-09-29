@@ -16,7 +16,7 @@ import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import type { Expense, ExpensePerson } from '../../model/ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
-import { allocateEvenly, expenseKey } from '../../util/ledger';
+import { allocateEvenly, expenseKey, isEvenSplit } from '../../util/ledger';
 
 export interface ExpenseLink {
   id: string;
@@ -71,7 +71,8 @@ export class ExpenseForm {
       this.personal.set(e?.personal ?? false);
       this.selected.set(e?.splits.map((s) => s.personId) ?? people.map((p) => p.id));
       this.shares.set(Object.fromEntries(e?.splits.map((s) => [s.personId, s.amount]) ?? []));
-      this.custom.set(!!e && !e.personal);
+      // 균등으로 나눴던 지출은 균등으로 연다. 그래야 금액을 고치면 분담도 다시 나뉜다.
+      this.custom.set(!!e && !e.personal && !isEvenSplit(e.amount, e.splits));
       this.memo.set(e?.memo ?? '');
 
     });
@@ -97,6 +98,10 @@ export class ExpenseForm {
     el.focus();
     el.select();
   }
+
+  readonly shareTotal = computed(() =>
+    this.selected().reduce((n, id) => n + (Number(this.shares()[id]) || 0), 0),
+  );
 
   /** 같은 이름이 이미 있으면 알린다. 저장은 막지 않는다. */
   readonly duplicateTitle = computed(() => {

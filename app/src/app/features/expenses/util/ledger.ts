@@ -146,3 +146,20 @@ export function categoryBreakdown(
     .map(([category, amount]) => ({ category, amount, ratio: amount / total }))
     .sort((a, b) => b.amount - a.amount);
 }
+
+/**
+ * 저장된 분담이 균등 분배로 만든 것인지 본다. 수정할 때 균등이었던 지출을
+ * 직접 입력 모드로 열면 금액을 바꿔도 분담액이 이전 값으로 남는다.
+ */
+export function isEvenSplit(amount: number, splits: readonly ExpenseSplit[]): boolean {
+  if (!splits.length) return true;
+  try {
+    const even = allocateEvenly(
+      amount,
+      splits.map((s) => s.personId),
+    );
+    return even.every((s, i) => s.amount === splits[i].amount);
+  } catch {
+    return false;
+  }
+}

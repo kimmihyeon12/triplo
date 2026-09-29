@@ -8,6 +8,7 @@ import {
   newLedger,
   settlementText,
   categoryBreakdown,
+  isEvenSplit,
 } from './ledger';
 import type { Expense } from '../model/ledger';
 
@@ -162,5 +163,24 @@ describe('분류별 지출', () => {
 
   it('지출이 없으면 빈 목록이다', () => {
     expect(categoryBreakdown([])).toEqual([]);
+  });
+});
+
+describe('균등 분담 판별', () => {
+  it('저장된 분담이 균등 분배와 같으면 균등으로 본다', () => {
+    expect(isEvenSplit(10001, allocateEvenly(10001, ['a', 'b']))).toBe(true);
+  });
+
+  it('금액을 사람마다 다르게 넣었으면 직접 입력으로 본다', () => {
+    expect(
+      isEvenSplit(10000, [
+        { personId: 'a', amount: 7000 },
+        { personId: 'b', amount: 3000 },
+      ]),
+    ).toBe(false);
+  });
+
+  it('분담이 없으면 균등으로 본다', () => {
+    expect(isEvenSplit(10000, [])).toBe(true);
   });
 });

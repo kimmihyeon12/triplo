@@ -71,6 +71,98 @@ test.describe('정산 화면 진입', () => {
     expect(Math.abs(dateBox!.y - categoryBox!.y)).toBeGreaterThanOrEqual(40);
   });
 
+  test('균등 분담 지출의 금액을 고치면 분담도 새 금액으로 다시 나뉜다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '금액 수정',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+    const ledger = {
+      people: [
+        { id: 'self', name: '나' },
+        { id: 'a', name: '민지' },
+      ],
+      expenses: [
+        {
+          id: 'e1',
+          title: '저녁',
+          date: '2026-05-01',
+          category: 'food',
+          amount: 20000,
+          paidBy: 'self',
+          splits: [
+            { personId: 'self', amount: 10000 },
+            { personId: 'a', amount: 10000 },
+          ],
+          memo: '',
+          linkId: null,
+        },
+      ],
+      receipts: [],
+      budget: null,
+    };
+    await page.evaluate(
+      ([key, value]) => localStorage.setItem(key, value),
+      [`${STORAGE_KEY}.ledger.${id}`, JSON.stringify(ledger)],
+    );
+    await page.goto(`/trips/${id}/expenses`);
+    await page.getByTestId('expense-menu-e1').click();
+    await page.getByRole('menuitem', { name: '수정' }).click();
+
+    // 전에는 균등 분담도 직접 입력 모드로 열려 이전 분담액 10,000원이 남았다.
+    await expect(page.getByLabel('분담 금액 직접 입력')).not.toBeChecked();
+    await page.getByLabel('실제 금액 (원)', { exact: true }).fill('30000');
+    await page.getByRole('button', { name: '지출 저장' }).click();
+
+    await page.getByRole('tab', { name: '정산 현황' }).click();
+    await expect(page.getByTestId('panel-settlement')).toContainText('15,000원');
+  });
+
+  test('직접 입력한 분담은 금액과 합계가 어긋나면 바로 보인다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '직접 분담',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+    const ledger = {
+      people: [
+        { id: 'self', name: '나' },
+        { id: 'a', name: '민지' },
+      ],
+      expenses: [
+        {
+          id: 'e1',
+          title: '저녁',
+          date: '2026-05-01',
+          category: 'food',
+          amount: 20000,
+          paidBy: 'self',
+          splits: [
+            { personId: 'self', amount: 14000 },
+            { personId: 'a', amount: 6000 },
+          ],
+          memo: '',
+          linkId: null,
+        },
+      ],
+      receipts: [],
+      budget: null,
+    };
+    await page.evaluate(
+      ([key, value]) => localStorage.setItem(key, value),
+      [`${STORAGE_KEY}.ledger.${id}`, JSON.stringify(ledger)],
+    );
+    await page.goto(`/trips/${id}/expenses`);
+    await page.getByTestId('expense-menu-e1').click();
+    await page.getByRole('menuitem', { name: '수정' }).click();
+
+    await expect(page.getByLabel('분담 금액 직접 입력')).toBeChecked();
+    await page.getByLabel('실제 금액 (원)', { exact: true }).fill('30000');
+    await expect(page.getByTestId('share-total')).toHaveText(/분담 합계 20,000원 \/ 지출\s+30,000원/);
+  });
+
   test('정산 내용을 이름과 금액이 담긴 글로 복사한다', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     const id = await createTrip(page, {
