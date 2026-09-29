@@ -127,6 +127,7 @@
       <section [class.hidden]="tab() !== 'expenses'" [attr.aria-hidden]="tab() !== 'expenses'">
         <app-expense-form
           [people]="ledger().people"
+          [me]="me()"
           [links]="links()"
           [initial]="editing()"
           [prefillLinkId]="add()"
@@ -141,6 +142,7 @@
       <section [class.hidden]="tab() !== 'expenses'" [attr.aria-hidden]="tab() !== 'expenses'">
         <app-receipt-scan
           [people]="ledger().people"
+          [me]="me()"
           [fallbackDate]="store.current()?.startDate ?? today"
           (saved)="saveScanned($event)"
           (cancelled)="scanOpen.set(false)"

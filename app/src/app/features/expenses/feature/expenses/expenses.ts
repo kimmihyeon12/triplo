@@ -41,6 +41,8 @@ import { copyText } from '../../../places/data/map-links';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
 import { ToastService } from '../../../../core/toast-service';
+import { myLedgerPersonId } from '../../../trips/util/sharing';
+import { AuthStore } from '../../../auth/data/auth-store';
 
 @Component({
   selector: 'app-expenses',
@@ -68,6 +70,12 @@ export class Expenses {
   /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
   readonly add = input<string | undefined>();
   readonly store = inject(TripEditorStore);
+  private readonly auth = inject(AuthStore);
+  /** 가계부에서 나를 가리키는 칸. 합류한 친구의 기본 결제자가 주인이 되지 않게 한다. */
+  readonly me = computed(() => {
+    const trip = this.store.current();
+    return trip ? myLedgerPersonId(trip, this.auth.user()?.id ?? null) : 'self';
+  });
   private readonly repository = inject(LEDGER_REPOSITORY);
   readonly saver = new LedgerSaver(this.repository);
   private readRequest = 0;

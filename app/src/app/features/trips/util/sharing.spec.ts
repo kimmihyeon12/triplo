@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createTrip } from './factories';
-import { canDeleteTrip, sharedLabel, tripPeople } from './sharing';
+import { canDeleteTrip, myLedgerPersonId, sharedLabel, tripPeople } from './sharing';
 
 const shared = {
   ...createTrip(),
@@ -31,5 +31,12 @@ describe('sharing', () => {
     ]);
     expect(tripPeople(createTrip(), { id: 'me', name: '나' })).toEqual([{ id: 'me', name: '나' }]);
     expect(tripPeople(createTrip(), null)).toEqual([]);
+  });
+
+  it('가계부의 내 칸: 주인·기기 여행은 self, 합류한 친구는 member-아이디', () => {
+    expect(myLedgerPersonId(shared, 'u2')).toBe('member-u2');
+    expect(myLedgerPersonId({ ...shared, sharing: { ...shared.sharing, role: 'owner' as const } }, 'u1')).toBe('self');
+    expect(myLedgerPersonId(createTrip(), 'u1')).toBe('self');
+    expect(myLedgerPersonId(shared, null)).toBe('self');
   });
 });

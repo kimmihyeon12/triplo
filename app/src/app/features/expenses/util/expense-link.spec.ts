@@ -29,5 +29,7 @@ describe('defaultPayer', () => {
     expect(defaultPayer([{ id: 'p2', name: '민지' }, { id: 'self', name: '나' }])).toBe('self');
     expect(defaultPayer([{ id: 'p2', name: '민지' }])).toBe('p2');
     expect(defaultPayer([])).toBe('');
+    expect(defaultPayer([{ id: 'self', name: '주인' }, { id: 'member-u2', name: '민지' }], 'member-u2')).toBe('member-u2');
+    expect(defaultPayer([{ id: 'self', name: '주인' }], 'member-u9')).toBe('self');
   });
 });
