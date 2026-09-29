@@ -1,4 +1,5 @@
 ﻿import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { nameTemporary } from '../../util/visible-markers';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -116,7 +117,7 @@ export class VisitMapPage {
     // 혼자 남았으므로 겹칠 상대가 없다. 이름표를 늘 보여준다.
     return this.labels()
       .filter(label => label.id === picked)
-      .map(label => ({ ...label, labelHidden: false }));
+      .map(label => nameTemporary(label, this.names, this.selected()));
   });
 
   constructor() {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { visibleMarkers } from './visible-markers';
+import { nameTemporary, visibleMarkers } from './visible-markers';
 
 const at = (id: string, x: number, y: number, extra: Partial<{ name: string; temporary: boolean; count: number }> = {}) =>
   ({ id, name: extra.name ?? id, x, y, temporary: extra.temporary ?? false, count: extra.count ?? 0 });
@@ -56,5 +56,22 @@ describe('visibleMarkers', () => {
   it('방문 수가 같으면 이름 순으로 정한다', () => {
     const labels = [at('b', 66, 80, { name: '나', count: 3 }), at('a', 60, 80, { name: '가', count: 3 })];
     expect(named(visibleMarkers(labels, 1, null))).toEqual(['a']);
+  });
+});
+
+describe('nameTemporary', () => {
+  const base = { id: 'temporary', name: '', x: 10, y: 10, temporary: true, count: 0 };
+
+  it('임시 선택 마커에 고른 시·군·구 이름을 붙인다', () => {
+    expect(nameTemporary(base, { '51150': '강릉시' }, '51150')).toMatchObject({ name: '강릉시', labelHidden: false });
+  });
+
+  it('이름을 찾지 못하면 빈 알약 대신 점만 남긴다', () => {
+    expect(nameTemporary(base, {}, '99999')).toMatchObject({ name: '', labelHidden: true });
+  });
+
+  it('저장한 지역 마커는 그대로 둔다', () => {
+    const saved = { ...base, id: '51150', name: '강릉', temporary: false };
+    expect(nameTemporary(saved, { '51150': '강릉시' }, '51150')).toEqual({ ...saved, labelHidden: false });
   });
 });

@@ -30,3 +30,18 @@ export function visibleMarkers(labels: readonly MapLabel[], zoom: number, select
     return collides ? { ...label, labelHidden: true } : label;
   });
 }
+
+/**
+ * 지도를 눌러 고른 임시 선택 마커에 이름을 붙인다. 지도 조각은 시·군·구 단위라
+ * 도 이름표로는 이름을 찾지 못해, 글자 없는 파란 알약만 떴다(2026-09-29).
+ * 고른 지역의 시·군·구 이름을 쓰고, 그래도 없으면 알약 없이 점만 남긴다.
+ */
+export function nameTemporary(
+  label: MapLabel,
+  names: Readonly<Record<string, string>>,
+  selected: string | null,
+): MapLabel {
+  if (!label.temporary) return { ...label, labelHidden: false };
+  const name = (selected && names[selected]) || label.name;
+  return { ...label, name, labelHidden: !name };
+}
