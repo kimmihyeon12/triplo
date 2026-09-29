@@ -1,11 +1,12 @@
 <!--
   알림 토스트(2026-09-29 사용자 결정). 종류마다 연한 바탕·테두리와 아이콘 색으로
-  구분하고 글자는 본문색으로 둔다: 성공은 초록, 안내는 파랑, 오류는 빨강.
+  구분하고 글자는 본문색으로 둔다: 성공은 초록, 안내는 파랑, 오류는 빨강. 바탕은 살짝 비치고
+  뒤를 흐리게 해 화면 위에 떠 있는 느낌을 준다(2026-09-29 사용자 결정).
   모든 화면에서 위쪽 같은 자리에 뜨며, X를 누르거나 위로 밀어 닫는다.
   오류만 alert로 읽어 주고, 성공·안내는 흐름을 끊지 않게 status로 읽는다.
 -->
 <div
-  class="toast grid grid-cols-[24px_minmax(0,1fr)_40px] items-center gap-2.5 rounded-panel border py-2 pr-1.5 pl-3.5 text-ink touch-none select-none [box-shadow:0_4px_12px_-8px_rgb(22_24_29/0.18)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
+  class="toast grid grid-cols-[24px_minmax(0,1fr)_40px] items-center gap-2.5 rounded-panel py-1 pr-1.5 pl-3.5 text-ink touch-none select-none [backdrop-filter:blur(16px)_saturate(160%)] [-webkit-backdrop-filter:blur(16px)_saturate(160%)] [box-shadow:0_4px_12px_-8px_rgb(22_24_29/0.18)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
   [class]="tone().card"
   [attr.role]="kind() === 'error' ? 'alert' : 'status'"
   aria-atomic="true"
