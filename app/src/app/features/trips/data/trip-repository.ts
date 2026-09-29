@@ -12,6 +12,8 @@ export interface TripRepository {
   remove(id: string): Promise<void>;
   /** 마지막 읽기에서 손상되어 건너뛴 항목 수 */
   readonly lastSkippedCount: number;
+  /** 기억한 서버 버전을 버린다. 충돌 뒤 새로 불러오기 전에 부른다. 기기 저장소는 쓰지 않는다. */
+  forget?(id: string): void;
 }
 
 export const TRIP_REPOSITORY = new InjectionToken<TripRepository>('TRIP_REPOSITORY');
