@@ -25,6 +25,7 @@ import { SupabaseTripRepository } from './features/trips/data/supabase-trip-repo
 import { supabaseTripDataClient } from './features/trips/data/trip-data-client';
 import { clearLegacyLocalTrips } from './features/trips/data/legacy-local-cleanup';
 import { AuthStore } from './features/auth/data/auth-store';
+import { NetworkActivity } from './core/network-activity';
 import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
 import { LocalSupportRepository } from './features/support/data/local-support-repository';
 import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
@@ -98,6 +99,8 @@ export const appConfig: ApplicationConfig = {
             }),
           ]),
     ),
+    // 상단 바 로딩이 모든 네트워크 요청을 보도록 다른 초기화보다 먼저 fetch를 감싼다.
+    provideAppInitializer(() => inject(NetworkActivity).install()),
     // 브라우저용 지도 키를 먼저 읽는다. 파일이 없어도 앱은 뜬다.
     provideAppInitializer(() => inject(MapConfig).load()),
     {

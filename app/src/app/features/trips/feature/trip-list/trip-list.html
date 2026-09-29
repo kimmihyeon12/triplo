@@ -6,7 +6,8 @@
     여행이 하나라도 있으면 목록이 주인공이라 작은 버튼으로 줄인다.
     첫 화면에서는 아래 빈 상태에서 같은 두 갈래를 카드로 크게 보여준다.
   -->
-  @if (!isFirstTime()) {
+  <!-- 불러오는 동안에는 그리지 않는다. 여행이 없으면 아래 첫 화면이 대신한다. -->
+  @if (store.view() === 'list') {
     <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
 <!--
         공통 버튼은 1px 테두리를 갖는다. 단색 버튼은 테두리를 배경색과 맞추면
@@ -55,9 +56,6 @@
   }
 
   @switch (store.listState()) {
-    @case ('loading') {
-      <p class="text-ink-3" role="status">불러오는 중…</p>
-    }
     @case ('error') {
       <div appNotice tone="danger" role="alert">
         <app-icon name="alert" />

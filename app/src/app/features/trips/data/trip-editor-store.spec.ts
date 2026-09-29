@@ -220,4 +220,15 @@ describe('trip editing async contract', () => {
     await store.open('x');
     expect(toast.message()).toBe('여행을 불러오지 못했어요.');
   });
+
+  it('목록은 불러오기가 끝나기 전에는 빈 목록도 목록도 아닌 pending이다', async () => {
+    const loading = deferred<Trip[]>();
+    const { list } = setup({ list: () => loading.promise });
+    expect(list.view()).toBe('pending');
+    const done = list.loadList();
+    expect(list.view()).toBe('pending');
+    loading.resolve([]);
+    await done;
+    expect(list.view()).toBe('empty');
+  });
 });

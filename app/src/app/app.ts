@@ -1,12 +1,19 @@
 import { Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import {
+  RouteConfigLoadEnd,
+  RouteConfigLoadStart,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
 import { IconComponent } from './shared/ui/icon/icon';
 import { NavigationHistory } from './core/navigation-history';
 import { PageBar } from './core/page-bar';
 import { PageTools } from './shared/ui/page-tools/page-tools';
 import { ErrorToast } from './shared/ui/error-toast/error-toast';
 import { ErrorToastService } from './core/error-toast-service';
+import { NetworkActivity } from './core/network-activity';
 import { AuthStore } from './features/auth/data/auth-store';
 import {
   PendingDraftRegistry,
@@ -23,7 +30,9 @@ export class App {
   private readonly router = inject(Router);
   readonly toast = inject(ErrorToastService);
   readonly navigating = this.router.currentNavigation;
-  readonly showNavigationLoading = signal(false);
+  private readonly network = inject(NetworkActivity);
+  /** 네트워크 요청이 진행 중일 때만, 지연 없이 상단 바에 로딩을 보인다. */
+  readonly showNavigationLoading = this.network.busy;
   private readonly pageBar = inject(PageBar);
   readonly bar = this.pageBar.state;
   private readonly location = inject(Location);
@@ -63,17 +72,15 @@ export class App {
   }
 
   constructor() {
+    // 처음 여는 화면의 코드 내려받기도 네트워크 요청으로 센다.
+    this.router.events.subscribe((event) => {
+      if (event instanceof RouteConfigLoadStart) this.network.begin();
+      else if (event instanceof RouteConfigLoadEnd) this.network.end();
+    });
     // 로그인 계정이 바뀌면 이전 계정의 저장 대기열과 화면 상태를 버린다.
     const auth = inject(AuthStore);
     const pending = inject(PendingDraftRegistry);
     const watch = sessionWatcher((session) => pending.changeSession(session));
     effect(() => watch(auth.loading(), auth.user()?.id ?? null));
-    effect((onCleanup) => {
-      const navigation = this.navigating();
-      this.showNavigationLoading.set(false);
-      if (!navigation) return;
-      const timer = setTimeout(() => this.showNavigationLoading.set(true), 200);
-      onCleanup(() => clearTimeout(timer));
-    });
   }
 }

@@ -40,6 +40,16 @@ export class TripListStore {
     return [...pending, ...this.state.trips().filter((t) => !ids.has(t.id))];
   });
 
+  /**
+   * 화면이 그릴 모양. 불러오기가 끝나기 전에는 빈 목록 화면도 목록 화면도
+   * 그리지 않는다. 서버 저장은 불러오는 데 시간이 걸려, 그사이 목록 화면
+   * (만들기 버튼·다녀온 곳 지도)을 먼저 그렸다가 빈 목록 화면으로 바뀌는
+   * 깜박임이 있었다.
+   */
+  readonly view = computed<'pending' | 'empty' | 'list'>(() =>
+    this.listState() !== 'ready' ? 'pending' : this.trips().length ? 'list' : 'empty',
+  );
+
   loadList(): Promise<void> {
     return untracked(() => this.load());
   }
