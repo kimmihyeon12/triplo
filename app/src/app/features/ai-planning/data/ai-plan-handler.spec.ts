@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiPlanHandler } from '../../../../../../supabase/functions/ai-plan/handler';
+import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
  * Edge Function의 핸들러를 앱 테스트에서 그대로 검증한다. delete-account와 같은
@@ -30,14 +31,21 @@ function setup(
   overrides: {
     getUser?: (token: string) => Promise<{ id: string } | null>;
     callModel?: (prompt: { system: string; user: string }) => Promise<string>;
+    consumeQuota?: (userId: string) => Promise<number>;
   } = {},
 ) {
   const callModel = overrides.callModel ?? vi.fn(async () => JSON.stringify({ items: [] }));
+  const consumeQuota = vi.fn(overrides.consumeQuota ?? (async () => 4));
+  const refundQuota = vi.fn(async () => {});
   return {
     callModel,
+    consumeQuota,
+    refundQuota,
     handler: createAiPlanHandler({
       getUser: overrides.getUser ?? (async () => ({ id: 'u1' })),
       callModel,
+      consumeQuota,
+      refundQuota,
     }),
   };
 }
@@ -91,7 +99,7 @@ describe('createAiPlanHandler', () => {
     const { handler } = setup({ callModel: async () => content });
     const res = await handler(post(BODY));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ content });
+    expect(await res.json()).toEqual({ content, remaining: 4 });
   });
 
   it('조건을 프롬프트에 담아 모델을 부른다', async () => {
@@ -147,5 +155,56 @@ describe('createAiPlanHandler', () => {
     const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0] as { user: string };
     // 긴 입력을 그대로 보내면 토큰만 쓰고 결과는 나아지지 않는다.
     expect(prompt.user.length).toBeLessThan(2000);
+  });
+
+  it('성공하면 한 번을 차감하고 남은 횟수를 함께 돌려준다', async () => {
+    const { handler, consumeQuota } = setup();
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(200);
+    expect((await res.json()).remaining).toBe(4);
+    expect(consumeQuota).toHaveBeenCalledWith('u1');
+  });
+
+  it('내 한도를 넘으면 모델을 부르지 않고 429 user_limit과 한도를 돌려준다', async () => {
+    const { handler, callModel } = setup({
+      consumeQuota: async () => {
+        throw new UserLimitError(5);
+      },
+    });
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: 'user_limit', limit: 5 });
+    expect(callModel).not.toHaveBeenCalled();
+  });
+
+  it('입력이 잘못되면 차감하지 않는다', async () => {
+    const { handler, consumeQuota } = setup();
+    expect((await handler(post({ ...BODY, regions: [] }))).status).toBe(400);
+    expect(consumeQuota).not.toHaveBeenCalled();
+  });
+
+  it('모델이 실패하면 차감한 한 번을 되돌린다', async () => {
+    for (const message of ['quota_exceeded', 'model_error_500']) {
+      const { handler, refundQuota } = setup({
+        callModel: async () => {
+          throw new Error(message);
+        },
+      });
+      await handler(post(BODY));
+      expect(refundQuota).toHaveBeenCalledWith('u1');
+    }
+  });
+
+  it('한도 확인이 실패하면 503 server_unavailable이고 모델을 부르지 않는다', async () => {
+    const { handler, callModel, refundQuota } = setup({
+      consumeQuota: async () => {
+        throw new Error('quota_check_failed');
+      },
+    });
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'server_unavailable' });
+    expect(callModel).not.toHaveBeenCalled();
+    expect(refundQuota).not.toHaveBeenCalled();
   });
 });
