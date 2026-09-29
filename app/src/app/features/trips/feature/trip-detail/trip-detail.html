@@ -31,6 +31,7 @@
       [saveState]="store.saveState()"
       [savedAt]="store.lastSavedAt()"
       (retry)="store.retrySave()"
+      (reload)="store.reload()"
     />
 
     @if (deleteTripOpen()) {

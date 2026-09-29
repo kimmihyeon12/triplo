@@ -18,7 +18,7 @@
       data-state="saved"
     >
       <app-icon name="check" [size]="14" />
-      기기에 저장됨 · {{ time() }}
+      저장됨 · {{ time() }}
     </span>
   }
   @case ('error') {
@@ -43,9 +43,35 @@
       </button>
     </span>
   }
+  @case ('conflict') {
+    <!--
+      다시 저장해도 풀리지 않는다. 서버 최신본을 불러와야 하며, 그러면 지금
+      입력이 사라지므로 버튼 옆에 적는다. 입력은 그 전까지 화면에 남는다.
+    -->
+    <span
+      class="flex flex-wrap items-center gap-2"
+      role="alert"
+      data-testid="save-status"
+      data-state="conflict"
+    >
+      <span appBadge class="cell cell--warn"
+        ><app-icon name="alert" [size]="14" /> 다른 곳에서 먼저 바뀌었어요</span
+      >
+      <button
+        appButton
+        type="button"
+        class="btn btn--sm"
+        (click)="reload.emit()"
+        data-testid="reload-trip"
+      >
+        <app-icon name="refresh" [size]="14" /> 새로 불러오기
+      </button>
+      <span class="text-12 text-ink-3">불러오면 지금 입력은 사라져요</span>
+    </span>
+  }
   @default {
     <span appBadge class="cell cell--ghost" data-testid="save-status" data-state="idle"
-      >기기 저장본</span
+      >저장본</span
     >
   }
 }
