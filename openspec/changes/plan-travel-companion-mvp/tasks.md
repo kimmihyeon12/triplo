@@ -47,8 +47,8 @@
 
 ## 4. Supabase 연결 (2026-09-14 사용자 요청으로 Google 인증 선행)
 - [ ] 4.1 개발용 Supabase 프로젝트 생성, `.mcp.json`/`.codex/config.toml` project ref 지정과 로그인. 사용자 제공 ref wslqgfetdwcmqeztixvs·공개 키 확인. 관리 도구 인증은 미완료.
-- [ ] 4.2 `trips`·`trip_regions`·`trip_stops`·`accommodation_stays` 테이블과 `owner_id` RLS 마이그레이션. 알파 모델 필드를 기준으로 작성한다.
-- [ ] 4.3 Supabase Auth 로그인과 `TripRepository` 서버 구현. 로컬 초안을 계정 저장으로 한 번만 가져오기.
+- [x] 4.2 `trips`·`trip_regions`·`trip_stops`·`accommodation_stays` 테이블과 `owner_id` RLS 마이그레이션. 알파 모델 필드를 기준으로 작성한다. 2026-09-29 원격 적용(id는 text, version·region_code 추가, authenticated 권한). 비로그인 거절 확인.
+- [x] 4.3 Supabase Auth 로그인과 `TripRepository` 서버 구현. ~~로컬 초안을 계정 저장으로 한 번만 가져오기~~ 2026-09-29 사용자 결정으로 기기 여행은 옮기지 않고 한 번 지운다. `SupabaseTripRepository`·`save_trip` 구현, 단위 테스트와 로컬 PostgreSQL 검사 통과.
 - [x] 4.3c 카카오·Google 최초 인증 후 닉네임만 받는 가입 흐름과 기존 회원 바로 입장, 저장 검증·실패 입력 보존·버튼 스피너를 구현한다. 모의 OAuth·프로필 HTTP로 PC·모바일 흐름을 검증했으며 실제 계정 인증 완료와 구분한다.
 - [x] 4.3d 오류 토스트를 하단 중앙으로 옮기고 PC·360px 실제 런타임에서 배치·닫기·카카오 버튼 활성화를 검증한다. 실제 카카오계정 화면과 Google 로그인 화면 도착 확인.
 - [x] 4.3e KOE205 대응으로 카카오 동의 요청을 profile_nickname만으로 제한한다. 회귀 테스트 수정 전 실패 확인, 수정 후 PC·모바일 Google·카카오 가입 테스트 4개와 운영 빌드 통과. 실제 카카오 요청 scope 확인. 관리자 동의항목·이메일 없는 계정 허용 설정과 실계정 인증 완료는 별도 확인 대상이다.
@@ -95,7 +95,7 @@
 - [x] 9.2 docs/architecture/ARCHITECTURE.md의 상태 계약을 구현한다. 검증: 조회 응답 역전, 연속 저장 중 새 편집, 이전 성공이 최신 실패/입력을 지우지 않음, 여행별 실패 입력 보존·재시도, 동일 화면 여행 ID 전환, 계정 변경 시 상태 정리. 서버 충돌 검증은 9.5에서 별도 수행한다.
 - [x] 9.3 NgRx Signals 21.x를 도입하고 목록·여행 작업 화면 서비스를 분리한다. 기능별 feature/ui/data/model/util로 점진 이동하며 큰 상세 화면과 공통 UI 의존성을 정리한다. 검증: private signalState, UI의 직접 저장소 변경 금지, 장소·숙소 자식 화면 상태 공유, 순수 함수 기존 테스트, 금지 import·순환 참조 lint.
 - [x] 9.4 Zoneless를 별도 전환·검증한다. 검증: provideZoneChangeDetection·ZoneJS polyfills·테스트 설정 일관성, 지도 SDK 콜백·Reactive Forms 프로그램 변경·저장 결과 화면 갱신, 모바일 핵심 E2E. Signal Forms·rxResource는 전면 교체하지 않고 필요 시 단일 흐름 실증 후 결정과 결과를 기록한다.
-- [ ] 9.5 Supabase 연결 단계에서 용도별 저장 명령과 버전·재시도 식별자·트랜잭션을 검증한다. 검증: 여러 탭의 오래된 저장 거절, AI 적용 중복 방지, 승인·정산 원자성, 권한별 데이터 차단. 4·5·6·8절의 관련 서버 검증과 통합하고 중복 작업하지 않는다.
+- [ ] 9.5 Supabase 연결 단계에서 용도별 저장 명령과 버전·재시도 식별자·트랜잭션을 검증한다. 2026-09-29 여행 저장은 버전 확인(P0409)·트랜잭션을 구현했다. AI 적용 중복 방지·승인·정산 원자성은 남았다. 검증: 여러 탭의 오래된 저장 거절, AI 적용 중복 방지, 승인·정산 원자성, 권한별 데이터 차단. 4·5·6·8절의 관련 서버 검증과 통합하고 중복 작업하지 않는다.
 
 검증 기록 (2026-09-14): Angular core 21.2.23 / CLI 21.2.24 / NgRx Signals 21.1.1. 공식 core·CLI migration-only 완료. 운영 빌드 통과(초기 271.56 kB), test 구성 앱 빌드·Playwright 40/40(PC·360px), Vitest 70/70, 경계·순환 참조 lint 50모듈 통과. 테스트 서버는 4300과 테스트 저장 키·fixture를 사용하고 watch/live-reload를 꺼 동시 편집으로 화면이 초기화되지 않도록 했다. 실제 카카오 키 연동은 다른 세션에서 진행하므로 이 결과에 포함하지 않는다.
 
