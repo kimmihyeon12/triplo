@@ -26,6 +26,23 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await expect(page.getByTestId('save-status')).toHaveCount(0);
   });
 
+  test('오류 토스트는 아래로 밀어서 닫는다', async ({ page }) => {
+    await page.goto('/trips/new');
+    await page.getByTestId('trip-title').fill('밀어서 닫기');
+    await page.getByTestId('trip-start').fill('2026-05-01');
+    await page.getByTestId('trip-end').fill('2026-05-02');
+    await page.evaluate((flag) => localStorage.setItem(flag, '1'), FAIL_FLAG);
+    await page.getByTestId('trip-save').click();
+    const toast = page.getByTestId('error-toast');
+    await expect(toast).toBeVisible();
+    const box = (await toast.boundingBox())!;
+    await page.mouse.move(box.x + 30, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 30, box.y + box.height / 2 + 80, { steps: 5 });
+    await page.mouse.up();
+    await expect(toast).toHaveCount(0);
+  });
+
   test('상세에서 순서 변경 저장이 실패하면 화면 상태는 유지되고 재시도로 기기에 반영된다', async ({
     page,
   }) => {
