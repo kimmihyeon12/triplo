@@ -213,12 +213,12 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 것을 색으로 가를 수 없었다. 색마다의 뜻과 `warn`·`danger`를 가르는 기준은
 [badge-tone.ts](../../app/src/app/shared/util/badge-tone.ts) 주석이 원본이다.
 
-**지출 분류와 여행 카드의 장소·숙소 수는 색 라벨이다(2026-09-29 사용자 결정).** 회색 글자만 두면
-칙칙했고, 목록 왼쪽 아이콘 타일은 이 화면들에만 있어 촌스럽게 보였다. 지출 라벨 색은
-`--color-exp-*` 토큰이 원본이며 같은 색 계열을 요약 카드의 분류별 막대와 필터 칩의 점에
-(`--color-exp-*-bar`, 글자색과 파스텔의 중간 명도) 이어 쓴다. 여행 카드는 일정 화면과 같은
-`place`·`stay` 톤을 쓴다. 매핑은
-[category-style.ts](../../app/src/app/features/expenses/model/category-style.ts)에 둔다.
+**지출 분류는 한 모양의 라벨에 분류색 점을 둔다(2026-09-29 사용자 결정).** 분류마다 라벨
+바탕색을 달리했더니 한 목록 안에서 알록달록했고, 목록 왼쪽 아이콘 타일은 이 화면에만 있어
+촌스러웠다. 라벨은 필터 칩과 같은 흰 바탕·회색 테두리이고, 분류색은 요약 카드의 분류별 막대와
+필터 칩·라벨의 작은 점에만 쓴다(`--color-exp-*-bar`, 글자색과 파스텔의 중간 명도). 매핑은
+[category-style.ts](../../app/src/app/features/expenses/model/category-style.ts)에 둔다. 여행
+카드의 장소·숙소 수는 일정 화면과 같은 `place`·`stay` 톤 라벨이다.
 
 **중복은 어느 화면에서나 `danger`다.** 지출의 '이름 중복'만 `warn`이어서 같은
 일이 화면에 따라 다른 심각도로 보였다.

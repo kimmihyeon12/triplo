@@ -198,10 +198,9 @@
         }
         @for (e of visibleExpenses(); track e.id) {
           <!--
-            분류는 이름 아래 색 라벨로 둔다. 목록 왼쪽 아이콘 타일은 이 화면에만
-            있어 다른 목록과 어울리지 않았다(2026-09-29 사용자 결정). 라벨 색은
-            요약 막대·필터 점과 같은 분류색 계열이다. 금액은 오른쪽에 모아
-            목록을 내려가며 세로로 비교하게 한다.
+            분류는 이름 아래 라벨로 둔다. 목록 왼쪽 아이콘 타일은 이 화면에만
+            있어 다른 목록과 어울리지 않았다(2026-09-29 사용자 결정). 금액은
+            오른쪽에 모아 목록을 내려가며 세로로 비교하게 한다.
           -->
           <article
             class="panel grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 rounded-panel bg-panel p-4 shadow-panel"
@@ -219,7 +218,19 @@
                 }
               </p>
               <p class="mt-2 flex flex-wrap gap-1.5">
-                <span appBadge [class]="style(e.category).label">{{ categoryLabel(e.category) }}</span>
+                <!--
+                  분류마다 라벨 색을 달리했더니 한 목록 안에서 알록달록했다(2026-09-29
+                  사용자 결정). 라벨은 필터 칩과 같은 한 모양으로 두고, 분류색은
+                  요약 막대와 같은 작은 점에만 남긴다.
+                -->
+                <span appBadge tone="neutral" class="gap-1.5"
+                  ><span
+                    class="size-1.5 flex-none rounded-full"
+                    [class]="style(e.category).fill"
+                    aria-hidden="true"
+                  ></span
+                  >{{ categoryLabel(e.category) }}</span
+                >
                 @if (e.personal) {
                   <span appBadge class="cell cell--ghost">정산 제외</span>
                 }
