@@ -814,11 +814,15 @@
               <span appBadge class="cell cell--ghost">{{ overview().days.length }}일</span>
             </summary>
             <div class="mt-3">
-          <ol class="ov flex flex-col gap-3" data-testid="overview-days">
+          <!--
+            카드 안의 날짜 행은 그림자 카드가 아니라 구분선으로 나눈다. 전에는 행마다
+            그림자를 둘러 카드 안에 카드가 겹쳐 보였다(2026-09-29).
+          -->
+          <ol class="ov -mx-2 flex flex-col divide-y divide-border" data-testid="overview-days">
             @for (d of overview().days; track d.date) {
               <li>
                 <a
-                  class="ov__row grid bg-panel rounded-panel no-underline [box-shadow:var(--shadow-panel)] grid-cols-[40px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border:1px_solid_transparent] text-inherit [transition:border-color_var(--dur)_var(--ease-out)] hover:border-border-strong [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_minmax(0,1fr)_auto]"
+                  class="ov__row grid rounded-control no-underline grid-cols-[40px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] px-2 py-3.5 text-inherit [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_minmax(0,1fr)_auto]"
                   [routerLink]="[]"
                   [queryParams]="{ tab: 'days', day: d.date }"
                   queryParamsHandling="merge"
