@@ -13,7 +13,7 @@ const AI_DELAY = 'tc.test.aiDelayMs';
 async function fillConditions(page: Page, start: string, end: string): Promise<void> {
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-match-강릉').click();
+  await page.getByTestId('ai-region-match-강릉시').click();
   await page.getByTestId('ai-start').fill(start);
   await page.getByTestId('ai-end').fill(end);
   await page.getByTestId('ai-next-1').click();
@@ -59,7 +59,7 @@ test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는�
   await resetApp(page);
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-match-강릉').click();
+  await page.getByTestId('ai-region-match-강릉시').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-02');
   await page.getByTestId('ai-next-1').click();
@@ -79,7 +79,10 @@ test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는�
 
   await page.evaluate((flag) => localStorage.setItem(flag, '1'), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
-  await expect(page.getByRole('alert')).toContainText('저장에 실패');
+  // 오류는 토스트 한 곳에서만 알린다. 화면에 같은 문장을 또 띄우지 않고, 고른 항목은 그대로 남는다.
+  await expect(page.getByTestId('error-toast')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(1);
+  await expect(page.getByTestId('ai-result')).toBeVisible();
   await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
   await expect(page.getByTestId('trip-header')).toBeVisible();
