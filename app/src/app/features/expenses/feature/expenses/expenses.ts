@@ -16,6 +16,7 @@ import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
@@ -23,9 +24,18 @@ import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LocalLedger } from '../../data/local-ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
+import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
-import { duplicateTitleIds, newLedger, transferSuggestions } from '../../util/ledger';
+import {
+  categoryBreakdown,
+  duplicateTitleIds,
+  newLedger,
+  settlementText,
+  transferSuggestions,
+} from '../../util/ledger';
+import { copyText } from '../../../places/data/map-links';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
+import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
 
 @Component({
   selector: 'app-expenses',
@@ -39,10 +49,12 @@ import { ExpenseForm } from '../../ui/expense-form/expense-form';
     UiNotice,
     UiActionBar,
     IconComponent,
+    UiEmptyState,
     UiRowMenu,
     UiTabs,
     ErrorToast,
     ExpenseForm,
+    ReceiptScan,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -56,6 +68,10 @@ export class Expenses {
   readonly error = signal('');
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
+  readonly scanOpen = signal(false);
+  readonly scanStatus = signal('');
+  /** 여행 날짜가 없을 때 사진 항목에 채울 날짜. */
+  readonly today = new Date().toLocaleDateString('sv-SE');
   readonly editing = signal<Expense | null>(null);
   readonly deleteId = signal('');
   readonly personName = signal('');
@@ -64,6 +80,10 @@ export class Expenses {
   readonly receiptAmount = signal<number | null>(null);
   readonly cancelling = signal('');
   readonly cancelReason = signal('');
+  readonly copyStatus = signal('');
+  /** 하단 버튼을 누른 손가락 근처에서도 결과가 보이도록 버튼 글자를 잠시 바꾼다. */
+  readonly copied = signal(false);
+  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
   readonly actual = computed(() => this.ledger().expenses.reduce((n, e) => n + e.amount, 0));
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
@@ -160,6 +180,22 @@ export class Expenses {
     { id: 'cancel', label: '기록 취소', icon: 'x', danger: true },
   ];
 
+  readonly style = categoryStyle;
+  readonly breakdown = computed(() => categoryBreakdown(this.ledger().expenses));
+  readonly breakdownLabel = computed(
+    () =>
+      '분류별 지출: ' +
+      this.breakdown()
+        .map((r) => `${this.categoryLabel(r.category)} ${r.amount.toLocaleString('ko-KR')}원`)
+        .join(', '),
+  );
+
+  /** 목록에서는 연도를 빼고 '5/1'처럼 줄여 쓴다. 여행 안의 지출이라 연도가 같다. */
+  shortDate(date: string): string {
+    const [, m, d] = date.split('-');
+    return m && d ? `${Number(m)}/${Number(d)}` : date;
+  }
+
   categoryLabel(key: string): string {
     return (EXPENSE_CATEGORIES as Record<string, string>)[key] ?? '기타';
   }
@@ -172,6 +208,20 @@ export class Expenses {
   openExpense(expense: Expense | null = null): void {
     this.editing.set(expense);
     this.formOpen.set(true);
+  }
+
+  openScan(): void {
+    this.scanStatus.set('');
+    this.scanOpen.set(true);
+  }
+
+  /** 사진에서 확인한 지출을 한 번에 더한다. 하나라도 저장하지 못하면 모두 남기지 않는다. */
+  saveScanned(expenses: Expense[]): void {
+    const previous = this.ledger();
+    if (this.persist({ ...previous, expenses: [...previous.expenses, ...expenses] })) {
+      this.scanOpen.set(false);
+      this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
+    }
   }
 
   saveExpense(expense: Expense): void {
@@ -212,6 +262,18 @@ export class Expenses {
       })
     )
       this.receiving.set(null);
+  }
+
+  async copySettlement(): Promise<void> {
+    const ok = await copyText(settlementText(this.ledger()));
+    clearTimeout(this.copiedTimer);
+    this.copied.set(ok);
+    if (ok) this.copiedTimer = setTimeout(() => this.copied.set(false), 2000);
+    this.copyStatus.set(
+      ok
+        ? '복사했어요. 메신저에 붙여 넣어 보내 주세요.'
+        : '복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.',
+    );
   }
 
   /** 남은 정산을 한 번에 전액 수령으로 남긴다. 부분 수령은 개별 기록을 쓴다. */

@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import type { IconName } from '../shared/ui/icon/icon';
 
 /**
  * 상단 바 한 줄(`‹ 제목 [동작]`)의 내용을 화면이 지정한다.
@@ -7,14 +8,26 @@ import { Injectable, signal } from '@angular/core';
 export interface PageBarAction {
   /** 오른쪽 동작 라벨(텍스트 버튼) */
   readonly label: string;
-  /** 라우터 링크. 지정하면 링크로, 없으면 표시하지 않는다. */
+  /**
+   * 라우터 링크. 다른 화면으로 가는 동작에 쓴다.
+   *
+   * 이것도 `run`도 없으면 그려지지 않는다. 전에는 `link` 없이 넣으면
+   * 빈 링크가 그려져 눌러도 아무 일이 없었다.
+   */
   readonly link?: unknown[];
   readonly queryParams?: Record<string, unknown>;
+  /**
+   * 화면을 떠나지 않고 그 자리에서 처리하는 동작(대화 초기화 등).
+   * `link`와 함께 쓰지 않는다.
+   */
+  readonly run?: () => void;
+  /** `run` 동작이 처리 중이라 누를 수 없을 때 true. */
+  readonly disabled?: boolean;
   /** 아이콘 이름(app-icon). 라벨만 쓸 경우 생략 */
-  readonly icon?: string;
+  readonly icon?: IconName;
   /** 지정하면 라벨 대신 이 글자를 담은 원형 아바타로 그린다(닉네임 첫 글자 등). */
   readonly avatar?: string;
-  /** 링크 없이 화면이 직접 처리하는 항목의 식별자(예: 삭제). */
+  /** 링크 없이 화면이 직접 처리하는 메뉴 항목의 식별자(예: 삭제). */
   readonly action?: string;
   /** 파괴적 동작이면 true. 메뉴에서 로즈 계열로 그린다. */
   readonly danger?: boolean;

@@ -33,7 +33,9 @@ export class OnboardingPage {
   async save(event: Event): Promise<void> {
     event.preventDefault();
     if (this.auth.designPreview && !this.auth.user()) {
-      void this.router.navigateByUrl('/trips');
+      // 아래 저장 경로와 같이 치운다. 닉네임을 정하고 나면 이 화면으로
+      // 되돌아올 일이 없다.
+      void this.router.navigateByUrl('/trips', { replaceUrl: true });
       return;
     }
     const saved = await this.auth.saveNickname(this.nickname());

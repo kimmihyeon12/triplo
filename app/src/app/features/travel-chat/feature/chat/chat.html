@@ -1,11 +1,8 @@
-<header class="flex flex-none items-center gap-2.5 border-b border-border bg-panel px-4 py-2">
-  <app-companion-face [mood]="'talking'" [size]="48" [decorative]="true" />
-  <div class="min-w-0 flex-1">
-    <h2 class="text-15 font-bold text-ink">여행 친구 구름이</h2>
-    <p class="text-12 text-ink-3">함께 정리하는 다음 여행</p>
-  </div>
-  <button appButton class="btn btn--sm shrink-0 text-12!" type="button" [disabled]="resetting()" (click)="newChat()" data-testid="chat-new">새 대화</button>
-</header>
+<!--
+  제목과 '새 대화'는 상단 바가 맡는다. 구름이는 대화가 시작되기 전 빈
+  화면에서 한 번 인사한다. 전에는 여기 헤더를 하나 더 두어 이 화면만
+  머리가 두 겹이었다.
+-->
 <app-chat-thread
   [messages]="store.messages()"
   [chips]="store.chips()"

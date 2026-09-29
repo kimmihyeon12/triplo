@@ -19,7 +19,7 @@
     -->
     <div class="mt-4 grid gap-4" [class.grid-cols-2]="!preview().detailed">
       <div>
-        <p class="mb-1.5 text-11 font-semibold uppercase tracking-wide text-ink-3">현재</p>
+        <p class="mb-1.5 text-12 font-semibold uppercase tracking-wide text-ink-3">현재</p>
         <ol class="flex flex-col gap-2" data-testid="confirm-before">
           @for (row of preview().before; track row.id; let i = $index) {
             <li
@@ -27,7 +27,7 @@
               [class.opacity-45]="row.removed"
               [class.line-through]="row.removed"
             >
-              <span class="w-3 flex-none text-11 tabular-nums text-ink-3">{{ i + 1 }}</span>
+              <span class="w-3 flex-none text-12 tabular-nums text-ink-3">{{ i + 1 }}</span>
               <span class="min-w-0 flex-1 text-ink-2 [overflow-wrap:anywhere]" [class.truncate]="!preview().detailed">{{ row.name }}</span>
             </li>
           }
@@ -35,14 +35,14 @@
       </div>
 
       <div>
-        <p class="mb-1.5 text-11 font-semibold uppercase tracking-wide text-accent-deep">바꾼 뒤</p>
+        <p class="mb-1.5 text-12 font-semibold uppercase tracking-wide text-accent-deep">바꾼 뒤</p>
         @if (preview().after.length === 0) {
           <p class="text-13 text-ink-2">해당 항목 삭제</p>
         }
         <ol class="flex flex-col gap-2" data-testid="confirm-after">
           @for (row of preview().after; track row.id; let i = $index) {
             <li class="flex items-baseline gap-1.5 text-13 leading-snug">
-              <span class="w-3 flex-none text-11 tabular-nums text-ink-3">{{ i + 1 }}</span>
+              <span class="w-3 flex-none text-12 tabular-nums text-ink-3">{{ i + 1 }}</span>
               <span
                 class="min-w-0 flex-1 [overflow-wrap:anywhere]"
                 [class.truncate]="!preview().detailed"

@@ -24,7 +24,9 @@ export class AiPlanPage {
   }
 
   leave(): void {
-    void this.router.navigate(['/trips']);
+    // 나가기도 저장과 같다. 조건 입력을 그만둔 화면이 히스토리에 남으면
+    // 목록에서 뒤로 갔을 때 다시 나타난다.
+    void this.router.navigate(['/trips'], { replaceUrl: true });
   }
 
   async apply(selection: AiPlanSelection): Promise<void> {

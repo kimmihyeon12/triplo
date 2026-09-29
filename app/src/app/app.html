@@ -10,7 +10,7 @@
 -->
 @if (showNavigationLoading() && bar().hidden) {
   <div
-    class="pointer-events-none fixed inset-x-0 top-0 z-[10007] h-[3px] overflow-hidden"
+    class="pointer-events-none fixed inset-x-0 top-0 z-10007 h-[3px] overflow-hidden"
     role="status"
     aria-label="페이지 불러오는 중"
     data-testid="navigation-loading"
@@ -21,7 +21,7 @@
 
 <!-- 로그인처럼 상단 바가 필요 없는 화면은 bar().hidden으로 숨긴다. -->
 @if (!bar().hidden) {
-  <header class="topbar sticky bg-panel top-0 z-[10006] [border-bottom:1px_solid_var(--color-border)]">
+  <header class="topbar sticky bg-panel top-0 z-10006 [border-bottom:1px_solid_var(--color-border)]">
     @if (showNavigationLoading()) {
       <div
         class="pointer-events-none absolute inset-x-0 -bottom-px h-0.75 overflow-hidden"
@@ -42,20 +42,7 @@
         (click)="goBack($event)"
         aria-label="뒤로"
       >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M15 5l-7 7 7 7" />
-        </svg>
+        <app-icon name="chevron-left" [size]="24" />
       </a>
     } @else {
       <a
@@ -91,20 +78,8 @@
             [queryParams]="act.queryParams ?? {}"
             [attr.data-testid]="act.testId"
             [attr.aria-label]="act.ariaLabel ?? act.label"
-            class="flex size-11 shrink-0 items-center justify-center rounded-lg text-ink-3 hover:bg-ground-2 focus-visible:outline-2"
-            ><svg
-              aria-hidden="true"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="m15 5 4 4M4.5 19.5l4.3-1 10.7-10.7a2.8 2.8 0 0 0-4-4L4.8 14.5l-.3 5Z" /></svg
-          ></a>
+            class="flex size-11 shrink-0 items-center justify-center rounded-control text-ink-3 hover:bg-ground-2 focus-visible:outline-2"
+            ><app-icon name="edit" [size]="17" /></a>
         }
       </div>
       <app-page-tools [tools]="tools" />
@@ -132,7 +107,32 @@
               >{{ act.avatar }}</span
             >
           </a>
-        } @else {
+        } @else if (act.run) {
+          <!--
+            화면을 떠나지 않는 동작은 버튼으로 그린다. 전에는 이 자리가
+            링크뿐이어서 '새 대화' 같은 동작은 본문에 헤더를 하나 더 만들어
+            넣어야 했고, 그 탓에 채팅만 제목이 두 줄이었다.
+          -->
+          <button
+            type="button"
+            class="topbar__action inline-flex items-center justify-center gap-1 min-w-11 min-h-11 text-accent-deep text-15 font-bold rounded-cell whitespace-nowrap py-0 px-2.5 hover:bg-accent-tint focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2 disabled:text-ink-3 disabled:hover:bg-transparent"
+            [disabled]="!!act.disabled"
+            [attr.aria-label]="act.ariaLabel ?? act.label"
+            [attr.data-testid]="act.testId"
+            (click)="act.run!()"
+          >
+            @if (act.icon) {
+              <app-icon [name]="act.icon" [size]="18" />
+            }
+            @if (act.label) {
+              <span
+                class="[&.visually-hidden]:w-px [&.visually-hidden]:h-px [&.visually-hidden]:overflow-hidden [&.visually-hidden]:whitespace-nowrap [&.visually-hidden]:absolute! [&.visually-hidden]:[clip:rect(0_0_0_0)]"
+                [class.visually-hidden]="!!act.icon && !act.label"
+                >{{ act.label }}</span
+              >
+            }
+          </button>
+        } @else if (act.link) {
           <a
             class="topbar__action inline-flex items-center justify-center gap-1 min-w-11 min-h-11 text-accent-deep text-15 font-bold no-underline rounded-cell whitespace-nowrap py-0 px-2.5 hover:bg-accent-tint focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
             [routerLink]="act.link"
@@ -151,6 +151,8 @@
               >
             }
           </a>
+        } @else {
+          <span class="topbar__spacer block w-11 h-11" aria-hidden="true"></span>
         }
       } @else {
         <span class="topbar__spacer block w-11 h-11" aria-hidden="true"></span>

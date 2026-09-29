@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { PageBar } from '../../../../core/page-bar';
 import { SUPPORT_REPOSITORY } from '../../data/support-repository';
 import type { Notice } from '../../model/support';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 
@@ -13,7 +14,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
  */
 @Component({
   selector: 'app-notices',
-  imports: [UiSpinner, IconComponent],
+  imports: [UiSpinner, IconComponent, UiEmptyState],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notices.html',
 })

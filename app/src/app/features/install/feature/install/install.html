@@ -128,14 +128,14 @@
 
   <!-- 설치 상태. 버튼은 하단 고정 바에 둔다. -->
   @if (runningAsApp()) {
-    <div appNotice class="notice notice--ok" data-testid="install-already">
+    <div appNotice tone="ok" data-testid="install-already">
       <app-icon name="check" />
       <div class="notice__body min-w-0 flex-1">
         홈 화면에서 연 앱으로 보고 있어요. 더 설치할 것이 없습니다.
       </div>
     </div>
   } @else if (installed()) {
-    <div appNotice class="notice notice--ok" data-testid="install-done">
+    <div appNotice tone="ok" data-testid="install-done">
       <app-icon name="check" />
       <div class="notice__body min-w-0 flex-1">
         설치를 마쳤어요. 홈 화면 아이콘으로 열어 보세요.

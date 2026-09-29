@@ -43,7 +43,8 @@ import {
 import { buildOverview } from '../../util/overview';
 import { kindTone } from '../../util/kind-tone';
 import { dayStayInfo, removeStay } from '../../util/stays';
-import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { IconComponent, type IconName } from '../../../../shared/ui/icon/icon';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { PageBar } from '../../../../core/page-bar';
 import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
@@ -51,6 +52,7 @@ import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 import { ChatSheet } from '../../../travel-chat/travel-chat';
 import { CompanionFace } from '../../../travel-chat/companion';
+import type { BadgeTone } from '../../../../shared/util/badge-tone';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -70,6 +72,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
     UiTabs,
     RouterLink,
     IconComponent,
+    UiEmptyState,
     TripHeader,
     TripStays,
     TripMapComponent,
@@ -132,7 +135,7 @@ export class TripDetailPage {
   readonly addOptions = computed(() => {
     const id = this.id();
     const date = this.activeTab() === 'days' ? this.selectedDay() : null;
-    const stop = (kind: string | null, label: string, icon: string, testId: string) => ({
+    const stop = (kind: string | null, label: string, icon: IconName, testId: string) => ({
       label,
       icon,
       testId,
@@ -146,7 +149,7 @@ export class TripDetailPage {
       stop('buffer', '여유시간', 'buffer', 'add-buffer'),
       {
         label: '숙소',
-        icon: 'home',
+        icon: 'home' as IconName,
         testId: 'add-stay',
         link: ['/trips', id, 'stays', 'new'],
         queryParams: {},
@@ -259,14 +262,19 @@ export class TripDetailPage {
       : `${names.slice(0, 4).join(' → ')} 외 ${names.length - 4}개`;
   }
 
-  nightCellClass(state: string): string {
+  /**
+   * 공통 배지의 tone으로 색을 고른다. 전에는 [class]로 cell--* 이름을 넣었는데,
+   * 그러면 배지가 스스로 붙이는 클래스와 겹쳐 색이 빠지고 안쪽 여백만 남아
+   * 글자가 옆 줄보다 안쪽으로 들어가 보였다.
+   */
+  nightTone(state: string): BadgeTone {
     return state === 'covered'
-      ? 'cell--stay'
+      ? 'stay'
       : state === 'conflict'
-        ? 'cell--danger'
+        ? 'danger'
         : state === 'undecided'
-          ? 'cell--warn'
-          : 'cell--ghost';
+          ? 'warn'
+          : 'neutral';
   }
 
   segKey(seg: DaySegment, i: number): string {
@@ -401,7 +409,12 @@ export class TripDetailPage {
   async confirmDeleteTrip(): Promise<void> {
     if (await this.store.removeCurrent()) {
       this.deleteTripOpen.set(false);
-      await this.router.navigate(['/trips']);
+      /*
+        지운 여행의 주소를 히스토리에서 치운다. 그대로 두면 목록에서 뒤로
+        갔을 때 방금 지운 여행의 상세로 돌아가 '여행을 찾을 수 없습니다'가
+        뜬다. 장소·숙소 삭제는 이미 같은 방식으로 처리하고 있다.
+      */
+      await this.router.navigate(['/trips'], { replaceUrl: true });
     }
   }
 
@@ -498,8 +511,15 @@ export class TripDetailPage {
       event.key === 'ArrowRight' ? Math.min(days.length - 1, cur + 1) : Math.max(0, cur - 1);
     if (next === cur) return;
     event.preventDefault();
+    // 날짜 칩을 눌러 옮길 때와 같이 히스토리를 쌓지 않는다. 전에는 키보드로
+    // 옮길 때만 기록이 남아, 3일차까지 넘기면 뒤로가기를 세 번 눌러야 목록에
+    // 닿았다. 같은 동작이 입력 수단에 따라 달라지면 안 된다.
     void this.router
-      .navigate([], { queryParams: { tab: 'days', day: days[next] }, queryParamsHandling: 'merge' })
+      .navigate([], {
+        queryParams: { tab: 'days', day: days[next] },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      })
       .then(() => {
         const el = document.querySelector<HTMLElement>(`[data-testid="daytab-${next + 1}"]`);
         el?.focus();

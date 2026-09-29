@@ -6,6 +6,9 @@ import {
   transferSuggestions,
   validateLedger,
   newLedger,
+  settlementText,
+  categoryBreakdown,
+  isEvenSplit,
 } from './ledger';
 import type { Expense } from '../model/ledger';
 
@@ -108,5 +111,76 @@ describe('공동 가계부', () => {
     ledger.expenses[0].amount = 1.5;
     expect(validateLedger(ledger)).toContain('정수');
     expect(() => allocateEvenly(10, ['a', 'a'])).toThrow();
+  });
+});
+
+describe('정산 내용 복사', () => {
+  const people = [
+    { id: 'me', name: '미현' },
+    { id: 'a', name: '민지' },
+    { id: 'b', name: '준호' },
+  ];
+
+  it('총금액과 보낼 사람·받을 사람·금액만 한 줄씩 적는다', () => {
+    const text = settlementText({
+      ...newLedger(),
+      people,
+      expenses: [
+        {
+          ...expense('e1', '저녁'),
+          amount: 30000,
+          paidBy: 'me',
+          personal: false,
+          splits: allocateEvenly(30000, ['me', 'a', 'b']),
+        },
+        { ...expense('e2', '기념품'), amount: 5000, paidBy: 'a' },
+      ],
+    });
+    expect(text).toBe(
+      ['총금액 30,000원', '민지 → 미현 10,000원', '준호 → 미현 10,000원'].join('\n'),
+    );
+  });
+
+  it('남은 정산이 없으면 그렇다고 적는다', () => {
+    expect(settlementText({ ...newLedger(), people })).toBe(
+      ['총금액 0원', '남은 정산 금액이 없어요.'].join('\n'),
+    );
+  });
+});
+
+describe('분류별 지출', () => {
+  it('분류마다 합계와 비율을 큰 순서로 낸다', () => {
+    const rows = categoryBreakdown([
+      { ...expense('a', '점심'), category: 'food', amount: 3000 },
+      { ...expense('b', '택시'), category: 'transport', amount: 1000 },
+      { ...expense('c', '저녁'), category: 'food', amount: 4000 },
+    ]);
+    expect(rows).toEqual([
+      { category: 'food', amount: 7000, ratio: 0.875 },
+      { category: 'transport', amount: 1000, ratio: 0.125 },
+    ]);
+  });
+
+  it('지출이 없으면 빈 목록이다', () => {
+    expect(categoryBreakdown([])).toEqual([]);
+  });
+});
+
+describe('균등 분담 판별', () => {
+  it('저장된 분담이 균등 분배와 같으면 균등으로 본다', () => {
+    expect(isEvenSplit(10001, allocateEvenly(10001, ['a', 'b']))).toBe(true);
+  });
+
+  it('금액을 사람마다 다르게 넣었으면 직접 입력으로 본다', () => {
+    expect(
+      isEvenSplit(10000, [
+        { personId: 'a', amount: 7000 },
+        { personId: 'b', amount: 3000 },
+      ]),
+    ).toBe(false);
+  });
+
+  it('분담이 없으면 균등으로 본다', () => {
+    expect(isEvenSplit(10000, [])).toBe(true);
   });
 });

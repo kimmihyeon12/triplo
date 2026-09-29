@@ -8,7 +8,7 @@
   <div
     class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   >
-    <div appNotice class="notice notice--danger" role="alert">
+    <div appNotice tone="danger" role="alert">
       <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         <strong class="in-[.notice]:font-bold">여행을 찾을 수 없습니다.</strong>
@@ -34,7 +34,7 @@
     />
 
     @if (deleteTripOpen()) {
-      <div appNotice class="notice notice--danger" role="alert">
+      <div appNotice tone="danger" role="alert">
         <app-icon name="alert" />
         <div class="notice__body min-w-0 flex-1">
           <strong class="in-[.notice]:font-bold">‘{{ trip()!.title }}’을 삭제할까요?</strong>
@@ -75,7 +75,7 @@
     @if (activeTab() === 'days') {
       <section role="tabpanel" data-testid="panel-days">
         @if (overview().undecidedDates) {
-          <div appNotice class="notice notice--warn">
+          <div appNotice tone="warn">
             <app-icon name="calendar" />
             <div class="notice__body flex-1 min-w-0">
               날짜를 정하면 날짜별 일정을 만들 수 있습니다.
@@ -198,8 +198,7 @@
 
               @if (conflicts().length > 0) {
                 <div
-                  appNotice
-                  class="notice notice--danger"
+                  appNotice tone="danger"
                   role="alert"
                   data-testid="fixed-conflict"
                 >
@@ -213,14 +212,15 @@
 
               <!-- 시간순 항목 -->
               @if (segments().length === 0) {
+                <!-- 추가 버튼은 하단 고정 바가 맡으므로 여기서는 알리기만 한다. -->
                 <section
-                  class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
+                  class="panel empty bg-panel rounded-panel shadow-panel p-5"
                   data-testid="empty-day"
                 >
-                  <h3 class="text-16 font-bold">이 날 일정이 없습니다</h3>
-                  <p class="text-ink-3 text-12 leading-normal">
-                    장소나 식사·휴식을 추가하면 순서대로 정리됩니다.
-                  </p>
+                  <app-empty-state
+                    title="이 날 일정이 없어요"
+                    hint="장소나 식사·휴식을 추가하면 순서대로 정리돼요."
+                  />
                 </section>
               } @else {
                 <!--
@@ -287,7 +287,7 @@
                         번호만 숙소 색으로 구분한다.
                       -->
                       <li
-                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--selected]:bg-stay-tint [@media(min-width:_720px)]:grid-cols-[28px_minmax(0,1fr)_auto]"
+                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--selected]:bg-stay-tint [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                         [class.flash]="flashId() === seg.stay.id"
                         [class.item--selected]="selectedMarkerId() === seg.stay.id"
                         [attr.data-testid]="'day-stay-' + seg.stay.id"
@@ -295,7 +295,7 @@
                       >
                         <button
                           type="button"
-                          class="item__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-ink text-white text-14 font-bold border-0 cursor-pointer p-0 -mt-1.25 [&.item\_\_badge--unverified]:opacity-[0.55]"
+                          class="item__badge size-6 flex items-center justify-center rounded-full bg-stay-ink text-white text-12 font-bold tabular-nums leading-none border-0 cursor-pointer p-0 mt-px [&.item\_\_badge--unverified]:opacity-[0.55]"
                           [class.item__badge--unverified]="!seg.stay.location"
                           [attr.aria-label]="
                             stopNumber(idx) +
@@ -307,12 +307,12 @@
                         >
                           {{ stopNumber(idx) }}
                         </button>
-                        <div class="item__main flex flex-col gap-1 min-w-0">
+                        <div class="item__main relative pr-16 flex flex-col gap-1 min-w-0">
                           <div class="item__title flex items-center gap-1.5 text-15">
                             <strong class="item__name min-w-0 truncate" [title]="seg.stay.name">{{
                               seg.stay.name
                             }}</strong>
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto">
+                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stay)"
@@ -353,16 +353,16 @@
                           -->
                           @if (seg.stay.address) {
                             <div
-                              class="item__addr text-12 leading-normal text-ink-3 flex items-center gap-1"
+                              class="item__addr text-12 leading-normal text-ink-3 flex items-start gap-1"
                             >
                               <span
-                                class="item__addr-text min-w-0 truncate"
+                                class="item__addr-text min-w-0 line-clamp-2 wrap-anywhere"
                                 [title]="seg.stay.address"
                                 >{{ seg.stay.address }}</span
                               >
                               <button
                                 type="button"
-                                class="item__copy [-webkit-tap-highlight-color:transparent] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
+                                class="item__copy [-webkit-tap-highlight-color:transparent] -my-[3px] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
                                 (click)="copyAddress(seg.stay)"
                                 [attr.aria-label]="seg.stay.name + ' 주소 복사'"
                                 [attr.data-testid]="'copy-stay-' + seg.stay.id"
@@ -422,7 +422,7 @@
                           </span>
                         </div>
                         <div
-                          class="item__actions flex items-center gap-1.5 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:[align-self:start]"
+                          class="item__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5 [@media(min-width:_720px)]:col-start-auto [@media(min-width:_720px)]:my-0 [@media(min-width:_720px)]:[align-self:start]"
                         >
                           <span
                             class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden"
@@ -502,7 +502,7 @@
                       </li>
                     } @else {
                       <li
-                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--conflict]:[outline:1px_solid_var(--color-danger-ink)] [&.item--conflict]:-outline-offset-1 [&.item--selected]:bg-accent-tint [@media(min-width:_720px)]:grid-cols-[28px_minmax(0,1fr)_auto]"
+                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--conflict]:[outline:1px_solid_var(--color-danger-ink)] [&.item--conflict]:-outline-offset-1 [&.item--selected]:bg-accent-tint [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                         [class.item--excluded]="seg.stop.excluded"
                         [class.flash]="flashId() === seg.stop.id"
                         [class.item--conflict]="isConflicted(seg.stop.id)"
@@ -512,7 +512,7 @@
                       >
                         <button
                           type="button"
-                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 -mt-1.25 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-accent-deep p-0 text-14 font-bold text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
+                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 mt-px flex size-6 cursor-pointer items-center justify-center rounded-full tabular-nums leading-none border-0 bg-accent-deep p-0 text-12 font-bold text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
                           [class.item__badge--unverified]="!seg.stop.location"
                           [attr.aria-label]="
                             stopNumber(idx) +
@@ -529,7 +529,7 @@
                           }
                         </button>
                         <div
-                          class="item__main in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
+                          class="item__main relative pr-16 in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
                         >
                           <div class="item__title flex items-center gap-1.5 text-15">
                             <strong
@@ -550,8 +550,13 @@
                                 {{ seg.stop.fixedTime }} 고정</span
                               >
                             }
-                            <!-- 지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다 -->
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto">
+                            <!--
+                              지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다.
+                              제목 줄 안에 두면 제목만 아이콘 폭만큼 밀리고 주소·체류 줄은 카드
+                              끝까지 써서 오른쪽 끝이 어긋났다. 흐름에서 빼 오른쪽 위에 두고,
+                              본문 묶음 전체에 같은 오른쪽 여백(pr-16)을 준다.
+                            -->
+                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stop)"
@@ -605,19 +610,20 @@
                           @if (seg.stop.address) {
                             <!--
                               주소 복사는 주소와 같은 행에 아이콘으로 둔다.
-                              긴 주소는 한 줄로 줄인다. 전체 주소는 복사로 가져갈 수 있다.
+                              긴 주소는 두 줄까지 보이고 넘치면 줄인다. 한 줄로 자르면 정작 필요한 도로명·번지가
+                              가려졌다. 전체 주소는 복사로 가져갈 수 있다.
                             -->
                             <div
-                              class="item__addr text-12 leading-normal text-ink-3 flex items-center gap-1"
+                              class="item__addr text-12 leading-normal text-ink-3 flex items-start gap-1"
                             >
                               <span
-                                class="item__addr-text min-w-0 truncate"
+                                class="item__addr-text min-w-0 line-clamp-2 wrap-anywhere"
                                 [title]="seg.stop.address"
                                 >{{ seg.stop.address }}</span
                               >
                               <button
                                 type="button"
-                                class="item__copy [-webkit-tap-highlight-color:transparent] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
+                                class="item__copy [-webkit-tap-highlight-color:transparent] -my-[3px] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
                                 (click)="copyAddress(seg.stop)"
                                 [attr.aria-label]="seg.stop.name + ' 주소 복사'"
                                 [attr.data-testid]="'copy-' + seg.stop.id"
@@ -675,9 +681,12 @@
                         <!--
                           라벨은 맨 아래 한 줄이다. 좁은 화면에서는 같은 줄 왼쪽에 두어
                           더보기와 나란히 세운다. 빈 줄이 생기지 않는다.
+                          제목·주소와 같은 둘째 열에서 시작한다. 전에는 카드 전체 폭을
+                          써서 라벨만 번호 아래로 튀어나왔다. 버튼(36px)은 위아래 음수
+                          여백으로 줄 높이에서 빼 라벨 위가 벌어지지 않게 한다.
                         -->
                         <div
-                          class="item__actions flex items-center gap-1.5 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:[align-self:start]"
+                          class="item__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5 [@media(min-width:_720px)]:col-start-auto [@media(min-width:_720px)]:my-0 [@media(min-width:_720px)]:[align-self:start]"
                         >
                           <span class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden">
                             <span appBadge [tone]="kindTone(seg.stop.kind)">{{
@@ -759,19 +768,21 @@
                 data-testid="day-totals"
               >
                 <span class="totals__label text-16 font-bold">하루 합계</span>
-                <span class="flex flex-wrap items-center gap-2">
-                  <span appBadge class="cell cell--place"
-                    >체류 {{ minutes(totals().stayMinutes) }}</span
-                  >
+                <!--
+                  합계는 세어 본 값이라 본문으로 적는다. 전에는 체류 시간을
+                  place 배지로 두어 바로 위 일정의 '장소' 분류 배지와 같은
+                  색이 됐다. 배지는 '체류 미정'처럼 사용자가 아직 넣지 않은
+                  값이 있다는 상태에만 쓴다.
+                -->
+                <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-13 text-ink-2">
+                  <span>체류 {{ minutes(totals().stayMinutes) }}</span>
+                  <span class="text-border-strong" aria-hidden="true">·</span>
+                  <span>이동 {{ totals().legCount }}구간 · 시간 미확인</span>
                   @if (totals().unknownStayCount > 0) {
-                    <span appBadge class="cell cell--ghost"
+                    <span appBadge class="cell cell--warn"
                       >체류 미정 {{ totals().unknownStayCount }}개</span
                     >
                   }
-                  <!-- The badge already states the gap; the sentence repeated it every day. -->
-                  <span appBadge class="cell cell--ghost"
-                    >이동 {{ totals().legCount }}구간 · 시간 미확인</span
-                  >
                 </span>
               </div>
 
@@ -788,13 +799,13 @@
       <section class="flex flex-col gap-3" data-testid="panel-overview">
         @if (isEmptyTrip() && !overview().undecidedDates) {
           <section
-            class="panel empty bg-panel rounded-panel shadow-panel flex flex-col gap-1 p-5"
+            class="panel empty bg-panel rounded-panel shadow-panel p-5"
             data-testid="empty-trip"
           >
-            <h2 class="text-16 font-bold">장소와 숙소를 추가해 보세요</h2>
-            <p class="text-12 leading-normal text-ink-3">
-              날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장됩니다.
-            </p>
+            <app-empty-state
+              title="아직 담은 곳이 없어요"
+              hint="날짜에 배치하지 않은 장소는 미배치 목록에 남고, 숙소 미정인 밤이 있어도 저장돼요."
+            />
           </section>
         }
 
@@ -812,11 +823,15 @@
               <span appBadge class="cell cell--ghost">{{ overview().days.length }}일</span>
             </summary>
             <div class="mt-3">
-          <ol class="ov flex flex-col gap-3" data-testid="overview-days">
+          <!--
+            카드 안의 날짜 행은 그림자 카드가 아니라 구분선으로 나눈다. 전에는 행마다
+            그림자를 둘러 카드 안에 카드가 겹쳐 보였다(2026-09-29).
+          -->
+          <ol class="ov -mx-2 flex flex-col divide-y divide-border" data-testid="overview-days">
             @for (d of overview().days; track d.date) {
               <li>
                 <a
-                  class="ov__row grid bg-panel rounded-panel no-underline [box-shadow:var(--shadow-panel)] grid-cols-[40px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border:1px_solid_transparent] text-inherit [transition:border-color_var(--dur)_var(--ease-out)] hover:border-border-strong [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_minmax(0,1fr)_auto]"
+                  class="ov__row grid rounded-control no-underline grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] px-2 py-3.5 text-inherit [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                   [routerLink]="[]"
                   [queryParams]="{ tab: 'days', day: d.date }"
                   queryParamsHandling="merge"
@@ -824,9 +839,9 @@
                   [attr.data-testid]="'overview-day-' + d.dayNumber"
                 >
                   <span
-                    class="ov__no flex items-center justify-center w-8 h-8 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
+                    class="ov__no flex items-center justify-center size-6 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
                     [attr.aria-label]="d.dayNumber + '일차'"
-                    ><span class="ov__day text-14 font-bold leading-none" aria-hidden="true">{{
+                    ><span class="ov__day text-12 font-bold leading-none tabular-nums" aria-hidden="true">{{
                       d.dayNumber
                     }}</span></span
                   >
@@ -870,8 +885,8 @@
                   </span>
                   <span
                     appBadge
-                    class="ov__night cell text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
-                    [class]="nightCellClass(d.nightState)"
+                    class="ov__night text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
+                    [tone]="nightTone(d.nightState)"
                     [attr.data-testid]="'overview-night-' + d.dayNumber"
                   >
                     <app-icon
@@ -928,18 +943,20 @@
                 >
                   <span
                     appBadge
-                    class="cell"
+                    class="cell min-w-7 justify-center tabular-nums"
                     [class.cell--danger]="i.kind === 'stay-conflict' || i.kind === 'fixed-time'"
                     [class.cell--warn]="i.kind !== 'stay-conflict' && i.kind !== 'fixed-time'"
                     >{{ i.count }}</span
                   >
                   <span class="grow flex-1 min-w-0 text-14 wrap-anywhere">{{ i.label }}</span>
+                  <!-- 탭 전환이므로 공통 탭과 같이 히스토리를 쌓지 않는다. -->
                   <a
                     appButton
                     class="btn btn--sm"
                     [routerLink]="[]"
                     [queryParams]="{ tab: i.tab }"
                     queryParamsHandling="merge"
+                    [replaceUrl]="true"
                     variant="ghost"
                     >보기</a
                   >
@@ -964,22 +981,22 @@
       한 버튼으로 모든 추가를 받는다. 장소·식사·휴식·여유시간은 같은 폼의 kind만 다르고
       숙소만 다른 폼이므로, 흩어 두면 규칙이 보이지 않는다.
     -->
-    <div appActionBar class="action-bar z-[10002]">
+    <div appActionBar class="action-bar z-10002">
       <div class="action-bar__inner mx-auto my-0 flex justify-center max-w-(--content-max)">
         <details
           #addSheet
           appDismissible
-          class="menu-sheet relative w-full"
+          class="menu-sheet relative w-full [@media(min-width:_720px)]:w-auto"
         >
           <summary
-            class="btn relative z-[10001] flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
+            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer [@media(min-width:_720px)]:px-8 list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
             data-testid="add-open"
           >
             일정 추가
           </summary>
-          <button type="button" class="menu-backdrop fixed inset-0 z-[30] cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-[4px]" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
+          <button type="button" class="menu-backdrop fixed inset-0 z-30 cursor-default touch-none overscroll-none [background:rgba(15,23,42,0.28)] backdrop-blur-xs" style="background: rgba(15, 23, 42, 0.28); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px)" aria-label="메뉴 닫기" (click)="addSheet.open = false"></button>
           <div
-            class="absolute bottom-full left-0 right-0 z-[10001] mb-2 grid gap-1 rounded-panel border border-border bg-panel p-1.5 shadow-float [@media(min-width:_720px)]:left-auto [@media(min-width:_720px)]:w-56"
+            class="absolute bottom-full left-0 right-0 z-10001 mb-2 grid gap-1 rounded-panel border border-border bg-panel p-1.5 shadow-float [@media(min-width:_720px)]:left-auto [@media(min-width:_720px)]:w-56"
             role="menu"
           >
             @for (o of addOptions(); track o.testId) {
@@ -1016,7 +1033,7 @@
     -->
     <button
       type="button"
-      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-[10004] flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-10004 flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
       (click)="chatOpen.set(true)"
       aria-label="AI 챗봇 열기"
       data-testid="open-chat"

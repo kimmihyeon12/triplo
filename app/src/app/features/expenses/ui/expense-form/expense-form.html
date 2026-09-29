@@ -104,6 +104,7 @@
         inputId="expense-custom"
         name="custom"
         [(checked)]="custom"
+        (checkedChange)="redistribute()"
       />
       @if (people().length > 1) {
         <div class="border-t border-border pt-1">
@@ -139,9 +140,21 @@
           }
         </div>
       }
-      <p class="text-12 leading-[1.45] text-hint">
-        균등 분담 시 나머지 1원은 선택한 순서대로 배분해요.
-      </p>
+      @if (custom()) {
+        <!-- 지출 금액을 고치면 직접 넣은 분담은 그대로라 합계가 어긋난다. 저장 전에 보이게 한다. -->
+        <p
+          class="text-12 leading-[1.45] tabular-nums"
+          [class]="shareTotal() === (amount() ?? 0) ? 'text-hint' : 'font-semibold text-danger-ink'"
+          data-testid="share-total"
+        >
+          분담 합계 {{ shareTotal().toLocaleString('ko-KR') }}원 / 지출
+          {{ (amount() ?? 0).toLocaleString('ko-KR') }}원
+        </p>
+      } @else {
+        <p class="text-12 leading-[1.45] text-hint">
+          균등 분담 시 나머지 1원은 선택한 순서대로 배분해요.
+        </p>
+      }
     </fieldset>
   }
   <app-field label="메모" inputId="expense-memo">

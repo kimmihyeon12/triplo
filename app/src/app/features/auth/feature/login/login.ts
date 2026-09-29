@@ -9,8 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { UiInput } from '../../../../shared/ui/input/input';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
@@ -23,10 +22,8 @@ import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
   selector: 'app-login',
   imports: [
     UiButton,
-    UiInput,
     UiSpinner,
     ErrorToast,
-    RouterLink,
     IconComponent,
     UiBarcode,
     UiPostmark,
@@ -58,7 +55,9 @@ export class LoginPage {
 
   enterPreview(): void {
     sessionStorage.setItem('tc.preview.v1', '1');
-    void this.router.navigateByUrl('/trips');
+    // 실제 로그인과 같이 치운다. 그대로 두면 목록에서 뒤로 갔을 때 이미
+    // 지나온 로그인 화면이 다시 나타난다.
+    void this.router.navigateByUrl('/trips', { replaceUrl: true });
   }
 
   constructor() {

@@ -5,11 +5,12 @@ import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { buildGrid, type GeoCollection } from '../../../../shared/util/geo/geo-grid';
 import { createProjection, KOREA_ORIGIN, pointInPolygon } from '../../../../shared/util/geo/projection';
 import type { VoxelGrid } from '../../../../shared/util/geo/geo-types';
-import { KOREA_REGIONS, PROVINCE_SHORT_NAME, REGION_LABEL } from '../../../../shared/util/korea-regions';
+import { KOREA_REGIONS, REGION_LABEL } from '../../../../shared/util/korea-regions';
 import { LocalVisitStats } from '../../data/local-visit-stats';
 import type { ExcludedReasons, RegionVisitCount, VisitedPlace } from '../../model/visit-stats';
 import { VoxelScene } from '../../ui/voxel-scene';
@@ -27,7 +28,7 @@ const nameOf = (p: Record<string, unknown>): string => String(p['nm']);
 
 @Component({
   selector: 'app-visit-map',
-  imports: [DecimalPipe, RouterLink, UiButton, UiInput, IconComponent, UiSpinner],
+  imports: [DecimalPipe, RouterLink, UiButton, UiInput, IconComponent, UiNotice, UiSpinner],
   providers: [LocalVisitStats, SavedMapPlaces],
   templateUrl: './visit-map.html',
   host: { class: 'block bg-ground text-ink' },
@@ -92,26 +93,8 @@ export class VisitMapPage {
    * 좌표가 없어 지도에 못 찍은 지역도 여기에는 남는다. 합계가 어긋나면 안 된다.
    */
   readonly visitedList = computed(() => this.allRegions().filter(r => r.visitCount > 0));
-  /**
-   * 아직 안 간 곳을 시·도별로 묶는다. 220곳이 넘어 한 줄로 늘어놓으면 목록의
-   * 대부분을 차지해 실제 기록이 묻힌다. 시·도와 개수만 보여주고 펼쳤을 때
-   * 지역을 낸다.
-   */
-  readonly unvisitedByProvince = computed(() => {
-    const groups = new Map<string, { code: string; name: string; regions: { regionCode: string; name: string }[] }>();
-    for (const region of this.allRegions()) {
-      if (region.visitCount) continue;
-      const group = groups.get(region.provinceCode)
-        ?? { code: region.provinceCode, name: PROVINCE_SHORT_NAME[region.provinceCode] ?? region.provinceCode, regions: [] };
-      group.regions.push({ regionCode: region.regionCode, name: region.name });
-      groups.set(region.provinceCode, group);
-    }
-    for (const group of groups.values()) group.regions.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-  });
+  /** 남은 지역 수. 목록으로 늘어놓지 않고 한 줄로만 알린다. */
   readonly unvisitedCount = computed(() => this.allRegions().filter(r => !r.visitCount).length);
-  /** 펼쳐 둔 시·도. 안 간 곳 목록에서 하나씩 연다. */
-  readonly openProvince = signal<string | null>(null);
   readonly coverage = computed(() => Math.round(this.visitedRegions() / this.allRegions().length * 100));
   readonly months = computed(() => monthlyVisits(this.places(), this.year()));
   readonly monthMax = computed(() => Math.max(1, ...this.months().map(m => m.count)));
@@ -228,10 +211,6 @@ export class VisitMapPage {
     this.selectedMarker.set(id);
     this.scene?.setSelectedMarker(id);
     void this.select(id, true);
-  }
-  /** 안 간 곳 목록에서 시·도 하나를 펼치거나 접는다. */
-  toggleProvince(code: string): void {
-    this.openProvince.update(open => (open === code ? null : code));
   }
   clearSelection(): void { this.scene?.setSelectedMarker(null); this.detailRequest++; this.selected.set(null); this.places.set([]); this.detailState.set('idle'); this.selectedMarker.set(null); this.scene?.clearTemporary(); }
   zoom(factor: number): void { this.scene?.zoom(factor); }

@@ -21,24 +21,36 @@
       <span class="text-12 font-medium tracking-[0.18em] text-ink-3">여행 일정</span>
     </div>
 
-    <!-- 출발지 → 도착지. 저장한 이미지에도 같은 자리에 들어간다. -->
-    <div class="mt-5 flex items-end gap-3">
-      <div class="min-w-0 flex-1">
-        <p class="text-12 tracking-wide text-ink-3">FROM</p>
+    <!--
+      출발지 → 도착지. 저장한 이미지에도 같은 자리에 들어간다.
+      한 지역 여행은 '강릉시 → 강릉시'가 되므로 나누지 않는다.
+    -->
+    @if (ticket().singleRegion) {
+      <div class="mt-5">
+        <p class="text-12 tracking-wide text-ink-3">DESTINATION</p>
         <p class="truncate text-18 font-bold leading-tight" [title]="ticket().from">
           {{ ticket().from }}
         </p>
       </div>
-      <span class="mb-1.5 flex-none text-ink-3" aria-hidden="true">
-        <app-icon name="arrow-right" [size]="18" />
-      </span>
-      <div class="min-w-0 flex-1 text-right">
-        <p class="text-12 tracking-wide text-ink-3">TO</p>
-        <p class="truncate text-18 font-bold leading-tight" [title]="ticket().to">
-          {{ ticket().to }}
-        </p>
+    } @else {
+      <div class="mt-5 flex items-end gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="text-12 tracking-wide text-ink-3">FROM</p>
+          <p class="truncate text-18 font-bold leading-tight" [title]="ticket().from">
+            {{ ticket().from }}
+          </p>
+        </div>
+        <span class="mb-1.5 flex-none text-ink-3" aria-hidden="true">
+          <app-icon name="arrow-right" [size]="18" />
+        </span>
+        <div class="min-w-0 flex-1 text-right">
+          <p class="text-12 tracking-wide text-ink-3">TO</p>
+          <p class="truncate text-18 font-bold leading-tight" [title]="ticket().to">
+            {{ ticket().to }}
+          </p>
+        </div>
       </div>
-    </div>
+    }
 
     <h2 class="mt-5 wrap-anywhere text-22">{{ ticket().title }}</h2>
   </header>
@@ -157,7 +169,7 @@
                   </div>
                 </li>
               } @empty {
-                <li class="py-5 text-13 text-ink-3">아직 등록한 일정이 없습니다.</li>
+                <li class="py-5 text-13 text-ink-3">아직 등록한 일정이 없어요.</li>
               }
             </ol>
           }

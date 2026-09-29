@@ -41,7 +41,7 @@
       <p class="text-12 leading-normal text-ink-3" role="status">검색 제공자 확인 중…</p>
     }
     @case ('unavailable') {
-      <div appNotice class="notice notice--warn" data-testid="place-search-unavailable">
+      <div appNotice tone="warn" data-testid="place-search-unavailable">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           <strong class="in-[.notice]:font-bold">장소 검색이 연결되지 않았습니다.</strong>
@@ -63,7 +63,7 @@
       </p>
     }
     @case ('error') {
-      <div appNotice class="notice notice--danger" role="alert" data-testid="place-search-error">
+      <div appNotice tone="danger" role="alert" data-testid="place-search-error">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           <strong class="in-[.notice]:font-bold">검색에 실패했습니다.</strong>

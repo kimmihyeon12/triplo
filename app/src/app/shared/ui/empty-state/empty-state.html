@@ -1,0 +1,12 @@
+<p class="text-15 font-bold leading-snug text-ink">{{ title() }}</p>
+
+@if (hint()) {
+  <p class="text-13 leading-normal text-ink-2">{{ hint() }}</p>
+}
+
+<!--
+  버튼은 컴포넌트가 만들지 않고 쓰는 쪽이 넣는다. 화면마다 다음 행동이
+  다르고, 하단 고정 바에 이미 같은 버튼이 있는 화면도 있어 여기서 만들면
+  같은 동작이 두 번 나타난다.
+-->
+<ng-content />

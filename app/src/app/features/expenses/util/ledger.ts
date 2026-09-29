@@ -115,3 +115,51 @@ export function transferSuggestions(
     }
   return result;
 }
+
+/**
+ * 메신저에 붙여 넣을 정산 안내. 친구들은 앱을 열지 않고 이 글만 보므로
+ * 총금액과 누가 누구에게 얼마를 보내면 되는지만 적는다. 여행 이름 같은
+ * 머리글은 붙이지 않는다. 개인 지출은 총금액에서 뺀다.
+ */
+export function settlementText(ledger: Ledger): string {
+  const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
+  const name = (id: string) => ledger.people.find((p) => p.id === id)?.name ?? '알 수 없음';
+  const shared = ledger.expenses.filter((e) => !e.personal).reduce((n, e) => n + e.amount, 0);
+  const transfers = transferSuggestions(ledger);
+  return [
+    `총금액 ${won(shared)}`,
+    ...(transfers.length
+      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${won(t.amount)}`)
+      : ['남은 정산 금액이 없어요.']),
+  ].join('\n');
+}
+
+/** 요약 막대에 쓸 분류별 합계. 개인 지출도 실제로 쓴 돈이므로 포함한다. */
+export function categoryBreakdown(
+  expenses: readonly Expense[],
+): { category: string; amount: number; ratio: number }[] {
+  const total = expenses.reduce((n, e) => n + e.amount, 0);
+  if (!total) return [];
+  const sums = new Map<string, number>();
+  for (const e of expenses) sums.set(e.category, (sums.get(e.category) ?? 0) + e.amount);
+  return [...sums]
+    .map(([category, amount]) => ({ category, amount, ratio: amount / total }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+/**
+ * 저장된 분담이 균등 분배로 만든 것인지 본다. 수정할 때 균등이었던 지출을
+ * 직접 입력 모드로 열면 금액을 바꿔도 분담액이 이전 값으로 남는다.
+ */
+export function isEvenSplit(amount: number, splits: readonly ExpenseSplit[]): boolean {
+  if (!splits.length) return true;
+  try {
+    const even = allocateEvenly(
+      amount,
+      splits.map((s) => s.personId),
+    );
+    return even.every((s, i) => s.amount === splits[i].amount);
+  } catch {
+    return false;
+  }
+}

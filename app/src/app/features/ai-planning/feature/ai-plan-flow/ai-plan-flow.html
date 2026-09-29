@@ -76,7 +76,7 @@
                   >
                     <app-icon name="plus" [size]="14" />
                     <span class="font-medium">{{ m.name }}</span>
-                    <span class="text-11 text-hint">{{ m.short }}</span>
+                    <span class="text-12 text-hint">{{ m.short }}</span>
                   </button>
                 </li>
               }
@@ -328,7 +328,7 @@
 
       <!-- 설정이 없으면 만들 수 없다. 이유를 적어 눌러보게 하지 않는다. -->
       @if (!aiReady()) {
-        <div appNotice class="notice notice--warn" data-testid="ai-unavailable">
+        <div appNotice tone="warn" data-testid="ai-unavailable">
           <app-icon name="alert" />
           <div class="notice__body flex-1 min-w-0">{{ unavailableReason() }}</div>
         </div>
@@ -336,7 +336,7 @@
 
       <!-- 만들기에 실패했을 때. 조건은 그대로 남아 다시 시도할 수 있다. -->
       @if (error(); as err) {
-        <div appNotice class="notice notice--danger" role="alert" data-testid="ai-error">
+        <div appNotice tone="danger" role="alert" data-testid="ai-error">
           <app-icon name="alert" />
           <div class="notice__body flex-1 min-w-0">
             <strong class="in-[.notice]:font-bold">{{ err.message }}</strong>
@@ -370,7 +370,7 @@
         AI가 낸 것은 장소 이름과 날짜 배치뿐이다. 주소·분류는 장소 검색에서 가져오며,
         찾지 못한 이름은 목록에 들이지 않는다. 좌표가 없으면 지도에 올릴 수 없다.
       -->
-      <div appNotice class="notice" data-testid="ai-result-notice">
+      <div appNotice data-testid="ai-result-notice">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           실제 장소 검색으로 위치를 확인한 곳만 보여드립니다. 영업시간·휴무는 지도에서 확인해
@@ -630,7 +630,7 @@
   </div>
 
   @if (saveFailed()) {
-    <div appNotice class="notice notice--danger" role="alert">
+    <div appNotice tone="danger" role="alert">
       <app-icon name="alert" />
       <div class="notice__body flex-1 min-w-0">
         <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 선택한 항목은 그대로

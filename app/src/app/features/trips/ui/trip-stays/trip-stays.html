@@ -5,14 +5,14 @@
 -->
 <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-stays">
   @if (overview().undecidedDates) {
-    <div appNotice class="notice notice--warn">
+    <div appNotice tone="warn">
       <app-icon name="calendar" />
       <div class="notice__body flex-1 min-w-0">
         여행 날짜 미정: 등록한 숙박 날짜는 여행 날짜를 정한 뒤 확인 대상이 됩니다.
       </div>
     </div>
   } @else if (nights().length === 0) {
-    <div appNotice class="notice notice--ok" data-testid="no-nights">
+    <div appNotice tone="ok" data-testid="no-nights">
       <app-icon name="check" />
       <div class="notice__body flex-1 min-w-0">
         당일 여행은 숙박이 없습니다. 숙소 등록 없이 일정을 작성할 수 있습니다.
@@ -67,30 +67,33 @@
 
   @if (trip().stays.length === 0) {
     <section
-      class="panel empty bg-panel rounded-panel shadow-panel p-4"
+      class="panel empty bg-panel rounded-panel shadow-panel p-5"
       data-testid="empty-stays"
     >
-      <h3 class="text-16 font-bold">등록된 숙소가 없습니다</h3>
-      <p class="text-12 leading-normal text-ink-3">숙소 미정인 밤이 있어도 일정은 저장됩니다.</p>
+      <app-empty-state
+        title="아직 등록한 숙소가 없어요"
+        hint="숙소 미정인 밤이 있어도 일정은 저장돼요."
+      />
     </section>
   } @else {
     <ul class="flex flex-col gap-3" data-testid="stay-list">
       @for (s of sortedStays(); track s.id) {
         <li
-          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)]"
+          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)]"
           [attr.data-testid]="'stay-' + s.id"
           [id]="'stay-card-' + s.id"
         >
           <div
-            class="stay__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-ink text-white -mt-1.25"
+            class="stay__badge size-6 flex items-center justify-center rounded-full bg-stay-ink text-white mt-px"
           >
-            <app-icon name="home" [size]="18" />
+            <app-icon name="home" [size]="14" />
           </div>
           <!-- 일정 카드와 같은 위계다: 제목·지도 / 회색 메타 / 주소 / 라벨. -->
-          <div class="stay__main flex flex-col gap-1 min-w-0">
+          <div class="stay__main relative pr-16 flex flex-col gap-1 min-w-0">
             <div class="flex items-center gap-1.5 text-15">
               <strong class="min-w-0 truncate" [title]="s.name">{{ s.name }}</strong>
-              <span class="inline-flex flex-none gap-1 ml-auto">
+              <!-- 일정 카드와 같이 지도 아이콘은 흐름에서 빼고 본문 전체에 같은 오른쪽 여백을 준다. -->
+              <span class="absolute right-0 -top-0.5 inline-flex gap-1">
                 <a
                   class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                   [href]="naverUrl(s)"
@@ -130,10 +133,10 @@
               그다음에 언제 묵는지(기간·시각)를 읽는다.
             -->
             @if (s.address) {
-              <div class="text-12 leading-normal text-ink-3 flex items-center gap-1">
-                <span class="min-w-0 truncate" [title]="s.address">{{ s.address }}</span>
+              <div class="text-12 leading-normal text-ink-3 flex items-start gap-1">
+                <span class="min-w-0 line-clamp-2 wrap-anywhere" [title]="s.address">{{ s.address }}</span>
                 <button
-                  class="relative inline-flex size-6 flex-none items-center justify-center rounded-cell border-0 bg-transparent p-0 text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:transform-[translate(-10px,-10px)] hover:bg-ground-2 hover:text-ink"
+                  class="relative -my-[3px] inline-flex size-6 flex-none items-center justify-center rounded-cell border-0 bg-transparent p-0 text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:transform-[translate(-10px,-10px)] hover:bg-ground-2 hover:text-ink"
                   type="button"
                   (click)="copyAddress(s)"
                   [attr.aria-label]="s.name + ' 주소 복사'"
@@ -166,7 +169,8 @@
             }
           </div>
           <!-- 라벨과 더보기를 맨 아래 한 줄에 나란히 둔다. -->
-          <div class="stay__actions col-span-full flex items-center gap-1.5">
+          <!-- 일정 카드와 같이 제목 열에서 시작하고 버튼이 줄 높이를 키우지 않게 한다. -->
+          <div class="stay__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5">
             <span class="flex flex-wrap items-center gap-1.5">
               <span appBadge class="cell cell--stay">{{ nightCount(s) }}박</span>
               <!-- 예약 여부는 이 화면의 핵심 상태라서 배지로 올린다. -->

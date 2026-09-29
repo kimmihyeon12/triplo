@@ -4,7 +4,7 @@
 -->
 <div
   #scroller
-  class="my-1.5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
+  class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain bg-panel py-1.5"
   data-testid="chat-messages"
 >
   <!--
@@ -18,7 +18,13 @@
       알리고, 할 수 있는 일을 한 줄로 적는다.
     -->
     @if (messages().length === 0 && !pending()) {
+      <!--
+        구름이는 여기 한 번만 나온다. 전에는 화면 맨 위에 헤더를 따로 만들어
+        거기 세웠는데, 그러면 상단 바의 'AI 챗봇'과 제목이 둘이 되어 이
+        화면만 머리가 두 겹이었다. 말이 오가기 시작하면 사라진다.
+      -->
       <div class="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+        <app-companion-face [mood]="'talking'" [size]="72" [decorative]="true" />
         <p class="text-18 font-bold tracking-tight text-ink">{{ emptyTitle() }}</p>
         <p class="max-w-68 text-13 leading-relaxed text-ink-3">{{ emptyHint() }}</p>
       </div>
@@ -40,7 +46,7 @@
           <div class="flex w-full items-start gap-2.5">
             <div class="flex min-w-0 flex-1 flex-col items-start gap-2">
               <p
-                class="chat-bubble chat-bubble--assistant max-w-full whitespace-pre-line bg-panel px-3.5 py-2 text-14 leading-[22px] text-ink"
+                class="chat-bubble chat-bubble--assistant max-w-full whitespace-pre-line bg-ground-2 px-3.5 py-2 text-14 leading-[22px] text-ink"
                 [attr.data-kind]="message.kind"
               >
                 {{ message.text }}
@@ -87,7 +93,7 @@
       <div class="flex items-start gap-2.5" role="status" data-testid="chat-pending">
         <div class="flex min-w-0 items-center gap-3">
           <p
-            class="chat-bubble chat-bubble--assistant flex min-h-11 items-center gap-1.5 bg-panel px-3.5 py-3"
+            class="chat-bubble chat-bubble--assistant flex min-h-11 items-center gap-1.5 bg-ground-2 px-3.5 py-3"
           >
             <!-- 말 줄임표가 차례로 뛴다. 무엇을 기다리는지 스피너보다 분명하다. -->
             <span class="chat-dot size-1.5 rounded-pill bg-ink-3" aria-hidden="true"></span>
@@ -110,7 +116,7 @@
     }
 
     @if (error(); as err) {
-      <div appNotice class="notice notice--danger" role="alert" data-testid="chat-error">
+      <div appNotice tone="danger" role="alert" data-testid="chat-error">
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           <div class="text-13 leading-normal">{{ err.message }}</div>
@@ -143,7 +149,13 @@
 }
 
 <div class="flex-none border-t border-border bg-panel">
-  <div class="mx-auto w-full max-w-160 px-4 py-2">
+  <!--
+    아이폰 홈 표시줄 높이만큼 아래 여백을 더한다. 하단 고정 바([일정 추가])와 같은
+    방식이다. 없으면 입력창이 표시줄에 가려진다.
+  -->
+  <div
+    class="mx-auto w-full max-w-160 px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))]"
+  >
     @if (turnsLeft() === 0) {
       <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
         이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.

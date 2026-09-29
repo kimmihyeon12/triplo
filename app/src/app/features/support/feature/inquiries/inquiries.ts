@@ -5,6 +5,7 @@ import { SUPPORT_REPOSITORY } from '../../data/support-repository';
 import { INQUIRY_KIND_LABEL, INQUIRY_STATUS_LABEL, type Inquiry } from '../../model/support';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
@@ -19,7 +20,7 @@ import type { BadgeTone } from '../../../../shared/util/badge-tone';
  */
 @Component({
   selector: 'app-inquiries',
-  imports: [UiButton, UiBadge, UiSpinner, UiActionBar, IconComponent, RouterLink],
+  imports: [UiButton, UiBadge, UiSpinner, UiActionBar, IconComponent, RouterLink, UiEmptyState],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './inquiries.html',
 })
