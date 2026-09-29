@@ -23,8 +23,7 @@ import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LEDGER_REPOSITORY } from '../../data/ledger-repository';
-import { ledgerOps } from '../../util/ledger-ops';
-import { TripConflictError } from '../../../trips/data/trip-data-client';
+import { LedgerSaver } from '../../data/ledger-saver';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
@@ -67,6 +66,7 @@ export class Expenses {
   readonly add = input<string | undefined>();
   readonly store = inject(TripEditorStore);
   private readonly repository = inject(LEDGER_REPOSITORY);
+  readonly saver = new LedgerSaver(this.repository);
   private readRequest = 0;
   readonly ledger = signal<Ledger>(newLedger());
   readonly error = signal('');
@@ -133,8 +133,8 @@ export class Expenses {
 
   /**
    * 바뀐 가계부를 저장한다. 가계부 전체가 아니라 바뀐 동작만 서버에 보낸다
-   * (친구가 동시에 지출을 더해도 막히지 않게). 실패하면 화면 가계부를 그대로
-   * 두고 알린다. 다른 곳에서 먼저 바꿨으면 서버본을 다시 읽는다.
+   * (친구가 동시에 지출을 더해도 막히지 않게). 저장 중에 다시 누르면 무시하고,
+   * 실패하면 알린 뒤 서버에 남은 가계부로 화면을 맞춘다.
    */
   async persist(next: Ledger): Promise<boolean> {
     if (this.blocked()) return false;
@@ -143,16 +143,18 @@ export class Expenses {
       this.error.set(invalid);
       return false;
     }
-    try {
-      await this.repository.apply(this.id(), ledgerOps(this.ledger(), next));
-      this.ledger.set(next);
+    const result = await this.saver.save(this.id(), this.ledger(), next);
+    if (result.status === 'busy') return false;
+    // 저장 중에 시작된 읽기가 늦게 도착해 결과를 덮지 않게 한다.
+    this.readRequest++;
+    if (result.status === 'saved') {
+      this.ledger.set(result.ledger);
       this.error.set('');
       return true;
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : '저장하지 못했어요.');
-      if (e instanceof TripConflictError) await this.load(this.id());
-      return false;
     }
+    this.error.set(result.error);
+    if (result.ledger) this.ledger.set(result.ledger);
+    return false;
   }
 
   addPerson(): void {
@@ -237,10 +239,15 @@ export class Expenses {
     this.scanOpen.set(true);
   }
 
-  /** 사진에서 확인한 지출을 한 번에 더한다. 하나라도 저장하지 못하면 모두 남기지 않는다. */
+  /**
+   * 사진에서 확인한 지출을 한 번에 더한다. 중간에 실패하면 앞선 건은 서버에 남으므로,
+   * 다시 누르면 이미 저장된 건은 빼고 나머지만 보낸다.
+   */
   saveScanned(expenses: Expense[]): void {
     const previous = this.ledger();
-    void this.persist({ ...previous, expenses: [...previous.expenses, ...expenses] }).then((ok) => {
+    const saved = new Set(previous.expenses.map((e) => e.id));
+    const rest = expenses.filter((e) => !saved.has(e.id));
+    void this.persist({ ...previous, expenses: [...previous.expenses, ...rest] }).then((ok) => {
       if (!ok) return;
       this.scanOpen.set(false);
       this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
