@@ -8,7 +8,9 @@ import { CHAT_TURN_LIMIT, type ChatReply } from '../model/chat';
 import { CHAT_PROVIDER, type ChatProvider } from './chat-provider';
 import { CHAT_HISTORY, LocalChatHistory, type KeyValueStorage } from './chat-history';
 import { TravelChatStore } from './travel-chat-store';
-import { LocalLedger } from '../../expenses/data/local-ledger';
+import { LEDGER_REPOSITORY, type LedgerRepository } from '../../expenses/data/ledger-repository';
+import { applyOp } from '../../expenses/util/ledger-ops';
+import type { Ledger } from '../../expenses/model/ledger';
 import { newLedger } from '../../expenses/util/ledger';
 
 describe('local command routing', () => {
@@ -19,27 +21,26 @@ describe('local command routing', () => {
     await store.send('오죽헌 체류시간 60분으로 바꿔');
     const draft = store.messages().at(-1)!.draft!;
     store.setTrip({...base, title:'수정됨'});
-    expect(store.applyDraft(draft)).toBeNull();
+    expect(await store.applyDraft(draft)).toBeNull();
     expect(store.trip()!.title).toBe('수정됨');
     store.setTrip(base);
-    const applied = store.applyDraft(draft)!;
+    const applied = (await store.applyDraft(draft))!;
     store.setTrip({...applied, title:'다시 수정됨'});
-    expect(store.undo()).toBeNull();
+    expect(await store.undo()).toBeNull();
     expect(store.trip()!.title).toBe('다시 수정됨');
   });
   it('rejects stale ledger previews and reports storage errors without changing trip', async () => {
-    let saved = {...newLedger(), people:[{id:'self',name:'나'}]};
-    const service = { read: () => structuredClone(saved), save: () => {throw new Error('저장 실패');} };
-    const store = setup(fakeChat(), service);
+    const ledger = fakeLedger(undefined, true);
+    const store = setup(fakeChat(), ledger.repo);
     const base = trip();
     store.open('trip', base);
     await store.send('점심값 2만원 추가해');
     const draft = store.messages().at(-1)!.draft!;
-    saved = {...saved, budget: 50000};
-    expect(store.applyDraft(draft)).toBeNull();
+    ledger.set({...ledger.get(), budget: 50000});
+    expect(await store.applyDraft(draft)).toBeNull();
     expect(store.error()?.message).toContain('가계부가 변경');
-    saved = {...saved, budget: null};
-    expect(store.applyDraft(draft)).toBeNull();
+    ledger.set({...ledger.get(), budget: null});
+    expect(await store.applyDraft(draft)).toBeNull();
     expect(store.error()?.message).toContain('저장 실패');
     expect(store.trip()).toEqual(base);
     expect(store.canUndo()).toBe(false);
@@ -59,23 +60,31 @@ describe('local command routing', () => {
     await store.send('오죽헌 체류시간 60분으로 바꿔');
     expect(provider.calls).toBe(0);
     expect(store.trip()).toEqual(base);
-    const updated = store.applyDraft(store.messages().at(-1)!.draft!);
+    const updated = await store.applyDraft(store.messages().at(-1)!.draft!);
     expect(updated!.stops[0].stayMinutes).toBe(60);
     await store.send('방금 변경 되돌려');
-    expect(store.applyDraft(store.messages().at(-1)!.draft!)!.stops[0].stayMinutes).toBeNull();
+    expect((await store.applyDraft(store.messages().at(-1)!.draft!))!.stops[0].stayMinutes).toBeNull();
     expect(provider.calls).toBe(0);
   });
   it('saves ledger only on confirmation and restores it on undo', async () => {
-    let saved = { ...newLedger(), people: [{id:'self',name:'나'}] };
-    const service = {read: () => structuredClone(saved), save: (_id: string, value: typeof saved) => {saved = structuredClone(value);}};
-    const store = setup(fakeChat(), service);
+    const ledger = fakeLedger();
+    const store = setup(fakeChat(), ledger.repo);
     store.open('trip', trip());
     await store.send('점심값 2만원 추가해');
-    expect(saved.expenses).toHaveLength(0);
-    store.applyDraft(store.messages().at(-1)!.draft!);
-    expect(saved.expenses[0].amount).toBe(20000);
-    store.undo();
-    expect(saved.expenses).toHaveLength(0);
+    expect(ledger.get().expenses).toHaveLength(0);
+    await store.applyDraft(store.messages().at(-1)!.draft!);
+    expect(ledger.get().expenses[0].amount).toBe(20000);
+    await store.undo();
+    expect(ledger.get().expenses).toHaveLength(0);
+  });
+  it('undoes a chat expense when the server reads it back with defaults filled in', async () => {
+    const ledger = fakeLedger(undefined, false, true);
+    const store = setup(fakeChat(), ledger.repo);
+    store.open('trip', trip());
+    await store.send('점심값 2만원 추가해');
+    await store.applyDraft(store.messages().at(-1)!.draft!);
+    expect(await store.undo()).not.toBeNull();
+    expect(ledger.get().expenses).toHaveLength(0);
   });
 });
 
@@ -93,12 +102,12 @@ describe('local assignment integration', () => {
     const draft = store.messages().at(-1)!.draft!;
     expect(draft).toEqual({ action: 'assign-unassigned', date: '2026-10-01', stopIds: ['a'] });
     expect(store.trip()).toEqual(base);
-    const next = store.applyDraft(draft)!;
+    const next = (await store.applyDraft(draft))!;
     expect(next.stops.find(s => s.id === 'a')?.date).toBe('2026-10-01');
     expect(next.stops.find(s => s.id === 'a')!.order).toBeGreaterThan(next.stops.find(s => s.id === 'b')!.order);
     expect(next.stops.find(s => s.id === 'c')?.date).toBeNull();
-    expect(store.applyDraft(draft)).toBeNull();
-    expect(store.undo()).toEqual(base);
+    expect(await store.applyDraft(draft)).toBeNull();
+    expect(await store.undo()).toEqual(base);
   });
 });
 
@@ -171,14 +180,35 @@ function memoryStorage(): KeyValueStorage {
   };
 }
 
-function setup(chat: ChatProvider = fakeChat(), ledger = {read: () => ({...newLedger(), people: [{id:'self', name:'나'}]}), save: (_id: string, _value: ReturnType<typeof newLedger>) => {}}): TravelChatStore {
+/** 기기·서버 구현과 같은 계약의 가짜 가계부. 동작을 차례로 적용한다. */
+/** serverLike면 서버 읽기처럼 지출 필드를 정해진 순서로 채워 돌려준다. */
+function fakeLedger(initial: Ledger = {...newLedger(), people: [{id:'self', name:'나'}]}, fail = false, serverLike = false) {
+  let saved = structuredClone(initial);
+  const asServer = (ledger: Ledger): Ledger => ({
+    people: ledger.people, budget: ledger.budget, receipts: ledger.receipts,
+    expenses: ledger.expenses.map(e => ({
+      id: e.id, title: e.title, date: e.date, category: e.category, amount: e.amount, paidBy: e.paidBy,
+      splits: e.splits, memo: e.memo, linkId: e.linkId, personal: e.personal ?? false,
+    })),
+  });
+  const repo: LedgerRepository = {
+    read: async () => structuredClone(serverLike ? asServer(saved) : saved),
+    apply: async (_id, ops) => {
+      if (fail) throw new Error('저장 실패');
+      saved = ops.reduce(applyOp, saved);
+    },
+  };
+  return {repo, get: () => saved, set: (value: Ledger) => { saved = structuredClone(value); }};
+}
+
+function setup(chat: ChatProvider = fakeChat(), ledger: LedgerRepository = fakeLedger().repo): TravelChatStore {
   const injector = Injector.create({
     providers: [
       { provide: CHAT_PROVIDER, useValue: chat },
       { provide: PLACE_SEARCH, useValue: fakeSearch() },
       { provide: CHAT_HISTORY, useValue: new LocalChatHistory(memoryStorage(), 'test.chat') },
       TravelChatStore,
-      { provide: LocalLedger, useValue: ledger },
+      { provide: LEDGER_REPOSITORY, useValue: ledger },
     ],
   });
   return runInInjectionContext(injector, () => injector.get(TravelChatStore));
@@ -400,33 +430,33 @@ describe('TravelChatStore 적용과 되돌리기', () => {
     const store = setup();
     const base = trip([stop('a', '가', day1, 0), stop('b', '나', day1, 1)]);
     store.open('trip', base);
-    const next = store.applyDraft({ action: 'remove', stopIds: ['a'] });
+    const next = await store.applyDraft({ action: 'remove', stopIds: ['a'] });
     expect(next).not.toBeNull();
     expect(next!.stops).toHaveLength(1);
   });
 
-  it('적용한 뒤에는 되돌릴 수 있다', () => {
+  it('적용한 뒤에는 되돌릴 수 있다', async () => {
     const store = setup();
     const base = trip([stop('a', '가', day1, 0), stop('b', '나', day1, 1)]);
     store.open('trip', base);
-    store.applyDraft({ action: 'remove', stopIds: ['a'] });
+    await store.applyDraft({ action: 'remove', stopIds: ['a'] });
     expect(store.canUndo()).toBe(true);
-    const restored = store.undo();
+    const restored = await store.undo();
     expect(restored!.stops).toHaveLength(2);
   });
 
-  it('되돌린 뒤에는 다시 되돌릴 것이 없다', () => {
+  it('되돌린 뒤에는 다시 되돌릴 것이 없다', async () => {
     const store = setup();
     store.open('trip', trip([stop('a', '가', day1, 0)]));
-    store.applyDraft({ action: 'remove', stopIds: ['a'] });
-    store.undo();
+    await store.applyDraft({ action: 'remove', stopIds: ['a'] });
+    await store.undo();
     expect(store.canUndo()).toBe(false);
   });
 
-  it('여행 없이 적용하면 아무 일도 하지 않는다', () => {
+  it('여행 없이 적용하면 아무 일도 하지 않는다', async () => {
     const store = setup();
     store.open('list', null);
-    expect(store.applyDraft({ action: 'remove', stopIds: ['a'] })).toBeNull();
+    expect(await store.applyDraft({ action: 'remove', stopIds: ['a'] })).toBeNull();
   });
 });
 

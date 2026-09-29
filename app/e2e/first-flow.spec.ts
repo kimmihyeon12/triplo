@@ -14,7 +14,8 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
     await expect(page.getByTestId('trip-period')).toContainText('2박 3일');
     await expect(page.getByTestId('empty-trip')).toBeVisible();
-    await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved');
+    // 저장에 성공하면 표시가 사라진다. 실패·충돌만 보인다.
+    await expect(page.getByTestId('save-status')).toHaveCount(0);
 
     await addStop(page, id, {
       name: '안목해변',

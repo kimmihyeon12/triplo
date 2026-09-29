@@ -11,9 +11,8 @@
     </p>
   </header>
 
-  @if (loading()) {
-    <p class="py-10 text-center text-ink-3" role="status">불러오는 중…</p>
-  } @else {
+  <!-- 불러오는 동안은 상단 바가 로딩을 알린다. 목록 화면과 같은 방식이다. -->
+  @if (!loading()) {
     <!-- 기울기·빛 반응은 로그인 화면 티켓과 같은 공용 무대를 쓴다. -->
     <app-ticket-tilt class="ticket-stage" #tilt="ticketTilt">
       <!--

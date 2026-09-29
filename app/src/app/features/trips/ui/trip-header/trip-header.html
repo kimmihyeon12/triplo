@@ -21,10 +21,12 @@
     }
   </p>
   <!--
-        idle('기기 저장본')은 늘 떠 있어 주의를 끌므로 숨긴다.
+        idle('저장본')은 늘 떠 있어 주의를 끌므로 숨긴다.
         저장 중·저장됨·실패만 나타난다(저장됨은 방금 저장한 결과 확인용).
       -->
   @if (saveState() !== 'idle') {
-    <app-save-status [state]="saveState()" [savedAt]="savedAt()" (retry)="retry.emit()" />
+    <app-save-status [state]="saveState()" (retry)="retry.emit()"
+      (reload)="reload.emit()"
+    />
   }
 </header>

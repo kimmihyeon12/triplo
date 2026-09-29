@@ -2,11 +2,13 @@ import { computed, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
+import { TripConflictError } from './trip-data-client';
+import { ErrorToastService } from '../../../core/error-toast-service';
 
 export interface PendingDraft {
   readonly trip: Trip;
   readonly version: number;
-  readonly state: 'saving' | 'error';
+  readonly state: 'saving' | 'error' | 'conflict';
   readonly error: string | null;
 }
 
@@ -14,6 +16,7 @@ export interface PendingDraft {
 @Injectable({ providedIn: 'root' })
 export class PendingDraftRegistry {
   private readonly repo = inject(TRIP_REPOSITORY);
+  private readonly toast = inject(ErrorToastService);
   private readonly state = signalState({
     session: 'local',
     generation: 0,
@@ -69,7 +72,10 @@ export class PendingDraftRegistry {
         return true;
       } catch (error) {
         if (generation === this.generation() && this.get(id)?.version === version) {
-          this.put(id, { trip: snapshot, version, state: 'error', error: errorMessage(error) });
+          // 충돌은 다시 저장해도 풀리지 않는다. 화면이 새로 불러오기를 권하도록 구분한다.
+          const state = error instanceof TripConflictError ? 'conflict' : 'error';
+          this.put(id, { trip: snapshot, version, state, error: errorMessage(error) });
+          this.toast.show(errorMessage(error));
         }
         return false;
       }
@@ -84,6 +90,23 @@ export class PendingDraftRegistry {
   private put(id: string, draft: PendingDraft): void {
     patchState(this.state, { drafts: { ...this.state.drafts(), [id]: draft } });
   }
+}
+
+/**
+ * 로그인 계정 변화를 세션 전환으로 바꾼다. 로그인 복원(loading)이 끝난 뒤 처음
+ * 본 계정은 기준으로만 삼는다. 그때 전환하면 이미 불러온 여행 목록이 이전 세션
+ * 결과로 버려져 빈 채로 멈춘다. 그 뒤 실제로 바뀔 때만 알린다.
+ */
+export function sessionWatcher(
+  change: (session: string) => void,
+): (loading: boolean, userId: string | null) => void {
+  let previous: string | undefined;
+  return (loading, userId) => {
+    if (loading) return;
+    const session = userId ?? 'signed-out';
+    if (previous !== undefined && previous !== session) change(session);
+    previous = session;
+  };
 }
 
 export function errorMessage(error: unknown): string {

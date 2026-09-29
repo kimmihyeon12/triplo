@@ -1,6 +1,5 @@
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
-import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -42,7 +41,6 @@ import type { GeoPoint, PlaceRef } from '../../../places/model/place';
     UiButton,
     UiInput,
     UiBadge,
-    UiNotice,
     UiActionBar,
     UiField,
     FormsModule,
@@ -149,6 +147,8 @@ export class StopFormPage {
       onCleanup(() => {
         active = false;
       });
+      // 충돌 뒤 새로 불러오기가 끝나면 폼을 서버본으로 다시 채운다.
+      this.store.reloads();
       const id = this.id();
       this.trip.set(null);
       this.editing.set(null);

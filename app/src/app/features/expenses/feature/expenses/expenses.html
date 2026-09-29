@@ -61,7 +61,7 @@
 
   @if (!blocked()) {
     <!-- 접혔을 때는 제목 줄만 남도록 아래 여백을 없앤다. -->
-    <details class="panel rounded-panel bg-panel px-4 py-3 shadow-panel [&[open]]:pb-4">
+    <details class="fold panel rounded-panel bg-panel px-4 py-3 shadow-panel [&[open]]:pb-4">
       <summary
         class="flex min-h-8 cursor-pointer list-none items-center gap-2 text-14 font-bold [&::-webkit-details-marker]:hidden"
       >
@@ -79,9 +79,23 @@
       -->
       <div class="mt-3 flex flex-wrap items-center gap-2">
         @for (p of ledger().people; track p.id) {
+          <!-- '나'는 지울 수 없어 X를 두지 않는다. -->
           <span
-            class="inline-flex min-h-8 items-center rounded-control border border-border bg-panel px-3 text-13 text-ink-2"
-            >{{ p.name }}</span
+            class="inline-flex min-h-8 items-center rounded-control border border-border bg-panel pl-3 text-13 text-ink-2"
+            [style.padding-right.px]="p.id === 'self' ? 12 : 2"
+            [attr.data-testid]="'person-' + p.id"
+            >{{ p.name }}
+            @if (p.id !== 'self') {
+              <button
+                type="button"
+                class="-my-1 ml-0.5 grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink-3 hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+                [attr.aria-label]="p.name + ' 지우기'"
+                [attr.data-testid]="'remove-person-' + p.id"
+                (click)="removePerson(p.id)"
+              >
+                <app-icon name="x" [size]="14" />
+              </button>
+            }</span
           >
         }
       </div>
@@ -109,7 +123,7 @@
       (selected)="tab.set($any($event))"
     />
 
-    @if (formOpen()) {
+    @if (formOpen() && loadedTrip() === id()) {
       <section [class.hidden]="tab() !== 'expenses'" [attr.aria-hidden]="tab() !== 'expenses'">
         <app-expense-form
           [people]="ledger().people"
@@ -436,6 +450,7 @@
   </div>
 }
 
-@if (error()) {
+<!-- 가계부를 읽지 못해 멈춘 경우에는 위 안내 상자가 같은 말을 하므로 띄우지 않는다. -->
+@if (error() && !blocked()) {
   <app-error-toast [message]="error()" (dismissed)="error.set('')" />
 }

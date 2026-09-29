@@ -7,6 +7,8 @@ import { TRIP_REPOSITORY, type TripRepository } from './trip-repository';
 import { TripEditorStore } from './trip-editor-store';
 import { PendingDraftRegistry } from './pending-draft-registry';
 import { TripListStore } from './trip-list-store';
+import { TripConflictError } from './trip-data-client';
+import { ErrorToastService } from '../../../core/error-toast-service';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -37,6 +39,7 @@ function setup(overrides: Partial<TripRepository> = {}) {
       TripEditorStore,
       TripListStore,
       PendingDraftRegistry,
+      ErrorToastService,
       { provide: TRIP_REPOSITORY, useValue: repo },
     ],
   });
@@ -179,5 +182,73 @@ describe('trip editing async contract', () => {
     expect(store.current()?.id).toBe('b');
     expect(store.saveState()).toBe('idle');
     expect(store.saveError()).toBeNull();
+  });
+
+  it('충돌이면 conflict 상태로 두고 입력을 유지하며, reload는 서버본을 다시 읽는다', async () => {
+    const { store, records, injector } = setup({
+      save: async () => {
+        throw new TripConflictError();
+      },
+    });
+    const repo = injector.get(TRIP_REPOSITORY);
+    const forgotten: string[] = [];
+    repo.forget = (id) => void forgotten.push(id);
+    const server = createTrip({ title: '서버본' });
+    records.set(server.id, server);
+    await store.open(server.id);
+    await store.commit({ ...server, title: '내 입력' });
+    expect(store.saveState()).toBe('conflict');
+    expect(store.current()?.title).toBe('내 입력');
+    expect(store.reloads()).toBe(0);
+    await store.reload();
+    // 편집 폼은 이 값을 따라 폼을 서버본으로 다시 채운다.
+    expect(store.reloads()).toBe(1);
+    expect(forgotten).toEqual([server.id]);
+    expect(store.current()?.title).toBe('서버본');
+    expect(store.saveState()).toBe('idle');
+  });
+
+  it('여행 목록이나 여행을 불러오지 못하면 오류 토스트로 알린다', async () => {
+    const { store, list, injector } = setup({
+      list: async () => {
+        throw new Error('여행 목록을 불러오지 못했어요.');
+      },
+      get: async () => {
+        throw new Error('여행을 불러오지 못했어요.');
+      },
+    });
+    const toast = injector.get(ErrorToastService);
+    await list.loadList();
+    expect(toast.message()).toBe('여행 목록을 불러오지 못했어요.');
+    await store.open('x');
+    expect(toast.message()).toBe('여행을 불러오지 못했어요.');
+  });
+
+  it('목록은 불러오기가 끝나기 전에는 빈 목록도 목록도 아닌 pending이다', async () => {
+    const loading = deferred<Trip[]>();
+    const { list } = setup({ list: () => loading.promise });
+    expect(list.view()).toBe('pending');
+    const done = list.loadList();
+    expect(list.view()).toBe('pending');
+    loading.resolve([]);
+    await done;
+    expect(list.view()).toBe('empty');
+  });
+
+  it('저장에 실패한 초안이 있는 여행을 지우면 목록에 다시 나타나지 않는다', async () => {
+    let failing = true;
+    const { store, list, records } = setup({
+      save: async (trip) => {
+        if (failing) throw new Error('offline');
+        records.set(trip.id, trip);
+      },
+    });
+    const trip = createTrip({ title: '지울 여행' });
+    await store.commit(trip);
+    await list.loadList();
+    expect(list.trips().map((t) => t.id)).toContain(trip.id);
+    failing = false;
+    await list.removeTrip(trip.id);
+    expect(list.trips().map((t) => t.id)).not.toContain(trip.id);
   });
 });

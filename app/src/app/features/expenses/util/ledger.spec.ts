@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  personRemovalBlock,
   allocateEvenly,
   balances,
   duplicateTitleIds,
@@ -182,5 +183,32 @@ describe('균등 분담 판별', () => {
 
   it('분담이 없으면 균등으로 본다', () => {
     expect(isEvenSplit(10000, [])).toBe(true);
+  });
+});
+
+describe('personRemovalBlock', () => {
+  const ledger: Ledger = {
+    people: [
+      { id: 'self', name: '나' },
+      { id: 'p2', name: '민지' },
+      { id: 'p3', name: '준호' },
+      { id: 'p4', name: '서연' },
+    ],
+    expenses: [
+      {
+        id: 'e1', title: '저녁', date: '2026-10-10', category: 'food', amount: 2000, paidBy: 'self',
+        splits: [{ personId: 'self', amount: 1000 }, { personId: 'p2', amount: 1000 }],
+        memo: '', linkId: null, personal: false,
+      },
+    ],
+    receipts: [{ id: 'r1', from: 'p3', to: 'self', amount: 500, cancelledReason: null }],
+    budget: null,
+  };
+
+  it('나와 기록에 있는 사람은 지울 수 없고 이유를 알린다', () => {
+    expect(personRemovalBlock(ledger, 'self')).toContain('나');
+    expect(personRemovalBlock(ledger, 'p2')).toContain('지출');
+    expect(personRemovalBlock(ledger, 'p3')).toContain('수령');
+    expect(personRemovalBlock(ledger, 'p4')).toBeNull();
   });
 });

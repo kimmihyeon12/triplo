@@ -1,5 +1,6 @@
 import type { Trip } from '../model/trip';
 import type { TripRepository } from './trip-repository';
+import { TripConflictError } from './trip-data-client';
 
 export interface KeyValueStorage {
   getItem(key: string): string | null;
@@ -37,6 +38,11 @@ export class LocalStorageTripRepository implements TripRepository {
     private readonly key: string,
     /** 테스트 앱 전용: 이 키에 값이 있으면 쓰기를 실패시킨다. */
     private readonly failFlagKey: string | null = null,
+    /**
+     * 테스트 앱 전용: 이 키에 값이 있으면 서버의 버전 충돌(P0409)처럼 거절한다.
+     * 기기 저장소는 충돌이 나지 않아 충돌·새로 불러오기 화면을 검사할 수 없었다.
+     */
+    private readonly conflictFlagKey: string | null = null,
   ) {}
 
   private read(): Record<string, Trip> {
@@ -63,6 +69,9 @@ export class LocalStorageTripRepository implements TripRepository {
   private write(trips: Record<string, Trip>): void {
     if (this.failFlagKey && this.storage.getItem(this.failFlagKey)) {
       throw new Error('테스트용 저장 실패');
+    }
+    if (this.conflictFlagKey && this.storage.getItem(this.conflictFlagKey)) {
+      throw new TripConflictError();
     }
     const file: StoreFile = { version: 1, trips };
     this.storage.setItem(this.key, JSON.stringify(file));

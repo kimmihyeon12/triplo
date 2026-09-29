@@ -2,7 +2,7 @@
   <div
     class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   >
-    <p class="text-ink-3" role="status">불러오는 중…</p>
+    <!-- 불러오는 동안은 상단 바가 로딩을 알린다(2026-09-29). -->
   </div>
 } @else if (!trip()) {
   <div
@@ -29,8 +29,8 @@
     <app-trip-header
       [trip]="trip()!"
       [saveState]="store.saveState()"
-      [savedAt]="store.lastSavedAt()"
       (retry)="store.retrySave()"
+      (reload)="store.reload()"
     />
 
     @if (deleteTripOpen()) {
@@ -810,7 +810,7 @@
         }
 
         @if (overview().days.length > 0) {
-          <details class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="overview-fold">
+          <details class="fold panel bg-panel rounded-panel shadow-panel p-4" data-testid="overview-fold">
             <summary
               class="flex cursor-pointer list-none items-center gap-2 text-16 font-bold [&::-webkit-details-marker]:hidden"
             >

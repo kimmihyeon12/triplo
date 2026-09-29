@@ -1,26 +1,10 @@
+<!--
+  사용자가 무언가 해야 하는 상태(저장 실패·충돌)만 보인다(2026-09-29 사용자 결정).
+  무엇이 잘못됐는지는 오류 토스트가 말하므로 여기에는 누를 버튼만 둔다.
+  저장 중에는 상단 바가 네트워크 요청으로 로딩을 보이고, '저장됨 · 14:32'는
+  편집할 때마다 떠서 알려 주는 것 없이 자리만 차지했다.
+-->
 @switch (state()) {
-  @case ('saving') {
-    <span
-      appBadge
-      class="cell cell--ghost"
-      role="status"
-      data-testid="save-status"
-      data-state="saving"
-      >저장 중…</span
-    >
-  }
-  @case ('saved') {
-    <span
-      appBadge
-      class="cell cell--accent"
-      role="status"
-      data-testid="save-status"
-      data-state="saved"
-    >
-      <app-icon name="check" [size]="14" />
-      기기에 저장됨 · {{ time() }}
-    </span>
-  }
   @case ('error') {
     <span
       class="flex flex-wrap items-center gap-2"
@@ -28,9 +12,6 @@
       data-testid="save-status"
       data-state="error"
     >
-      <span appBadge class="cell cell--danger"
-        ><app-icon name="alert" [size]="14" /> 저장 실패 · 입력은 유지됨</span
-      >
       <button
         appButton
         type="button"
@@ -43,9 +24,27 @@
       </button>
     </span>
   }
-  @default {
-    <span appBadge class="cell cell--ghost" data-testid="save-status" data-state="idle"
-      >기기 저장본</span
+  @case ('conflict') {
+    <!--
+      다시 저장해도 풀리지 않는다. 서버 최신본을 불러와야 하며, 그러면 지금
+      입력이 사라지므로 버튼 옆에 적는다. 입력은 그 전까지 화면에 남는다.
+    -->
+    <span
+      class="flex flex-wrap items-center gap-2"
+      role="alert"
+      data-testid="save-status"
+      data-state="conflict"
     >
+      <button
+        appButton
+        type="button"
+        class="btn btn--sm"
+        (click)="reload.emit()"
+        data-testid="reload-trip"
+      >
+        <app-icon name="refresh" [size]="14" /> 새로 불러오기
+      </button>
+      <span class="text-12 text-ink-3">불러오면 지금 입력은 사라져요</span>
+    </span>
   }
 }

@@ -17,7 +17,7 @@
     <ul class="flex list-none flex-col gap-2 p-0" data-testid="inquiry-list">
       @for (inquiry of list(); track inquiry.id) {
         <li class="rounded-panel bg-panel shadow-panel">
-          <details class="px-4 [[open]]:pb-4" (toggle)="open(inquiry)">
+          <details class="fold px-4 [[open]]:pb-4" (toggle)="open(inquiry)">
             <summary
               class="flex min-h-14 cursor-pointer list-none items-center gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
             >

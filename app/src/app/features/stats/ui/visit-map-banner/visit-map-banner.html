@@ -1,13 +1,13 @@
 ﻿<!--
-  기록이 있을 때만 카드로 띄우고, 없으면 점선 테두리로 가라앉힌다.
-  두 경우 모두 링크는 살아 있어 빈 지도 화면으로 갈 수 있다.
+  기록이 없어도 흰 카드로 둔다(2026-09-29 사용자 결정). 점선 테두리는 비어 보여
+  다른 카드와 어울리지 않았다. 여행이 없는 첫 화면에서는 목록이 이 배너를 숨긴다.
 -->
 <a
   class="flex items-center gap-3 rounded-panel p-3.5 no-underline text-inherit [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] active:scale-[0.99] focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
   [class]="
     hasRecord()
       ? 'bg-panel shadow-panel [border:1px_solid_transparent] hover:border-border-strong'
-      : '[border:1px_dashed_var(--color-border-strong)] hover:bg-panel'
+      : 'bg-panel shadow-panel [border:1px_solid_transparent] hover:border-border-strong'
   "
   routerLink="/stats"
   data-testid="go-stats"

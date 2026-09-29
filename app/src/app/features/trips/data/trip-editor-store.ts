@@ -1,10 +1,11 @@
-import { computed, inject, Injectable, untracked } from '@angular/core';
+import { computed, inject, Injectable, signal, untracked } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
 import { errorMessage, PendingDraftRegistry } from './pending-draft-registry';
+import { ErrorToastService } from '../../../core/error-toast-service';
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
 export type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Provided by the trip workspace and shared by detail/stop/stay child routes. */
@@ -12,6 +13,7 @@ export type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 export class TripEditorStore {
   private readonly repo = inject(TRIP_REPOSITORY);
   private readonly pending = inject(PendingDraftRegistry);
+  private readonly toast = inject(ErrorToastService);
   private readonly state = signalState({
     id: null as string | null,
     current: null as Trip | null,
@@ -44,6 +46,13 @@ export class TripEditorStore {
   readonly saveError = computed(() => this.draft()?.error ?? null);
   readonly lastSavedAt = computed(() => (this.sessionMatches() ? this.state.lastSavedAt() : null));
   readonly hasPending = computed(() => !!this.draft());
+  /**
+   * 새로 불러오기가 끝날 때마다 오른다. 편집 폼은 여행을 자기 사본으로 들고
+   * 있으므로 이 값을 따라 폼을 서버본으로 다시 채운다. 그러지 않으면 옛 사본으로
+   * 저장해 다른 기기에서 바꾼 내용을 지운다.
+   */
+  private readonly reloadCount = signal(0);
+  readonly reloads = this.reloadCount.asReadonly();
 
   open(id: string): Promise<Trip | null> {
     return untracked(() => this.load(id));
@@ -78,6 +87,7 @@ export class TripEditorStore {
           currentState: 'error',
           currentError: errorMessage(error),
         });
+        this.toast.show(errorMessage(error));
       }
       return null;
     }
@@ -89,9 +99,11 @@ export class TripEditorStore {
     if (!id) return false;
     try {
       await this.repo.remove(id);
+      this.pending.discard(id);
       return true;
     } catch (error) {
       patchState(this.state, { currentError: errorMessage(error) });
+      this.toast.show(errorMessage(error));
       return false;
     }
   }
@@ -117,11 +129,30 @@ export class TripEditorStore {
       this.state.id() === stamped.id
     ) {
       patchState(this.state, {
-        saveState: ok ? 'saved' : 'error',
+        saveState: ok
+          ? 'saved'
+          : this.pending.get(stamped.id)?.state === 'conflict'
+            ? 'conflict'
+            : 'error',
         lastSavedAt: ok ? new Date() : this.state.lastSavedAt(),
       });
     }
     return ok;
+  }
+
+  /**
+   * 충돌 뒤 서버 최신본을 다시 읽는다. 대기 중인 초안과 기억한 버전을 버린다.
+   * 화면에 남아 있던 입력은 사라지므로 버튼 옆에 그렇게 적는다.
+   */
+  async reload(): Promise<Trip | null> {
+    const id = this.state.id();
+    if (!id) return null;
+    this.pending.discard(id);
+    this.repo.forget?.(id);
+    patchState(this.state, { currentState: 'idle', saveState: 'idle' });
+    const trip = await this.load(id);
+    this.reloadCount.update((n) => n + 1);
+    return trip;
   }
 
   retrySave(): Promise<boolean> {

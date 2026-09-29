@@ -1,21 +1,33 @@
+<!--
+  연한 빨강 카드(2026-09-29 사용자 결정). 흰 카드는 오류라는 것이 아이콘으로만
+  드러나 약했다. 짙은 빨강은 화면을 누르므로 연한 바탕·테두리로 알리고 글자는
+  본문색으로 둬 읽기 쉽게 한다. X를 누르거나 아래로 밀어 닫는다.
+-->
 <div
-  class="toast grid gap-2.5 items-center rounded-panel bg-ink text-panel grid-cols-[28px_minmax(0,1fr)_44px] pt-2.5 pr-2 pb-2.5 pl-4 [box-shadow:0_8px_24px_-6px_rgb(22_24_29/0.24)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
+  class="toast grid grid-cols-[24px_minmax(0,1fr)_40px] items-center gap-2.5 rounded-panel border border-danger-fill bg-danger-tint py-2 pr-1.5 pl-3.5 text-ink touch-none select-none [box-shadow:0_4px_12px_-8px_rgb(22_24_29/0.18)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
   role="alert"
   aria-atomic="true"
   data-testid="error-toast"
+  [style.transform]="offset() ? 'translateY(' + offset() + 'px)' : null"
+  [style.opacity]="offset() ? 1 - offset() / 120 : null"
+  [style.transition]="dragging() ? 'none' : 'transform 180ms ease, opacity 180ms ease'"
+  (pointerdown)="start($event)"
+  (pointermove)="move($event)"
+  (pointerup)="end()"
+  (pointercancel)="end()"
 >
   <span
-    class="toast__icon grid place-items-center w-7 h-7 rounded-full bg-danger-tint text-danger-ink"
+    class="toast__icon grid size-6 place-items-center text-danger-ink"
     aria-hidden="true"
-    ><app-icon name="alert" [size]="16"
+    ><app-icon name="alert" [size]="18"
   /></span>
-  <p class="m-0 text-14 font-medium leading-[1.55] wrap-anywhere">{{ message() }}</p>
+  <p class="m-0 text-14 font-medium leading-[1.5] wrap-anywhere">{{ message() }}</p>
   <button
-    class="grid place-items-center w-11 h-11 p-0 border-0 rounded-control bg-transparent cursor-pointer text-inherit hover:[background:rgb(255_255_255/0.1)] focus-visible:[outline:2px_solid_currentColor] focus-visible:-outline-offset-4"
+    class="grid size-10 cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink hover:bg-danger-fill/50 focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-4"
     type="button"
     aria-label="오류 알림 닫기"
     (click)="dismissed.emit()"
   >
-    <app-icon name="x" [size]="18" />
+    <app-icon name="x" [size]="16" />
   </button>
 </div>

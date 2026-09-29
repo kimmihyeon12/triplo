@@ -95,3 +95,63 @@
     opacity: 0.85;
   }
 }
+
+/*
+  앱 안의 움직임(2026-09-29 사용자 요청). 탭 밑줄 이동·카드 높이 펼침·메뉴 튀어나옴만 둔다.
+  무엇이 바뀌었는지 알리는 용도이며 짧게(160~260ms) 끝난다. 모션 감소 설정은 위의 공통 규칙이 멈춘다.
+*/
+
+/*
+  접었다 펴는 카드. 지원하는 브라우저에서는 높이가 늘어나며 열리고,
+  지원하지 않으면 바로 열린다(열고 닫는 기능은 같다). 내용이 떠오르는 전환은
+  쓰지 않는다(2026-09-29 사용자 결정).
+*/
+@supports (interpolate-size: allow-keywords) {
+  /*
+    닫힐 때는 급감속 곡선을 쓰지 않는다. 처음 몇 프레임에 높이가 확 줄고 끝에서
+    끌려 버벅이는 것처럼 보였다. 닫힘은 고르게 짧게, 열림만 부드럽게 멈춘다.
+    열림에만 붙는 아래 여백도 같이 옮겨 마지막에 튀지 않게 한다.
+  */
+  details.fold {
+    interpolate-size: allow-keywords;
+    transition: padding-block-end 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  details.fold::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      content-visibility 200ms allow-discrete;
+  }
+  details.fold[open] {
+    transition-duration: 260ms;
+    transition-timing-function: var(--ease-out);
+  }
+  details.fold[open]::details-content {
+    block-size: auto;
+    transition-duration: 260ms;
+    transition-timing-function: var(--ease-out);
+  }
+}
+
+/* 행의 더보기 메뉴는 누른 버튼 자리에서 작게 튀어나온다. 뒤 가림막은 흐려지며 깔린다. */
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+app-row-menu details[open] > [role='menu'] {
+  transform-origin: top right;
+  animation: menu-pop 160ms var(--ease-out) both;
+}
+body:has(app-row-menu details[open])::before {
+  transition: opacity 180ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+  }
+}
