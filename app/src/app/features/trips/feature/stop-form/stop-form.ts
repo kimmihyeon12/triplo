@@ -149,6 +149,8 @@ export class StopFormPage {
       onCleanup(() => {
         active = false;
       });
+      // 충돌 뒤 새로 불러오기가 끝나면 폼을 서버본으로 다시 채운다.
+      this.store.reloads();
       const id = this.id();
       this.trip.set(null);
       this.editing.set(null);

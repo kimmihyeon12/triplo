@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, untracked } from '@angular/core';
+import { computed, inject, Injectable, signal, untracked } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
@@ -46,6 +46,13 @@ export class TripEditorStore {
   readonly saveError = computed(() => this.draft()?.error ?? null);
   readonly lastSavedAt = computed(() => (this.sessionMatches() ? this.state.lastSavedAt() : null));
   readonly hasPending = computed(() => !!this.draft());
+  /**
+   * 새로 불러오기가 끝날 때마다 오른다. 편집 폼은 여행을 자기 사본으로 들고
+   * 있으므로 이 값을 따라 폼을 서버본으로 다시 채운다. 그러지 않으면 옛 사본으로
+   * 저장해 다른 기기에서 바꾼 내용을 지운다.
+   */
+  private readonly reloadCount = signal(0);
+  readonly reloads = this.reloadCount.asReadonly();
 
   open(id: string): Promise<Trip | null> {
     return untracked(() => this.load(id));
@@ -142,7 +149,9 @@ export class TripEditorStore {
     this.pending.discard(id);
     this.repo.forget?.(id);
     patchState(this.state, { currentState: 'idle', saveState: 'idle' });
-    return this.load(id);
+    const trip = await this.load(id);
+    this.reloadCount.update((n) => n + 1);
+    return trip;
   }
 
   retrySave(): Promise<boolean> {

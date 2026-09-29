@@ -199,7 +199,10 @@ describe('trip editing async contract', () => {
     await store.commit({ ...server, title: '내 입력' });
     expect(store.saveState()).toBe('conflict');
     expect(store.current()?.title).toBe('내 입력');
+    expect(store.reloads()).toBe(0);
     await store.reload();
+    // 편집 폼은 이 값을 따라 폼을 서버본으로 다시 채운다.
+    expect(store.reloads()).toBe(1);
     expect(forgotten).toEqual([server.id]);
     expect(store.current()?.title).toBe('서버본');
     expect(store.saveState()).toBe('idle');
