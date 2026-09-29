@@ -164,3 +164,8 @@
 <main class="focus:[outline:none]" id="main" tabindex="-1" [attr.aria-busy]="!!navigating()">
   <router-outlet />
 </main>
+
+<!-- 여행 불러오기·저장·삭제 실패처럼 여러 화면에서 나는 오류를 한 자리에 띄운다. -->
+@if (toast.message()) {
+  <app-error-toast [message]="toast.message()" (dismissed)="toast.dismiss()" />
+}

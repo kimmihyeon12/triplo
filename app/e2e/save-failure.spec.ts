@@ -12,6 +12,8 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await page.evaluate((flag) => localStorage.setItem(flag, '1'), FAIL_FLAG);
     await page.getByTestId('trip-save').click();
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'error');
+    // 저장 실패는 화면을 옮겨도 보이도록 앱 전체의 오류 토스트로도 알린다.
+    await expect(page.getByTestId('error-toast')).toContainText('테스트용 저장 실패');
     await expect(page.getByText('저장에 실패했습니다.')).toBeVisible();
     await expect(page.getByTestId('trip-title')).toHaveValue('실패 테스트');
     await expect(page).toHaveURL(/\/trips\/new$/);

@@ -5,6 +5,8 @@ import { IconComponent } from './shared/ui/icon/icon';
 import { NavigationHistory } from './core/navigation-history';
 import { PageBar } from './core/page-bar';
 import { PageTools } from './shared/ui/page-tools/page-tools';
+import { ErrorToast } from './shared/ui/error-toast/error-toast';
+import { ErrorToastService } from './core/error-toast-service';
 import { AuthStore } from './features/auth/data/auth-store';
 import {
   PendingDraftRegistry,
@@ -13,12 +15,13 @@ import {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, IconComponent, PageTools],
+  imports: [RouterOutlet, RouterLink, IconComponent, PageTools, ErrorToast],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
 })
 export class App {
   private readonly router = inject(Router);
+  readonly toast = inject(ErrorToastService);
   readonly navigating = this.router.currentNavigation;
   readonly showNavigationLoading = signal(false);
   private readonly pageBar = inject(PageBar);

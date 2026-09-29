@@ -8,6 +8,7 @@ import { TripEditorStore } from './trip-editor-store';
 import { PendingDraftRegistry } from './pending-draft-registry';
 import { TripListStore } from './trip-list-store';
 import { TripConflictError } from './trip-data-client';
+import { ErrorToastService } from '../../../core/error-toast-service';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -38,6 +39,7 @@ function setup(overrides: Partial<TripRepository> = {}) {
       TripEditorStore,
       TripListStore,
       PendingDraftRegistry,
+      ErrorToastService,
       { provide: TRIP_REPOSITORY, useValue: repo },
     ],
   });
@@ -201,5 +203,21 @@ describe('trip editing async contract', () => {
     expect(forgotten).toEqual([server.id]);
     expect(store.current()?.title).toBe('서버본');
     expect(store.saveState()).toBe('idle');
+  });
+
+  it('여행 목록이나 여행을 불러오지 못하면 오류 토스트로 알린다', async () => {
+    const { store, list, injector } = setup({
+      list: async () => {
+        throw new Error('여행 목록을 불러오지 못했어요.');
+      },
+      get: async () => {
+        throw new Error('여행을 불러오지 못했어요.');
+      },
+    });
+    const toast = injector.get(ErrorToastService);
+    await list.loadList();
+    expect(toast.message()).toBe('여행 목록을 불러오지 못했어요.');
+    await store.open('x');
+    expect(toast.message()).toBe('여행을 불러오지 못했어요.');
   });
 });
