@@ -14,8 +14,8 @@ grant usage on schema public, auth to authenticated;
 insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('22222222-2222-2222-2222-222222222222');
 \ir ../migrations/20260917000000_create_trip_tables.sql
 \ir ../migrations/20260929000000_trip_version_and_save.sql
+\ir ../migrations/20260929000001_trip_grants.sql
 \set ON_ERROR_STOP 0
-grant select, insert, update, delete on all tables in schema public to authenticated;
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 select 'A new' as t, save_trip('{"id":"t1","title":"강릉","startDate":"2026-10-10","endDate":null,"regions":[{"id":"t1:region:0","name":"강릉시","order":0,"regionCode":"51150"}],"stops":[{"id":"s1","kind":"meal","name":"순두부","address":"","regionId":"t1:region:0","date":"2026-10-10","order":0,"stayMinutes":60,"memo":"","fixedTime":"12:30","excluded":false,"locationStatus":"verified","location":{"lat":37.7,"lng":128.9},"placeRef":{"provider":"kakao","id":"99","url":null},"estimatedCost":12000}],"stays":[{"id":"a1","name":"숙소","address":"","regionId":null,"checkIn":"2026-10-10","checkOut":"2026-10-11","checkInTime":null,"checkOutTime":null,"dayOrder":null,"reservation":"unknown","memo":"","locationStatus":"unverified","location":null,"placeRef":null}]}'::jsonb, 0) as v;
