@@ -52,6 +52,7 @@ import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 import { ChatSheet } from '../../../travel-chat/travel-chat';
 import { CompanionFace } from '../../../travel-chat/companion';
+import type { BadgeTone } from '../../../../shared/util/badge-tone';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -261,14 +262,19 @@ export class TripDetailPage {
       : `${names.slice(0, 4).join(' → ')} 외 ${names.length - 4}개`;
   }
 
-  nightCellClass(state: string): string {
+  /**
+   * 공통 배지의 tone으로 색을 고른다. 전에는 [class]로 cell--* 이름을 넣었는데,
+   * 그러면 배지가 스스로 붙이는 클래스와 겹쳐 색이 빠지고 안쪽 여백만 남아
+   * 글자가 옆 줄보다 안쪽으로 들어가 보였다.
+   */
+  nightTone(state: string): BadgeTone {
     return state === 'covered'
-      ? 'cell--stay'
+      ? 'stay'
       : state === 'conflict'
-        ? 'cell--danger'
+        ? 'danger'
         : state === 'undecided'
-          ? 'cell--warn'
-          : 'cell--ghost';
+          ? 'warn'
+          : 'neutral';
   }
 
   segKey(seg: DaySegment, i: number): string {

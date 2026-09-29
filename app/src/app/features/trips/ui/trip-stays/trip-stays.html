@@ -79,20 +79,20 @@
     <ul class="flex flex-col gap-3" data-testid="stay-list">
       @for (s of sortedStays(); track s.id) {
         <li
-          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)]"
+          class="panel stay bg-panel rounded-panel shadow-panel p-4 grid grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)]"
           [attr.data-testid]="'stay-' + s.id"
           [id]="'stay-card-' + s.id"
         >
           <div
-            class="stay__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-ink text-white -mt-1.25"
+            class="stay__badge size-6 flex items-center justify-center rounded-full bg-stay-ink text-white mt-px"
           >
-            <app-icon name="home" [size]="18" />
+            <app-icon name="home" [size]="14" />
           </div>
           <!-- 일정 카드와 같은 위계다: 제목·지도 / 회색 메타 / 주소 / 라벨. -->
           <div class="stay__main flex flex-col gap-1 min-w-0">
             <div class="flex items-center gap-1.5 text-15">
               <strong class="min-w-0 truncate" [title]="s.name">{{ s.name }}</strong>
-              <span class="inline-flex flex-none gap-1 ml-auto">
+              <span class="inline-flex flex-none gap-1 ml-auto -my-1">
                 <a
                   class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                   [href]="naverUrl(s)"

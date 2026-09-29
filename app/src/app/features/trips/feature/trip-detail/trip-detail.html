@@ -287,7 +287,7 @@
                         번호만 숙소 색으로 구분한다.
                       -->
                       <li
-                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--selected]:bg-stay-tint [@media(min-width:_720px)]:grid-cols-[28px_minmax(0,1fr)_auto]"
+                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--selected]:bg-stay-tint [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                         [class.flash]="flashId() === seg.stay.id"
                         [class.item--selected]="selectedMarkerId() === seg.stay.id"
                         [attr.data-testid]="'day-stay-' + seg.stay.id"
@@ -295,7 +295,7 @@
                       >
                         <button
                           type="button"
-                          class="item__badge w-8 h-8 flex items-center justify-center rounded-full bg-stay-ink text-white text-14 font-bold border-0 cursor-pointer p-0 -mt-1.25 [&.item\_\_badge--unverified]:opacity-[0.55]"
+                          class="item__badge size-6 flex items-center justify-center rounded-full bg-stay-ink text-white text-12 font-bold tabular-nums leading-none border-0 cursor-pointer p-0 mt-px [&.item\_\_badge--unverified]:opacity-[0.55]"
                           [class.item__badge--unverified]="!seg.stay.location"
                           [attr.aria-label]="
                             stopNumber(idx) +
@@ -312,7 +312,7 @@
                             <strong class="item__name min-w-0 truncate" [title]="seg.stay.name">{{
                               seg.stay.name
                             }}</strong>
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto">
+                            <span class="item__maps inline-flex gap-1 flex-none ml-auto -my-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stay)"
@@ -502,7 +502,7 @@
                       </li>
                     } @else {
                       <li
-                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[32px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--conflict]:[outline:1px_solid_var(--color-danger-ink)] [&.item--conflict]:-outline-offset-1 [&.item--selected]:bg-accent-tint [@media(min-width:_720px)]:grid-cols-[28px_minmax(0,1fr)_auto]"
+                        class="item [&.flash]:animate-[settle_400ms_var(--ease-out)] motion-reduce:[&.flash]:bg-accent-tint motion-reduce:[&.flash]:animate-none grid bg-panel grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] p-4 [border-top:1px_solid_var(--color-border)] [transition:background-color_var(--dur)_var(--ease-out)] first:[border-top:0] [&.item--conflict]:[outline:1px_solid_var(--color-danger-ink)] [&.item--conflict]:-outline-offset-1 [&.item--selected]:bg-accent-tint [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                         [class.item--excluded]="seg.stop.excluded"
                         [class.flash]="flashId() === seg.stop.id"
                         [class.item--conflict]="isConflicted(seg.stop.id)"
@@ -512,7 +512,7 @@
                       >
                         <button
                           type="button"
-                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 -mt-1.25 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-accent-deep p-0 text-14 font-bold text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
+                          class="item__badge in-[.item--excluded]:bg-ground-2 in-[.item--excluded]:text-ink-3 mt-px flex size-6 cursor-pointer items-center justify-center rounded-full tabular-nums leading-none border-0 bg-accent-deep p-0 text-12 font-bold text-white [&.item\_\_badge--unverified]:opacity-[0.55]"
                           [class.item__badge--unverified]="!seg.stop.location"
                           [attr.aria-label]="
                             stopNumber(idx) +
@@ -551,7 +551,7 @@
                               >
                             }
                             <!-- 지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다 -->
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto">
+                            <span class="item__maps inline-flex gap-1 flex-none ml-auto -my-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stop)"
@@ -822,7 +822,7 @@
             @for (d of overview().days; track d.date) {
               <li>
                 <a
-                  class="ov__row grid rounded-control no-underline grid-cols-[40px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] px-2 py-3.5 text-inherit [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[40px_minmax(0,1fr)_auto]"
+                  class="ov__row grid rounded-control no-underline grid-cols-[24px_minmax(0,1fr)] gap-[var(--sp-2)_var(--sp-3)] px-2 py-3.5 text-inherit [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2 [@media(min-width:_720px)]:items-center [@media(min-width:_720px)]:grid-cols-[24px_minmax(0,1fr)_auto]"
                   [routerLink]="[]"
                   [queryParams]="{ tab: 'days', day: d.date }"
                   queryParamsHandling="merge"
@@ -830,9 +830,9 @@
                   [attr.data-testid]="'overview-day-' + d.dayNumber"
                 >
                   <span
-                    class="ov__no flex items-center justify-center w-8 h-8 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
+                    class="ov__no flex items-center justify-center size-6 bg-accent-deep text-white rounded-full row-[span_2] [align-self:start] [@media(min-width:_720px)]:row-auto"
                     [attr.aria-label]="d.dayNumber + '일차'"
-                    ><span class="ov__day text-14 font-bold leading-none" aria-hidden="true">{{
+                    ><span class="ov__day text-12 font-bold leading-none tabular-nums" aria-hidden="true">{{
                       d.dayNumber
                     }}</span></span
                   >
@@ -876,8 +876,8 @@
                   </span>
                   <span
                     appBadge
-                    class="ov__night cell text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
-                    [class]="nightCellClass(d.nightState)"
+                    class="ov__night text-left col-2 [justify-self:start] whitespace-normal [@media(min-width:_720px)]:max-w-65 [@media(min-width:_720px)]:col-3"
+                    [tone]="nightTone(d.nightState)"
                     [attr.data-testid]="'overview-night-' + d.dayNumber"
                   >
                     <app-icon
@@ -934,7 +934,7 @@
                 >
                   <span
                     appBadge
-                    class="cell"
+                    class="cell min-w-7 justify-center tabular-nums"
                     [class.cell--danger]="i.kind === 'stay-conflict' || i.kind === 'fixed-time'"
                     [class.cell--warn]="i.kind !== 'stay-conflict' && i.kind !== 'fixed-time'"
                     >{{ i.count }}</span
@@ -977,10 +977,10 @@
         <details
           #addSheet
           appDismissible
-          class="menu-sheet relative w-full"
+          class="menu-sheet relative w-full [@media(min-width:_720px)]:w-auto"
         >
           <summary
-            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
+            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer [@media(min-width:_720px)]:px-8 list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
             data-testid="add-open"
           >
             일정 추가
