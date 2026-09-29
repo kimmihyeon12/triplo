@@ -6,7 +6,7 @@
   오류만 alert로 읽어 주고, 성공·안내는 흐름을 끊지 않게 status로 읽는다.
 -->
 <div
-  class="toast grid grid-cols-[24px_minmax(0,1fr)_40px] items-center gap-2.5 rounded-panel py-1 pr-1.5 pl-3.5 text-ink touch-none select-none [backdrop-filter:blur(16px)_saturate(160%)] [-webkit-backdrop-filter:blur(16px)_saturate(160%)] [box-shadow:0_4px_12px_-8px_rgb(22_24_29/0.18)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
+  class="toast grid grid-cols-[24px_minmax(0,1fr)_40px] items-center gap-2.5 rounded-panel pr-1.5 pl-3.5 text-ink touch-none select-none [backdrop-filter:blur(16px)_saturate(160%)] [-webkit-backdrop-filter:blur(16px)_saturate(160%)] [box-shadow:0_4px_12px_-8px_rgb(22_24_29/0.18)] animate-[toast-enter_180ms_cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none"
   [class]="tone().card"
   [attr.role]="kind() === 'error' ? 'alert' : 'status'"
   aria-atomic="true"
