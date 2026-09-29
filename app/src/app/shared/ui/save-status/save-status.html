@@ -1,26 +1,9 @@
+<!--
+  사용자가 무언가 해야 하는 상태(저장 실패·충돌)만 보인다(2026-09-29 사용자 결정).
+  저장 중에는 상단 바가 네트워크 요청으로 로딩을 보이고, '저장됨 · 14:32'는
+  편집할 때마다 떠서 알려 주는 것 없이 자리만 차지했다.
+-->
 @switch (state()) {
-  @case ('saving') {
-    <span
-      appBadge
-      class="cell cell--ghost"
-      role="status"
-      data-testid="save-status"
-      data-state="saving"
-      >저장 중…</span
-    >
-  }
-  @case ('saved') {
-    <span
-      appBadge
-      class="cell cell--accent"
-      role="status"
-      data-testid="save-status"
-      data-state="saved"
-    >
-      <app-icon name="check" [size]="14" />
-      저장됨 · {{ time() }}
-    </span>
-  }
   @case ('error') {
     <span
       class="flex flex-wrap items-center gap-2"
@@ -68,10 +51,5 @@
       </button>
       <span class="text-12 text-ink-3">불러오면 지금 입력은 사라져요</span>
     </span>
-  }
-  @default {
-    <span appBadge class="cell cell--ghost" data-testid="save-status" data-state="idle"
-      >저장본</span
-    >
   }
 }

@@ -25,7 +25,7 @@
         저장 중·저장됨·실패만 나타난다(저장됨은 방금 저장한 결과 확인용).
       -->
   @if (saveState() !== 'idle') {
-    <app-save-status [state]="saveState()" [savedAt]="savedAt()" (retry)="retry.emit()"
+    <app-save-status [state]="saveState()" (retry)="retry.emit()"
       (reload)="reload.emit()"
     />
   }

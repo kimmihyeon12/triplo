@@ -1,8 +1,6 @@
 <div class="mx-auto flex max-w-(--content-max) flex-col gap-3 px-4 pb-8 pt-4 md:px-6">
   @if (loadState() === 'loading') {
-    <p class="flex items-center gap-2 py-10 text-13 text-ink-2" role="status" data-testid="stats-loading">
-      <app-spinner/> 불러오는 중입니다.
-    </p>
+    <!-- 불러오는 동안은 상단 바가 로딩을 알린다(2026-09-29). -->
   } @else if (loadState() === 'error') {
     <div class="rounded-panel bg-panel p-5 shadow-panel" role="alert" data-testid="stats-error">
       <p class="font-semibold">방문 기록을 불러오지 못했어요.</p>

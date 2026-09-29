@@ -14,7 +14,6 @@ import type { Trip } from '../../model/trip';
 export class TripHeader {
   readonly trip = input.required<Trip>();
   readonly saveState = input<'idle' | 'saving' | 'saved' | 'error' | 'conflict'>('idle');
-  readonly savedAt = input<Date | null>(null);
   readonly retry = output<void>();
   readonly reload = output<void>();
   readonly period = computed(() => formatPeriod(this.trip().startDate, this.trip().endDate));

@@ -21,7 +21,8 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
     await page.getByTestId('trip-save').click();
     await expect(page.getByTestId('trip-title')).toHaveText('실패 테스트');
-    await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved');
+    // 저장에 성공하면 표시가 사라진다. 실패·충돌만 보인다.
+    await expect(page.getByTestId('save-status')).toHaveCount(0);
   });
 
   test('상세에서 순서 변경 저장이 실패하면 화면 상태는 유지되고 재시도로 기기에 반영된다', async ({
@@ -46,7 +47,8 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
 
     await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
     await page.getByTestId('retry-save').click();
-    await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved');
+    // 저장에 성공하면 표시가 사라진다. 실패·충돌만 보인다.
+    await expect(page.getByTestId('save-status')).toHaveCount(0);
     await page.reload();
     await expect(items).toHaveText(['나', '가']);
   });
