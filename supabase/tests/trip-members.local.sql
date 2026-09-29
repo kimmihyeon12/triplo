@@ -121,6 +121,14 @@ select 'C leave' as t, leave_trip('t1');
 select 'C trips after leave (0)' as t, count(*) from trips;
 select 'C leave again (not_found)' as t, leave_trip('t1');
 
+-- 가계부를 한 번도 열지 않은 여행에 친구가 들어와도 주인 칸은 주인 닉네임이고 친구가 그 뒤다.
+set request.jwt.claim.sub = :'A';
+select 'A save t3 (1)' as t, save_trip('{"id":"t3","title":"양양","regions":[],"stops":[],"stays":[]}'::jsonb, 0);
+select create_trip_invite('t3') as code4 \gset
+set request.jwt.claim.sub = :'B';
+select 'B join t3 (t3)' as t, join_trip(:'code4');
+select 'no-ledger people (self 주인, member 민지)' as t, string_agg(id || ' ' || name, ', ' order by "order") from ledger_people where trip_id = 't3';
+
 -- 분담은 지출과 같은 여행에만 달린다. 주인만 여행을 지운다.
 set request.jwt.claim.sub = :'A';
 select 'A save t2 (1)' as t, save_trip('{"id":"t2","title":"속초","regions":[],"stops":[],"stays":[]}'::jsonb, 0);
@@ -131,4 +139,4 @@ insert into expense_splits (expense_id, trip_id, person_id, amount) values ('e1'
 set role authenticated;
 set request.jwt.claim.sub = :'A';
 select 'A delete t2' as t, delete_trip('t2');
-select 'A trips (t1)' as t, string_agg(id, ',') from trips;
+select 'A trips (t1,t3)' as t, string_agg(id, ',') from trips;

@@ -425,12 +425,14 @@ begin
   on conflict (trip_id, user_id) do nothing;
   get diagnostics v_added = row_count;
   if v_added > 0 then
-    -- 함께 쓰는 가계부에서 '나'는 사람마다 뜻이 달라진다. 주인의 닉네임으로 바꾼다.
-    update public.ledger_people p
-       set name = left(m.nickname, 40)
+    -- 함께 쓰는 가계부에서 '나'는 사람마다 뜻이 달라진다. 주인 칸(self)을 주인 닉네임으로
+    -- 둔다. 주인이 가계부를 한 번도 열지 않았으면 여기서 만든다. 그러지 않으면 나중에
+    -- 가계부를 처음 읽는 쪽이 '나'로 만들어 친구에게도 '나'로 보인다.
+    insert into public.ledger_people as p (trip_id, id, name, "order")
+    select v_trip, 'self', left(coalesce(nullif(btrim(m.nickname), ''), '만든 사람'), 40), 0
       from public.trip_members m
-     where p.trip_id = v_trip and p.id = 'self' and p.name = '나'
-       and m.trip_id = v_trip and m.role = 'owner' and btrim(m.nickname) <> '';
+     where m.trip_id = v_trip and m.role = 'owner'
+    on conflict (trip_id, id) do update set name = excluded.name where p.name = '나';
     insert into public.ledger_people (trip_id, id, name, "order")
     values (v_trip, 'member-' || v_uid, left(v_nickname, 40),
             coalesce((select max("order") + 1 from public.ledger_people where trip_id = v_trip), 0))
