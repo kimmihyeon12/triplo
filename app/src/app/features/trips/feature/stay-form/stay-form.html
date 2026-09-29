@@ -2,7 +2,7 @@
   class="page flex flex-col gap-3 mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
 >
   @if (!trip()) {
-    <p class="text-ink-3" role="status">불러오는 중…</p>
+    <!-- 불러오는 동안은 상단 바가 로딩을 알린다(2026-09-29). -->
   } @else {
     <p class="flex flex-wrap items-center gap-2 text-12 leading-normal text-ink-3">
       <app-icon
@@ -311,26 +311,13 @@
         </div>
       }
 
-      @if (store.saveState() === 'error') {
-        <div appNotice tone="danger" role="alert">
-          <app-icon
-            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
-            name="alert"
-          />
-          <div class="notice__body flex-1 min-w-0">
-            <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은
-            그대로 남아 있습니다.
-            <div class="text-12 leading-normal">{{ store.saveError() }}</div>
-          </div>
-        </div>
-      }
 
       @if (store.saveState() !== 'idle') {
         <div class="flex flex-wrap items-center gap-2 form-status justify-end">
           <app-save-status
             [state]="store.saveState()"
-            [savedAt]="store.lastSavedAt()"
             (retry)="store.retrySave()"
+            (reload)="store.reload()"
           />
         </div>
       }

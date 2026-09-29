@@ -71,9 +71,6 @@ export class TripListPage implements OnInit {
    * 첫 화면인지 여부. 여행이 없을 때는 두 갈래를 큰 카드로 세워 무엇이
    * 다른지 읽게 하고, 하나라도 쌓이면 작은 버튼으로 줄여 목록에 자리를 준다.
    */
-  readonly isFirstTime = computed(
-    () => this.store.listState() === 'ready' && this.store.trips().length === 0,
-  );
 
   onTripMenu(action: string, trip: Trip): void {
     if (action === 'edit') void this.router.navigate(['/trips', trip.id, 'edit']);

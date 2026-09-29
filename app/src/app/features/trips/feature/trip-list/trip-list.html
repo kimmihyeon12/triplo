@@ -6,7 +6,8 @@
     여행이 하나라도 있으면 목록이 주인공이라 작은 버튼으로 줄인다.
     첫 화면에서는 아래 빈 상태에서 같은 두 갈래를 카드로 크게 보여준다.
   -->
-  @if (!isFirstTime()) {
+  <!-- 불러오는 동안에는 그리지 않는다. 여행이 없으면 아래 첫 화면이 대신한다. -->
+  @if (store.view() === 'list') {
     <nav class="make grid gap-2 grid-cols-[1fr_1fr]" aria-label="여행 만들기">
 <!--
         공통 버튼은 1px 테두리를 갖는다. 단색 버튼은 테두리를 배경색과 맞추면
@@ -55,27 +56,15 @@
   }
 
   @switch (store.listState()) {
-    @case ('loading') {
-      <p class="text-ink-3" role="status">불러오는 중…</p>
-    }
     @case ('error') {
-      <div appNotice tone="danger" role="alert">
-        <app-icon name="alert" />
-        <div class="notice__body flex-1 min-w-0">
-          <strong class="in-[.notice]:font-bold">기기 저장소를 읽지 못했습니다.</strong>
-          <div class="text-12 leading-normal">{{ store.listError() }}</div>
-          <div class="notice__actions flex gap-2 flex-wrap mt-2">
-            <button
-              appButton
-              type="button"
-              class="btn btn--sm"
-              (click)="store.loadList()"
-              variant="danger"
-            >
-              다시 시도
-            </button>
-          </div>
-        </div>
+      <!--
+        무엇이 잘못됐는지는 오류 토스트가 말한다. 토스트는 사라지므로 목록 자리에는
+        빈 목록으로 잘못 보이지 않도록 다시 시도만 남긴다.
+      -->
+      <div class="flex justify-center py-10">
+        <button appButton type="button" (click)="store.loadList()" data-testid="retry-list">
+          <app-icon name="refresh" [size]="16" /> 다시 시도
+        </button>
       </div>
     }
     @case ('ready') {
@@ -136,13 +125,6 @@
                 <app-icon class="mt-1 flex-none text-ink-3" name="chevron-right" [size]="18" />
               </span>
             </a>
-
-            <!--
-              첫 화면에서도 지도를 숨기지 않는다. 보여 줄 기록은 아직 없지만
-              기능이 있다는 사실은 알려야 나중에 찾아올 수 있다. 두 갈래 카드
-              아래에 두어 시작하는 일을 가리지 않게 한다.
-            -->
-            <app-visit-map-banner class="mt-1 block" />
           </div>
         </section>
       } @else {
@@ -255,11 +237,6 @@
     }
   }
 
-  <p
-    class="alpha text-12 leading-normal text-ink-3 flex flex-wrap justify-center items-center text-center mt-2 gap-[var(--sp-1)_var(--sp-2)]"
-  >
-    내부 알파 · 이 기기에만 저장됩니다
-  </p>
 </div>
 
 <!--

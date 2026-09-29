@@ -22,11 +22,14 @@ import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
-import { LocalLedger } from '../../data/local-ledger';
+import { LEDGER_REPOSITORY } from '../../data/ledger-repository';
+import { LedgerSaver } from '../../data/ledger-saver';
+import { expenseLinks } from '../../util/expense-link';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
 import {
+  validateLedger,
   categoryBreakdown,
   duplicateTitleIds,
   newLedger,
@@ -63,8 +66,15 @@ export class Expenses {
   /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
   readonly add = input<string | undefined>();
   readonly store = inject(TripEditorStore);
-  private readonly repository = inject(LocalLedger);
+  private readonly repository = inject(LEDGER_REPOSITORY);
+  readonly saver = new LedgerSaver(this.repository);
+  private readRequest = 0;
   readonly ledger = signal<Ledger>(newLedger());
+  /**
+   * 가계부를 읽어 온 여행 id. 폼은 이 값이 지금 여행과 같을 때만 그린다.
+   * 읽기 전에 폼이 열리면 사람 목록이 비어 결제자·분담 대상 기본값을 채우지 못한다.
+   */
+  readonly loadedTrip = signal('');
   readonly error = signal('');
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
@@ -88,10 +98,9 @@ export class Expenses {
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
   );
-  readonly links = computed(() => [
-    ...(this.store.current()?.stops.filter((s) => !s.excluded) ?? []),
-    ...(this.store.current()?.stays ?? []),
-  ]);
+  readonly links = computed(() =>
+    expenseLinks(this.store.current()?.stops ?? [], this.store.current()?.stays ?? []),
+  );
   readonly transfers = computed(() => transferSuggestions(this.ledger()));
   /** 이름이 겹치는 지출. 목록에서 라벨로 알린다. */
   readonly duplicateIds = computed(() => duplicateTitleIds(this.ledger().expenses));
@@ -106,12 +115,7 @@ export class Expenses {
       this.editing.set(null);
       this.blocked.set(false);
       this.error.set('');
-      try {
-        this.ledger.set(this.repository.read(this.id()));
-      } catch (e) {
-        this.blocked.set(true);
-        this.error.set(e instanceof Error ? e.message : '기록을 읽지 못했어요.');
-      }
+      void this.load(this.id());
     });
   }
 
@@ -119,29 +123,56 @@ export class Expenses {
     return this.ledger().people.find((p) => p.id === id)?.name ?? '알 수 없음';
   }
 
-  persist(next: Ledger): boolean {
-    if (this.blocked()) return false;
+  /** 가계부를 읽는다. 여행을 빠르게 옮겨 다니면 늦게 온 이전 여행의 결과는 버린다. */
+  private async load(tripId: string): Promise<void> {
+    const request = ++this.readRequest;
     try {
-      this.repository.save(this.id(), next);
-      this.ledger.set(next);
-      this.error.set('');
-      return true;
+      const ledger = await this.repository.read(tripId);
+      if (request !== this.readRequest) return;
+      this.ledger.set(ledger);
+      this.loadedTrip.set(tripId);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : '이 기기에 저장하지 못했어요.');
+      if (request !== this.readRequest) return;
+      this.blocked.set(true);
+      this.error.set(e instanceof Error ? e.message : '기록을 읽지 못했어요.');
+    }
+  }
+
+  /**
+   * 바뀐 가계부를 저장한다. 가계부 전체가 아니라 바뀐 동작만 서버에 보낸다
+   * (친구가 동시에 지출을 더해도 막히지 않게). 저장 중에 다시 누르면 무시하고,
+   * 실패하면 알린 뒤 서버에 남은 가계부로 화면을 맞춘다.
+   */
+  async persist(next: Ledger): Promise<boolean> {
+    if (this.blocked()) return false;
+    const invalid = validateLedger(next);
+    if (invalid) {
+      this.error.set(invalid);
       return false;
     }
+    const result = await this.saver.save(this.id(), this.ledger(), next);
+    if (result.status === 'busy') return false;
+    // 저장 중에 시작된 읽기가 늦게 도착해 결과를 덮지 않게 한다.
+    this.readRequest++;
+    if (result.status === 'saved') {
+      this.ledger.set(result.ledger);
+      this.error.set('');
+      return true;
+    }
+    this.error.set(result.error);
+    if (result.ledger) this.ledger.set(result.ledger);
+    return false;
   }
 
   addPerson(): void {
     const name = this.personName().trim();
     if (!name) return;
-    if (
-      this.persist({
-        ...this.ledger(),
-        people: [...this.ledger().people, { id: crypto.randomUUID(), name }],
-      })
-    )
-      this.personName.set('');
+    void this.persist({
+      ...this.ledger(),
+      people: [...this.ledger().people, { id: crypto.randomUUID(), name }],
+    }).then((ok) => {
+      if (ok) this.personName.set('');
+    });
   }
 
   /** 행마다 버튼을 늘어놓지 않고 더보기 한 곳에 모은다. */
@@ -215,13 +246,19 @@ export class Expenses {
     this.scanOpen.set(true);
   }
 
-  /** 사진에서 확인한 지출을 한 번에 더한다. 하나라도 저장하지 못하면 모두 남기지 않는다. */
+  /**
+   * 사진에서 확인한 지출을 한 번에 더한다. 중간에 실패하면 앞선 건은 서버에 남으므로,
+   * 다시 누르면 이미 저장된 건은 빼고 나머지만 보낸다.
+   */
   saveScanned(expenses: Expense[]): void {
     const previous = this.ledger();
-    if (this.persist({ ...previous, expenses: [...previous.expenses, ...expenses] })) {
+    const saved = new Set(previous.expenses.map((e) => e.id));
+    const rest = expenses.filter((e) => !saved.has(e.id));
+    void this.persist({ ...previous, expenses: [...previous.expenses, ...rest] }).then((ok) => {
+      if (!ok) return;
       this.scanOpen.set(false);
       this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
-    }
+    });
   }
 
   saveExpense(expense: Expense): void {
@@ -229,17 +266,18 @@ export class Expenses {
     const expenses = previous.expenses.some((e) => e.id === expense.id)
       ? previous.expenses.map((e) => (e.id === expense.id ? expense : e))
       : [...previous.expenses, expense];
-    if (this.persist({ ...previous, expenses })) this.formOpen.set(false);
+    void this.persist({ ...previous, expenses }).then((ok) => {
+      if (ok) this.formOpen.set(false);
+    });
   }
 
   removeExpense(id: string): void {
-    if (
-      this.persist({
-        ...this.ledger(),
-        expenses: this.ledger().expenses.filter((e) => e.id !== id),
-      })
-    )
-      this.deleteId.set('');
+    void this.persist({
+      ...this.ledger(),
+      expenses: this.ledger().expenses.filter((e) => e.id !== id),
+    }).then((ok) => {
+      if (ok) this.deleteId.set('');
+    });
   }
 
   recordReceipt(): void {
@@ -252,16 +290,15 @@ export class Expenses {
       this.error.set('수령 금액은 남은 정산 금액 안에서 입력해 주세요.');
       return;
     }
-    if (
-      this.persist({
-        ...this.ledger(),
-        receipts: [
-          ...this.ledger().receipts,
-          { ...transfer, id: crypto.randomUUID(), amount, cancelledReason: null },
-        ],
-      })
-    )
-      this.receiving.set(null);
+    void this.persist({
+      ...this.ledger(),
+      receipts: [
+        ...this.ledger().receipts,
+        { ...transfer, id: crypto.randomUUID(), amount, cancelledReason: null },
+      ],
+    }).then((ok) => {
+      if (ok) this.receiving.set(null);
+    });
   }
 
   async copySettlement(): Promise<void> {
@@ -280,7 +317,7 @@ export class Expenses {
   receiveAll(): void {
     const pending = this.transfers();
     if (pending.length === 0) return;
-    this.persist({
+    void this.persist({
       ...this.ledger(),
       receipts: [
         ...this.ledger().receipts,
@@ -294,16 +331,15 @@ export class Expenses {
       this.error.set('취소 이유를 입력해 주세요.');
       return;
     }
-    if (
-      this.persist({
-        ...this.ledger(),
-        receipts: this.ledger().receipts.map((r) =>
-          r.id === this.cancelling() ? { ...r, cancelledReason: this.cancelReason().trim() } : r,
-        ),
-      })
-    ) {
+    void this.persist({
+      ...this.ledger(),
+      receipts: this.ledger().receipts.map((r) =>
+        r.id === this.cancelling() ? { ...r, cancelledReason: this.cancelReason().trim() } : r,
+      ),
+    }).then((ok) => {
+      if (!ok) return;
       this.cancelling.set('');
       this.cancelReason.set('');
-    }
+    });
   }
 }

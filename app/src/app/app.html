@@ -12,7 +12,7 @@
   <div
     class="pointer-events-none fixed inset-x-0 top-0 z-10007 h-[3px] overflow-hidden"
     role="status"
-    aria-label="페이지 불러오는 중"
+    aria-label="불러오는 중"
     data-testid="navigation-loading"
   >
     <span class="nav-progress__fill block h-full w-full"></span>
@@ -26,7 +26,7 @@
       <div
         class="pointer-events-none absolute inset-x-0 -bottom-px h-0.75 overflow-hidden"
         role="status"
-        aria-label="페이지 불러오는 중"
+        aria-label="불러오는 중"
         data-testid="navigation-loading"
       >
         <span class="nav-progress__fill block h-full w-full"></span>
@@ -164,3 +164,8 @@
 <main class="focus:[outline:none]" id="main" tabindex="-1" [attr.aria-busy]="!!navigating()">
   <router-outlet />
 </main>
+
+<!-- 여행 불러오기·저장·삭제 실패처럼 여러 화면에서 나는 오류를 한 자리에 띄운다. -->
+@if (toast.message()) {
+  <app-error-toast [message]="toast.message()" (dismissed)="toast.dismiss()" />
+}

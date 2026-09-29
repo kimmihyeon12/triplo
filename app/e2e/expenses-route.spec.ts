@@ -21,6 +21,19 @@ test.describe('정산 화면 진입', () => {
     await expect(page.getByTestId('panel-expenses')).toBeVisible();
   });
 
+  test('일정의 정산하기로 들어오면 나를 결제자로, 모두를 분담 대상으로 둔다', async ({ page }) => {
+    const id = await createTrip(page, {
+      title: '정산하기 진입',
+      start: '2026-05-01',
+      end: '2026-05-02',
+      regions: ['강릉시'],
+    });
+
+    await page.goto(`/trips/${id}/expenses?add=none`);
+    await expect(page.locator('#expense-payer')).toHaveValue('self');
+    await expect(page.locator('#expense-share-self')).toBeChecked();
+  });
+
   test('주소로 바로 들어가도 화면이 열린다', async ({ page }) => {
     const id = await createTrip(page, {
       title: '정산 직접 진입',

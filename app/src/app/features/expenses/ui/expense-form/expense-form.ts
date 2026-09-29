@@ -17,12 +17,9 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import type { Expense, ExpensePerson } from '../../model/ledger';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { allocateEvenly, expenseKey, isEvenSplit, validMoney } from '../../util/ledger';
+import { defaultPayer, type ExpenseLink } from '../../util/expense-link';
 
-export interface ExpenseLink {
-  id: string;
-  name: string;
-  estimatedCost?: number | null;
-}
+export type { ExpenseLink } from '../../util/expense-link';
 
 @Component({
   selector: 'app-expense-form',
@@ -66,7 +63,7 @@ export class ExpenseForm {
           `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
       );
       this.category.set(e?.category ?? 'other');
-      this.paidBy.set(e?.paidBy ?? people[0]?.id ?? '');
+      this.paidBy.set(e?.paidBy ?? defaultPayer(people));
       this.linkId.set(e?.linkId ?? '');
       this.personal.set(e?.personal ?? false);
       this.selected.set(e?.splits.map((s) => s.personId) ?? people.map((p) => p.id));
@@ -117,6 +114,7 @@ export class ExpenseForm {
     if (link) {
       this.title.set(link.name);
       this.amount.set(link.estimatedCost ?? null);
+      this.category.set(link.category);
     }
   }
 

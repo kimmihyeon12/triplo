@@ -4,6 +4,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { nicknameFrom, normalizeNickname } from '../util/nickname';
+import { TripSaveError } from '../../trips/data/trip-data-client';
 
 /** Authentication only; travel drafts remain device data until the DB migration. */
 @Injectable({ providedIn: 'root' })
@@ -250,6 +251,17 @@ export class AuthStore {
    * Edge Function을 부른다. 로그인 토큰은 클라이언트가 알아서 실어 보낸다.
    * 서버가 돌려준 오류 코드를 그대로 던져 부르는 쪽이 사정을 구분하게 한다.
    */
+  /**
+   * 여행 저장소가 쓸 DB 클라이언트. 초기화(설정 읽기·세션 복원)를 기다린다.
+   * 설정이 없으면 서버 저장을 쓸 수 없으므로 저장 실패로 알린다.
+   */
+  async dataClient(): Promise<SupabaseClient> {
+    await this.initialize();
+    if (!this.client)
+      throw new TripSaveError('서버에 연결되지 않았어요. 잠시 후 다시 시도해 주세요.');
+    return this.client;
+  }
+
   async callFunction<T>(name: string, body: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
     if (!this.client) throw new Error('server_unavailable');
     const { data, error } = await this.client.functions.invoke(name, { body, signal });

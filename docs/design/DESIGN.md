@@ -75,7 +75,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 | 배지 | `span[appBadge]` | accent/place/region/stay/warn/danger/ok/meal/cafe/neutral. 상태 텍스트 필수. meal·cafe는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
 | 안내 | `div[appNotice]` | warn/danger/ok. 동적 오류 등 필요한 경우에만 소비자가 live region 지정 |
 | 로딩 | `app-spinner` | 장식용. 독립 로딩은 부모 role=status와 접근성 이름, 버튼은 aria-busy 제공 |
-| 오류 토스트 | `app-error-toast` | message/dismissed. 하단 중앙·안전 영역·role=alert·닫기 버튼. 자동 소멸하지 않음 |
+| 오류 토스트 | `app-error-toast` | message/dismissed. 하단 중앙·안전 영역·role=alert·닫기 버튼·아래로 밀어 닫기(40px 초과). 자동 소멸하지 않음 |
 | 하단 동작 바 | `div[appActionBar]` | 하단 고정·안전 영역. 내부 action-bar__inner에 주요 버튼 배치 |
 | 스위치 | `app-switch` | checked/disabled/label/changed. 누르는 즉시 반영되는 설정에 쓴다. 폼을 보내야 반영되는 자리에는 체크박스를 쓴다. 줄 전체가 버튼이면 `presentational`을 켜고 표시만 맡긴다 |
 
@@ -117,7 +117,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 
 - 버튼 로딩은 문구를 유지하고 내부 스피너·중복 실행 차단으로 표현한다. ‘화면으로 이동 중’ 같은 별도 문장을 추가하지 않는다.
 - 스피너는 `animate-spin`과 `border-r-transparent`로 열린 테두리를 회전시킨다. border shorthand가 투명 부분을 덮지 않게 한다. 모션 감소 설정은 `motion-reduce:animate-none`으로 존중한다.
-- 토스트는 짙은 배경·흰 본문·오류 아이콘을 사용하며 44px 닫기 영역을 확보한다. 모바일 하단 안전 영역을 반영한다.
+- 토스트는 연한 빨강 바탕(`danger-tint`)·연한 빨강 테두리(`danger-fill`)·옅은 그림자에 본문색 글자를 쓴다. 경고 아이콘은 원 없이 `danger-ink`로, 닫기 X는 본문색으로 둔다(2026-09-29 사용자 결정). 닫기 영역은 40px 이상 확보한다. 모바일 하단 안전 영역을 반영한다.
 - 작은 아이콘 버튼도 조작 영역은 최소 44px로 확보한다. 키보드 포커스를 숨기지 않는다.
 - **상태에 따라 값이 바뀌는 자리는 `[class.left-5]`가 아니라 `[style.left.px]`를 쓴다.** Tailwind는 소스에서 클래스 문자열을 찾아 CSS를 만드는데, `[class.xxx]` 표기는 그 문자열이 나타나지 않아 규칙이 만들어지지 않는다. 화면에서는 아무 일도 일어나지 않고 오류도 나지 않는다(2026-09-17 스위치 손잡이에서 확인). 색처럼 두 값 중 하나를 고르는 경우도 `[style.background]`에 토큰을 넣는다.
 - 아이콘은 Lucide 도형을 1.75px 둥근 선으로 그린다(2026-09-28). 직접 그린 경로는 아이콘마다 비율·모서리가 달라 촌스럽게 보였다. 새 아이콘도 Lucide에서 골라 [icon.ts](../../app/src/app/shared/ui/icon/icon.ts)에 원본 이름과 함께 넣고, 화면에 SVG를 따로 그리지 않는다(브랜드 T 표시 제외).

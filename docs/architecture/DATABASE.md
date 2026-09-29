@@ -1,8 +1,8 @@
 # 데이터베이스 구조
 
-여행 데이터를 계정별로 저장하는 표 구조다. 원본 마이그레이션은 `supabase/migrations/`에 있고, 앱 모델은 `app/src/app/features/trips/model/trip.ts`다. 이 문서는 두 곳의 대응 관계와 설계 결정을 기록한다.
+여행과 가계부를 계정별로 저장하는 표 구조다. 원본 마이그레이션은 `supabase/migrations/`에 있고, 앱 모델은 `app/src/app/features/trips/model/trip.ts`다. 이 문서는 두 곳의 대응 관계와 설계 결정을 기록한다.
 
-2026-09-17 작성. 적용 여부는 아래 '적용 현황'을 본다.
+2026-09-17 작성, 2026-09-29 원격 적용·저장 함수 추가. 적용 여부는 아래 '적용 현황'을 본다.
 
 ## 전체 관계
 
@@ -29,7 +29,7 @@ trip_regions       trip_stops      accommodation_stays
 
 | 컬럼 | 타입 | 비고 |
 | --- | --- | --- |
-| id | uuid | 기본 키. 앱이 만든 값을 그대로 쓴다 |
+| id | text | 기본 키. 앱이 만든 값을 그대로 쓴다. AI 일정 담기가 UUID가 아닌 고정 id를 써서 text다 |
 | owner_id | uuid | `auth.users`를 참조. 계정 삭제 시 함께 삭제 |
 | title | text | 여행 이름 |
 | start_date | date | null이면 날짜 미정 |
@@ -38,6 +38,7 @@ trip_regions       trip_stops      accommodation_stays
 | schema_version | smallint | 모델 변경 시 이전 데이터를 구분한다 |
 | created_at | timestamptz | |
 | updated_at | timestamptz | 목록 정렬 기준 |
+| version | integer | 저장이 성공할 때마다 1 오른다. 저장 충돌 확인용(2026-09-29) |
 
 `(owner_id, updated_at desc)` 색인을 둔다. 여행 목록이 이 순서로 읽기 때문이다.
 
@@ -45,18 +46,19 @@ trip_regions       trip_stops      accommodation_stays
 
 | 컬럼 | 타입 | 비고 |
 | --- | --- | --- |
-| id | uuid | 기본 키 |
-| trip_id | uuid | 여행 삭제 시 함께 삭제 |
+| id | text | 기본 키 |
+| trip_id | text | 여행 삭제 시 함께 삭제 |
 | name | text | 지역 이름 |
 | "order" | integer | 표시 순서. `order`가 예약어라 따옴표를 쓴다 |
+| region_code | text | 표준 지역 코드. 통계 집계 키. 예전 여행에는 없을 수 있다(2026-09-29) |
 
 ### trip_stops — 일정 항목
 
 | 컬럼 | 타입 | 비고 |
 | --- | --- | --- |
-| id | uuid | 기본 키 |
-| trip_id | uuid | 여행 삭제 시 함께 삭제 |
-| region_id | uuid | 지역 삭제 시 null이 된다. 항목은 남는다 |
+| id | text | 기본 키 |
+| trip_id | text | 여행 삭제 시 함께 삭제 |
+| region_id | text | 지역 삭제 시 null이 된다. 항목은 남는다 |
 | kind | stop_kind | `place`·`meal`·`break`·`buffer` |
 | name | text | |
 | address | text | 기본값은 빈 문자열 |
@@ -77,9 +79,9 @@ trip_regions       trip_stops      accommodation_stays
 
 | 컬럼 | 타입 | 비고 |
 | --- | --- | --- |
-| id | uuid | 기본 키 |
-| trip_id | uuid | 여행 삭제 시 함께 삭제 |
-| region_id | uuid | 지역 삭제 시 null |
+| id | text | 기본 키 |
+| trip_id | text | 여행 삭제 시 함께 삭제 |
+| region_id | text | 지역 삭제 시 null |
 | name, address | text | |
 | check_in | date | |
 | check_out | date | 숙박 밤은 `[check_in, check_out)` |
@@ -115,8 +117,10 @@ trip_regions       trip_stops      accommodation_stays
 
 `trips`는 `owner_id`를 직접 본다. 딸린 세 표는 `owns_trip(trip_id)` 함수로 여행의 주인을 확인한다. 같은 규칙을 세 번 적지 않기 위해서다.
 
+표 권한은 `authenticated`에만 준다(`20260929000001_trip_grants.sql`). 이 프로젝트는 새 표에 권한을 자동으로 주지 않아, 원격 적용 뒤 비로그인 요청이 `permission denied for table trips`로 막히는 것을 보고 확인했다. 비로그인(`anon`)은 표도 저장 함수도 쓸 수 없다.
+
 ```sql
-create function owns_trip(target uuid) returns boolean ...
+create function owns_trip(target text) returns boolean ...
   select exists (
     select 1 from public.trips
     where id = target and owner_id = (select auth.uid())
@@ -143,9 +147,51 @@ on conflict (id) do update set role = excluded.role;
 
 여행 하나를 저장할 때 **네 표를 한 트랜잭션으로** 갱신한다(2026-09-17 사용자 결정). 앱이 표마다 나눠 호출하면 중간에 끊겼을 때 일정이 반만 저장된 상태로 남는다.
 
-구현은 여행 전체를 JSON으로 받아 처리하는 RPC 함수로 한다. 이 함수는 아직 만들지 않았다.
+`save_trip(p_trip jsonb, p_base_version integer) returns integer`가 이를 맡는다(`20260929000000_trip_version_and_save.sql`, 2026-09-29).
 
-기존 `TripRepository` 인터페이스의 `save(trip)`이 여행 하나를 통째로 넘기므로 화면 코드는 바뀌지 않는다.
+- 앱 모델 JSON(camelCase)을 그대로 받는다. 변환은 이 함수와 읽기 쪽 `app/.../trips/data/trip-rows.ts`에만 있다.
+- `security invoker`라 RLS가 그대로 걸린다. 다른 사람의 여행은 보이지 않으므로 같은 id로 저장하면 새 여행으로 넣으려다 기본 키 중복(`23505`)으로 실패한다.
+- **저장 충돌:** 앱은 불러온 버전을 `p_base_version`으로 보낸다. 서버 버전과 다르면 `P0409`로 거절하고, 앱은 '다른 곳에서 먼저 바뀌었어요'와 [새로 불러오기]를 보인다. 새 여행은 0을 보낸다.
+- 딸린 표는 지우고 다시 넣는다. 제약(시각 형식, 좌표 짝, 금액 음수 금지)을 어기면 전체가 되돌려진다.
+- 로그인하지 않으면 `28000`으로 거절한다.
+
+읽기와 삭제는 함수 없이 표를 직접 쓴다. 목록·한 개 읽기는 `*, trip_regions(*), trip_stops(*), accommodation_stays(*)` 중첩 select, 삭제는 `trips` 행을 지우면 cascade로 딸린 행이 사라진다.
+
+로컬 확인: `supabase/tests/save-trip.local.sql`이 PostgreSQL에 `auth` 스키마를 흉내 내 위 동작을 검사한다.
+
+## 가계부 표 (2026-09-29)
+
+마이그레이션은 `20260929000002_ledger_tables.sql`이고 앱 모델은 `app/src/app/features/expenses/model/ledger.ts`다. 모든 표가 `trip_id`로 여행에 딸리며, 여행을 지우면 함께 사라진다.
+
+| 표 | 담는 것 | 키·제약 |
+| --- | --- | --- |
+| `trip_ledgers` | 예산 | `trip_id` 기본 키, 예산은 null 또는 0 이상 |
+| `ledger_people` | 정산에 참여하는 사람 | `(trip_id, id)` 기본 키, 이름 1~40자 |
+| `expenses` | 지출 한 건 | `version`으로 충돌 확인, 결제자는 `ledger_people` 참조, 금액 양수 |
+| `expense_splits` | 지출별 사람별 분담 | `(expense_id, person_id)` 기본 키, 분담 합계는 저장 함수가 확인 |
+| `settlement_receipts` | 수령 기록과 취소 사유 | 보낸 사람과 받은 사람이 달라야 함, 취소 사유는 비울 수 없음 |
+
+### 동작 단위로 저장한다
+
+여행은 한 번에 통째로 저장하지만, 가계부는 **동작 하나씩** 저장한다(2026-09-29 사용자 결정). 친구 여럿이 동시에 지출을 더하는 경우가 흔하기 때문이다. 가계부 전체를 한 버전으로 묶으면 서로 다른 지출을 더해도 매번 충돌이 난다.
+
+앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가다.
+
+| 함수 | 하는 일 |
+| --- | --- |
+| `add_ledger_person(trip, person)` | 사람을 더하거나 이름을 바꾼다 |
+| `save_expense(trip, expense, base_version) → integer` | 지출과 분담을 한 트랜잭션으로 저장하고 새 버전을 돌려준다 |
+| `delete_expense(trip, id, base_version)` | 지출을 지운다 |
+| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다 |
+| `set_budget(trip, budget)` | 예산을 바꾸거나 비운다 |
+
+- 모든 함수는 `ledger_guard`로 로그인(`28000`)과 여행 소유(`P0404`)를 먼저 확인한다. `security invoker`라 RLS도 그대로 걸린다.
+- 지출은 여행처럼 버전을 확인한다. 새 지출은 0을 보내고, 버전이 다르면 `P0409`로 거절한다. 앱은 새로 불러오기를 안내한다.
+- 분담 합계가 지출 금액과 다르면 `P0422`로 거절하고 아무것도 바꾸지 않는다.
+- 읽기는 네 표를 동시에 select해 앱 모델로 합친다(`ledger-rows.ts`). 사람 '나'(`self`)가 없으면 처음 읽을 때 한 번 만든다.
+- 기기에 있던 가계부는 옮기지 않고 한 번 지운다(2026-09-29 사용자 결정).
+
+로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다.
 
 ## 계정 삭제
 
@@ -155,14 +201,14 @@ on conflict (id) do update set role = excluded.role;
 
 ## 아직 없는 것
 
-- **저장 충돌 검사.** 현재 인터페이스에 버전 인자가 없어 여러 탭에서 같은 여행을 저장하면 나중 것이 앞선 것을 덮는다. OpenSpec tasks 9.5에서 다룬다.
 - **친구 공유 관련 표.** `TripParticipant`·`TripMember`·`TripInvite`·`TripShare`는 tasks 8.2 범위다. 그때 이 RLS 규칙도 "본인 여행"에서 "참여한 여행"으로 넓혀야 한다.
-- **가계부 표.** 실제 지출·결제자·분담은 별도 표가 필요하다.
 - **AI 호출 횟수 기록.** 사용자별 하루 제한을 서버에서 세려면 표가 필요하다. tasks 13.12에서 다룬다.
 
 ## 적용 현황
 
-- 2026-09-17 마이그레이션 작성. **원격 적용 전이다.**
-- 프로젝트 `wslqgfetdwcmqeztixvs`(PostgreSQL 17.6), 적용 명령은 `npx supabase db push`.
-- 적용 후 확인할 것: 두 계정 간 접근 차단, 같은 계정 다른 기기 조회, 계정 삭제 시 여행 연쇄 삭제.
-- 2026-09-29 `20260929100000_profiles_role.sql` 작성. 로컬 PostgreSQL 임시 DB 검증 완료, 원격 적용 전이다.
+- 2026-09-17 마이그레이션 작성.
+- 2026-09-29 원격 적용(`npx supabase db push --linked`). 프로젝트 `wslqgfetdwcmqeztixvs`(PostgreSQL 17.6)에 세 마이그레이션(`20260917000000`, `20260929000000`, `20260929000001`)이 적용됐다.
+- 적용 후 확인: 비로그인 요청은 표·저장 함수 모두 `42501`로 거절. 로컬 PostgreSQL 17에서 저장 함수 동작(새 저장, 충돌 거절, 제약 위반 시 전체 되돌림, 다른 계정 차단, 비로그인 거절)을 확인했다.
+- 2026-09-29 가계부 마이그레이션(`20260929000002`) 원격 적용. 비로그인 요청은 가계부 표 다섯 개와 저장 함수 모두 `42501`로 거절됨을 확인했다. 적용 전에는 표가 없어 가계부 화면에서 404가 났다.
+- 2026-09-29 관리자 판별 마이그레이션(`20260929100000_profiles_role.sql`) 작성. 로컬 PostgreSQL 임시 DB 검증 완료, 원격 적용 전이다.
+- 아직 확인할 것: 실제 계정 두 개로 서로의 여행이 안 보이는지, 같은 계정 다른 기기 조회, 두 탭 충돌 알림, 계정 삭제 시 여행·가계부 연쇄 삭제, 실제 계정으로 지출 저장·수정·삭제와 챗봇 지출 적용.

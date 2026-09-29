@@ -206,6 +206,18 @@ body:has([data-testid='open-chat']) {
   --toast-bottom-offset: 80px;
 }
 
+/*
+  하단 고정 버튼 줄(action-bar: 저장·지출 기록 등)이 있는 화면도 같은 이유로 민다.
+  버튼 줄 높이 64px에 간격 8px. 여행 상세처럼 버튼 줄 위에 챗봇 버튼까지 있으면
+  둘 다 피한다(2026-09-29, 알림이 저장 버튼을 덮은 것을 보고 더함).
+*/
+body:has(.action-bar) {
+  --toast-bottom-offset: 72px;
+}
+body:has(.action-bar):has([data-testid='open-chat']) {
+  --toast-bottom-offset: 132px;
+}
+
 details.menu-sheet[open] > .menu-backdrop {
   opacity: 1;
   pointer-events: auto;
