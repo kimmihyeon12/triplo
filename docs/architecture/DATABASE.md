@@ -1,6 +1,6 @@
 # 데이터베이스 구조
 
-여행 데이터를 계정별로 저장하는 표 구조다. 원본 마이그레이션은 `supabase/migrations/`에 있고, 앱 모델은 `app/src/app/features/trips/model/trip.ts`다. 이 문서는 두 곳의 대응 관계와 설계 결정을 기록한다.
+여행과 가계부를 계정별로 저장하는 표 구조다. 원본 마이그레이션은 `supabase/migrations/`에 있고, 앱 모델은 `app/src/app/features/trips/model/trip.ts`다. 이 문서는 두 곳의 대응 관계와 설계 결정을 기록한다.
 
 2026-09-17 작성, 2026-09-29 원격 적용·저장 함수 추가. 적용 여부는 아래 '적용 현황'을 본다.
 
@@ -145,6 +145,40 @@ create function owns_trip(target text) returns boolean ...
 
 로컬 확인: `supabase/tests/save-trip.local.sql`이 PostgreSQL에 `auth` 스키마를 흉내 내 위 동작을 검사한다.
 
+## 가계부 표 (2026-09-29)
+
+마이그레이션은 `20260929000002_ledger_tables.sql`이고 앱 모델은 `app/src/app/features/expenses/model/ledger.ts`다. 모든 표가 `trip_id`로 여행에 딸리며, 여행을 지우면 함께 사라진다.
+
+| 표 | 담는 것 | 키·제약 |
+| --- | --- | --- |
+| `trip_ledgers` | 예산 | `trip_id` 기본 키, 예산은 null 또는 0 이상 |
+| `ledger_people` | 정산에 참여하는 사람 | `(trip_id, id)` 기본 키, 이름 1~40자 |
+| `expenses` | 지출 한 건 | `version`으로 충돌 확인, 결제자는 `ledger_people` 참조, 금액 양수 |
+| `expense_splits` | 지출별 사람별 분담 | `(expense_id, person_id)` 기본 키, 분담 합계는 저장 함수가 확인 |
+| `settlement_receipts` | 수령 기록과 취소 사유 | 보낸 사람과 받은 사람이 달라야 함, 취소 사유는 비울 수 없음 |
+
+### 동작 단위로 저장한다
+
+여행은 한 번에 통째로 저장하지만, 가계부는 **동작 하나씩** 저장한다(2026-09-29 사용자 결정). 친구 여럿이 동시에 지출을 더하는 경우가 흔하기 때문이다. 가계부 전체를 한 버전으로 묶으면 서로 다른 지출을 더해도 매번 충돌이 난다.
+
+앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가다.
+
+| 함수 | 하는 일 |
+| --- | --- |
+| `add_ledger_person(trip, person)` | 사람을 더하거나 이름을 바꾼다 |
+| `save_expense(trip, expense, base_version) → integer` | 지출과 분담을 한 트랜잭션으로 저장하고 새 버전을 돌려준다 |
+| `delete_expense(trip, id, base_version)` | 지출을 지운다 |
+| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다 |
+| `set_budget(trip, budget)` | 예산을 바꾸거나 비운다 |
+
+- 모든 함수는 `ledger_guard`로 로그인(`28000`)과 여행 소유(`P0404`)를 먼저 확인한다. `security invoker`라 RLS도 그대로 걸린다.
+- 지출은 여행처럼 버전을 확인한다. 새 지출은 0을 보내고, 버전이 다르면 `P0409`로 거절한다. 앱은 새로 불러오기를 안내한다.
+- 분담 합계가 지출 금액과 다르면 `P0422`로 거절하고 아무것도 바꾸지 않는다.
+- 읽기는 네 표를 동시에 select해 앱 모델로 합친다(`ledger-rows.ts`). 사람 '나'(`self`)가 없으면 처음 읽을 때 한 번 만든다.
+- 기기에 있던 가계부는 옮기지 않고 한 번 지운다(2026-09-29 사용자 결정).
+
+로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다.
+
 ## 계정 삭제
 
 `delete-account` 함수는 `auth.users` 행을 실제로 지운다(soft delete가 아니다). `trips.owner_id`에 `on delete cascade`를 걸어 두었으므로 그 사람의 여행·지역·장소·숙소가 함께 사라진다.
@@ -154,7 +188,6 @@ create function owns_trip(target text) returns boolean ...
 ## 아직 없는 것
 
 - **친구 공유 관련 표.** `TripParticipant`·`TripMember`·`TripInvite`·`TripShare`는 tasks 8.2 범위다. 그때 이 RLS 규칙도 "본인 여행"에서 "참여한 여행"으로 넓혀야 한다.
-- **가계부 표.** 실제 지출·결제자·분담은 별도 표가 필요하다.
 - **AI 호출 횟수 기록.** 사용자별 하루 제한을 서버에서 세려면 표가 필요하다. tasks 13.12에서 다룬다.
 
 ## 적용 현황
@@ -162,4 +195,5 @@ create function owns_trip(target text) returns boolean ...
 - 2026-09-17 마이그레이션 작성.
 - 2026-09-29 원격 적용(`npx supabase db push --linked`). 프로젝트 `wslqgfetdwcmqeztixvs`(PostgreSQL 17.6)에 세 마이그레이션(`20260917000000`, `20260929000000`, `20260929000001`)이 적용됐다.
 - 적용 후 확인: 비로그인 요청은 표·저장 함수 모두 `42501`로 거절. 로컬 PostgreSQL 17에서 저장 함수 동작(새 저장, 충돌 거절, 제약 위반 시 전체 되돌림, 다른 계정 차단, 비로그인 거절)을 확인했다.
-- 아직 확인할 것: 실제 계정 두 개로 서로의 여행이 안 보이는지, 같은 계정 다른 기기 조회, 두 탭 충돌 알림, 계정 삭제 시 여행 연쇄 삭제.
+- 2026-09-29 가계부 마이그레이션(`20260929000002`) 원격 적용. 비로그인 요청은 가계부 표 다섯 개와 저장 함수 모두 `42501`로 거절됨을 확인했다. 적용 전에는 표가 없어 가계부 화면에서 404가 났다.
+- 아직 확인할 것: 실제 계정 두 개로 서로의 여행이 안 보이는지, 같은 계정 다른 기기 조회, 두 탭 충돌 알림, 계정 삭제 시 여행·가계부 연쇄 삭제, 실제 계정으로 지출 저장·수정·삭제와 챗봇 지출 적용.
