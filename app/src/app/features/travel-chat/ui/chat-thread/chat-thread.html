@@ -149,7 +149,13 @@
 }
 
 <div class="flex-none border-t border-border bg-panel">
-  <div class="mx-auto w-full max-w-160 px-4 py-2">
+  <!--
+    아이폰 홈 표시줄 높이만큼 아래 여백을 더한다. 하단 고정 바([일정 추가])와 같은
+    방식이다. 없으면 입력창이 표시줄에 가려진다.
+  -->
+  <div
+    class="mx-auto w-full max-w-160 px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))]"
+  >
     @if (turnsLeft() === 0) {
       <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
         이 대화에서 물어볼 수 있는 횟수를 다 썼어요. 담을 것을 담고 새 대화를 시작해 주세요.
