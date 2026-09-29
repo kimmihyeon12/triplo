@@ -404,7 +404,6 @@
         (click)="copySettlement()"
         data-testid="copy-settlement"
       >
-        <app-icon [name]="copied() ? 'check' : 'copy'" [size]="18" />
         {{ copied() ? '복사했어요' : '정산 내용 복사' }}
       </button>
     </div>
@@ -422,7 +421,6 @@
       class="action-bar__inner mx-auto my-0 grid max-w-(--content-max) grid-cols-[auto_1fr] gap-2 [@media(min-width:_720px)]:flex [@media(min-width:_720px)]:justify-center"
     >
       <button appButton (click)="openScan()" data-testid="scan-expense">
-        <app-icon name="camera" [size]="18" />
         사진으로 입력
       </button>
       <button

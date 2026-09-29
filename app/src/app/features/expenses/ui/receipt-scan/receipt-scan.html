@@ -60,7 +60,6 @@
               (click)="marking.set(!marking())"
               data-testid="receipt-marker"
             >
-              <app-icon name="edit" [size]="16" />
               {{ marking() ? '형광펜 끄기' : '형광펜 칠하기' }}
             </button>
             @if (strokes().length) {

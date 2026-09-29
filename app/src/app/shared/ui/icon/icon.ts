@@ -124,9 +124,6 @@ const PATHS = {
   // lucide: arrow-up-down
   sort:
     'M21 16l-4 4-4-4M17 20V4M3 8l4-4 4 4M7 4v16',
-  // lucide: camera
-  camera:
-    'M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4zM9 13a3 3 0 1 0 6 0a3 3 0 1 0 -6 0',
 } as const satisfies Record<string, string>;
 
 /**
