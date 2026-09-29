@@ -89,10 +89,11 @@
             <app-icon name="home" [size]="14" />
           </div>
           <!-- 일정 카드와 같은 위계다: 제목·지도 / 회색 메타 / 주소 / 라벨. -->
-          <div class="stay__main flex flex-col gap-1 min-w-0">
+          <div class="stay__main relative pr-16 flex flex-col gap-1 min-w-0">
             <div class="flex items-center gap-1.5 text-15">
               <strong class="min-w-0 truncate" [title]="s.name">{{ s.name }}</strong>
-              <span class="inline-flex flex-none gap-1 ml-auto -my-1">
+              <!-- 일정 카드와 같이 지도 아이콘은 흐름에서 빼고 본문 전체에 같은 오른쪽 여백을 준다. -->
+              <span class="absolute right-0 -top-0.5 inline-flex gap-1">
                 <a
                   class="mapbtn relative inline-flex items-center justify-center rounded-cell no-underline [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                   [href]="naverUrl(s)"

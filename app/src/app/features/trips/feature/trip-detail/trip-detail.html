@@ -307,12 +307,12 @@
                         >
                           {{ stopNumber(idx) }}
                         </button>
-                        <div class="item__main flex flex-col gap-1 min-w-0">
+                        <div class="item__main relative pr-16 flex flex-col gap-1 min-w-0">
                           <div class="item__title flex items-center gap-1.5 text-15">
                             <strong class="item__name min-w-0 truncate" [title]="seg.stay.name">{{
                               seg.stay.name
                             }}</strong>
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto -my-1">
+                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stay)"
@@ -529,7 +529,7 @@
                           }
                         </button>
                         <div
-                          class="item__main in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
+                          class="item__main relative pr-16 in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
                         >
                           <div class="item__title flex items-center gap-1.5 text-15">
                             <strong
@@ -550,8 +550,13 @@
                                 {{ seg.stop.fixedTime }} 고정</span
                               >
                             }
-                            <!-- 지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다 -->
-                            <span class="item__maps inline-flex gap-1 flex-none ml-auto -my-1">
+                            <!--
+                              지도 앱 열기: 각 사가 배포하는 공식 서비스 아이콘을 원본 그대로 쓴다.
+                              제목 줄 안에 두면 제목만 아이콘 폭만큼 밀리고 주소·체류 줄은 카드
+                              끝까지 써서 오른쪽 끝이 어긋났다. 흐름에서 빼 오른쪽 위에 두고,
+                              본문 묶음 전체에 같은 오른쪽 여백(pr-16)을 준다.
+                            -->
+                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
                                 [href]="naverUrl(seg.stop)"
