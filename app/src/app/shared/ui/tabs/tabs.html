@@ -3,11 +3,11 @@
   화면을 나가지 못하고 이전 탭으로만 되돌아가, 상단 바의 ‹ 뒤로 가기와
   제스처 뒤로가기가 서로 다르게 동작한다. 그래서 주소만 바꿔 치운다.
 -->
-<nav class="tabs flex min-w-0 flex-1 gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
+<nav class="tabs relative flex min-w-0 flex-1 gap-1" role="tablist" [attr.aria-label]="ariaLabel()">
   @for (t of items(); track t.id; let i = $index) {
     @if (t.queryParams) {
       <a
-        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 no-underline [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
+        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 no-underline [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:font-bold [&.tab--on]:text-ink"
         role="tab"
         [attr.data-tab-id]="t.id"
         [class.tab--on]="active() === t.id"
@@ -24,7 +24,7 @@
       </a>
     } @else {
       <button
-        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:border-b-accent-deep [&.tab--on]:font-bold [&.tab--on]:text-ink"
+        class="tab flex min-h-10.5 items-center justify-center px-4 text-14 font-medium text-ink-2 [border-bottom:2px_solid_transparent] -mb-px [transition:color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out)] hover:text-ink [&.tab--on]:font-bold [&.tab--on]:text-ink"
         type="button"
         role="tab"
         [attr.data-tab-id]="t.id"
@@ -39,6 +39,15 @@
       </button>
     }
   }
+  <!--
+    선택 밑줄. 탭마다 밑줄을 켜고 끄지 않고 하나를 옮겨, 어느 탭에서 어느 탭으로
+    갔는지 보이게 한다. 자리는 코드가 선택된 탭을 재어 정한다.
+  -->
+  <span
+    #ink
+    class="tabs__ink pointer-events-none absolute bottom-[-1px] left-0 h-0.5 w-0 rounded-full bg-accent-deep opacity-0"
+    aria-hidden="true"
+  ></span>
 </nav>
 <!-- 탭 줄 오른쪽에 두는 보조 동작(예: 정산으로 이동). -->
 <ng-content />

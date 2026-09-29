@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterRenderEffect,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 export interface TabItem {
@@ -26,6 +36,44 @@ export class UiTabs {
   readonly ariaLabel = input('보기 전환');
   readonly selected = output<string>();
   private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly ink = viewChild.required<ElementRef<HTMLElement>>('ink');
+
+  constructor() {
+    // 탭이 바뀌거나 탭 줄 폭이 바뀌면(글꼴 로드·회전) 밑줄을 다시 맞춘다.
+    afterRenderEffect(() => {
+      this.active();
+      this.items();
+      this.placeInk();
+    });
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => this.placeInk());
+      observer.observe(this.host.nativeElement as HTMLElement);
+      inject(DestroyRef).onDestroy(() => observer.disconnect());
+    }
+  }
+
+  /**
+   * 선택된 탭 아래로 밑줄을 옮긴다. 처음 자리를 잡을 때는 움직이지 않고,
+   * 그다음부터 미끄러진다. 화면이 열리자마자 밑줄이 날아오면 산만하다.
+   */
+  private placeInk(): void {
+    const ink = this.ink().nativeElement;
+    const on = (this.host.nativeElement as HTMLElement).querySelector<HTMLElement>('.tab--on');
+    if (!on) {
+      ink.style.opacity = '0';
+      return;
+    }
+    ink.style.width = `${on.offsetWidth}px`;
+    ink.style.transform = `translateX(${on.offsetLeft}px)`;
+    ink.style.opacity = '1';
+    if (!ink.dataset['live']) {
+      ink.dataset['live'] = '1';
+      requestAnimationFrame(() => {
+        ink.style.transition =
+          'transform 260ms var(--ease-out), width 260ms var(--ease-out)';
+      });
+    }
+  }
 
   /**
    * 방향키로 옆 탭에 간다. role=tab을 쓰면 화살표 이동을 기대하기 때문이다.
