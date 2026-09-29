@@ -102,7 +102,7 @@ export class ChatPage implements OnInit {
   async apply(event: { messageId: string; draft: ChatDraft }): Promise<void> {
     if (this.editor.saveState() === 'saving') return;
     if (!this.store.trip()) this.store.setTrip(this.blankTrip(event.draft));
-    const next = this.store.applyDraft(event.draft);
+    const next = await this.store.applyDraft(event.draft);
     if (!next) return;
     if (!(await this.editor.commit(next)) || this.destroyRef.destroyed) return;
     this.appliedMessageId.set(event.messageId);
@@ -110,7 +110,7 @@ export class ChatPage implements OnInit {
   }
 
   async undo(): Promise<void> {
-    const previous = this.store.undo();
+    const previous = await this.store.undo();
     if (!previous) return;
     await this.editor.commit(previous);
     this.appliedMessageId.set(null);

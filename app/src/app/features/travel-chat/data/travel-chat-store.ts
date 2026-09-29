@@ -6,7 +6,8 @@ import { PLACE_SEARCH } from '../../places/data/place-search';
 import { verifyPlaces } from '../../ai-planning/data/verify-places';
 import { newId } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
-import { LocalLedger } from '../../expenses/data/local-ledger';
+import { LEDGER_REPOSITORY } from '../../expenses/data/ledger-repository';
+import { ledgerOps } from '../../expenses/util/ledger-ops';
 import type { Ledger } from '../../expenses/model/ledger';
 import { localCommand } from '../util/local-commands';
 import { isLedgerCommand, ledgerCommand } from '../util/local-ledger-commands';
@@ -44,7 +45,7 @@ export class TravelChatStore {
   private readonly provider = inject(CHAT_PROVIDER);
   private readonly placeSearch = inject(PLACE_SEARCH);
   private readonly history = inject(CHAT_HISTORY);
-  private readonly ledger = inject(LocalLedger);
+  private readonly ledger = inject(LEDGER_REPOSITORY);
   private undoLedger: { before: Ledger; after: Ledger } | null = null;
   private appliedVersion: string | null = null;
 
@@ -130,7 +131,7 @@ export class TravelChatStore {
           }};
         } else command = {text: '되돌릴 변경이 없거나 이후 일정이 달라졌어요.'};
       } else if (isLedgerCommand(text)) {
-        command = trip ? ledgerCommand(text, trip, this.ledger.read(trip.id)) : {text: '먼저 경비를 확인할 여행을 열어 주세요.'};
+        command = trip ? ledgerCommand(text, trip, await this.ledger.read(trip.id)) : {text: '먼저 경비를 확인할 여행을 열어 주세요.'};
       } else command = localCommand(text, trip);
       if (command) {
         this.push({role: 'assistant', kind: command.draft ? 'draft' : 'explore', ...command});
@@ -217,7 +218,7 @@ export class TravelChatStore {
    * 확인한 변경을 여행에 반영하고 그 결과를 돌려준다. 저장은 화면이 한다.
    * 적용 직전의 여행을 보관해 되돌리기를 제공한다.
    */
-  applyDraft(draft: ChatDraft): Trip | null {
+  async applyDraft(draft: ChatDraft): Promise<Trip | null> {
     const current = this.trip();
     if (!current) return null;
     const next = applyDraft(current, draft);
@@ -228,8 +229,9 @@ export class TravelChatStore {
     const ledgerChange = draft.action === 'local-change' ? draft.ledger : undefined;
     if (ledgerChange) {
       try {
-        if (JSON.stringify(this.ledger.read(current.id)) !== JSON.stringify(ledgerChange.before)) throw new Error('가계부가 변경되었어요. 다시 요청해 주세요.');
-        this.ledger.save(current.id, ledgerChange.after);
+        // 가계부는 동작 한 건씩 저장한다. 미리보기 뒤 다른 곳에서 바뀌었으면 적용하지 않는다.
+        if (JSON.stringify(await this.ledger.read(current.id)) !== JSON.stringify(ledgerChange.before)) throw new Error('가계부가 변경되었어요. 다시 요청해 주세요.');
+        await this.ledger.apply(current.id, ledgerOps(ledgerChange.before, ledgerChange.after));
       } catch (error) {
         patchState(this.state, {error: toChatError(error)});
         return null;
@@ -242,7 +244,7 @@ export class TravelChatStore {
   }
 
   /** 마지막 적용을 되돌린다. 저장은 화면이 한다. */
-  undo(): Trip | null {
+  async undo(): Promise<Trip | null> {
     const previous = this.state.undoTrip();
     if (!previous) return null;
     const current = this.trip();
@@ -252,8 +254,8 @@ export class TravelChatStore {
     }
     if (this.undoLedger) {
       try {
-        if (JSON.stringify(this.ledger.read(current.id)) !== JSON.stringify(this.undoLedger.after)) throw new Error('이후 가계부가 변경되어 되돌릴 수 없어요.');
-        this.ledger.save(current.id, this.undoLedger.before);
+        if (JSON.stringify(await this.ledger.read(current.id)) !== JSON.stringify(this.undoLedger.after)) throw new Error('이후 가계부가 변경되어 되돌릴 수 없어요.');
+        await this.ledger.apply(current.id, ledgerOps(this.undoLedger.after, this.undoLedger.before));
       } catch (error) {
         patchState(this.state, {error: toChatError(error)});
         return null;

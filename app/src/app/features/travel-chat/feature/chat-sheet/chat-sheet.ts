@@ -81,15 +81,15 @@ export class ChatSheet {
   }
 
   /** 확인한 변경을 반영한다. 저장은 여행 상세가 한다. */
-  apply(event: { messageId: string; draft: ChatDraft }): void {
-    const next = this.store.applyDraft(event.draft);
+  async apply(event: { messageId: string; draft: ChatDraft }): Promise<void> {
+    const next = await this.store.applyDraft(event.draft);
     if (!next) return;
     this.appliedMessageId.set(event.messageId);
     this.applied.emit(next);
   }
 
-  undo(): void {
-    const previous = this.store.undo();
+  async undo(): Promise<void> {
+    const previous = await this.store.undo();
     if (!previous) return;
     this.appliedMessageId.set(null);
     this.applied.emit(previous);
