@@ -24,6 +24,7 @@ import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LEDGER_REPOSITORY } from '../../data/ledger-repository';
 import { LedgerSaver } from '../../data/ledger-saver';
+import { expenseLinks } from '../../util/expense-link';
 import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
@@ -92,10 +93,9 @@ export class Expenses {
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
   );
-  readonly links = computed(() => [
-    ...(this.store.current()?.stops.filter((s) => !s.excluded) ?? []),
-    ...(this.store.current()?.stays ?? []),
-  ]);
+  readonly links = computed(() =>
+    expenseLinks(this.store.current()?.stops ?? [], this.store.current()?.stays ?? []),
+  );
   readonly transfers = computed(() => transferSuggestions(this.ledger()));
   /** 이름이 겹치는 지출. 목록에서 라벨로 알린다. */
   readonly duplicateIds = computed(() => duplicateTitleIds(this.ledger().expenses));
