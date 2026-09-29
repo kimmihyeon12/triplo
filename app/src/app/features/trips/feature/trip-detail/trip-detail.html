@@ -422,7 +422,7 @@
                           </span>
                         </div>
                         <div
-                          class="item__actions flex items-center gap-1.5 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:[align-self:start]"
+                          class="item__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5 [@media(min-width:_720px)]:col-start-auto [@media(min-width:_720px)]:my-0 [@media(min-width:_720px)]:[align-self:start]"
                         >
                           <span
                             class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden"
@@ -675,9 +675,12 @@
                         <!--
                           라벨은 맨 아래 한 줄이다. 좁은 화면에서는 같은 줄 왼쪽에 두어
                           더보기와 나란히 세운다. 빈 줄이 생기지 않는다.
+                          제목·주소와 같은 둘째 열에서 시작한다. 전에는 카드 전체 폭을
+                          써서 라벨만 번호 아래로 튀어나왔다. 버튼(36px)은 위아래 음수
+                          여백으로 줄 높이에서 빼 라벨 위가 벌어지지 않게 한다.
                         -->
                         <div
-                          class="item__actions flex items-center gap-1.5 col-span-full [@media(min-width:_720px)]:col-auto [@media(min-width:_720px)]:[align-self:start]"
+                          class="item__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5 [@media(min-width:_720px)]:col-start-auto [@media(min-width:_720px)]:my-0 [@media(min-width:_720px)]:[align-self:start]"
                         >
                           <span class="flex flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:hidden">
                             <span appBadge [tone]="kindTone(seg.stop.kind)">{{

@@ -168,7 +168,8 @@
             }
           </div>
           <!-- 라벨과 더보기를 맨 아래 한 줄에 나란히 둔다. -->
-          <div class="stay__actions col-span-full flex items-center gap-1.5">
+          <!-- 일정 카드와 같이 제목 열에서 시작하고 버튼이 줄 높이를 키우지 않게 한다. -->
+          <div class="stay__actions col-start-2 -my-1.5 -mr-2 flex items-center gap-1.5">
             <span class="flex flex-wrap items-center gap-1.5">
               <span appBadge class="cell cell--stay">{{ nightCount(s) }}박</span>
               <!-- 예약 여부는 이 화면의 핵심 상태라서 배지로 올린다. -->
