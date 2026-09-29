@@ -4,6 +4,7 @@ import type { Trip } from '../model/trip';
 import type { TripRow } from './trip-rows';
 import { SupabaseTripRepository } from './supabase-trip-repository';
 import {
+  TripAccessError,
   TripConflictError,
   TripSaveError,
   toTripError,
@@ -135,6 +136,14 @@ describe('SupabaseTripRepository 멤버', () => {
     };
     expect((await new SupabaseTripRepository(client, () => 'u-owner').list())[0].sharing?.role).toBe('owner');
     expect((await new SupabaseTripRepository(client, () => 'u-me').list())[0].sharing?.role).toBe('editor');
+  });
+});
+
+describe('toTripError 접근', () => {
+  it('P0404는 접근할 수 없다는 안내로 바꾼다', () => {
+    const error = toTripError({ code: 'P0404', message: 'not_found' });
+    expect(error).toBeInstanceOf(TripAccessError);
+    expect(error.message).toContain('접근할 수 없어요');
   });
 });
 
