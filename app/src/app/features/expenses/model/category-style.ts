@@ -13,7 +13,7 @@ export interface CategoryStyle {
   readonly tile: string;
   /** 분류 이름 글자색. */
   readonly ink: string;
-  /** 막대 조각과 필터 점의 채움. */
+  /** 막대 조각과 필터 점의 채움. 글자색보다 연한 톤이다. */
   readonly fill: string;
 }
 
@@ -22,32 +22,32 @@ export const CATEGORY_STYLE: Record<string, CategoryStyle> = {
     icon: 'meal',
     tile: 'bg-exp-food-tint text-exp-food-ink',
     ink: 'text-exp-food-ink',
-    fill: 'bg-exp-food-ink',
+    fill: 'bg-exp-food-bar',
   },
-  stay: { icon: 'bed', tile: 'bg-stay-tint text-stay-ink', ink: 'text-stay-ink', fill: 'bg-stay-ink' },
+  stay: { icon: 'bed', tile: 'bg-stay-tint text-stay-ink', ink: 'text-stay-ink', fill: 'bg-exp-stay-bar' },
   transport: {
     icon: 'car',
     tile: 'bg-exp-transport-tint text-exp-transport-ink',
     ink: 'text-exp-transport-ink',
-    fill: 'bg-exp-transport-ink',
+    fill: 'bg-exp-transport-bar',
   },
   activity: {
     icon: 'ticket',
     tile: 'bg-exp-activity-tint text-exp-activity-ink',
     ink: 'text-exp-activity-ink',
-    fill: 'bg-exp-activity-ink',
+    fill: 'bg-exp-activity-bar',
   },
   shopping: {
     icon: 'bag',
     tile: 'bg-exp-shopping-tint text-exp-shopping-ink',
     ink: 'text-exp-shopping-ink',
-    fill: 'bg-exp-shopping-ink',
+    fill: 'bg-exp-shopping-bar',
   },
   other: {
     icon: 'wallet',
     tile: 'bg-exp-other-tint text-exp-other-ink',
     ink: 'text-exp-other-ink',
-    fill: 'bg-exp-other-ink',
+    fill: 'bg-exp-other-bar',
   },
 };
 

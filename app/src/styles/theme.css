@@ -55,6 +55,18 @@
   --color-exp-other-ink: #4a5568;
   --color-exp-other-tint: #eef0f3;
   /*
+    요약 막대와 필터 점에 쓰는 연한 톤. 글자색(ink)을 그대로 칠했더니 막대가
+    무겁고 특히 기타(짙은 회색)가 칙칙했다(2026-09-29). 글자가 아니라 면이라
+    같은 색상에서 명도만 올린다. 분류 이름은 옆에 글자로 있으므로 색만으로
+    읽지 않는다.
+  */
+  --color-exp-food-bar: #d47a54;
+  --color-exp-stay-bar: #947ad0;
+  --color-exp-transport-bar: #598ccf;
+  --color-exp-activity-bar: #5aa278;
+  --color-exp-shopping-bar: #cc6c9a;
+  --color-exp-other-bar: #8c94a1;
+  /*
     지역 전용. ok(완료·확인됨)와 뜻이 겹치면 안 되므로 초록을 피한다.
     2026-09-21 올리브(#3f6212)에서 청록으로 옮겼다. 올리브는 색상이 누런
     초록(H86)이라 옆의 장소(파랑)·숙소(보라) 배지와 나란히 놓이면 혼자
