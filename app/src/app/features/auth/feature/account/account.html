@@ -212,13 +212,16 @@
     </button>
 
     <!--
-      되돌릴 수 없는 동작이지만 자주 쓰는 동작이 아니다. 버튼 모양 없이 빨간
-      글자로만 둔다(2026-09-29 사용자 결정). 누르는 영역은 위아래 여백으로
-      44px을 지킨다. 누르는 즉시 지우지 않고 확인을 한 번 받는다.
+      되돌릴 수 없는 동작이지만 자주 쓰는 동작이 아니다. 분홍 채움 버튼으로
+      두었더니 로그아웃보다 눈에 띄었다. 글자 버튼으로 낮추고 색만 빨강으로
+      알린다. 버튼 모양을 없앤 순수 글자도 써 봤으나 버튼 쪽이 나았다(2026-09-29
+      사용자 확인). 누르는 즉시 지우지 않고 확인을 한 번 받는다.
     -->
     <button
+      appButton
+      variant="ghost"
       type="button"
-      class="mx-auto cursor-pointer border-0 bg-transparent px-2 py-3 text-13 font-medium text-danger-ink underline-offset-4 hover:underline focus-visible:rounded-cell focus-visible:outline-2 focus-visible:outline-accent-deep"
+      class="mx-auto text-danger-ink! [@media(hover:_hover)]:hover:text-danger-ink!"
       (click)="toggleLeaving()"
       [attr.aria-expanded]="leaving()"
       data-testid="open-delete"
