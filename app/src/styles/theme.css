@@ -48,7 +48,7 @@
     그대로 칠하면 무겁고 파스텔까지 올리면 흐려 보여, 두 색의 중간 명도로
     맞췄다. 분류 이름은 옆에 글자로 있으므로 색만으로 읽지 않는다.
   */
-  --color-exp-food-bar: #83a379;
+  --color-exp-food-bar: #78b065;
   --color-exp-stay-bar: #947ad0;
   --color-exp-transport-bar: #598ccf;
   --color-exp-activity-bar: #56a7ac;
@@ -82,8 +82,8 @@
   --color-danger-ink: #bf3f3d;
   --color-danger-tint: #ffece9;
   --color-danger-fill: #fbcfcb;
-  --color-ok-ink: #0a7f41;
-  --color-ok-tint: #e5faea;
+  --color-ok-ink: #067d5f;
+  --color-ok-tint: #defcef;
   /*
     기록 지도 전용: 원본 2.5D 블록 시각화의 바다와 방문 빈도.
     지형은 순백에 가깝게 두므로 바다가 너무 옅으면 한반도 윤곽이 사라진다.
@@ -105,13 +105,13 @@
     거의 같은 색으로 보인다. 그래서 색상환에서 확실히 떨어진 청록으로 옮겼다.
   */
   /*
-    식사는 채도를 낮춘 세이지 녹색이다(2026-09-29 사용자 결정). 선명한 주황은 주의(노랑)와
-    충돌(빨강) 사이에 끼어 경고처럼 읽혔고, 살구색을 거쳐 녹색으로 정했다. 완료(ok)의
-    선명한 에메랄드와는 채도로 구분한다. 지출의 관광·활동은 식비와 겹치지 않게
+    식사는 생기 있는 잎사귀 녹색이다(2026-09-29 사용자 결정). 선명한 주황은 주의(노랑)와
+    충돌(빨강) 사이에 끼어 경고처럼 읽혔고, 살구색·세이지는 칙칙했다. 완료(ok)는
+    청록빛 에메랄드로 옮겨 색상으로 구분한다. 지출의 관광·활동은 식비와 겹치지 않게
     청록으로 옮겼다. 글자는 바탕 위 4.6:1 이상이다.
   */
-  --color-meal-ink: #537746;
-  --color-meal-tint: #ebf8e6;
+  --color-meal-ink: #387d16;
+  --color-meal-tint: #e4fcdc;
   --color-cafe-ink: #157795;
   --color-cafe-tint: #dff8ff;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
