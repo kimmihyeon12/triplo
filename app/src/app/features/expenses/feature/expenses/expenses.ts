@@ -70,6 +70,11 @@ export class Expenses {
   readonly saver = new LedgerSaver(this.repository);
   private readRequest = 0;
   readonly ledger = signal<Ledger>(newLedger());
+  /**
+   * 가계부를 읽어 온 여행 id. 폼은 이 값이 지금 여행과 같을 때만 그린다.
+   * 읽기 전에 폼이 열리면 사람 목록이 비어 결제자·분담 대상 기본값을 채우지 못한다.
+   */
+  readonly loadedTrip = signal('');
   readonly error = signal('');
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
@@ -123,7 +128,9 @@ export class Expenses {
     const request = ++this.readRequest;
     try {
       const ledger = await this.repository.read(tripId);
-      if (request === this.readRequest) this.ledger.set(ledger);
+      if (request !== this.readRequest) return;
+      this.ledger.set(ledger);
+      this.loadedTrip.set(tripId);
     } catch (e) {
       if (request !== this.readRequest) return;
       this.blocked.set(true);
