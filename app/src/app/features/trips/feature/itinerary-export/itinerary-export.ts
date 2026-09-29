@@ -12,7 +12,7 @@ import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import { TripEditorStore } from '../../data/trip-editor-store';
@@ -33,7 +33,7 @@ import { renderItineraryPng } from '../../data/itinerary-png';
     UiInput,
     UiField,
     UiCheckbox,
-    ErrorToast,
+    UiToast,
     ItinerarySnapshot,
     UiActionBar,
   ],

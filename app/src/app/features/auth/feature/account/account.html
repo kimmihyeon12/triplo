@@ -3,7 +3,7 @@
   [attr.aria-busy]="auth.loading() || auth.busy()"
 >
   @if (auth.error()) {
-    <app-error-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
+    <app-toast [message]="auth.error()!" (dismissed)="auth.clearError()" />
   }
 
   <!--

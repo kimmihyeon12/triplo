@@ -69,6 +69,6 @@
     }
   }
   @if (error()) {
-    <app-error-toast [message]="error()" (dismissed)="error.set('')" />
+    <app-toast [message]="error()" (dismissed)="error.set('')" />
   }
 </div>

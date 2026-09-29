@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
@@ -23,7 +23,7 @@ import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
   imports: [
     UiButton,
     UiSpinner,
-    ErrorToast,
+    UiToast,
     IconComponent,
     UiBarcode,
     UiPostmark,

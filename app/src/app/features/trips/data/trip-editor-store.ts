@@ -3,7 +3,7 @@ import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
 import { errorMessage, PendingDraftRegistry } from './pending-draft-registry';
-import { ErrorToastService } from '../../../core/error-toast-service';
+import { ToastService } from '../../../core/toast-service';
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
 export type LoadState = 'idle' | 'loading' | 'ready' | 'error';
@@ -13,7 +13,7 @@ export type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 export class TripEditorStore {
   private readonly repo = inject(TRIP_REPOSITORY);
   private readonly pending = inject(PendingDraftRegistry);
-  private readonly toast = inject(ErrorToastService);
+  private readonly toast = inject(ToastService);
   private readonly state = signalState({
     id: null as string | null,
     current: null as Trip | null,
@@ -87,7 +87,7 @@ export class TripEditorStore {
           currentState: 'error',
           currentError: errorMessage(error),
         });
-        this.toast.show(errorMessage(error));
+        this.toast.error(errorMessage(error));
       }
       return null;
     }
@@ -103,7 +103,7 @@ export class TripEditorStore {
       return true;
     } catch (error) {
       patchState(this.state, { currentError: errorMessage(error) });
-      this.toast.show(errorMessage(error));
+      this.toast.error(errorMessage(error));
       return false;
     }
   }

@@ -19,7 +19,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LEDGER_REPOSITORY } from '../../data/ledger-repository';
@@ -56,7 +56,7 @@ import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
     UiEmptyState,
     UiRowMenu,
     UiTabs,
-    ErrorToast,
+    UiToast,
     ExpenseForm,
     ReceiptScan,
   ],

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createTrip } from '../util/factories';
 import { PendingDraftRegistry, sessionWatcher } from './pending-draft-registry';
 import { TRIP_REPOSITORY, type TripRepository } from './trip-repository';
-import { ErrorToastService } from '../../../core/error-toast-service';
+import { ToastService } from '../../../core/toast-service';
 
 describe('PendingDraftRegistry 계정 전환', () => {
   it('다른 계정으로 바뀌면 이전 계정의 실패 초안을 버린다', async () => {
@@ -20,7 +20,7 @@ describe('PendingDraftRegistry 계정 전환', () => {
     const pending = Injector.create({
       providers: [
         PendingDraftRegistry,
-        ErrorToastService,
+        ToastService,
         { provide: TRIP_REPOSITORY, useValue: repo },
       ],
     }).get(PendingDraftRegistry);
@@ -61,11 +61,11 @@ describe('저장 실패 알림', () => {
     const injector = Injector.create({
       providers: [
         PendingDraftRegistry,
-        ErrorToastService,
+        ToastService,
         { provide: TRIP_REPOSITORY, useValue: repo },
       ],
     });
     await injector.get(PendingDraftRegistry).save(createTrip());
-    expect(injector.get(ErrorToastService).message()).toBe('서버에 저장하지 못했어요.');
+    expect(injector.get(ToastService).current()).toEqual({ kind: 'error', message: '서버에 저장하지 못했어요.' });
   });
 });
