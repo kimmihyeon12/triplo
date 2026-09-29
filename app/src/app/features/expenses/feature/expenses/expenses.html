@@ -198,53 +198,38 @@
         }
         @for (e of visibleExpenses(); track e.id) {
           <!--
-            분류는 모든 지출에 하나씩 붙는 이름표다. 상태 배지('정산 제외'·
-            '이름 중복')와 같은 모양이면 같은 무게로 읽히므로, 배지 대신 왼쪽
-            아이콘 타일과 분류색 글자로 보인다. 금액은 오른쪽에 모아 목록을
-            내려가며 세로로 비교하게 한다.
+            분류는 이름 아래 색 라벨로 둔다. 목록 왼쪽 아이콘 타일은 이 화면에만
+            있어 다른 목록과 어울리지 않았다(2026-09-29 사용자 결정). 라벨 색은
+            요약 막대·필터 점과 같은 분류색 계열이다. 금액은 오른쪽에 모아
+            목록을 내려가며 세로로 비교하게 한다.
           -->
           <article
-            class="panel grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-x-3 rounded-panel bg-panel p-4 shadow-panel"
+            class="panel grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 rounded-panel bg-panel p-4 shadow-panel"
             [attr.data-testid]="'expense-' + e.id"
           >
-            <span
-              class="flex size-10 items-center justify-center rounded-control"
-              [class]="style(e.category).tile"
-              aria-hidden="true"
-            >
-              <app-icon [name]="style(e.category).icon" [size]="20" />
-            </span>
             <div class="min-w-0">
               <div class="flex items-baseline justify-between gap-3">
                 <p class="min-w-0 text-15 font-bold leading-snug wrap-anywhere">{{ e.title }}</p>
                 <strong class="shrink-0 text-16 tabular-nums">{{ e.amount | number }}원</strong>
               </div>
-              <p class="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-12 leading-[1.45] text-hint">
-                <span class="font-semibold" [class]="style(e.category).ink">{{
-                  categoryLabel(e.category)
-                }}</span>
-                <span aria-hidden="true">·</span>
-                <span>{{ shortDate(e.date) }}</span>
-                <span aria-hidden="true">·</span>
-                <span>{{ person(e.paidBy) }} 결제</span>
+              <p class="mt-1 text-12 leading-[1.45] text-hint">
+                {{ shortDate(e.date) }} · {{ person(e.paidBy) }} 결제
                 @if (!e.personal) {
-                  <span aria-hidden="true">·</span>
-                  <span>{{ e.splits.length }}명 분담</span>
+                  · {{ e.splits.length }}명 분담
                 }
               </p>
-              @if (e.personal || duplicateIds().has(e.id)) {
-                <!-- 중복은 넣은 값끼리 어긋난 것이라 어느 화면에서나 danger다. -->
-                <p class="mt-2 flex flex-wrap gap-1.5">
-                  @if (e.personal) {
-                    <span appBadge class="cell cell--ghost">정산 제외</span>
-                  }
-                  @if (duplicateIds().has(e.id)) {
-                    <span appBadge class="cell cell--danger" [attr.data-testid]="'dup-' + e.id"
-                      >이름 중복</span
-                    >
-                  }
-                </p>
-              }
+              <p class="mt-2 flex flex-wrap gap-1.5">
+                <span appBadge [class]="style(e.category).label">{{ categoryLabel(e.category) }}</span>
+                @if (e.personal) {
+                  <span appBadge class="cell cell--ghost">정산 제외</span>
+                }
+                @if (duplicateIds().has(e.id)) {
+                  <!-- 중복은 넣은 값끼리 어긋난 것이라 어느 화면에서나 danger다. -->
+                  <span appBadge class="cell cell--danger" [attr.data-testid]="'dup-' + e.id"
+                    >이름 중복</span
+                  >
+                }
+              </p>
             </div>
             <app-row-menu
               class="-mt-1.5 -mr-2"
@@ -254,7 +239,7 @@
               (selected)="onExpenseMenu($event, e)"
             />
             @if (deleteId() === e.id) {
-              <div class="col-span-3 mt-3 flex flex-col gap-2 border-t border-border pt-3">
+              <div class="col-span-2 mt-3 flex flex-col gap-2 border-t border-border pt-3">
                 <p class="text-13">이 지출을 삭제할까요? 정산 금액도 다시 계산됩니다.</p>
                 <div class="flex justify-end gap-2">
                   <button appButton class="btn btn--sm" (click)="deleteId.set('')">취소</button

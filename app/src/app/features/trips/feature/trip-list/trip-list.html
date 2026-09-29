@@ -203,34 +203,20 @@
                 </p>
 
                 <!--
-                  배지는 지역 하나뿐이다. 장소·숙소 수는 값에 따라 뜻이
-                  달라지는 상태가 아니라 세어 본 결과이므로 본문으로 적는다.
-                  전에는 셋을 나란히 배지로 두어 분류와 수량이 같은 무게로
-                  보였다. '지출 미설정'·'동행 준비 중'은 어느 여행에서나
-                  똑같이 나와 알려 주는 것이 없으므로 뺐다.
+                  '지출 미설정'·'동행 준비 중'은 어느 여행에서나 똑같이 나와
+                  알려 주는 것이 없으므로 뺐다.
                 -->
                 <p class="card__meta flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-12 text-ink-3">
                   @if (trip.regions.length > 0) {
                     <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
                   <!--
-                    수량은 배지가 아니지만 회색 글자만 두면 카드가 밋밋하다.
-                    일정 목록의 장소·숙소 색 아이콘을 붙여 무엇의 수인지
-                    한눈에 읽히게 한다. 숫자와 이름은 글자로 그대로 둔다.
+                    장소·숙소 수를 일정 화면과 같은 장소·숙소 색 라벨로 둔다. 회색 글자는
+                    칙칙했고 아이콘은 이 카드에만 있어 어색했다(2026-09-29 사용자 결정).
                   -->
-                  <span
-                    class="ml-1 inline-flex items-center gap-2.5 text-ink-2"
-                    [attr.data-testid]="'trip-counts-' + trip.id"
-                  >
-                    <span class="inline-flex items-center gap-1">
-                      <app-icon class="text-place-ink" name="place" [size]="14" />
-                      장소 {{ trip.stops.length }}
-                    </span>
-                    <span class="inline-flex items-center gap-1">
-                      <app-icon class="text-stay-ink" name="bed" [size]="14" />
-                      숙소 {{ trip.stays.length }}
-                    </span>
-                  </span>
+                  <span appBadge tone="place" [attr.data-testid]="'trip-counts-' + trip.id"
+                    >장소 {{ trip.stops.length }}</span
+                  ><span appBadge tone="stay">숙소 {{ trip.stays.length }}</span>
                 </p>
                 </a>
                 @if (deleteTripId() === trip.id) {
