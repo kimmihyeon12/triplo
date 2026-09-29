@@ -1,4 +1,4 @@
-import type { AccommodationStay, Trip, TripRegion, TripStop } from '../model/trip';
+import type { AccommodationStay, Trip, TripRegion, TripSharing, TripStop } from '../model/trip';
 import type { PlaceRef } from '../../places/model/place';
 
 /**
@@ -54,6 +54,13 @@ export interface StayRow {
   estimated_cost: number | null;
 }
 
+export interface MemberRow {
+  user_id: string;
+  role: 'owner' | 'editor';
+  nickname: string;
+  joined_at: string;
+}
+
 export interface TripRow {
   id: string;
   title: string;
@@ -64,13 +71,16 @@ export interface TripRow {
   created_at: string;
   updated_at: string;
   version: number;
+  owner_id?: string;
+  trip_members?: MemberRow[];
   trip_regions: RegionRow[];
   trip_stops: StopRow[];
   accommodation_stays: StayRow[];
 }
 
 /** 목록·한 개 읽기에 같은 모양을 쓰도록 select 문자열을 한곳에 둔다. */
-export const TRIP_SELECT = '*, trip_regions(*), trip_stops(*), accommodation_stays(*)';
+export const TRIP_SELECT =
+  '*, trip_regions(*), trip_stops(*), accommodation_stays(*), trip_members(user_id, role, nickname, joined_at)';
 
 function location(lat: number | null, lng: number | null) {
   return lat === null || lng === null ? null : { lat, lng };
@@ -85,7 +95,18 @@ function placeRef(
   return { provider: provider as PlaceRef['provider'], id, url };
 }
 
-export function tripFromRow(row: TripRow): Trip {
+/** 멤버는 주인 먼저, 그다음 합류한 순서로 보인다. */
+function sharingFromRow(row: TripRow, me: string | null): TripSharing | undefined {
+  if (!row.trip_members?.length) return undefined;
+  const members = [...row.trip_members]
+    .sort((a, b) =>
+      a.role === b.role ? a.joined_at.localeCompare(b.joined_at) : a.role === 'owner' ? -1 : 1,
+    )
+    .map((m) => ({ userId: m.user_id, nickname: m.nickname, role: m.role }));
+  return { role: row.owner_id !== undefined && row.owner_id === me ? 'owner' : 'editor', members };
+}
+
+export function tripFromRow(row: TripRow, me: string | null = null): Trip {
   const regions: TripRegion[] = [...row.trip_regions]
     .sort((a, b) => a.order - b.order)
     .map((r) => ({
@@ -128,6 +149,7 @@ export function tripFromRow(row: TripRow): Trip {
     placeRef: placeRef(a.place_provider, a.place_id, a.place_url),
     estimatedCost: a.estimated_cost,
   }));
+  const sharing = sharingFromRow(row, me);
   return {
     id: row.id,
     title: row.title,
@@ -140,5 +162,6 @@ export function tripFromRow(row: TripRow): Trip {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     schemaVersion: 1,
+    ...(sharing ? { sharing } : {}),
   };
 }

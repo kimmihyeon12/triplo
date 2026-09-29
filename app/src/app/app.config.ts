@@ -126,7 +126,10 @@ export const appConfig: ApplicationConfig = {
           // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
         }
         const auth = inject(AuthStore);
-        return new SupabaseTripRepository(supabaseTripDataClient(() => auth.dataClient()));
+        return new SupabaseTripRepository(
+          supabaseTripDataClient(() => auth.dataClient()),
+          () => auth.user()?.id ?? null,
+        );
       },
     },
     // 가계부도 여행과 같이 실행 앱은 Supabase에, 테스트·미리보기는 기기에 저장한다.

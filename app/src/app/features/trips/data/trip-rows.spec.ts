@@ -95,4 +95,29 @@ describe('tripFromRow', () => {
     expect(trip.stops[0].location).toBeNull();
     expect(trip.stops[0].placeRef).toBeNull();
   });
+
+  it('멤버를 주인 먼저 합류 순으로 싣고, 나의 역할을 정한다', () => {
+    const shared: TripRow = {
+      ...row,
+      owner_id: 'u-owner',
+      trip_members: [
+        { user_id: 'u-b', role: 'editor', nickname: '민지', joined_at: '2026-09-29T02:00:00+00:00' },
+        { user_id: 'u-owner', role: 'owner', nickname: '주인', joined_at: '2026-09-29T00:00:00+00:00' },
+        { user_id: 'u-a', role: 'editor', nickname: '준호', joined_at: '2026-09-29T01:00:00+00:00' },
+      ],
+    };
+    expect(tripFromRow(shared, 'u-b').sharing).toEqual({
+      role: 'editor',
+      members: [
+        { userId: 'u-owner', nickname: '주인', role: 'owner' },
+        { userId: 'u-a', nickname: '준호', role: 'editor' },
+        { userId: 'u-b', nickname: '민지', role: 'editor' },
+      ],
+    });
+    expect(tripFromRow(shared, 'u-owner').sharing?.role).toBe('owner');
+  });
+
+  it('멤버 정보가 없는 행은 sharing을 싣지 않는다', () => {
+    expect(tripFromRow(row)).not.toHaveProperty('sharing');
+  });
 });

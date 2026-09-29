@@ -58,8 +58,9 @@ export function supabaseTripDataClient(client: () => Promise<SupabaseClient>): T
       if (error) throw toTripError(error);
       return data as number;
     },
+    // 표를 직접 지우지 않는다. 주인만 지울 수 있게 서버 함수가 확인한다.
     async deleteTrip(id) {
-      const { error } = await (await client()).from('trips').delete().eq('id', id);
+      const { error } = await (await client()).rpc('delete_trip', { p_trip_id: id });
       if (error) throw new TripSaveError('여행을 지우지 못했어요. 다시 시도해 주세요.');
     },
   };

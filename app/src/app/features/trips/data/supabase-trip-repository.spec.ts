@@ -115,6 +115,29 @@ describe('SupabaseTripRepository', () => {
   });
 });
 
+describe('SupabaseTripRepository 멤버', () => {
+  it('읽을 때 지금 로그인한 사람으로 역할을 정한다', async () => {
+    const trip = createTrip({ id: 't1', title: '함께' });
+    const client: TripDataClient = {
+      listRows: async () => [
+        {
+          ...rowOf(trip, 1),
+          owner_id: 'u-owner',
+          trip_members: [
+            { user_id: 'u-owner', role: 'owner', nickname: '주인', joined_at: '2026-09-29T00:00:00Z' },
+            { user_id: 'u-me', role: 'editor', nickname: '나', joined_at: '2026-09-29T01:00:00Z' },
+          ],
+        },
+      ],
+      getRow: async () => null,
+      saveTrip: async () => 1,
+      deleteTrip: async () => undefined,
+    };
+    expect((await new SupabaseTripRepository(client, () => 'u-owner').list())[0].sharing?.role).toBe('owner');
+    expect((await new SupabaseTripRepository(client, () => 'u-me').list())[0].sharing?.role).toBe('editor');
+  });
+});
+
 describe('toTripError', () => {
   it('P0409는 충돌, 그 밖은 일반 저장 실패다', () => {
     expect(toTripError({ code: 'P0409', message: 'conflict' })).toBeInstanceOf(TripConflictError);

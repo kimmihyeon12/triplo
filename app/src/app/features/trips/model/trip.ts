@@ -77,6 +77,19 @@ export interface AccommodationStay {
 
 export type TripStatus = 'draft';
 
+/** 여행을 함께 쓰는 사람. 서버 저장에서만 채운다. */
+export interface TripMember {
+  userId: string;
+  nickname: string;
+  role: 'owner' | 'editor';
+}
+
+/** 서버 여행의 멤버와 나의 역할. 기기 저장 여행에는 없다. */
+export interface TripSharing {
+  role: 'owner' | 'editor';
+  members: TripMember[];
+}
+
 export interface Trip {
   id: string;
   title: string;
@@ -89,6 +102,8 @@ export interface Trip {
   createdAt: string;
   updatedAt: string;
   schemaVersion: 1;
+  /** 서버에서 읽을 때만 채운다. 저장(save_trip)은 이 값을 쓰지 않는다. */
+  sharing?: TripSharing;
 }
 
 export const STOP_KIND_LABEL: Record<StopKind, string> = {
