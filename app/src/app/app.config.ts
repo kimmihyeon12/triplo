@@ -26,6 +26,11 @@ import { supabaseTripDataClient } from './features/trips/data/trip-data-client';
 import { clearLegacyLocalTrips } from './features/trips/data/legacy-local-cleanup';
 import { AuthStore } from './features/auth/data/auth-store';
 import { NetworkActivity } from './core/network-activity';
+import { LEDGER_REPOSITORY } from './features/expenses/data/ledger-repository';
+import { LocalLedgerRepository } from './features/expenses/data/local-ledger-repository';
+import { SupabaseLedgerRepository } from './features/expenses/data/supabase-ledger-repository';
+import { supabaseLedgerDataClient } from './features/expenses/data/ledger-data-client';
+import { clearLegacyLocalLedgers } from './features/expenses/data/legacy-ledger-cleanup';
 import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
 import { LocalSupportRepository } from './features/support/data/local-support-repository';
 import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
@@ -122,6 +127,21 @@ export const appConfig: ApplicationConfig = {
         }
         const auth = inject(AuthStore);
         return new SupabaseTripRepository(supabaseTripDataClient(() => auth.dataClient()));
+      },
+    },
+    // 가계부도 여행과 같이 실행 앱은 Supabase에, 테스트·미리보기는 기기에 저장한다.
+    {
+      provide: LEDGER_REPOSITORY,
+      useFactory: () => {
+        if (environment.isTest || environment.designPreview)
+          return new LocalLedgerRepository(new SafeLocalStorage(), environment.storageKey);
+        try {
+          clearLegacyLocalLedgers(localStorage, environment.storageKey);
+        } catch {
+          // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
+        }
+        const auth = inject(AuthStore);
+        return new SupabaseLedgerRepository(supabaseLedgerDataClient(() => auth.dataClient()));
       },
     },
     // 공지·문의도 같은 자리에 둔다. 서버가 붙으면 구현만 갈아 끼운다.
