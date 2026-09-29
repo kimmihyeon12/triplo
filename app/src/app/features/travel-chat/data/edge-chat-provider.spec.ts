@@ -4,12 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthStore } from '../../auth/data/auth-store';
 import { EdgeChatProvider } from './edge-chat-provider';
 import { normalizeChatResponse } from '../../../../../../supabase/functions/ai-chat/contract';
+import { AiQuota } from '../../../core/ai-quota';
+import { FunctionError } from '../../auth/data/function-error';
 
 const request = {input:'먹방 코스 추천해줘',scope:'trip' as const,history:[],trip:null};
 describe('real chat provider', () => {
   it('does not start an aborted request and forwards cancellation', async () => {
     const callFunction = vi.fn(async () => ({content: JSON.stringify({kind:'explore',text:'응답'})}));
-    const injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction}},EdgeChatProvider]});
+    const injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction}},AiQuota,EdgeChatProvider]});
     const provider = runInInjectionContext(injector,()=>injector.get(EdgeChatProvider));
     const controller = new AbortController();
     controller.abort();
@@ -21,7 +23,7 @@ describe('real chat provider', () => {
   });
   it('calls ai-chat with the conversation, not a fixture', async () => {
     const callFunction = vi.fn(async () => ({content: JSON.stringify({kind:'explore',text:'지역을 알려 주세요.',regions:[],places:[]})}));
-    const injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction}},EdgeChatProvider]});
+    const injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction}},AiQuota,EdgeChatProvider]});
     const provider = runInInjectionContext(injector,()=>injector.get(EdgeChatProvider));
     expect((await provider.reply(request,new AbortController().signal)).text).toContain('지역');
     expect(callFunction.mock.calls[0][0]).toBe('ai-chat');
@@ -38,5 +40,17 @@ describe('real chat provider', () => {
   it('supplies controlled reference links for unverified business information', () => {
     const result = normalizeChatResponse(JSON.stringify({kind:'reference',text:'방문 전에 확인해 주세요.',reference:{subject:'오죽헌',body:'시간은 변경될 수 있어요.',links:[{url:'javascript:alert(1)'}]}}));
     expect(result.reference!.links[0].url).toContain('https://map.naver.com/');
+  });
+
+  it('records what is left and explains the personal limit', async () => {
+    const ok = vi.fn(async () => ({content: JSON.stringify({kind:'explore',text:'응답'}),remaining:1}));
+    let injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction:ok}},AiQuota,EdgeChatProvider]});
+    let provider = runInInjectionContext(injector,()=>injector.get(EdgeChatProvider));
+    await provider.reply(request,new AbortController().signal);
+    expect(injector.get(AiQuota).hint('chat')()).toBe('오늘 1번 남음');
+    const limited = vi.fn(async () => { throw new FunctionError('user_limit',{limit:30}); });
+    injector = Injector.create({providers:[{provide:AuthStore,useValue:{available:()=>true,callFunction:limited}},AiQuota,EdgeChatProvider]});
+    provider = runInInjectionContext(injector,()=>injector.get(EdgeChatProvider));
+    await expect(provider.reply(request,new AbortController().signal)).rejects.toThrow('오늘 챗봇 질문을 30번 모두 썼어요.');
   });
 });

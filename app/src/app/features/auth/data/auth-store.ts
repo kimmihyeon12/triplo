@@ -1,3 +1,4 @@
+import { FunctionError } from './function-error';
 import { computed, DestroyRef, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
@@ -270,8 +271,8 @@ export class AuthStore {
     // 그것을 꺼내 던져야 '하루 한도'와 '그 밖의 실패'를 나눌 수 있다.
     const response = (error as { context?: Response }).context;
     if (response instanceof Response) {
-      const parsed = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (parsed?.error) throw new Error(parsed.error);
+      const parsed = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (typeof parsed?.['error'] === 'string') throw new FunctionError(parsed['error'], parsed);
     }
     throw new Error('function_failed');
   }

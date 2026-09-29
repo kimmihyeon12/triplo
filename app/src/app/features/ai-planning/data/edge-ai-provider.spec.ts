@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthStore } from '../../auth/data/auth-store';
 import { EdgeAiProvider } from './edge-ai-provider';
 import type { AiPlanRequest } from './ai-plan-provider';
+import { AiQuota } from '../../../core/ai-quota';
+import { FunctionError } from '../../auth/data/function-error';
 
 const REQUEST: AiPlanRequest = {
   regions: ['경주'],
@@ -22,16 +24,24 @@ interface FakeAuth {
   callFunction: ReturnType<typeof vi.fn>;
 }
 
-function setup(overrides: Partial<FakeAuth> = {}): { provider: EdgeAiProvider; auth: FakeAuth } {
+function setup(overrides: Partial<FakeAuth> = {}): {
+  provider: EdgeAiProvider;
+  auth: FakeAuth;
+  quota: AiQuota;
+} {
   const auth: FakeAuth = {
     available: () => true,
     callFunction: vi.fn(async () => ({ content: '{"items":[]}' })),
     ...overrides,
   };
   const injector = Injector.create({
-    providers: [{ provide: AuthStore, useValue: auth }, EdgeAiProvider],
+    providers: [{ provide: AuthStore, useValue: auth }, AiQuota, EdgeAiProvider],
   });
-  return { provider: runInInjectionContext(injector, () => injector.get(EdgeAiProvider)), auth };
+  return {
+    provider: runInInjectionContext(injector, () => injector.get(EdgeAiProvider)),
+    auth,
+    quota: injector.get(AiQuota),
+  };
 }
 
 describe('EdgeAiProvider', () => {
@@ -79,7 +89,7 @@ describe('EdgeAiProvider', () => {
       }),
     });
     await expect(provider.generate(REQUEST, new AbortController().signal)).rejects.toThrow(
-      /오늘 사용량/,
+      /오늘 AI 무료 사용량이 모두 소진됐어요/,
     );
   });
 
@@ -112,5 +122,24 @@ describe('EdgeAiProvider', () => {
     });
     const items = await provider.generate(REQUEST, new AbortController().signal);
     expect(items.map((i) => i.name)).toEqual(['있음']);
+  });
+
+  it('성공하면 남은 횟수를 기록한다', async () => {
+    const { provider, quota } = setup({
+      callFunction: vi.fn(async () => ({ content: '{"items":[]}', remaining: 2 })),
+    });
+    await provider.generate(REQUEST, new AbortController().signal);
+    expect(quota.hint('plan')()).toBe('오늘 2번 남음');
+  });
+
+  it('내 한도 초과는 서버 한도로 알린다', async () => {
+    const { provider } = setup({
+      callFunction: vi.fn(async () => {
+        throw new FunctionError('user_limit', { error: 'user_limit', limit: 5 });
+      }),
+    });
+    await expect(provider.generate(REQUEST, new AbortController().signal)).rejects.toThrow(
+      '오늘 AI 일정 만들기를 5번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
+    );
   });
 });

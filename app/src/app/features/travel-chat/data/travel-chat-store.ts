@@ -415,7 +415,7 @@ export class TravelChatStore {
 
 function toChatError(error: unknown): ChatError {
   const message = error instanceof Error ? error.message : '알 수 없는 오류가 생겼습니다.';
-  if (message.includes('오늘 사용량') || message.includes('AI 요청 한도')) return { kind: 'quota', message };
+  if (/오늘 사용량|모두 썼어요|무료 사용량/.test(message)) return { kind: 'quota', message };
   if (message.includes('오래 걸립니다')) return { kind: 'timeout', message };
   // fetch가 네트워크에 닿지 못하면 'Failed to fetch'를 던진다.
   if (error instanceof TypeError)

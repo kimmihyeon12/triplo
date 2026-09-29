@@ -486,6 +486,18 @@ describe('TravelChatStore 실패 처리', () => {
     expect(store.error()?.kind).toBe('quota');
   });
 
+  it('내 한도·무료 한도 문구도 한도로 구분한다', async () => {
+    for (const message of [
+      '오늘 챗봇 질문을 30번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
+      '오늘 AI 무료 사용량이 모두 소진됐어요. 오후 5시쯤 다시 쓸 수 있어요.',
+    ]) {
+      const store = setup(fakeChat({ reply: async () => { throw new Error(message); } }));
+      store.open('list', null);
+      await store.send('3일 쉬는데 어디 가지');
+      expect(store.error()?.kind).toBe('quota');
+    }
+  });
+
   it('시간 초과를 구분한다', async () => {
     const chat = fakeChat({
       reply: async () => {
