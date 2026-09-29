@@ -1,0 +1,30 @@
+<div
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  data-testid="admin-home"
+>
+  <p class="px-1 text-12 leading-relaxed text-ink-3">
+    관리 기능은 서버 연결 뒤에 차례로 엽니다.
+  </p>
+
+  <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">관리</p>
+  <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" aria-label="관리">
+    <li
+      class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink-3"
+      aria-disabled="true"
+      data-testid="admin-notices"
+    >
+      <span class="flex size-5 flex-none items-center justify-center"><app-icon name="megaphone" [size]="18" /></span>
+      <span class="flex-1">공지 관리</span>
+      <span class="text-12">준비 중</span>
+    </li>
+    <li
+      class="flex min-h-12 items-center gap-3 px-4 py-3 text-14 text-ink-3"
+      aria-disabled="true"
+      data-testid="admin-inquiries"
+    >
+      <span class="flex size-5 flex-none items-center justify-center"><app-icon name="mail" [size]="18" /></span>
+      <span class="flex-1">문의 관리</span>
+      <span class="text-12">준비 중</span>
+    </li>
+  </ul>
+</div>
