@@ -18,6 +18,24 @@
             지금은 일정을 보기만 할 수 있어요. 함께하면 장소·숙소와 가계부를 같이 고칠 수 있어요.
           </p>
           @if (!authReady()) {
+          } @else if (myRole(); as role) {
+            <p class="mt-1 text-14 font-semibold" data-testid="join-already">
+              {{ role === 'owner' ? '내가 만든 여행이에요' : '이미 함께하는 여행이에요' }}
+            </p>
+            <button
+              appButton
+              variant="primary"
+              type="button"
+              class="w-full"
+              [disabled]="busy()"
+              (click)="openTrip()"
+              data-testid="join-open"
+            >
+              여행 보기
+            </button>
+            <button appButton type="button" class="w-full" (click)="switchAccount()" data-testid="join-switch">
+              다른 계정으로 로그인
+            </button>
           } @else if (signedIn()) {
             <button
               appButton
@@ -28,7 +46,10 @@
               (click)="join()"
               data-testid="join-accept"
             >
-              함께하기
+              {{ nickname() ? nickname() + '님으로 함께하기' : '함께하기' }}
+            </button>
+            <button appButton type="button" class="w-full" (click)="switchAccount()" data-testid="join-switch">
+              다른 계정으로 로그인
             </button>
           } @else {
             <button

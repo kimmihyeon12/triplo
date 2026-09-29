@@ -54,6 +54,8 @@ export class LocalTripMembers implements TripMembersRepository {
 /** 서버 미리보기와 같은 모양으로 줄인다. 메모·예약·금액·주소는 넣지 않는다. */
 function previewOf(trip: Trip): InvitePreview {
   return {
+    // 테스트 앱은 초대받은 사람의 흐름을 보여 주므로 아직 멤버가 아닌 것으로 둔다.
+    myRole: null,
     title: trip.title,
     startDate: trip.startDate,
     endDate: trip.endDate,
