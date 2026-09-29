@@ -152,9 +152,11 @@
   <!--
     아이폰 홈 표시줄 높이만큼 아래 여백을 더한다. 하단 고정 바([일정 추가])와 같은
     방식이다. 없으면 입력창이 표시줄에 가려진다.
+    입력 중에는 키보드가 표시줄을 덮으므로 여백을 뺀다. 그대로 두면 키보드 위로
+    표시줄 높이(약 34px)만큼 빈 띠가 생겨 입력창이 떠 보였다.
   -->
   <div
-    class="mx-auto w-full max-w-160 px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))]"
+    class="mx-auto w-full max-w-160 px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] has-[textarea:focus]:pb-2"
   >
     @if (turnsLeft() === 0) {
       <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
