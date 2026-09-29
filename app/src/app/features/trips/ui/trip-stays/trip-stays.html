@@ -133,10 +133,10 @@
               그다음에 언제 묵는지(기간·시각)를 읽는다.
             -->
             @if (s.address) {
-              <div class="text-12 leading-normal text-ink-3 flex items-center gap-1">
-                <span class="min-w-0 truncate" [title]="s.address">{{ s.address }}</span>
+              <div class="text-12 leading-normal text-ink-3 flex items-start gap-1">
+                <span class="min-w-0 line-clamp-2 wrap-anywhere" [title]="s.address">{{ s.address }}</span>
                 <button
-                  class="relative inline-flex size-6 flex-none items-center justify-center rounded-cell border-0 bg-transparent p-0 text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:transform-[translate(-10px,-10px)] hover:bg-ground-2 hover:text-ink"
+                  class="relative -my-[3px] inline-flex size-6 flex-none items-center justify-center rounded-cell border-0 bg-transparent p-0 text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:w-11 after:[content:''] after:transform-[translate(-10px,-10px)] hover:bg-ground-2 hover:text-ink"
                   type="button"
                   (click)="copyAddress(s)"
                   [attr.aria-label]="s.name + ' 주소 복사'"

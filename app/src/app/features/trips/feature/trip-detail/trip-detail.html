@@ -353,16 +353,16 @@
                           -->
                           @if (seg.stay.address) {
                             <div
-                              class="item__addr text-12 leading-normal text-ink-3 flex items-center gap-1"
+                              class="item__addr text-12 leading-normal text-ink-3 flex items-start gap-1"
                             >
                               <span
-                                class="item__addr-text min-w-0 truncate"
+                                class="item__addr-text min-w-0 line-clamp-2 wrap-anywhere"
                                 [title]="seg.stay.address"
                                 >{{ seg.stay.address }}</span
                               >
                               <button
                                 type="button"
-                                class="item__copy [-webkit-tap-highlight-color:transparent] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
+                                class="item__copy [-webkit-tap-highlight-color:transparent] -my-[3px] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
                                 (click)="copyAddress(seg.stay)"
                                 [attr.aria-label]="seg.stay.name + ' 주소 복사'"
                                 [attr.data-testid]="'copy-stay-' + seg.stay.id"
@@ -610,19 +610,20 @@
                           @if (seg.stop.address) {
                             <!--
                               주소 복사는 주소와 같은 행에 아이콘으로 둔다.
-                              긴 주소는 한 줄로 줄인다. 전체 주소는 복사로 가져갈 수 있다.
+                              긴 주소는 두 줄까지 보이고 넘치면 줄인다. 한 줄로 자르면 정작 필요한 도로명·번지가
+                              가려졌다. 전체 주소는 복사로 가져갈 수 있다.
                             -->
                             <div
-                              class="item__addr text-12 leading-normal text-ink-3 flex items-center gap-1"
+                              class="item__addr text-12 leading-normal text-ink-3 flex items-start gap-1"
                             >
                               <span
-                                class="item__addr-text min-w-0 truncate"
+                                class="item__addr-text min-w-0 line-clamp-2 wrap-anywhere"
                                 [title]="seg.stop.address"
                                 >{{ seg.stop.address }}</span
                               >
                               <button
                                 type="button"
-                                class="item__copy [-webkit-tap-highlight-color:transparent] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
+                                class="item__copy [-webkit-tap-highlight-color:transparent] -my-[3px] flex-none inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-cell bg-transparent text-ink-3 cursor-pointer [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:transform-[translate(-10px,-10px)] relative hover:bg-ground-2 hover:text-ink"
                                 (click)="copyAddress(seg.stop)"
                                 [attr.aria-label]="seg.stop.name + ' 주소 복사'"
                                 [attr.data-testid]="'copy-' + seg.stop.id"
