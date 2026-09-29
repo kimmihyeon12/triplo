@@ -46,7 +46,15 @@ export function expenseLinks(stops: readonly StopLike[], stays: readonly StayLik
   ];
 }
 
-/** 새 지출의 결제자 기본값. 대부분 기록하는 사람이 냈으므로 '나'를 먼저 고른다. */
-export function defaultPayer(people: readonly ExpensePerson[]): string {
-  return people.find((p) => p.id === 'self')?.id ?? people[0]?.id ?? '';
+/**
+ * 새 지출의 결제자 기본값. 대부분 기록하는 사람이 냈으므로 나(me)를 먼저 고른다.
+ * 함께 쓰는 여행에 합류한 친구의 '나'는 'self'(주인)가 아니라 자기 칸이다.
+ */
+export function defaultPayer(people: readonly ExpensePerson[], me = 'self'): string {
+  return (
+    people.find((p) => p.id === me)?.id ??
+    people.find((p) => p.id === 'self')?.id ??
+    people[0]?.id ??
+    ''
+  );
 }

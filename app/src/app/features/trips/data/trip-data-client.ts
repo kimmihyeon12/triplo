@@ -18,6 +18,17 @@ export class TripConflictError extends Error {
   }
 }
 
+/**
+ * 이 여행에 더는 접근할 수 없다(멤버에서 빠졌거나 여행이 지워졌거나 보이지 않는 기록).
+ * 다시 시도해도 풀리지 않으므로 연결 오류와 따로 알린다.
+ */
+export class TripAccessError extends Error {
+  constructor() {
+    super('이 여행에 접근할 수 없어요. 여행에서 빠졌거나 여행이 지워졌어요.');
+    this.name = 'TripAccessError';
+  }
+}
+
 export class TripSaveError extends Error {
   constructor(message = '서버에 저장하지 못했어요. 연결을 확인하고 다시 시도해 주세요.') {
     super(message);
@@ -28,6 +39,7 @@ export class TripSaveError extends Error {
 /** save_trip은 충돌을 SQLSTATE P0409로 알린다. 나머지는 사용자가 다시 시도할 일이다. */
 export function toTripError(error: { code?: string; message?: string } | null): Error {
   if (error?.code === 'P0409') return new TripConflictError();
+  if (error?.code === 'P0404') return new TripAccessError();
   return new TripSaveError();
 }
 
@@ -58,8 +70,9 @@ export function supabaseTripDataClient(client: () => Promise<SupabaseClient>): T
       if (error) throw toTripError(error);
       return data as number;
     },
+    // 표를 직접 지우지 않는다. 주인만 지울 수 있게 서버 함수가 확인한다.
     async deleteTrip(id) {
-      const { error } = await (await client()).from('trips').delete().eq('id', id);
+      const { error } = await (await client()).rpc('delete_trip', { p_trip_id: id });
       if (error) throw new TripSaveError('여행을 지우지 못했어요. 다시 시도해 주세요.');
     },
   };

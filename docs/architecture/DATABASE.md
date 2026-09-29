@@ -113,21 +113,38 @@ trip_regions       trip_stops      accommodation_stays
 
 ## 접근 제어
 
-네 표 모두 Row Level Security를 켠다. 규칙은 하나다. **본인 여행만 읽고 쓴다.**
+2026-09-29부터 규칙은 **참여한 여행만 읽고, 쓰기는 함수로만 한다**이다(`20260929000005_trip_members.sql`). 그 전에는 '본인 여행만 읽고 쓴다'였다.
 
-`trips`는 `owner_id`를 직접 본다. 딸린 세 표는 `owns_trip(trip_id)` 함수로 여행의 주인을 확인한다. 같은 규칙을 세 번 적지 않기 위해서다.
-
-표 권한은 `authenticated`에만 준다(`20260929000001_trip_grants.sql`). 이 프로젝트는 새 표에 권한을 자동으로 주지 않아, 원격 적용 뒤 비로그인 요청이 `permission denied for table trips`로 막히는 것을 보고 확인했다. 비로그인(`anon`)은 표도 저장 함수도 쓸 수 없다.
-
-```sql
-create function owns_trip(target text) returns boolean ...
-  select exists (
-    select 1 from public.trips
-    where id = target and owner_id = (select auth.uid())
-  );
-```
+- **읽기:** 모든 여행·가계부 표는 `is_trip_member(trip_id)`로 멤버만 읽는다. 개인 지출과 그 분담은 쓴 사람(`expenses.created_by`)만 본다. `trip_members`는 같은 여행 멤버끼리, `trip_invites`는 주인만 읽는다.
+- **쓰기:** `authenticated`의 insert·update·delete 권한을 모두 거뒀다. 여행 저장(`save_trip`)·삭제(`delete_trip`)·가계부 함수·초대 함수만 쓴다. 이 함수들은 `security definer`라 RLS를 건너뛰므로 **함수 안에서 멤버·주인을 확인한다.** 버전·분담 합계 검사를 표 직접 쓰기로 우회하지 못하게 하기 위해서다.
+- **확인 함수:** `is_trip_member`·`is_trip_owner`도 `security definer`다. 정책이 `trip_members`를 읽을 때 그 정책이 다시 걸려 돌지 않게 한다.
+- **비로그인(`anon`):** 표 권한이 없고, 초대 미리보기(`preview_trip_invite`)만 부를 수 있다.
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
+
+## 멤버와 초대 (2026-09-29)
+
+| 표 | 담는 것 |
+| --- | --- |
+| `trip_members` | 여행·사용자·역할(`owner`·`editor`)·합류 시점 닉네임. 기존 여행은 주인 행으로 채웠다. 새 여행은 `save_trip`이 주인 행을 넣는다 |
+| `trip_invites` | 여행마다 하나(`trip_id` 기본 키). 코드의 SHA-256 해시·만든 사람·7일 만료. 새로 만들면 앞 코드는 무효, 지우면 취소 |
+
+| 함수 | 누가 | 하는 일 |
+| --- | --- | --- |
+| `create_trip_invite(trip)` → 코드 | 주인 | 헷갈리는 글자를 뺀 8자 코드를 만들어 해시만 저장하고 코드를 돌려준다. 코드는 다시 볼 수 없다 |
+| `revoke_trip_invite(trip)` | 주인 | 초대를 지운다 |
+| `preview_trip_invite(code)` → json | 누구나 | 제목·기간·지역·장소(이름·분류·날짜·순서·고정 시각)·숙소(이름·체크인·체크아웃)·주인 닉네임. 메모·예약·금액·주소·가계부·여행 id는 없다 |
+| `join_trip(code)` → 여행 id | 로그인한 사람 | editor로 넣는다(이미 멤버면 그대로). 처음 합류하면 가계부에 그 사람 이름을 더하고, 가계부의 '나'를 주인 닉네임으로 바꾼다 |
+| `leave_trip(trip)` | 주인 아닌 멤버 | 스스로 나간다. 주인은 `P0422` |
+| `remove_trip_member(trip, user)` | 주인 | 멤버를 뺀다. 빠진 사람이 쓴 지출은 남는다 |
+| `delete_trip(trip)` | 주인 | 여행을 지운다(cascade) |
+
+- 코드는 대문자로 바꾸고 문자·숫자만 남겨 해시한다(`abcd-efgh`도 같다). 없는 코드·만료·취소는 모두 `invite_invalid`(`P0404`)로 같게 알린다.
+- 남의 여행 id로 `save_trip`을 부르면 `P0404`다(예전에는 기본 키 중복 `23505`).
+- 개인 지출은 쓴 사람만 고치고 지운다. 남의 공동 지출을 개인으로 돌려 감추는 것도 막는다.
+- `expense_splits (expense_id, trip_id)`가 `expenses (id, trip_id)`를 가리켜 분담이 다른 여행의 지출에 달리지 않는다.
+
+로컬 확인: `supabase/tests/trip-members.local.sql`. 기존 `save-trip.local.sql`·`ledger.local.sql`도 이 마이그레이션을 포함해 주인 동작이 그대로인지 확인한다.
 
 ## 저장 방식
 
@@ -188,7 +205,8 @@ create function owns_trip(target text) returns boolean ...
 
 ## 아직 없는 것
 
-- **친구 공유 관련 표.** `TripParticipant`·`TripMember`·`TripInvite`·`TripShare`는 tasks 8.2 범위다. 그때 이 RLS 규칙도 "본인 여행"에서 "참여한 여행"으로 넓혀야 한다.
+- **보기 전용 공유 링크 스냅숏(tasks 8.3).** 지금 초대 미리보기는 원본을 줄여 보여 줄 뿐 따로 저장한 스냅숏이 아니다.
+- **주인 승인·코드 시도 제한.** 2026-09-29 결정으로 이번 범위에서 뺐다.
 
 ## 적용 현황
 

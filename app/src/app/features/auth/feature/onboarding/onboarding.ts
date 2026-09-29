@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { AuthStore } from '../../data/auth-store';
+import { takeReturn } from '../../util/return-to';
 
 @Component({
   selector: 'app-onboarding',
@@ -25,7 +26,8 @@ export class OnboardingPage {
       if (this.auth.loading()) return;
       if (!this.auth.user()) void this.router.navigateByUrl('/login', { replaceUrl: true });
       else if (this.auth.nickname() && !this.auth.busy())
-        void this.router.navigateByUrl('/trips', { replaceUrl: true });
+        // 초대 링크로 왔다면 닉네임을 정한 뒤 합류 화면으로 돌아간다.
+        void this.router.navigateByUrl(takeReturn() ?? '/trips', { replaceUrl: true });
     });
     void this.auth.initialize();
   }

@@ -17,6 +17,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiBarcode } from '../../../../shared/ui/barcode/barcode';
 import { UiPostmark } from '../../../../shared/ui/postmark/postmark';
 import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
+import { takeReturn } from '../../util/return-to';
 
 @Component({
   selector: 'app-login',
@@ -77,7 +78,10 @@ export class LoginPage {
       if (loading) return;
       if (leaves)
         void router
-          .navigateByUrl(this.auth.nickname() ? '/trips' : '/onboarding', { replaceUrl: true })
+          // 초대 링크로 왔다면 로그인 뒤 합류 화면으로 돌아간다. 닉네임이 없으면 설정 뒤에 돌아간다.
+          .navigateByUrl(this.auth.nickname() ? (takeReturn() ?? '/trips') : '/onboarding', {
+            replaceUrl: true,
+          })
           .finally(() => this.auth.settleCallback());
       else this.auth.settleCallback();
     });

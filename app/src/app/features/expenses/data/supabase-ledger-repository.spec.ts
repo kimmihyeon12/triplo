@@ -3,7 +3,7 @@ import type { Expense } from '../model/ledger';
 import { ledgerFromRows, type LedgerRows } from './ledger-rows';
 import { SupabaseLedgerRepository } from './supabase-ledger-repository';
 import { toLedgerError, type LedgerDataClient } from './ledger-data-client';
-import { TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
+import { TripAccessError, TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
 
 const expense: Expense = {
   id: 'e1',
@@ -129,5 +129,6 @@ describe('toLedgerError', () => {
     expect(split).toBeInstanceOf(TripSaveError);
     expect(split.message).toContain('분담 금액');
     expect(toLedgerError({ code: '42501' })).toBeInstanceOf(TripSaveError);
+    expect(toLedgerError({ code: 'P0404' })).toBeInstanceOf(TripAccessError);
   });
 });

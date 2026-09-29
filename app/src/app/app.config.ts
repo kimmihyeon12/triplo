@@ -27,6 +27,12 @@ import { clearLegacyLocalTrips } from './features/trips/data/legacy-local-cleanu
 import { AuthStore } from './features/auth/data/auth-store';
 import { NetworkActivity } from './core/network-activity';
 import { LEDGER_REPOSITORY } from './features/expenses/data/ledger-repository';
+import { TRIP_MEMBERS } from './features/collaboration/data/trip-members-repository';
+import { LocalTripMembers } from './features/collaboration/data/local-trip-members';
+import {
+  SupabaseTripMembers,
+  supabaseMembersDataClient,
+} from './features/collaboration/data/supabase-trip-members';
 import { LocalLedgerRepository } from './features/expenses/data/local-ledger-repository';
 import { SupabaseLedgerRepository } from './features/expenses/data/supabase-ledger-repository';
 import { supabaseLedgerDataClient } from './features/expenses/data/ledger-data-client';
@@ -126,7 +132,20 @@ export const appConfig: ApplicationConfig = {
           // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
         }
         const auth = inject(AuthStore);
-        return new SupabaseTripRepository(supabaseTripDataClient(() => auth.dataClient()));
+        return new SupabaseTripRepository(
+          supabaseTripDataClient(() => auth.dataClient()),
+          () => auth.user()?.id ?? null,
+        );
+      },
+    },
+    // 초대·합류·멤버 관리. 실행 앱은 서버 함수, 테스트·미리보기는 고정 코드의 기기 구현.
+    {
+      provide: TRIP_MEMBERS,
+      useFactory: () => {
+        if (environment.isTest || environment.designPreview)
+          return new LocalTripMembers(inject(TRIP_REPOSITORY));
+        const auth = inject(AuthStore);
+        return new SupabaseTripMembers(supabaseMembersDataClient(() => auth.dataClient()));
       },
     },
     // 가계부도 여행과 같이 실행 앱은 Supabase에, 테스트·미리보기는 기기에 저장한다.

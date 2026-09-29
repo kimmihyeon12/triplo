@@ -1,0 +1,52 @@
+<div class="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-6" data-testid="join-page">
+  @switch (state()) {
+    @case ('invalid') {
+      <div class="rounded-panel bg-panel p-6 text-center shadow-panel" data-testid="join-invalid">
+        <h1 class="text-17 font-bold">초대를 열 수 없어요</h1>
+        <p class="mt-2 text-14 leading-relaxed text-ink-2">{{ invalidMessage() }}</p>
+      </div>
+    }
+    @case ('ready') {
+      @if (preview(); as p) {
+        <!-- 다음에 할 일이 일정보다 먼저 보이도록 안내와 버튼을 위에 둔다. -->
+        <section class="flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel">
+          <p class="text-13 font-semibold text-accent-deep">
+            {{ p.ownerNickname || '친구' }}님이 여행에 초대했어요
+          </p>
+          <h1 class="text-18 font-bold">{{ p.title }}</h1>
+          <p class="text-13 leading-relaxed text-ink-3">
+            지금은 일정을 보기만 할 수 있어요. 함께하면 장소·숙소와 가계부를 같이 고칠 수 있어요.
+          </p>
+          @if (!authReady()) {
+          } @else if (signedIn()) {
+            <button
+              appButton
+              variant="primary"
+              type="button"
+              class="mt-1 w-full"
+              [disabled]="busy()"
+              (click)="join()"
+              data-testid="join-accept"
+            >
+              함께하기
+            </button>
+          } @else {
+            <button
+              appButton
+              variant="primary"
+              type="button"
+              class="mt-1 w-full"
+              (click)="loginToJoin()"
+              data-testid="join-login"
+            >
+              로그인하고 함께하기
+            </button>
+          }
+        </section>
+        @if (ticket(); as ticket) {
+          <app-itinerary-snapshot [ticket]="ticket" [sections]="sections()" />
+        }
+      }
+    }
+  }
+</div>

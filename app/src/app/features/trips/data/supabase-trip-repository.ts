@@ -12,7 +12,11 @@ export class SupabaseTripRepository implements TripRepository {
   readonly lastSkippedCount = 0;
   private readonly versions = new Map<string, number>();
 
-  constructor(private readonly data: TripDataClient) {}
+  /** me: 지금 로그인한 사람의 id. 여행마다 내가 주인인지 멤버인지 정하는 데 쓴다. */
+  constructor(
+    private readonly data: TripDataClient,
+    private readonly me: () => string | null = () => null,
+  ) {}
 
   /**
    * 버전은 오르기만 한다. 저장 뒤 목록을 다시 읽을 때 저장보다 먼저 읽힌 응답이
@@ -21,7 +25,7 @@ export class SupabaseTripRepository implements TripRepository {
    */
   private remember(row: TripRow): Trip {
     this.versions.set(row.id, Math.max(this.versions.get(row.id) ?? 0, row.version));
-    return tripFromRow(row);
+    return tripFromRow(row, this.me());
   }
 
   async list(): Promise<Trip[]> {

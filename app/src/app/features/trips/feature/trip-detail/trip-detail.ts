@@ -54,6 +54,7 @@ import { ChatSheet } from '../../../travel-chat/travel-chat';
 import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { ToastService } from '../../../../core/toast-service';
+import { canDeleteTrip, tripPeople } from '../../util/sharing';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -205,10 +206,12 @@ export class TripDetailPage {
         action: null,
         tools: t
           ? {
-              people:
+              people: tripPeople(
+                t,
                 this.auth.user() && this.auth.nickname()
-                  ? [{ id: this.auth.user()!.id, name: this.auth.nickname()! }]
-                  : [],
+                  ? { id: this.auth.user()!.id, name: this.auth.nickname()! }
+                  : null,
+              ),
               inviteLink: ['/trips', t.id, 'invite'],
               menu: [
                 {
@@ -218,13 +221,21 @@ export class TripDetailPage {
                   testId: 'trip-edit',
                 },
                 { label: '이미지로 저장', icon: 'save', link: ['/trips', t.id, 'export'] },
-                {
-                  label: '여행 삭제',
-                  icon: 'trash',
-                  action: 'delete-trip',
-                  testId: 'trip-delete',
-                  danger: true,
-                },
+                // 함께 쓰는 여행의 멤버는 지우지 못한다. 함께하는 사람 화면에서 나간다.
+                canDeleteTrip(t)
+                  ? {
+                      label: '여행 삭제',
+                      icon: 'trash',
+                      action: 'delete-trip',
+                      testId: 'trip-delete',
+                      danger: true,
+                    }
+                  : {
+                      label: '함께하는 사람·나가기',
+                      icon: 'share',
+                      link: ['/trips', t.id, 'invite'],
+                      testId: 'trip-members',
+                    },
               ],
               onAction: (action) => {
                 if (action === 'delete-trip') this.deleteTripOpen.set(true);
