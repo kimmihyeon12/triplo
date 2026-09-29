@@ -27,7 +27,11 @@ export function quotaDeps(client: RpcClient, kind: AiKind, defaultLimit: number)
         p_kind: kind,
         p_default_limit: defaultLimit,
       });
-      if (error?.code === 'P0429') throw new UserLimitError(Number(error.details) || defaultLimit);
+      if (error?.code === 'P0429') {
+        // 예외 한도 0도 그대로 알린다. '||'로 기본값을 고르면 0이 기본 한도로 바뀐다.
+        const limit = Number(error.details);
+        throw new UserLimitError(Number.isInteger(limit) && limit >= 0 ? limit : defaultLimit);
+      }
       if (error) throw new Error('quota_check_failed');
       return Number(data);
     },

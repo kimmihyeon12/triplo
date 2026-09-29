@@ -24,6 +24,12 @@ describe('quotaDeps', () => {
     expect(error.limit).toBe(7);
   });
 
+  it('예외 한도 0도 그대로 알린다', async () => {
+    const c = client({ data: null, error: { code: 'P0429', details: '0' } });
+    const error = await quotaDeps(c, 'plan', 5).consumeQuota('u1').catch((e) => e);
+    expect(error.limit).toBe(0);
+  });
+
   it('그 밖의 오류는 quota_check_failed', async () => {
     const c = client({ data: null, error: { code: '42501' } });
     await expect(quotaDeps(c, 'receipt', 10).consumeQuota('u1')).rejects.toThrow('quota_check_failed');
