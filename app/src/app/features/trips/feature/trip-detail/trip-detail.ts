@@ -55,8 +55,7 @@ import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { ToastService } from '../../../../core/toast-service';
 import { canDeleteTrip, tripPeople } from '../../util/sharing';
-import { memberSummary } from '../../util/sharing';
-import { UiMemberStack } from '../../../../shared/ui/member-stack/member-stack';
+import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -67,7 +66,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
-    UiMemberStack,
+    UiMapLink,
     UiButton,
     UiBadge,
     UiNotice,
@@ -486,10 +485,6 @@ export class TripDetailPage {
   });
 
   private readonly toast = inject(ToastService);
-  readonly members = computed(() => {
-    const t = this.trip();
-    return t ? memberSummary(t, this.auth.user()?.id ?? null) : null;
-  });
 
   async sortByNearest(): Promise<void> {
     const t = this.trip();

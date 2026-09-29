@@ -10,11 +10,13 @@ import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../pla
 import { formatKoreanDate } from '../../../../shared/util/dates';
 import { RESERVATION_LABEL, type Trip, type AccommodationStay } from '../../model/trip';
 import { nightCoverage, stayIssues, stayNightCount } from '../../util/stays';
+import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
 
 @Component({
   host: { class: 'block' },
   selector: 'app-trip-stays',
-  imports: [UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
+  imports: [
+    UiMapLink,UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-stays.html',
 })

@@ -61,16 +61,6 @@
       탭은 이 화면의 패널만 바꾼다. 가계부는 다른 화면이므로 tablist 밖에 두고,
       아이콘과 구분선으로 "여기서부터는 이동"임을 드러낸다.
     -->
-    <!-- 여러 명이 함께 쓰는 여행이면 누구와 함께인지 탭 위에 보인다. 누르면 함께하는 사람 화면. -->
-    @if (members(); as m) {
-      <a
-        class="-mb-1 flex min-h-11 items-center self-start no-underline"
-        [routerLink]="['/trips', id(), 'invite']"
-        [attr.aria-label]="m.label + ' · 함께하는 사람 보기'"
-        data-testid="trip-member-stack"
-        ><app-member-stack [me]="m.me" [others]="m.others" [label]="m.label"
-      /></a>
-    }
     <app-tabs [items]="tabItems()" [active]="activeTab()" ariaLabel="여행 보기">
       <a
         appButton
@@ -316,7 +306,7 @@
                             <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="naverUrl(seg.stay)"
+                                appMapLink [href]="naverUrl(seg.stay)"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 [attr.aria-label]="seg.stay.name + ' 네이버지도에서 검색'"
@@ -332,7 +322,7 @@
                               </a>
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="kakaoUrl(seg.stay)"
+                                appMapLink [href]="kakaoUrl(seg.stay)"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 [attr.aria-label]="seg.stay.name + ' 카카오맵에서 검색'"
@@ -555,7 +545,7 @@
                             <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="naverUrl(seg.stop)"
+                                appMapLink [href]="naverUrl(seg.stop)"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 [attr.aria-label]="seg.stop.name + ' 네이버지도에서 검색'"
@@ -571,7 +561,7 @@
                               </a>
                               <a
                                 class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="kakaoUrl(seg.stop)"
+                                appMapLink [href]="kakaoUrl(seg.stop)"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 [attr.aria-label]="seg.stop.name + ' 카카오맵에서 검색'"

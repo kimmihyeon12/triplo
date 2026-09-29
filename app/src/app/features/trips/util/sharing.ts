@@ -16,7 +16,11 @@ export function tripPeople(
   trip: Trip,
   me: { id: string; name: string } | null,
 ): { id: string; name: string }[] {
-  if (trip.sharing) return trip.sharing.members.map((m) => ({ id: m.userId, name: m.nickname || '친구' }));
+  if (trip.sharing) {
+    // 상단 바는 내 원을 먼저 보이고 나머지는 +N으로 줄이므로 나를 맨 앞에 둔다.
+    const people = trip.sharing.members.map((m) => ({ id: m.userId, name: m.nickname || '친구' }));
+    return [...people.filter((p) => p.id === me?.id), ...people.filter((p) => p.id !== me?.id)];
+  }
   return me ? [me] : [];
 }
 

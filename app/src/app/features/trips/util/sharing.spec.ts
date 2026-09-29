@@ -29,6 +29,8 @@ describe('sharing', () => {
       { id: 'u1', name: '주인' },
       { id: 'u2', name: '민지' },
     ]);
+    // 상단 바는 내 원을 먼저 보이므로 나를 맨 앞에 둔다.
+    expect(tripPeople(shared, { id: 'u2', name: '민지' }).map((p) => p.id)).toEqual(['u2', 'u1']);
     expect(tripPeople(createTrip(), { id: 'me', name: '나' })).toEqual([{ id: 'me', name: '나' }]);
     expect(tripPeople(createTrip(), null)).toEqual([]);
   });
