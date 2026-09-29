@@ -195,42 +195,59 @@
   @if (!loading()) {
     <section class="flex flex-col gap-3">
       @if (isOwner()) {
-        @if (link(); as url) {
-          <div class="flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel">
-            <p class="text-13 font-semibold">초대 링크</p>
-            <p
-              class="rounded-control bg-ground-2 px-3 py-2.5 text-14 font-medium break-all select-all"
-              data-testid="invite-link"
-            >
-              {{ url }}
-            </p>
-            <p class="text-12 text-ink-3">{{ expiryLabel() }} · 링크는 지금만 보여요</p>
-            <div class="grid gap-2" [style.grid-template-columns]="canShare ? '1fr 1fr' : '1fr'">
-              <button appButton variant="primary" type="button" (click)="copyLink()" data-testid="invite-copy">
-                링크 복사
-              </button>
-              @if (canShare) {
-                <button appButton type="button" (click)="shareLink()">공유하기</button>
-              }
-            </div>
-          </div>
-        } @else if (expiresAt()) {
-          <div class="rounded-panel bg-panel p-4 shadow-panel" data-testid="invite-active">
-            <p class="text-14 font-semibold">초대 링크가 있어요</p>
-            <p class="mt-1 text-12 leading-relaxed text-ink-3">
-              {{ expiryLabel() }}. 링크는 만들 때만 보여요. 다시 보내려면 새로 만들어 주세요.
-            </p>
-          </div>
-        }
+        <!--
+          링크 카드: 제목 옆 새로고침 아이콘이 새 링크 만들기, 주 버튼이 복사, 취소는
+          카드 아래 작은 글자로 둔다. 흰 버튼 두 개를 나란히 두면 어느 것이 주 동작인지
+          흐려졌다(2026-09-29 사용자 결정).
+        -->
         @if (link() || expiresAt()) {
-          <div class="grid grid-cols-2 gap-2">
-            <button appButton type="button" [disabled]="busy()" (click)="createLink()" data-testid="invite-renew">
-              새로 만들기
-            </button>
-            <button appButton type="button" [disabled]="busy()" (click)="revokeLink()" data-testid="invite-revoke">
-              링크 취소
-            </button>
+          <div class="flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel" data-testid="invite-active">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-13 font-semibold">{{ link() ? '초대 링크' : '초대 링크가 있어요' }}</p>
+              <button
+                type="button"
+                class="-my-1.5 -mr-2 grid size-10 flex-none cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink-3 hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] disabled:opacity-40"
+                [disabled]="busy()"
+                (click)="createLink()"
+                aria-label="새 링크 만들기 · 앞 링크는 더 이상 쓸 수 없어요"
+                title="새 링크 만들기"
+                data-testid="invite-renew"
+              >
+                <app-icon name="refresh" [size]="18" />
+              </button>
+            </div>
+            @if (link(); as url) {
+              <p
+                class="rounded-control bg-ground-2 px-3 py-2.5 text-14 font-medium break-all select-all"
+                data-testid="invite-link"
+              >
+                {{ url }}
+              </p>
+              <p class="text-12 text-ink-3">{{ expiryLabel() }} · 링크는 지금만 보여요</p>
+              <div class="grid gap-2" [style.grid-template-columns]="canShare ? '1fr 1fr' : '1fr'">
+                <button appButton variant="primary" type="button" (click)="copyLink()" data-testid="invite-copy">
+                  링크 복사
+                </button>
+                @if (canShare) {
+                  <button appButton type="button" (click)="shareLink()">공유하기</button>
+                }
+              </div>
+            } @else {
+              <p class="text-12 leading-relaxed text-ink-3">
+                {{ expiryLabel() }}. 링크는 만들 때만 보여요. 다시 보내려면 오른쪽 위 새로고침으로
+                새 링크를 만들어 주세요.
+              </p>
+            }
           </div>
+          <button
+            type="button"
+            class="mx-auto min-h-11 cursor-pointer border-0 bg-transparent px-3 text-13 text-ink-3 underline underline-offset-4 hover:text-danger-ink disabled:opacity-40"
+            [disabled]="busy()"
+            (click)="revokeLink()"
+            data-testid="invite-revoke"
+          >
+            링크 취소
+          </button>
         } @else {
           <button
             appButton
