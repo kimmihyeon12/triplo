@@ -24,6 +24,7 @@ import { copyText } from '../../../places/data/map-links';
 import type { TripMember } from '../../../trips/model/trip';
 import { TRIP_MEMBERS } from '../../data/trip-members-repository';
 import { inviteLink } from '../../data/invite-code';
+import { avatarTone } from '../../../../shared/util/avatar-tone';
 
 @Component({
   selector: 'app-invite',
@@ -32,6 +33,8 @@ import { inviteLink } from '../../data/invite-code';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Invite {
+  /** 프로필 원 색. 사람마다 다르고 같은 사람은 늘 같다. */
+  readonly tone = avatarTone;
   readonly id = input.required<string>();
   readonly trip = signal<Trip | null>(null);
   readonly loading = signal(true);

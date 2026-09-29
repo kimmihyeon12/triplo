@@ -27,3 +27,23 @@ export function tripPeople(
 export function myLedgerPersonId(trip: Trip, userId: string | null): string {
   return trip.sharing?.role === 'editor' && userId ? `member-${userId}` : 'self';
 }
+
+/**
+ * 함께하는 사람 요약: 내 프로필 원과 '나를 뺀 나머지 수'(회색 원 +N).
+ * 혼자 쓰는 여행은 null이다. 로그인 정보가 없으면 첫 사람(주인)을 대표로 둔다.
+ */
+export function memberSummary(
+  trip: Trip,
+  myId: string | null,
+): { me: { initial: string; seed: string }; others: number; label: string } | null {
+  const members = trip.sharing?.members ?? [];
+  if (members.length < 2) return null;
+  const mine = members.find((m) => m.userId === myId);
+  const first = mine ?? members[0];
+  const name = first.nickname || '친구';
+  return {
+    me: { initial: name.slice(0, 1), seed: first.userId },
+    others: members.length - 1,
+    label: `${mine ? '나' : name} 외 ${members.length - 1}명`,
+  };
+}
