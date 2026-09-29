@@ -425,6 +425,12 @@ begin
   on conflict (trip_id, user_id) do nothing;
   get diagnostics v_added = row_count;
   if v_added > 0 then
+    -- 함께 쓰는 가계부에서 '나'는 사람마다 뜻이 달라진다. 주인의 닉네임으로 바꾼다.
+    update public.ledger_people p
+       set name = left(m.nickname, 40)
+      from public.trip_members m
+     where p.trip_id = v_trip and p.id = 'self' and p.name = '나'
+       and m.trip_id = v_trip and m.role = 'owner' and btrim(m.nickname) <> '';
     insert into public.ledger_people (trip_id, id, name, "order")
     values (v_trip, 'member-' || v_uid, left(v_nickname, 40),
             coalesce((select max("order") + 1 from public.ledger_people where trip_id = v_trip), 0))

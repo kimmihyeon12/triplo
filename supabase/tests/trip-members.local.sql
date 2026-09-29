@@ -60,6 +60,7 @@ select 'B join again (t1)' as t, join_trip(:'code');
 select 'B trips (1)' as t, count(*) from trips;
 select 'B members (2)' as t, count(*) from trip_members where trip_id = 't1';
 select 'B ledger person added (민지)' as t, name from ledger_people where trip_id = 't1' and id = 'member-' || :'B';
+select 'self renamed to owner nickname (주인)' as t, name from ledger_people where trip_id = 't1' and id = 'self';
 select 'B sees expenses (e1 only)' as t, string_agg(id, ',') from expenses;
 select 'B sees splits (1)' as t, count(*) from expense_splits;
 select 'B edits trip (2)' as t, save_trip('{"id":"t1","title":"강릉 함께","regions":[{"id":"r1","name":"강릉시","order":0}],"stops":[],"stays":[]}'::jsonb, 1);

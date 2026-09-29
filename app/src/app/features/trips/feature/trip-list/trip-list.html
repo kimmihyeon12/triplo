@@ -163,7 +163,7 @@
 <!-- z-index를 주면 쌓임 맥락이 생겨 메뉴가 배경 아래 갇힌다. -->
                 <app-row-menu
                   class="absolute right-3 top-3"
-                  [items]="tripMenu"
+                  [items]="canDeleteTrip(trip) ? tripMenu : memberMenu"
                   [ariaLabel]="trip.title + ' 더보기'"
                   [testId]="'trip-menu-' + trip.id"
                   (selected)="onTripMenu($event, trip)"
@@ -189,6 +189,9 @@
                   알려 주는 것이 없으므로 뺐다.
                 -->
                 <p class="card__meta flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-12 text-ink-3">
+                  @if (sharedLabel(trip); as label) {
+                    <span appBadge tone="accent" [attr.data-testid]="'trip-shared-' + trip.id">{{ label }}</span>
+                  }
                   @if (trip.regions.length > 0) {
                     <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
                   }
