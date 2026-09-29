@@ -14,8 +14,13 @@ export class SupabaseTripRepository implements TripRepository {
 
   constructor(private readonly data: TripDataClient) {}
 
+  /**
+   * 버전은 오르기만 한다. 저장 뒤 목록을 다시 읽을 때 저장보다 먼저 읽힌 응답이
+   * 늦게 도착하면 버전을 낮춰, 다음 저장이 가짜 충돌로 거절됐다. 새로 불러올
+   * 때는 forget으로 먼저 지운다.
+   */
   private remember(row: TripRow): Trip {
-    this.versions.set(row.id, row.version);
+    this.versions.set(row.id, Math.max(this.versions.get(row.id) ?? 0, row.version));
     return tripFromRow(row);
   }
 

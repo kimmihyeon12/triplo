@@ -79,6 +79,20 @@ describe('SupabaseTripRepository', () => {
     await expect(repo.save(trip)).resolves.toBeUndefined();
   });
 
+  it('저장 뒤 늦게 도착한 옛 목록 응답이 기억한 버전을 낮추지 않는다', async () => {
+    const server = fakeServer();
+    const trip = createTrip({ title: '강릉' });
+    // 목록 조회가 저장보다 먼저 읽혀 버전 0을 돌려주는 경우를 흉내 낸다.
+    const repo = new SupabaseTripRepository({
+      ...server.client,
+      listRows: async () => [rowOf(trip, 0)],
+    });
+    await repo.save(trip);
+    await repo.list();
+    await repo.save({ ...trip, title: '강릉 2' });
+    expect(server.calls).toEqual([0, 1]);
+  });
+
   it('목록을 못 읽으면 오류를 그대로 던진다', async () => {
     const server = fakeServer();
     const repo = new SupabaseTripRepository({
