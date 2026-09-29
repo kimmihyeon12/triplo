@@ -23,7 +23,8 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { EXPENSE_CATEGORIES, type Expense, type ExpensePerson } from '../../model/ledger';
 import { RECEIPT_SCANNER } from '../../data/receipt-scanner';
 import { draftsToExpenses, type ReceiptDraft } from '../../util/receipt';
-import { drawStrokes, fitSize, renderReceipt, type HighlightStroke } from '../../util/image';
+import { drawStrokes, fitSize, type HighlightStroke } from '../../util/image';
+import { renderReceipt } from './render-receipt';
 import { AiQuota } from '../../../../core/ai-quota';
 import { defaultPayer } from '../../util/expense-link';
 
