@@ -2,11 +2,12 @@ import { computed, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
+import { TripConflictError } from './trip-data-client';
 
 export interface PendingDraft {
   readonly trip: Trip;
   readonly version: number;
-  readonly state: 'saving' | 'error';
+  readonly state: 'saving' | 'error' | 'conflict';
   readonly error: string | null;
 }
 
@@ -69,7 +70,9 @@ export class PendingDraftRegistry {
         return true;
       } catch (error) {
         if (generation === this.generation() && this.get(id)?.version === version) {
-          this.put(id, { trip: snapshot, version, state: 'error', error: errorMessage(error) });
+          // 충돌은 다시 저장해도 풀리지 않는다. 화면이 새로 불러오기를 권하도록 구분한다.
+          const state = error instanceof TripConflictError ? 'conflict' : 'error';
+          this.put(id, { trip: snapshot, version, state, error: errorMessage(error) });
         }
         return false;
       }

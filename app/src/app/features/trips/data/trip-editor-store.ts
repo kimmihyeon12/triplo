@@ -4,7 +4,7 @@ import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
 import { errorMessage, PendingDraftRegistry } from './pending-draft-registry';
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
 export type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
 /** Provided by the trip workspace and shared by detail/stop/stay child routes. */
@@ -117,11 +117,28 @@ export class TripEditorStore {
       this.state.id() === stamped.id
     ) {
       patchState(this.state, {
-        saveState: ok ? 'saved' : 'error',
+        saveState: ok
+          ? 'saved'
+          : this.pending.get(stamped.id)?.state === 'conflict'
+            ? 'conflict'
+            : 'error',
         lastSavedAt: ok ? new Date() : this.state.lastSavedAt(),
       });
     }
     return ok;
+  }
+
+  /**
+   * 충돌 뒤 서버 최신본을 다시 읽는다. 대기 중인 초안과 기억한 버전을 버린다.
+   * 화면에 남아 있던 입력은 사라지므로 버튼 옆에 그렇게 적는다.
+   */
+  async reload(): Promise<Trip | null> {
+    const id = this.state.id();
+    if (!id) return null;
+    this.pending.discard(id);
+    this.repo.forget?.(id);
+    patchState(this.state, { currentState: 'idle', saveState: 'idle' });
+    return this.load(id);
   }
 
   retrySave(): Promise<boolean> {

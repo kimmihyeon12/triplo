@@ -7,6 +7,7 @@ import { TRIP_REPOSITORY, type TripRepository } from './trip-repository';
 import { TripEditorStore } from './trip-editor-store';
 import { PendingDraftRegistry } from './pending-draft-registry';
 import { TripListStore } from './trip-list-store';
+import { TripConflictError } from './trip-data-client';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -179,5 +180,26 @@ describe('trip editing async contract', () => {
     expect(store.current()?.id).toBe('b');
     expect(store.saveState()).toBe('idle');
     expect(store.saveError()).toBeNull();
+  });
+
+  it('충돌이면 conflict 상태로 두고 입력을 유지하며, reload는 서버본을 다시 읽는다', async () => {
+    const { store, records, injector } = setup({
+      save: async () => {
+        throw new TripConflictError();
+      },
+    });
+    const repo = injector.get(TRIP_REPOSITORY);
+    const forgotten: string[] = [];
+    repo.forget = (id) => void forgotten.push(id);
+    const server = createTrip({ title: '서버본' });
+    records.set(server.id, server);
+    await store.open(server.id);
+    await store.commit({ ...server, title: '내 입력' });
+    expect(store.saveState()).toBe('conflict');
+    expect(store.current()?.title).toBe('내 입력');
+    await store.reload();
+    expect(forgotten).toEqual([server.id]);
+    expect(store.current()?.title).toBe('서버본');
+    expect(store.saveState()).toBe('idle');
   });
 });
