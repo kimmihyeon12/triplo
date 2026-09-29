@@ -77,8 +77,8 @@
   --color-warn-ink: #975f03;
   --color-warn-tint: #fff3d5;
   --color-warn-fill: #ffe08a;
-  --color-danger-ink: #bf3f3d;
-  --color-danger-tint: #ffece9;
+  --color-danger-ink: #d42a2a;
+  --color-danger-tint: #fff3f2;
   --color-danger-fill: #fbcfcb;
   --color-ok-ink: #067d5f;
   --color-ok-tint: #defcef;
@@ -113,6 +113,11 @@
   --color-cafe-ink: #107c73;
   --color-cafe-tint: #dbfcf6;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
+  /*
+    일정 짜기(AI 진입)는 파랑→보라 그라데이션이다. 2026-09-29 1일차 칩의 남색 그라데이션도
+    써 봤으나 사용자가 이전 색을 골랐다. 빨강(danger)은 같은 날 칙칙하다는 의견으로
+    선명한 #d42a2a로 바꿨고 바탕 위 4.65:1이다.
+  */
   --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
   --ai-fill-hover: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);
   --color-ink: #16181d;
