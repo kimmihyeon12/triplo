@@ -18,6 +18,20 @@ test('다녀온 여행이 없으면 빈 상태를 보여준다', async ({ page }
   await expect(page.getByTestId('block-map')).toHaveCount(0);
 });
 
+test('불러오는 동안에는 빈 상태를 보여주지 않는다', async ({ page }) => {
+  let release: () => void = () => {};
+  const held = new Promise<void>((r) => (release = r));
+  await page.route('**/geo/*.geo.json', async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.goto('/stats');
+  await page.waitForTimeout(500);
+  await expect(page.getByText('첫 여행을 기다리고 있어요')).toHaveCount(0);
+  release();
+  await expect(page.getByText('첫 여행을 기다리고 있어요')).toBeVisible();
+});
+
 test('날짜가 지나지 않은 여행은 통계에 넣지 않는다', async ({ page }) => {
   const id = await createTrip(page, {
     title: '앞으로 갈 여행',
