@@ -1,6 +1,5 @@
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
-import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -42,7 +41,6 @@ import type { GeoPoint, PlaceRef } from '../../../places/model/place';
     UiButton,
     UiInput,
     UiBadge,
-    UiNotice,
     UiActionBar,
     UiField,
     FormsModule,

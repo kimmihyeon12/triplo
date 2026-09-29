@@ -1,5 +1,6 @@
 <!--
   사용자가 무언가 해야 하는 상태(저장 실패·충돌)만 보인다(2026-09-29 사용자 결정).
+  무엇이 잘못됐는지는 오류 토스트가 말하므로 여기에는 누를 버튼만 둔다.
   저장 중에는 상단 바가 네트워크 요청으로 로딩을 보이고, '저장됨 · 14:32'는
   편집할 때마다 떠서 알려 주는 것 없이 자리만 차지했다.
 -->
@@ -11,9 +12,6 @@
       data-testid="save-status"
       data-state="error"
     >
-      <span appBadge class="cell cell--danger"
-        ><app-icon name="alert" [size]="14" /> 저장 실패 · 입력은 유지됨</span
-      >
       <button
         appButton
         type="button"
@@ -37,9 +35,6 @@
       data-testid="save-status"
       data-state="conflict"
     >
-      <span appBadge class="cell cell--warn"
-        ><app-icon name="alert" [size]="14" /> 다른 곳에서 먼저 바뀌었어요</span
-      >
       <button
         appButton
         type="button"

@@ -1,4 +1,3 @@
-import { UiBadge } from '../badge/badge';
 import { UiButton } from '../button/button';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { IconComponent } from '../icon/icon';
@@ -7,7 +6,7 @@ import { IconComponent } from '../icon/icon';
 @Component({
   host: { class: 'inline-flex items-center' },
   selector: 'app-save-status',
-  imports: [UiButton, UiBadge, IconComponent],
+  imports: [UiButton, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './save-status.html',
 })

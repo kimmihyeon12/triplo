@@ -311,19 +311,6 @@
         </div>
       }
 
-      @if (store.saveState() === 'error') {
-        <div appNotice tone="danger" role="alert">
-          <app-icon
-            class="in-[.field__hint]:text-warn-ink in-[.field__hint]:[vertical-align:-2px]"
-            name="alert"
-          />
-          <div class="notice__body flex-1 min-w-0">
-            <strong class="in-[.notice]:font-bold">저장에 실패했습니다.</strong> 입력한 내용은
-            그대로 남아 있습니다.
-            <div class="text-12 leading-normal">{{ store.saveError() }}</div>
-          </div>
-        </div>
-      }
 
       @if (store.saveState() !== 'idle') {
         <div class="flex flex-wrap items-center gap-2 form-status justify-end">

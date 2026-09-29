@@ -14,7 +14,8 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'error');
     // 저장 실패는 화면을 옮겨도 보이도록 앱 전체의 오류 토스트로도 알린다.
     await expect(page.getByTestId('error-toast')).toContainText('테스트용 저장 실패');
-    await expect(page.getByText('저장에 실패했습니다.')).toBeVisible();
+    // 무엇이 잘못됐는지는 토스트가 알리고, 화면에는 다시 저장 버튼만 남는다.
+    await expect(page.getByTestId('retry-save')).toBeVisible();
     await expect(page.getByTestId('trip-title')).toHaveValue('실패 테스트');
     await expect(page).toHaveURL(/\/trips\/new$/);
 

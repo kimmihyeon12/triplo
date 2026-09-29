@@ -57,26 +57,14 @@
 
   @switch (store.listState()) {
     @case ('error') {
-      <div appNotice tone="danger" role="alert">
-        <app-icon name="alert" />
-        <div class="notice__body flex-1 min-w-0">
-          <!--
-            자세한 이유는 오류 토스트가 알린다. 토스트는 사라지므로 목록 자리에는
-            빈 목록으로 잘못 보이지 않도록 이 안내와 다시 시도를 남긴다.
-          -->
-          <strong class="in-[.notice]:font-bold">여행을 불러오지 못했어요.</strong>
-          <div class="notice__actions flex gap-2 flex-wrap mt-2">
-            <button
-              appButton
-              type="button"
-              class="btn btn--sm"
-              (click)="store.loadList()"
-              variant="danger"
-            >
-              다시 시도
-            </button>
-          </div>
-        </div>
+      <!--
+        무엇이 잘못됐는지는 오류 토스트가 말한다. 토스트는 사라지므로 목록 자리에는
+        빈 목록으로 잘못 보이지 않도록 다시 시도만 남긴다.
+      -->
+      <div class="flex justify-center py-10">
+        <button appButton type="button" (click)="store.loadList()" data-testid="retry-list">
+          <app-icon name="refresh" [size]="16" /> 다시 시도
+        </button>
       </div>
     }
     @case ('ready') {
