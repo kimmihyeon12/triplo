@@ -156,21 +156,20 @@
     <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">설정</p>
     <div class="rounded-panel bg-panel shadow-panel">
       <!--
-        알림은 화면을 옮기지 않고 그 자리에서 켜고 끈다. 스위치 하나를 위해
-        화면을 하나 더 두면 누르는 횟수만 늘어난다.
+        알림은 아직 보낼 수단이 없다. 켜고 끌 수 있게 두면 설정이 있는 것처럼 보이고
+        새로고침하면 다시 켜져 믿을 수 없었다(2026-09-30 감리 P2-02). 준비 중으로 꺼 둔다.
       -->
       <button
         type="button"
-        class="flex min-h-12 w-full items-center gap-3 border-b border-border bg-transparent px-4 py-3 text-left text-14"
+        class="flex min-h-12 w-full items-center gap-3 border-b border-border bg-transparent px-4 py-3 text-left text-14 disabled:cursor-default"
         role="switch"
-        [attr.aria-checked]="notificationsOn()"
-        (click)="toggleNotifications()"
+        aria-checked="false"
+        disabled
         data-testid="toggle-notifications"
       >
         <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="bell" [size]="18" /></span>
-        <span class="flex-1">알림</span>
-        <!-- 줄 전체가 버튼이므로 스위치는 표시만 맡는다. -->
-        <app-switch [checked]="notificationsOn()" presentational />
+        <span class="flex-1">알림 <span class="text-12 text-ink-3">준비 중</span></span>
+        <app-switch [checked]="false" disabled presentational />
       </button>
       <a
         class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"

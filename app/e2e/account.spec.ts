@@ -67,13 +67,13 @@ test('닉네임 편집을 취소하면 원래 이름이 남는다', async ({ pag
   await expect(page.getByTestId('login-account')).toContainText('여행테스터');
 });
 
-test('알림 스위치는 화면을 옮기지 않고 그 자리에서 바뀐다', async ({ page }) => {
+// 감리 P2-02: 알림 기능이 없는데 스위치가 켜고 꺼지고, 새로고침하면 다시 켜졌다.
+test('알림은 준비 중으로 꺼진 채 누를 수 없다', async ({ page }) => {
   await page.goto('/account');
   const toggle = page.getByTestId('toggle-notifications');
-  await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await toggle.click();
+  await expect(toggle).toBeDisabled();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
-  await expect(page).toHaveURL(/\/account$/);
+  await expect(toggle).toContainText('준비 중');
 });
 
 test('공지사항을 열면 목록이 보이고 첫 글이 펼쳐진다', async ({ page }) => {
