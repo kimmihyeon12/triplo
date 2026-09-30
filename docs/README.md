@@ -87,3 +87,4 @@
 
 - [예산·요금 기준·추천 체류시간과 전체 지역 선택](ai-plan-estimates.md): 요청·응답 추가 항목, 일차별 목록, 추정과 실제 지출 구분, 검증·배포 상태.
 - [관련 OpenSpec](../openspec/changes/add-ai-plan-estimates/proposal.md).
+- [시간순 코스·분류 통일 OpenSpec](../openspec/changes/add-ai-course-plan/proposal.md), [설계](superpowers/specs/2026-09-30-ai-course-plan-design.md), [구현 계획](superpowers/plans/2026-09-30-ai-course-plan.md): 코스 카드·일곱 분류·가계부 분류 예산·숙소 숙박 담기.
