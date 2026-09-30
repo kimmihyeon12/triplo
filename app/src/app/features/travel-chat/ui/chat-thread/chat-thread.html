@@ -183,10 +183,16 @@
         (keydown)="onKeydown($event)"
         data-testid="chat-input"
       ></textarea>
+      <!--
+        누르는 순간 입력창이 포커스를 잃으면 키보드가 닫히고 입력 영역 아래 여백이
+        바뀌어 버튼이 손가락 밑에서 움직인다. 그러면 클릭이 버튼을 벗어나 한 번 더
+        눌러야 보내진다. 포커스를 입력창에 남겨 메신저처럼 키보드를 연 채 보낸다.
+      -->
       <button
         appButton
         class="btn size-11 flex-none rounded-control p-0"
         type="submit"
+        (mousedown)="$event.preventDefault()"
         variant="primary"
         [disabled]="pending() || draftText().trim().length === 0"
         aria-label="보내기"
