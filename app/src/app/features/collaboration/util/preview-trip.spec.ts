@@ -33,3 +33,15 @@ describe('tripFromPreview', () => {
     expect(trip.stops[0].kind).toBe('place');
   });
 });
+
+it('새 분류는 그대로, 모르는 분류는 관광으로 읽는다', () => {
+  const trip = tripFromPreview({
+    ...preview,
+    stops: [
+      { ...preview.stops[0]!, kind: 'activity' },
+      { ...preview.stops[0]!, name: 'x', kind: 'unknown' },
+      { ...preview.stops[0]!, name: 'y', kind: 'other' },
+    ],
+  });
+  expect(trip.stops.map((s) => s.kind)).toEqual(['activity', 'place', 'other']);
+});

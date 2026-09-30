@@ -372,3 +372,16 @@ describe('visitedPlacesIn', () => {
     ]);
   });
 });
+
+describe('여행지 필터', () => {
+  it('관광·액티비티·쇼핑·기타를 함께 세고 식사는 뺀다', () => {
+    const trip = pastTrip({ stops: [
+      createStop({ name: '관광', kind: 'place', regionId: 'r1' }),
+      createStop({ name: '체험', kind: 'activity', regionId: 'r1' }),
+      createStop({ name: '쇼핑', kind: 'shopping', regionId: 'r1' }),
+      createStop({ name: '역', kind: 'other', regionId: 'r1' }),
+      createStop({ name: '식사', kind: 'meal', regionId: 'r1' }),
+    ] });
+    expect(visitedPlacesIn([trip], TODAY, '51', 'travel').map(p => p.name).sort()).toEqual(['관광', '쇼핑', '역', '체험']);
+  });
+});

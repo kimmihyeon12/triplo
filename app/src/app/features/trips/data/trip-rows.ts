@@ -1,4 +1,4 @@
-import type { AccommodationStay, Trip, TripRegion, TripSharing, TripStop } from '../model/trip';
+import { toStopKind, type AccommodationStay, type Trip, type TripRegion, type TripSharing, type TripStop } from '../model/trip';
 import type { PlaceRef } from '../../places/model/place';
 
 /**
@@ -117,7 +117,7 @@ export function tripFromRow(row: TripRow, me: string | null = null): Trip {
     }));
   const stops: TripStop[] = row.trip_stops.map((s) => ({
     id: s.id,
-    kind: s.kind,
+    kind: toStopKind(s.kind),
     name: s.name,
     address: s.address,
     regionId: s.region_id,

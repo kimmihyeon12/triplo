@@ -1,8 +1,6 @@
-import type { StopKind, Trip } from '../../trips/model/trip';
+import { toStopKind, type Trip } from '../../trips/model/trip';
 import { createStay, createStop, createTrip } from '../../trips/util/factories';
 import type { InvitePreview } from '../model/invite-preview';
-
-const KINDS: readonly StopKind[] = ['place', 'meal', 'break', 'buffer'];
 
 /**
  * 초대 미리보기를 일정 카드가 그릴 수 있는 여행 모양으로 바꾼다. 미리보기에는
@@ -19,7 +17,7 @@ export function tripFromPreview(preview: InvitePreview): Trip {
       createStop({
         id: `preview-stop-${i}`,
         name: s.name,
-        kind: KINDS.includes(s.kind as StopKind) ? (s.kind as StopKind) : 'place',
+        kind: toStopKind(s.kind),
         date: s.date,
         order: s.order,
         fixedTime: s.fixedTime,

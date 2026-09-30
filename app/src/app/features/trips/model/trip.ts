@@ -141,6 +141,11 @@ export function toStopKind(value: unknown): StopKind {
   return (STOP_KINDS as readonly unknown[]).includes(value) ? (value as StopKind) : 'place';
 }
 
+/** 통계의 '여행지' 필터에 드는 분류. 먹는 곳과 여유시간이 아닌 모든 장소다. */
+export function isSightseeing(kind: StopKind): boolean {
+  return kind === 'place' || kind === 'activity' || kind === 'shopping' || kind === 'other';
+}
+
 export const STOP_KIND_DEFAULT_NAME: Record<StopKind, string> = {
   place: '',
   activity: '',

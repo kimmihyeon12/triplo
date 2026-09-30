@@ -1,4 +1,4 @@
-import type { Trip } from '../../trips/model/trip';
+import { isSightseeing, type Trip } from '../../trips/model/trip';
 import type { VisitFilter } from '../model/visit-stats';
 import type { SavedMapMarker } from '../model/map-marker';
 
@@ -6,7 +6,7 @@ export function savedMarkers(trips: readonly Trip[], filter: VisitFilter): Saved
   const points = new Map<string, SavedMapMarker>();
   for (const trip of trips) {
     const stops = trip.stops.filter(stop => !stop.excluded && stop.kind !== 'buffer'
-      && (filter === 'all' || stop.kind === (filter === 'travel' ? 'place' : filter)));
+      && (filter === 'all' || (filter === 'travel' ? isSightseeing(stop.kind) : stop.kind === filter)));
     const items = [...stops, ...(filter === 'all' || filter === 'travel' ? trip.stays : [])];
     for (const item of items) {
       const p = item.location;
