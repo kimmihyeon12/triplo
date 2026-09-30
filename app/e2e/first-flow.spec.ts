@@ -27,7 +27,8 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
     await expect(page.getByTestId('panel-days')).toBeVisible();
     await expect(page.getByTestId('day-items')).toContainText('안목해변');
     await expect(page.getByTestId('day-items')).toContainText('위치 미확인');
-    await expect(page.getByTestId('day-totals')).toContainText('체류 1시간');
+    // 체류시간은 화면에서 쓰지 않는다(2026-09-30).
+    await expect(page.getByTestId('day-totals')).not.toContainText('체류');
     await expect(page.getByTestId('day-stay-info')).toContainText('숙소 미정');
 
     await addStay(page, id, {
@@ -65,15 +66,12 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
   });
 
-  test('장소 이름 없이 저장할 수 없고 체류시간 오류를 표시한다', async ({ page }) => {
+  test('장소 이름 없이 저장할 수 없고 체류시간 입력칸은 없다', async ({ page }) => {
     const id = await createTrip(page, { start: '2026-05-01', end: '2026-05-01' });
     await page.goto(`/trips/${id}/stops/new`);
     await expect(page.getByTestId('stop-save')).toBeDisabled();
+    await expect(page.getByTestId('stop-stay')).toHaveCount(0);
     await page.getByTestId('stop-name').fill('카페');
-    await page.getByTestId('stop-stay').fill('-5');
-    await expect(page.getByText('0 이상의 분 단위로 입력하세요.')).toBeVisible();
-    await expect(page.getByTestId('stop-save')).toBeDisabled();
-    await page.getByTestId('stop-stay').fill('30');
     await expect(page.getByTestId('stop-save')).toBeEnabled();
   });
 });

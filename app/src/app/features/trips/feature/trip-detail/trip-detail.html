@@ -527,17 +527,9 @@
                             분류 배지는 그 아래 한 줄에 모은다.
                           -->
                           <!--
-                            체류시간은 적어 둔 경우에만 보여준다. '미정'을 적어 두면
-                            대부분의 카드에 같은 말이 붙어 읽을 것이 늘어나기만 한다.
-                            위치 미확인은 아래 배지 줄로 옮겼다.
+                            체류시간은 화면에서 쓰지 않는다(2026-09-30 사용자 결정). 저장된 값은
+                            보유하며, AI 일정의 추천 체류는 비고에 적는다.
                           -->
-                          @if (seg.stop.stayMinutes !== null) {
-                            <div
-                              class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
-                            >
-                              <span>체류 {{ minutes(seg.stop.stayMinutes) }}</span>
-                            </div>
-                          }
                           @if (seg.stop.address) {
                             <!--
                               주소 복사는 주소와 같은 행에 아이콘으로 둔다.
@@ -689,21 +681,9 @@
                 data-testid="day-totals"
               >
                 <span class="totals__label text-16 font-bold">하루 합계</span>
-                <!--
-                  합계는 세어 본 값이라 본문으로 적는다. 전에는 체류 시간을
-                  place 배지로 두어 바로 위 일정의 '장소' 분류 배지와 같은
-                  색이 됐다. 배지는 '체류 미정'처럼 사용자가 아직 넣지 않은
-                  값이 있다는 상태에만 쓴다.
-                -->
+                <!-- 합계는 세어 본 값이라 본문으로 적는다. 체류시간은 화면에서 쓰지 않는다(2026-09-30). -->
                 <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-13 text-ink-2">
-                  <span>체류 {{ minutes(totals().stayMinutes) }}</span>
-                  <span class="text-border-strong" aria-hidden="true">·</span>
                   <span>이동 {{ totals().legCount }}구간 · 시간 미확인</span>
-                  @if (totals().unknownStayCount > 0) {
-                    <span appBadge class="cell cell--warn"
-                      >체류 미정 {{ totals().unknownStayCount }}개</span
-                    >
-                  }
                 </span>
               </div>
 
@@ -788,14 +768,8 @@
                     <span
                       class="ov__meta text-12 leading-normal text-ink-3 flex gap-1 flex-wrap items-center"
                     >
-                      @if (d.totals.activeCount > 0) {
-                        <span>체류 {{ minutes(d.totals.stayMinutes) }}</span>
-                        @if (d.totals.unknownStayCount > 0) {
-                          <span>· 체류 미정 {{ d.totals.unknownStayCount }}</span>
-                        }
-                        @if (d.totals.legCount > 0) {
-                          <span>· 이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
-                        }
+                      @if (d.totals.activeCount > 0 && d.totals.legCount > 0) {
+                        <span>이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
                       }
                       @if (d.fixedTimeConflictCount > 0) {
                         <span appBadge class="cell cell--danger"

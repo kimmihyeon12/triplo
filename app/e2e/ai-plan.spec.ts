@@ -65,10 +65,11 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(page.getByTestId('trip-header')).toBeVisible();
   const stop = await page.evaluate((key) => {
     const saved = JSON.parse(localStorage.getItem(key)!);
-    const trips = Object.values(saved.trips) as { stops: { name: string; estimatedCost: number; stayMinutes: number; memo: string }[] }[];
+    const trips = Object.values(saved.trips) as { stops: { name: string; estimatedCost: number; stayMinutes: number | null; memo: string }[] }[];
     return trips[0]!.stops.find(s => s.name === '오죽헌');
   }, STORAGE_KEY);
-  expect(stop).toMatchObject({ estimatedCost: 10000, stayMinutes: 90 });
+  expect(stop).toMatchObject({ estimatedCost: 10000, stayMinutes: null });
+  expect(stop?.memo).toContain('- 체류 60~90분');
   expect(stop?.memo).toContain('AI 추정');
   expect(stop?.memo).toContain('2명');
 });

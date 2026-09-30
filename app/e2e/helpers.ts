@@ -95,8 +95,7 @@ export async function addStop(page: Page, tripId: string, input: StopInput): Pro
   const stopAddress = input.address ?? (input.region ? `강원 ${input.region}시 어딘가` : '');
   if (stopAddress) await page.getByTestId('stop-address').fill(stopAddress);
   if (input.date) await page.getByTestId('stop-date').selectOption(input.date);
-  if (input.stayMinutes !== undefined)
-    await page.getByTestId('stop-stay').fill(String(input.stayMinutes));
+  // 체류시간 입력칸은 없앴다(2026-09-30). stayMinutes를 넘겨도 입력하지 않는다.
   if (input.fixedTime) await page.getByTestId('stop-fixed').fill(input.fixedTime);
   if (input.memo) await page.getByTestId('stop-memo').fill(input.memo);
   await page.getByTestId('stop-save').click();

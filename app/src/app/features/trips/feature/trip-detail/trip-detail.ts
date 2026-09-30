@@ -27,7 +27,6 @@ import {
   dayStops,
   dayTotals,
   fixedTimeConflicts,
-  formatMinutes,
   moveStay,
   moveStop,
   removeStop,
@@ -278,10 +277,6 @@ export class TripDetailPage {
 
   formatDate(d: IsoDate, short = false): string {
     return formatKoreanDate(d, { short });
-  }
-
-  minutes(m: number): string {
-    return formatMinutes(m);
   }
 
   summarize(names: string[]): string {

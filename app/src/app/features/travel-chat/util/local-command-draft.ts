@@ -24,5 +24,5 @@ export function change(before: Trip, after: Trip, title: string): LocalResult {
 }
 
 export function describeStop(stop: TripStop): string {
-  return `${stop.name} · ${stop.date ?? '미배치'} · 순서 ${stop.order + 1} · ${stop.stayMinutes === null ? '체류 미정' : `${stop.stayMinutes}분`} · ${stop.fixedTime ?? '시각 미정'}${stop.excluded ? ' · 제외' : ''}${stop.memo ? ` · 메모: ${stop.memo}` : ''}`;
+  return `${stop.name} · ${stop.date ?? '미배치'} · 순서 ${stop.order + 1} · ${stop.fixedTime ?? '시각 미정'}${stop.excluded ? ' · 제외' : ''}${stop.memo ? ` · 메모: ${stop.memo}` : ''}`;
 }

@@ -56,7 +56,8 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
         location: item.location,
         placeRef: item.placeRef,
         estimatedCost: costRange(item.estimate, partySize)?.max ?? null,
-        stayMinutes: item.estimate?.stay?.max ?? null,
+        // 체류시간 칸은 화면에서 없앴다(2026-09-30). 추천 체류는 비고(메모)에만 남긴다.
+        stayMinutes: null,
         memo: withClosed(estimateMemo(item.estimate, partySize, item.start), item.closed),
       }),
     );

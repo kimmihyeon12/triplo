@@ -55,7 +55,9 @@ describe('selectionToTrip', () => {
       stay: { min: 45, max: 60, reason: '여유 있는 식사' },
     } }] }));
     expect(trip.stops[0]?.estimatedCost).toBe(40000);
-    expect(trip.stops[0]?.stayMinutes).toBe(60);
+    // 체류시간은 칸에 저장하지 않고 비고에만 남긴다(2026-09-30).
+    expect(trip.stops[0]?.stayMinutes).toBeNull();
+    expect(trip.stops[0]?.memo).toContain('- 체류');
     expect(trip.stops[0]?.memo).toContain('AI 추정');
     expect(trip.stops[0]?.memo).toContain('- 요금');
     expect(trip.stops[0]?.memo).toContain('2명');
