@@ -1,3 +1,4 @@
+import { formatWon } from '../../../shared/util/won';
 import { tripNights } from '../../../shared/util/dates';
 import type { Trip } from '../../trips/model/trip';
 import { commandDate, commandTargets, dateLabel } from './local-command-targets';
@@ -43,7 +44,7 @@ export function localQuery(text: string, trip: Trip, today: string): LocalResult
   }
   if (/날짜 없는|미배치/.test(text)) return list('미배치 장소', active.filter(s => s.date === null).map(s => s.name));
   if (/주소|좌표|위치/.test(text) && /없는|미정|누락|미확인/.test(text)) return list('위치 미확인', targets.filter(s => !s.location).map(s => s.name));
-  if (/예상.*비용|계획.*금액/.test(text)) return { text: `장소 예상 비용 합계 ${targets.reduce((n, s) => n + (s.estimatedCost ?? 0), 0).toLocaleString()}원 · 미정 ${targets.filter(s => s.estimatedCost == null).length}곳. 실제 지출과 별개예요.` };
+  if (/예상.*비용|계획.*금액/.test(text)) return { text: `장소 예상 비용 합계 ${formatWon(targets.reduce((n, s) => n + (s.estimatedCost ?? 0), 0))} · 미정 ${targets.filter(s => s.estimatedCost == null).length}곳. 실제 지출과 별개예요.` };
   if (/일정|장소|카페|식사|식당|몇 개|몇 곳/.test(text)) {
     // A malformed date filter must not silently return all days.
     if (/\d+일차|오늘|내일/.test(text) && !commandDate(text, trip, today)) return { text: '여행 기간 안의 날짜를 알려 주세요.' };

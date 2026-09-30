@@ -20,7 +20,7 @@ import { ticketNo as makeTicketNo } from '../../../trips/util/ticket-no';
 import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
 import { ToastService } from '../../../../core/toast-service';
 import { AuthStore } from '../../../auth/data/auth-store';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import type { TripMember } from '../../../trips/model/trip';
 import { TRIP_MEMBERS } from '../../data/trip-members-repository';
 import { inviteLink } from '../../data/invite-code';

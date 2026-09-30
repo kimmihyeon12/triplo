@@ -13,14 +13,3 @@ export function kakaoSearchUrl(query: string): string {
 export function mapQuery(name: string, address: string): string {
   return [name.trim(), address.trim()].filter(Boolean).join(' ');
 }
-
-export async function copyText(text: string): Promise<boolean> {
-  try {
-    const clip = globalThis.navigator?.clipboard;
-    if (!clip) return false;
-    await clip.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-}

@@ -47,7 +47,8 @@ import { dayStayInfo, removeStay } from '../../util/stays';
 import { IconComponent, type IconName } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { PageBar } from '../../../../core/page-bar';
-import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
@@ -56,7 +57,7 @@ import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { ToastService } from '../../../../core/toast-service';
 import { canDeleteTrip, tripPeople } from '../../util/sharing';
-import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
+import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -67,7 +68,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
-    UiMapLink,
+    UiMapLinks,
     UiButton,
     UiBadge,
     UiNotice,

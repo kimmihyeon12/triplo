@@ -1,3 +1,4 @@
+import { formatWon } from '../../../../shared/util/won';
 import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import {
   ChangeDetectionStrategy,
@@ -38,7 +39,7 @@ import {
   settlementText,
   transferSuggestions,
 } from '../../util/ledger';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
 import { ToastService } from '../../../../core/toast-service';
@@ -250,7 +251,7 @@ export class Expenses {
     () =>
       '분류별 지출: ' +
       this.breakdown()
-        .map((r) => `${this.categoryLabel(r.category)} ${r.amount.toLocaleString('ko-KR')}원`)
+        .map((r) => `${this.categoryLabel(r.category)} ${formatWon(r.amount)}`)
         .join(', '),
   );
 

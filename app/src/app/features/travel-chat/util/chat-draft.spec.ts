@@ -56,6 +56,27 @@ describe('local preview density', () => {
     expect(view.before.map(r => r.id)).toEqual(['trip','a']);
     expect(view.after.map(r => r.id)).toEqual(['trip']);
   });
+  // 리팩터링 제안 C1·C2 전에 현재 동작을 고정한다: 바뀐 것만, 원래 순서대로 보인다.
+  it('shows only changed stays in their original order', () => {
+    const stay = (id: string, name: string, checkIn: string, checkOut: string) =>
+      ({ id, name, address: '', regionId: null, checkIn, checkOut, checkInTime: null, checkOutTime: null, memo: '', estimatedCost: null, location: null, placeRef: null }) as unknown as Trip['stays'][number];
+    const before = { ...trip(), stays: [stay('s1', 'A 숙소', '2026-10-01', '2026-10-02'), stay('s2', 'B 숙소', '2026-10-02', '2026-10-03')] };
+    const after = { ...before, stays: [stay('s0', 'C 숙소', '2026-10-01', '2026-10-02'), before.stays[0], { ...before.stays[1], checkOut: '2026-10-04' }] };
+    const view = previewDraft(before, { action: 'local-change', title: '숙소', before, after });
+    expect(view.before.map(r => r.name)).toEqual(['B 숙소 · 2026-10-02 ~ 2026-10-03']);
+    expect(view.after.map(r => r.name)).toEqual(['C 숙소 · 2026-10-01 ~ 2026-10-02', 'B 숙소 · 2026-10-02 ~ 2026-10-04']);
+  });
+  it('shows ledger changes instead of trip rows when a ledger change is attached', () => {
+    const expense = (id: string, title: string, amount: number) =>
+      ({ id, title, date: '2026-10-01', category: 'food', amount, paidBy: 'self', splits: [], memo: '', linkId: null, personal: false });
+    const people = [{ id: 'self', name: '나' }];
+    const ledgerBefore = { people, expenses: [expense('e1', '점심', 12000), expense('e2', '커피', 5000), expense('e3', '택시', 8000)], receipts: [], budget: null };
+    const ledgerAfter = { ...ledgerBefore, budget: 300000, expenses: [ledgerBefore.expenses[0], { ...ledgerBefore.expenses[1], amount: 6000 }, expense('e4', '저녁', 30000)] };
+    const t = trip();
+    const view = previewDraft(t, { action: 'local-change', title: '가계부', before: t, after: t, ledger: { before: ledgerBefore, after: ledgerAfter } });
+    expect(view.before.map(r => r.name)).toEqual(['예산 미정', '2026-10-01 · 커피 · 5,000원', '2026-10-01 · 택시 · 8,000원']);
+    expect(view.after.map(r => r.name)).toEqual(['예산 300,000원', '2026-10-01 · 커피 · 6,000원', '2026-10-01 · 저녁 · 30,000원']);
+  });
 });
 
 describe('previewDraft — 순서 변경', () => {

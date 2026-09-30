@@ -17,7 +17,6 @@ import type { ExcludedReasons, RegionVisitCount, VisitedPlace } from '../../mode
 import { VoxelScene } from '../../ui/voxel-scene';
 import type { MapLabel, RegionMapMarker } from '../../model/map-marker';
 import { regionMarkers } from '../../util/region-markers';
-import { SavedMapPlaces } from '../../data/saved-map-places';
 import { VISIT_STEPS, visitStyle, type VisitPalette } from '../../util/visit-style';
 import { monthlyVisits } from '../../util/monthly-visits';
 import type { VisitSpot } from '../../util/visit-spots';
@@ -31,7 +30,7 @@ const nameOf = (p: Record<string, unknown>): string => String(p['nm']);
 @Component({
   selector: 'app-visit-map',
   imports: [DecimalPipe, RouterLink, UiButton, UiInput, IconComponent, UiNotice, UiSpinner],
-  providers: [LocalVisitStats, SavedMapPlaces],
+  providers: [LocalVisitStats],
   templateUrl: './visit-map.html',
   host: { class: 'block bg-ground text-ink' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,7 +39,6 @@ export class VisitMapPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly repository = inject(LocalVisitStats);
-  private readonly savedPlaces = inject(SavedMapPlaces);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('mapHost');
   private scene?: VoxelScene;
@@ -135,11 +133,10 @@ export class VisitMapPage {
     const controller = new AbortController();
     this.controller = controller;
     try {
-      const [response, summary, markers, spots] = await Promise.all([
+      // 여행은 한 번만 읽어 집계·마커·지점을 같은 목록에서 계산한다(mapSnapshot).
+      const [response, { summary, markers, spots }] = await Promise.all([
         fetch('/geo/korea-municipalities-2026.geo.json', { signal: controller.signal }),
-        this.repository.provinceCounts('all'),
-        this.savedPlaces.read('all'),
-        this.repository.spots(),
+        this.repository.mapSnapshot('all'),
       ]);
       if (!response.ok) throw new Error('Boundary load failed');
       const geo = await response.json() as GeoCollection;
