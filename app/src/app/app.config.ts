@@ -39,6 +39,10 @@ import { supabaseLedgerDataClient } from './features/expenses/data/ledger-data-c
 import { clearLegacyLocalLedgers } from './features/expenses/data/legacy-ledger-cleanup';
 import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
 import { LocalSupportRepository } from './features/support/data/local-support-repository';
+import { SupabaseSupportRepository } from './features/support/data/supabase-support-repository';
+import { supabaseSupportDataClient } from './features/support/data/support-data-client';
+import { clearLocalSupport } from './features/support/data/local-support-cleanup';
+import { APP_VERSION } from './core/version';
 import { MapConfig } from './features/places/data/map-config';
 import { CHAT_HISTORY, LocalChatHistory } from './features/travel-chat/travel-chat';
 import { ADAPTER_PROVIDERS } from './adapters';
@@ -162,12 +166,30 @@ export const appConfig: ApplicationConfig = {
         return new SupabaseLedgerRepository(supabaseLedgerDataClient(() => auth.dataClient()));
       },
     },
-    // 공지·문의도 같은 자리에 둔다. 서버가 붙으면 구현만 갈아 끼운다.
-    // 기기에 남기는 문의·대화는 계정마다 다른 열쇠에 둔다(감리 P1-01).
+    // 공지·문의는 실행 앱에서 서버에 저장한다(2026-10-01). 테스트 앱과 미리보기는
+    // 기기 저장을 쓰고, 기기 문의는 계정마다 다른 열쇠에 둔다(감리 P1-01).
     {
       provide: SUPPORT_REPOSITORY,
-      useFactory: () =>
-        new LocalSupportRepository(new SafeLocalStorage(), accountKey('support')),
+      useFactory: () => {
+        if (environment.isTest || environment.designPreview)
+          return new LocalSupportRepository(
+            new SafeLocalStorage(),
+            accountKey('support'),
+            environment.isTest ? `${environment.storageKey}.supportFail` : null,
+          );
+        try {
+          // 운영자에게 간 적 없는 기기 문의는 옮기지 않고 지운다(2026-10-01 사용자 결정).
+          clearLocalSupport(localStorage, environment.storageKey);
+        } catch {
+          // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
+        }
+        const auth = inject(AuthStore);
+        return new SupabaseSupportRepository(
+          supabaseSupportDataClient(() => auth.dataClient()),
+          APP_VERSION.name,
+          () => (typeof navigator === 'undefined' ? '' : navigator.userAgent),
+        );
+      },
     },
     // 지도·장소 검색·AI 어댑터. 테스트 빌드는 파일째 고정 응답으로 바뀐다(adapters.ts).
     ...ADAPTER_PROVIDERS,

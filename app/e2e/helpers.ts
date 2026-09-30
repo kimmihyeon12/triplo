@@ -42,6 +42,7 @@ export async function resetApp(page: Page): Promise<void> {
       localStorage.removeItem('tc.test.mapDelayMs');
       localStorage.removeItem('tc.test.aiFail');
       localStorage.removeItem('tc.test.aiDelayMs');
+      localStorage.removeItem(`${key}.supportFail`);
     },
     [STORAGE_KEY, FAIL_FLAG],
   );

@@ -122,6 +122,30 @@ trip_regions       trip_stops      accommodation_stays
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
 
+### 공지·문의 (2026-10-01)
+
+| 표 | 담는 것 · 읽기 규칙 |
+| --- | --- |
+| `notices` | 제목(1~100자)·본문(1~5000자)·상태(초안·발행)·자동 생성 여부·배포 태그·발행 시각. 발행된 것은 로그인 사용자 모두, 초안은 관리자만 읽는다 |
+| `notice_reads` | 사용자별로 읽은 공지. 본인 행만 읽는다 |
+| `inquiries` | 보낸 사람·서버가 채운 닉네임·종류·본문(1~1000자)·상태·앱 버전·기기 정보·답변 확인 시각. 본인과 관리자만 읽는다 |
+| `inquiry_replies` | 답변 본문(1~2000자)·작성자 역할·시각. 그 문의를 읽을 수 있는 사람만 읽는다 |
+
+네 표 모두 `authenticated`에 `select`만 주고 쓰기는 아래 함수로만 한다. 계정을 지우면 문의·답변·읽음 기록이 함께 지워진다.
+
+| 함수 | 누가 | 하는 일 |
+| --- | --- | --- |
+| `send_inquiry(kind, body, app_version, user_agent)` → id | 로그인한 사람 | 문의를 남긴다. 닉네임은 계정 정보에서 서버가 채운다 |
+| `mark_inquiry_read(id)` | 본인 | 답변 확인 시각을 지금으로 한다. 남의 문의면 `P0404` |
+| `mark_notices_read()` | 로그인한 사람 | 지금 발행된 공지를 모두 읽음으로 기록한다 |
+| `admin_save_notice(id, title, body)` → id | 관리자 | id가 없으면 초안을 만들고 있으면 고친다 |
+| `admin_set_notice_published(id, published)` | 관리자 | 발행하거나 초안으로 돌린다 |
+| `admin_delete_notice(id)` | 관리자 | 공지를 지운다 |
+| `admin_reply_inquiry(id, body)` → id | 관리자 | 답변을 더하고 답변 완료로 바꾼다 |
+| `admin_set_inquiry_status(id, status)` | 관리자 | 확인 중·접수됨으로 바꾼다 |
+
+오류 코드: 길이·값 `P0400`, 없는 대상 `P0404`, 권한 없음 `42501`. 로컬 확인: `supabase/tests/support.local.sql`.
+
 ### 관리자 판별
 
 `profiles(id, role)`은 역할 전용 표다. 행이 없으면 일반 사용자다. 본인 행 조회만 허용하고 쓰기 권한과 정책은 두지 않아 사용자가 스스로 관리자가 될 수 없다. 계정을 지우면 함께 지운다.

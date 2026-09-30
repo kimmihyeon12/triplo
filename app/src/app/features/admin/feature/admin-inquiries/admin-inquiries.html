@@ -1,0 +1,61 @@
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  data-testid="admin-inquiries-page"
+>
+  <div class="flex flex-wrap gap-2" role="group" aria-label="문의 상태로 거르기">
+    @for (f of filters; track f.value) {
+      <button
+        type="button"
+        class="min-h-9 rounded-full border px-3 text-13 [transition:border-color_var(--dur)_var(--ease-out)]"
+        [class.border-accent]="filter() === f.value"
+        [class.bg-accent-tint]="filter() === f.value"
+        [class.text-accent-deep]="filter() === f.value"
+        [class.font-bold]="filter() === f.value"
+        [class.border-border]="filter() !== f.value"
+        [class.bg-panel]="filter() !== f.value"
+        [attr.aria-pressed]="filter() === f.value"
+        (click)="filter.set(f.value)"
+        [attr.data-testid]="'admin-inquiry-filter-' + f.value"
+      >
+        {{ f.label }}@if (f.value === 'open' && open() > 0) {<span class="ml-1 tabular-nums">{{ open() }}</span>}
+      </button>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="admin-inquiries-error">{{ message }}</div>
+  } @else if (inquiries() === null) {
+    <div class="flex justify-center py-16" role="status" aria-label="문의 불러오는 중">
+      <app-spinner />
+    </div>
+  } @else if (shown().length === 0) {
+    <p class="rounded-panel bg-panel p-5 text-13 text-ink-3 shadow-panel" data-testid="admin-inquiries-empty">
+      해당하는 문의가 없어요.
+    </p>
+  } @else {
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="admin-inquiry-list">
+      @for (inquiry of shown(); track inquiry.id) {
+        <li class="border-b border-border last:border-b-0">
+          <a
+            class="flex items-start gap-3 px-4 py-3 text-ink no-underline"
+            [routerLink]="['/admin/inquiries', inquiry.id]"
+            [attr.data-testid]="'admin-inquiry-' + inquiry.id"
+          >
+            <span class="min-w-0 flex-1">
+              <span class="flex flex-wrap items-center gap-1.5 text-12 text-ink-3">
+                <span appBadge [tone]="tone(inquiry.status)">{{ statusLabel[inquiry.status] }}</span>
+                <span>{{ kindLabel[inquiry.kind] }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ inquiry.senderNickname || '이름 없음' }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ day(inquiry.createdAt) }}</span>
+              </span>
+              <span class="mt-1 block line-clamp-2 text-14 wrap-anywhere">{{ inquiry.body }}</span>
+            </span>
+            <span class="mt-1 flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

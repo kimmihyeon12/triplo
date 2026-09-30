@@ -59,6 +59,10 @@
     }
   </p>
 
+  @if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="inquiry-send-error">{{ message }}</div>
+  }
+
   <div appActionBar class="action-bar">
     <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
       <button

@@ -11,6 +11,7 @@ import {
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiNotice } from '../../../../shared/ui/notice/notice';
 
 /**
  * 문의 보내기.
@@ -23,7 +24,7 @@ import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
  */
 @Component({
   selector: 'app-inquiry-form',
-  imports: [UiButton, UiInput, UiActionBar],
+  imports: [UiButton, UiInput, UiActionBar, UiNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './inquiry-form.html',
 })
@@ -39,6 +40,8 @@ export class InquiryFormPage {
   readonly kind = signal<InquiryKind>('bug');
   readonly body = signal('');
   readonly sending = signal(false);
+  /** 보내기에 실패한 이유. 입력은 그대로 두고 다시 보낼 수 있게 한다. */
+  readonly error = signal<string | null>(null);
 
   readonly canSend = computed(() => this.body().trim().length > 0 && !this.sending());
 
@@ -54,9 +57,12 @@ export class InquiryFormPage {
     event.preventDefault();
     if (!this.canSend()) return;
     this.sending.set(true);
+    this.error.set(null);
     try {
       await this.support.sendInquiry(this.kind(), this.body().trim());
       await this.router.navigateByUrl('/account/inquiries', { replaceUrl: true });
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : '문의를 보내지 못했어요. 다시 시도해 주세요.');
     } finally {
       this.sending.set(false);
     }

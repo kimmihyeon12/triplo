@@ -6,6 +6,8 @@
     <div class="flex justify-center py-16" role="status" aria-label="공지사항 불러오는 중">
       <app-spinner />
     </div>
+  } @else if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="notices-error">{{ message }}</div>
   } @else if (notices().length === 0) {
     <section class="panel rounded-panel bg-panel p-5 shadow-panel" data-testid="empty-notices">
       <app-empty-state title="아직 공지사항이 없어요" />

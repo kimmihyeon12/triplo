@@ -1,0 +1,44 @@
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  data-testid="admin-notices-page"
+>
+  <a appButton variant="primary" class="btn self-start" routerLink="/admin/notices/new" data-testid="admin-notice-new">
+    <app-icon name="plus" [size]="16" /> 새 공지
+  </a>
+
+  @if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="admin-notices-error">{{ message }}</div>
+  } @else if (notices() === null) {
+    <div class="flex justify-center py-16" role="status" aria-label="공지 불러오는 중">
+      <app-spinner />
+    </div>
+  } @else if (notices()!.length === 0) {
+    <p class="rounded-panel bg-panel p-5 text-13 text-ink-3 shadow-panel" data-testid="admin-notices-empty">
+      아직 공지가 없어요.
+    </p>
+  } @else {
+    <!-- 내 정보 목록과 같은 줄 모양을 쓴다. 초안은 사용자에게 보이지 않으므로 배지로 구분한다. -->
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="admin-notice-list">
+      @for (notice of notices(); track notice.id) {
+        <li class="border-b border-border last:border-b-0">
+          <a
+            class="flex min-h-14 items-center gap-3 px-4 py-3 text-ink no-underline"
+            [routerLink]="['/admin/notices', notice.id]"
+            [attr.data-testid]="'admin-notice-' + notice.id"
+          >
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-14 font-bold">{{ notice.title }}</span>
+              <span class="mt-0.5 block text-12 text-ink-3">{{ day(notice) }}</span>
+            </span>
+            @if (notice.status === 'published') {
+              <span appBadge tone="ok">발행됨</span>
+            } @else {
+              <span appBadge tone="warn">초안</span>
+            }
+            <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>
