@@ -319,3 +319,21 @@ describe('AI 코스 꼭 갈 장소', () => {
     expect(prompt.user).toContain('꼭 갈 장소(반드시 포함): 수원 신가회전훠궈');
   });
 });
+
+describe('AI 코스 식사 규칙(2026-09-30 카페 요청에 식사가 빠진 것 확인)', () => {
+  const user = async (extra: object) => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, ...extra }));
+    return (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0] as { system: string; user: string };
+  };
+  it('추가 요청이 범위를 정해도 하루 식사 2곳을 반드시 넣게 한다', async () => {
+    const prompt = await user({ extraNote: '예쁜 카페 위주로' });
+    expect(prompt.user).toContain('하루 식사 2곳(점심 12시쯤, 저녁 18시쯤)은 추가 요청과 관계없이 반드시 넣는다');
+    expect(prompt.user).not.toContain('다른 어떤 지시보다');
+  });
+  it('식사 시각은 다른 일정 때문에 1~2시간 늦어져도 된다고 알린다', async () => {
+    const prompt = await user({});
+    expect(prompt.system).toContain('점심은 12:00~14:00, 저녁은 18:00~20:00');
+    expect(prompt.user).toContain('하루 식사 2곳(점심 12시쯤, 저녁 18시쯤)');
+  });
+});
