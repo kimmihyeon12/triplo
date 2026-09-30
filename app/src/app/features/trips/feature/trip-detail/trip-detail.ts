@@ -13,6 +13,7 @@ import {
   Component,
   computed,
   effect,
+  untracked,
   inject,
   input,
   signal,
@@ -249,6 +250,18 @@ export class TripDetailPage {
     effect(() => {
       const id = this.id();
       void this.store.open(id);
+    });
+    /*
+      저장 실패 알림에 다시 저장을 붙인다. 헤더의 다시 저장은 목록 아래에서 편집하면
+      화면 밖에 있고, 위로 올려도 상단 바 아래에 남는 오류 알림이 그 자리를 덮는다.
+      충돌은 다시 저장해도 풀리지 않으므로 붙이지 않는다.
+    */
+    effect(() => {
+      if (this.store.saveState() !== 'error') return;
+      const message = this.store.saveError() ?? '저장하지 못했어요.';
+      untracked(() =>
+        this.toast.error(message, { label: '다시 저장', run: () => void this.store.retrySave() }),
+      );
     });
     effect(() => {
       const day = this.selectedDay();

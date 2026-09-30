@@ -2,9 +2,16 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastKind = 'success' | 'info' | 'error';
 
+/** 알림에서 바로 할 수 있는 일. 누르면 알림을 닫고 실행한다. */
+export interface ToastAction {
+  readonly label: string;
+  readonly run: () => void;
+}
+
 export interface Toast {
   readonly kind: ToastKind;
   readonly message: string;
+  readonly action?: ToastAction;
 }
 
 /** 성공·안내가 스스로 닫히기까지의 시간. 한 문장을 읽기에 충분하고 화면을 오래 가리지 않는다. */
@@ -31,8 +38,12 @@ export class ToastService {
     this.show('info', message);
   }
 
-  error(message: string): void {
-    this.show('error', message);
+  /**
+   * 오류를 알린다. 할 일이 있으면 알림 안에 버튼으로 둔다. 알림이 상단 바 아래를
+   * 덮으므로, 그 자리에 있던 버튼(예: 여행 상세의 다시 저장)을 대신 누를 수 있어야 한다.
+   */
+  error(message: string, action?: ToastAction): void {
+    this.show('error', message, action);
   }
 
   dismiss(): void {
@@ -40,9 +51,9 @@ export class ToastService {
     this.state.set(null);
   }
 
-  private show(kind: ToastKind, message: string): void {
+  private show(kind: ToastKind, message: string, action?: ToastAction): void {
     clearTimeout(this.timer);
-    this.state.set({ kind, message });
+    this.state.set(action ? { kind, message, action } : { kind, message });
     if (kind !== 'error') this.timer = setTimeout(() => this.state.set(null), AUTO_CLOSE_MS);
   }
 }

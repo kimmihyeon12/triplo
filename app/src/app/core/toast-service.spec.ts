@@ -27,6 +27,16 @@ describe('ToastService', () => {
     expect(toast.current()).toBeNull();
   });
 
+  it('오류에 할 일을 붙이면 알림이 그 동작을 들고 남는다', () => {
+    const toast = new ToastService();
+    const run = vi.fn();
+    toast.error('저장하지 못했어요.', { label: '다시 저장', run });
+    vi.advanceTimersByTime(60_000);
+    expect(toast.current()?.action?.label).toBe('다시 저장');
+    toast.current()?.action?.run();
+    expect(run).toHaveBeenCalledOnce();
+  });
+
   it('새 알림은 앞의 알림과 그 타이머를 대신한다', () => {
     const toast = new ToastService();
     toast.success('복사했어요.');

@@ -167,5 +167,10 @@
 
 <!-- 성공·안내·오류 알림을 모든 화면에서 같은 자리(위쪽)에 띄운다. -->
 @if (toast.current(); as t) {
-  <app-toast [kind]="t.kind" [message]="t.message" (dismissed)="toast.dismiss()" />
+  <app-toast
+    [kind]="t.kind"
+    [message]="t.message"
+    [action]="t.action"
+    (dismissed)="toast.dismiss()"
+  />
 }
