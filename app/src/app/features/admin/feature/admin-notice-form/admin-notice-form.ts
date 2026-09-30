@@ -7,8 +7,9 @@ import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import type { NoticeStatus } from '../../../support/model/support';
-import { AdminSupport, isAdminDenied } from '../../data/admin-support';
+import { AdminSupport, isAdminDenied, isAdminMissing } from '../../data/admin-support';
 import { NOTICE_BODY_MAX, NOTICE_TITLE_MAX } from '../../model/admin-support';
+import { adminExit } from '../admin-exit';
 import { noticeFormError } from '../../util/admin-form';
 
 /**
@@ -24,6 +25,7 @@ import { noticeFormError } from '../../util/admin-form';
 export class AdminNoticeForm {
   private readonly support = inject(AdminSupport);
   private readonly router = inject(Router);
+  private readonly exit = adminExit();
 
   /** 라우트의 :id. 새 공지면 없다. */
   readonly id = input<string | undefined>();
@@ -32,6 +34,10 @@ export class AdminNoticeForm {
 
   readonly title = signal('');
   readonly body = signal('');
+  /** 서버에 저장된 제목·본문. 다르면 발행을 잠근다(저장하지 않은 수정이 발행되는 줄 오해하지 않게). */
+  private readonly savedTitle = signal('');
+  private readonly savedBody = signal('');
+  readonly dirty = computed(() => this.title() !== this.savedTitle() || this.body() !== this.savedBody());
   readonly status = signal<NoticeStatus>('draft');
   readonly busy = signal(false);
   readonly saved = signal(false);
@@ -53,11 +59,13 @@ export class AdminNoticeForm {
     await this.run(async () => {
       const notice = await this.support.notice(id);
       if (!notice) {
-        await this.router.navigateByUrl('/admin/notices', { replaceUrl: true });
+        await this.exit.missing('이미 지워진 공지예요.', '/admin/notices');
         return;
       }
       this.title.set(notice.title);
       this.body.set(notice.body);
+      this.savedTitle.set(notice.title);
+      this.savedBody.set(notice.body);
       this.status.set(notice.status);
     });
   }
@@ -67,6 +75,8 @@ export class AdminNoticeForm {
     if (this.formError() || this.busy()) return;
     await this.run(async () => {
       const id = await this.support.saveNotice(this.id() ?? null, this.title(), this.body());
+      this.savedTitle.set(this.title());
+      this.savedBody.set(this.body());
       this.saved.set(true);
       if (this.isNew()) await this.router.navigate(['/admin/notices', id], { replaceUrl: true });
     });
@@ -103,7 +113,11 @@ export class AdminNoticeForm {
       await work();
     } catch (error) {
       if (isAdminDenied(error)) {
-        await this.router.navigateByUrl('/account', { replaceUrl: true });
+        await this.exit.denied();
+        return;
+      }
+      if (isAdminMissing(error)) {
+        await this.exit.missing('이미 지워진 공지예요.', '/admin/notices');
         return;
       }
       this.error.set(error instanceof Error ? error.message : '저장하지 못했어요. 다시 시도해 주세요.');

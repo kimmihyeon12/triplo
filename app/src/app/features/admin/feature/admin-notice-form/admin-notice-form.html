@@ -63,12 +63,15 @@
         appButton
         type="button"
         class="btn w-full"
-        [disabled]="busy()"
+        [disabled]="busy() || dirty()"
         (click)="togglePublished()"
         data-testid="admin-notice-publish"
       >
         {{ status() === 'published' ? '발행 취소' : '발행' }}
       </button>
+      @if (dirty()) {
+        <p class="text-12 text-ink-3" data-testid="admin-notice-dirty">저장한 뒤에 발행할 수 있어요.</p>
+      }
       @if (confirmDelete()) {
         <p class="text-12 text-danger-ink" data-testid="admin-notice-delete-confirm">
           지우면 되돌릴 수 없어요. 한 번 더 누르면 지웁니다.

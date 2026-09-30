@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
@@ -9,6 +9,7 @@ import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { formatKoreanDate } from '../../../../shared/util/dates';
 import { INQUIRY_KIND_LABEL, INQUIRY_STATUS_LABEL, type InquiryStatus } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied } from '../../data/admin-support';
+import { adminExit } from '../admin-exit';
 import type { AdminInquiry } from '../../model/admin-support';
 import { filterInquiries, openCount, type InquiryFilter } from '../../util/inquiry-filter';
 
@@ -21,7 +22,7 @@ import { filterInquiries, openCount, type InquiryFilter } from '../../util/inqui
 })
 export class AdminInquiries {
   private readonly support = inject(AdminSupport);
-  private readonly router = inject(Router);
+  private readonly exit = adminExit();
   readonly kindLabel = INQUIRY_KIND_LABEL;
   readonly statusLabel = INQUIRY_STATUS_LABEL;
   readonly filters: readonly { value: InquiryFilter; label: string }[] = [
@@ -48,7 +49,7 @@ export class AdminInquiries {
       this.error.set(null);
     } catch (error) {
       if (isAdminDenied(error)) {
-        void this.router.navigateByUrl('/account', { replaceUrl: true });
+        void this.exit.denied();
         return;
       }
       this.error.set(error instanceof Error ? error.message : '문의를 불러오지 못했어요.');

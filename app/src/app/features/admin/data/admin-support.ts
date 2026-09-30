@@ -57,6 +57,11 @@ export function isAdminDenied(error: unknown): boolean {
   return error instanceof SupportError && error.code === '42501';
 }
 
+/** 다른 관리자가 지웠거나 없는 대상이다. */
+export function isAdminMissing(error: unknown): boolean {
+  return error instanceof SupportError && error.code === 'P0404';
+}
+
 /** 처리할 것부터 보인다. 접수됨 → 확인 중 → 답변 완료. */
 const STATUS_ORDER: Record<InquiryStatus, number> = { open: 0, reading: 1, answered: 2 };
 

@@ -130,3 +130,32 @@ test('관리자 권한이 사라지면 내 정보로 돌아간다', async ({ pag
   await page.goto('/admin/notices');
   await expect(page).toHaveURL(/\/account$/);
 });
+
+test('저장하지 않은 수정이 있으면 발행을 잠근다', async ({ page }) => {
+  await fakeAdminServer(page);
+  await page.goto('/admin/notices/n1');
+  await expect(page.getByTestId('admin-notice-publish')).toBeEnabled();
+  await page.getByTestId('admin-notice-body').fill('고친 본문');
+  await expect(page.getByTestId('admin-notice-publish')).toBeDisabled();
+  await page.getByTestId('admin-notice-save').click();
+  await expect(page.getByTestId('admin-notice-publish')).toBeEnabled();
+});
+
+test('서버 함수가 관리자 권한을 거절하면 알리고 내 정보로 돌아간다', async ({ page }) => {
+  await fakeAdminServer(page);
+  await page.route('**/rest/v1/rpc/admin_save_notice', (route) =>
+    route.fulfill({ status: 403, json: { code: '42501', message: 'admin_only', details: null, hint: null } }),
+  );
+  await page.goto('/admin/notices/n1');
+  await page.getByTestId('admin-notice-title').fill('바꾼 제목');
+  await page.getByTestId('admin-notice-save').click();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByTestId('error-toast')).toContainText('관리자 권한이 없어요');
+});
+
+test('없는 공지를 열면 목록으로 돌아가며 알린다', async ({ page }) => {
+  await fakeAdminServer(page);
+  await page.goto('/admin/notices/missing');
+  await expect(page).toHaveURL(/\/admin\/notices$/);
+  await expect(page.getByTestId('error-toast')).toContainText('이미 지워진 공지예요');
+});

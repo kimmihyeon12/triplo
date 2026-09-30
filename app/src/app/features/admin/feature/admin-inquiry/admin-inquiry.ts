@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -8,8 +7,9 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { INQUIRY_KIND_LABEL, INQUIRY_STATUS_LABEL, type InquiryStatus } from '../../../support/model/support';
-import { AdminSupport, isAdminDenied } from '../../data/admin-support';
+import { AdminSupport, isAdminDenied, isAdminMissing } from '../../data/admin-support';
 import { REPLY_BODY_MAX, type AdminInquiry } from '../../model/admin-support';
+import { adminExit } from '../admin-exit';
 import { replyFormError } from '../../util/admin-form';
 
 /**
@@ -24,7 +24,7 @@ import { replyFormError } from '../../util/admin-form';
 })
 export class AdminInquiryPage {
   private readonly support = inject(AdminSupport);
-  private readonly router = inject(Router);
+  private readonly exit = adminExit();
 
   readonly id = input<string>('');
   readonly kindLabel = INQUIRY_KIND_LABEL;
@@ -49,7 +49,7 @@ export class AdminInquiryPage {
     await this.run(async () => {
       const found = await this.support.inquiry(id);
       if (!found) {
-        await this.router.navigateByUrl('/admin/inquiries', { replaceUrl: true });
+        await this.exit.missing('이미 지워진 문의예요.', '/admin/inquiries');
         return;
       }
       this.inquiry.set(found);
@@ -90,7 +90,11 @@ export class AdminInquiryPage {
       await work();
     } catch (error) {
       if (isAdminDenied(error)) {
-        await this.router.navigateByUrl('/account', { replaceUrl: true });
+        await this.exit.denied();
+        return;
+      }
+      if (isAdminMissing(error)) {
+        await this.exit.missing('이미 지워진 문의예요.', '/admin/inquiries');
         return;
       }
       this.error.set(error instanceof Error ? error.message : '처리하지 못했어요. 다시 시도해 주세요.');

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -9,6 +9,7 @@ import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { formatKoreanDate } from '../../../../shared/util/dates';
 import type { Notice } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied } from '../../data/admin-support';
+import { adminExit } from '../admin-exit';
 
 /**
  * 관리자 공지 목록. 초안과 발행된 공지를 함께 보이고, 누르면 고치는 화면으로 간다.
@@ -22,7 +23,7 @@ import { AdminSupport, isAdminDenied } from '../../data/admin-support';
 })
 export class AdminNotices {
   private readonly support = inject(AdminSupport);
-  private readonly router = inject(Router);
+  private readonly exit = adminExit();
   readonly notices = signal<Notice[] | null>(null);
   readonly error = signal<string | null>(null);
 
@@ -37,7 +38,7 @@ export class AdminNotices {
       this.error.set(null);
     } catch (error) {
       if (isAdminDenied(error)) {
-        void this.router.navigateByUrl('/account', { replaceUrl: true });
+        void this.exit.denied();
         return;
       }
       this.error.set(error instanceof Error ? error.message : '공지를 불러오지 못했어요.');

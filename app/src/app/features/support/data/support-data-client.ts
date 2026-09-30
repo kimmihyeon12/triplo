@@ -22,7 +22,7 @@ export class SupportError extends Error {
 /** 서버 오류 코드: P0400 길이·값, P0404 없는 대상, 42501 권한 없음. */
 export function toSupportError(error: { code?: string } | null): SupportError {
   if (error?.code === 'P0400') return new SupportError('입력 길이를 확인해 주세요.');
-  if (error?.code === 'P0404') return new SupportError('이미 지워졌거나 볼 수 없는 항목이에요.');
+  if (error?.code === 'P0404') return new SupportError('이미 지워졌거나 볼 수 없는 항목이에요.', 'P0404');
   if (error?.code === '42501') return new SupportError('권한이 없어요. 다시 로그인해 주세요.', '42501');
   return new SupportError('서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
 }
