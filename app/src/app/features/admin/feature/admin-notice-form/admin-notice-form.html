@@ -1,5 +1,5 @@
 <form
-  class="page mx-auto my-0 flex max-w-105 flex-col gap-4 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-4 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   (submit)="save($event)"
   [attr.aria-busy]="busy()"
   novalidate
@@ -89,7 +89,7 @@
   }
 
   <div appActionBar class="action-bar">
-    <div class="action-bar__inner mx-auto my-0 flex max-w-105 gap-2">
+    <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
       <button
         appButton
         type="submit"
