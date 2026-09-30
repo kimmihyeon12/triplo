@@ -1,5 +1,6 @@
 import { expect, it, describe } from 'vitest';
 import { kindTone } from './kind-tone';
+import { PLAN_KIND_LABEL, STOP_KIND_LABEL, STOP_KINDS, toStopKind } from '../model/trip';
 
 describe('kindTone', () => {
   it('종류마다 다른 색을 준다', () => {
@@ -27,5 +28,26 @@ describe('kindTone', () => {
     // stay는 숙소 배지가 이미 쓰고 있다.
     const tones = (['place', 'meal', 'break', 'buffer'] as const).map(kindTone);
     expect(tones).not.toContain('stay');
+  });
+});
+
+describe('일정 분류', () => {
+  it('앱 전체가 쓰는 일곱 분류 라벨을 한 곳에서 정한다', () => {
+    expect(PLAN_KIND_LABEL).toEqual({
+      place: '관광', activity: '액티비티', meal: '식사', break: '카페', shopping: '쇼핑', other: '기타', buffer: '여유시간', stay: '숙소',
+    });
+    expect(STOP_KIND_LABEL.buffer).toBe('여유시간');
+    expect(STOP_KINDS).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer']);
+  });
+  it('분류마다 서로 다른 전용 색을 쓴다', () => {
+    const tones = (['place', 'activity', 'meal', 'break', 'shopping', 'other', 'stay'] as const).map(kindTone);
+    expect(new Set(tones).size).toBe(7);
+    expect(kindTone('stay')).toBe('stay');
+    expect(kindTone('buffer')).toBe('neutral');
+  });
+  it('모르는 분류 문자열은 관광으로 읽는다', () => {
+    expect(toStopKind('activity')).toBe('activity');
+    expect(toStopKind('sight')).toBe('place');
+    expect(toStopKind(undefined)).toBe('place');
   });
 });

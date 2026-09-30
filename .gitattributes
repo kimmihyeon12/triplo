@@ -1,0 +1,35 @@
+# AI planning changes keep CRLF in the working tree.
+app/e2e/ai-plan.spec.ts text eol=crlf
+app/src/app/features/ai-planning/data/ai-plan-handler.spec.ts text eol=crlf
+app/src/app/features/ai-planning/data/ai-plan-provider.ts text eol=crlf
+app/src/app/features/ai-planning/data/ai-plan-store.spec.ts text eol=crlf
+app/src/app/features/ai-planning/data/ai-plan-store.ts text eol=crlf
+app/src/app/features/ai-planning/data/edge-ai-provider.ts text eol=crlf
+app/src/app/features/ai-planning/data/fixture-ai-provider.ts text eol=crlf
+app/src/app/features/ai-planning/data/verify-places.ts text eol=crlf
+app/src/app/features/ai-planning/feature/ai-plan-flow/ai-plan-flow.html -text
+app/src/app/features/ai-planning/feature/ai-plan-flow/ai-plan-flow.ts text eol=crlf
+app/src/app/features/ai-planning/model/ai-plan.ts text eol=crlf
+app/src/app/features/ai-planning/util/ai-response.ts text eol=crlf
+app/src/app/features/ai-planning/util/plan-estimates.spec.ts text eol=crlf
+app/src/app/features/stats/util/item-province.ts text eol=crlf
+app/src/app/features/stats/util/visit-tally.spec.ts text eol=crlf
+app/src/app/features/trips/feature/trip-form/trip-form.html text eol=crlf
+app/src/app/features/trips/util/ai-selection.spec.ts text eol=crlf
+app/src/app/features/trips/util/ai-selection.ts text eol=crlf
+app/src/app/features/trips/util/factories.ts -text
+app/src/app/shared/model/plan-estimate.ts text eol=crlf
+app/src/app/shared/util/korea-regions.spec.ts text eol=crlf
+app/src/app/shared/util/korea-regions.ts text eol=crlf
+app/src/app/shared/util/plan-estimate.ts text eol=crlf
+docs/DEVELOPMENT.md text eol=crlf
+docs/HARNESS.md text eol=crlf
+docs/README.md text eol=crlf
+docs/ai-plan-estimates.md text eol=crlf
+docs/기획안-v0.1.md text eol=crlf
+openspec/changes/add-ai-plan-estimates/design.md text eol=crlf
+openspec/changes/add-ai-plan-estimates/proposal.md text eol=crlf
+openspec/changes/add-ai-plan-estimates/specs/ai-plan-estimates/spec.md text eol=crlf
+openspec/changes/add-ai-plan-estimates/tasks.md text eol=crlf
+supabase/functions/ai-plan/handler.ts text eol=crlf
+supabase/functions/ai-plan/prompt.ts text eol=crlf

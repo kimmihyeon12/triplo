@@ -17,6 +17,7 @@ import {
   type ChatDraft,
   type ChatError,
   type ChatMessage,
+  type ChatPlace,
   type ChatReply,
   type ChatScope,
 } from '../model/chat';
@@ -315,7 +316,10 @@ export class TravelChatStore {
     const regions = reply.regions.length
       ? reply.regions
       : (this.trip()?.regions ?? []).map((r) => r.name);
-    const verified = await verifyPlaces(reply.places, regions, this.placeSearch);
+    // 챗봇은 숙소를 숙박으로 담지 않는다. 검색 분류가 숙박이면 예전처럼 관광으로 담는다.
+    const verified = (await verifyPlaces(reply.places, regions, this.placeSearch)).map(
+      (p): ChatPlace => ({ ...p, kind: p.kind === 'stay' ? 'place' : p.kind }),
+    );
     // 확인된 것이 하나도 없으면 담을 수 없다. 확인 카드를 띄우지 않는다.
     if (!verified.some((p) => p.verified)) return null;
     return { action: 'append', regions, places: verified };

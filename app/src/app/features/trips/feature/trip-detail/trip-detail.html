@@ -219,7 +219,7 @@
                 >
                   <app-empty-state
                     title="이 날 일정이 없어요"
-                    hint="장소나 식사·휴식을 추가하면 순서대로 정리돼요."
+                    hint="관광·식사·카페 같은 일정을 추가하면 순서대로 정리돼요."
                   />
                 </section>
               } @else {
@@ -367,9 +367,8 @@
                             </p>
                           }
                           @if (seg.stay.memo) {
-                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">
-                              {{ seg.stay.memo }}
-                            </div>
+                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
+                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stay.memo }}</div>
                           }
                           <span
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
@@ -573,11 +572,8 @@
                             </p>
                           }
                           @if (seg.stop.memo) {
-                            <div
-                              class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap"
-                            >
-                              {{ seg.stop.memo }}
-                            </div>
+                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
+                            <div class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stop.memo }}</div>
                           }
                           @if (copyFallback() && copyFallbackId() === seg.stop.id) {
                             <p class="text-12 leading-normal copy-fallback text-warn-ink">

@@ -1,6 +1,6 @@
 ﻿import { REGION_LABEL, provinceCodeOf } from '../../../shared/util/korea-regions';
 import type { GeoPoint } from '../../places/model/place';
-import type { IsoDate, Trip, TripRegion } from '../../trips/model/trip';
+import { isSightseeing, type IsoDate, type Trip, type TripRegion } from '../../trips/model/trip';
 import type { VisitFilter, VisitSummary, VisitedPlace } from '../model/visit-stats';
 import { excludedReasons } from './excluded-reasons';
 import { itemRegionCode } from './item-province';
@@ -113,7 +113,7 @@ function visitedItems(trips: readonly Trip[], today: IsoDate, filter: VisitFilte
     for (const stop of trip.stops) {
       // 제외한 장소는 가지 않은 것으로 본다. 여유시간은 장소가 아니다.
       if (stop.excluded || stop.kind === 'buffer') continue;
-      if (filter !== 'all' && stop.kind !== (filter === 'travel' ? 'place' : filter)) continue;
+      if (filter !== 'all' && !(filter === 'travel' ? isSightseeing(stop.kind) : stop.kind === filter)) continue;
       items.push({
         ...base,
         id: stop.id,

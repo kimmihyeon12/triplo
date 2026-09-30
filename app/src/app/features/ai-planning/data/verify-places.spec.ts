@@ -1,7 +1,7 @@
 import { expect, it, describe, vi } from 'vitest';
 import type { PlaceCandidate } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
-import { verifyPlaces } from './verify-places';
+import { kindFromCategory, verifyPlaces } from './verify-places';
 import type { AiItem } from '../util/ai-response';
 
 function candidate(partial: Partial<PlaceCandidate> & { name: string }): PlaceCandidate {
@@ -242,5 +242,40 @@ describe('verifyPlaces', () => {
     const [found] = await verifyPlaces([items[0]!], ['강릉'], search);
     expect(found!.verified).toBe(true);
     expect(found!.note).toBe('');
+  });
+});
+
+describe('kindFromCategory', () => {
+  it.each([
+    ['음식점 > 한식', 'place', 'meal'], ['카페', 'meal', 'break'], ['숙박 > 호텔', 'place', 'stay'],
+    ['관광명소', 'activity', 'activity'], ['시장', 'shopping', 'shopping'], ['관광명소', 'stay', 'place'],
+    ['문화유적', 'meal', 'place'], ['', 'shopping', 'shopping'], ['기차역', 'other', 'other'],
+  ] as const)('%s + 모델 %s → %s', (category, model, expected) => {
+    expect(kindFromCategory(category, model)).toBe(expected);
+  });
+});
+
+describe('코스 정보 보존', () => {
+  it('확인한 장소는 순서·시각·이동을 그대로 들고 간다', async () => {
+    const search = fakeSearch({ '강릉시 안목해변': [candidate({ name: '안목해변', category: '관광명소' })] });
+    const [item] = await verifyPlaces(
+      [{ day: 1, order: 2, start: '11:00', moveToNext: { mode: '도보', minutes: 5 }, name: '안목해변', kind: 'activity' }],
+      ['강릉시'],
+      search,
+    );
+    expect(item).toMatchObject({ verified: true, order: 2, start: '11:00', moveToNext: { mode: '도보', minutes: 5 }, kind: 'activity' });
+  });
+  it('순서·시각이 없는 챗봇 제안도 받아서 응답 순서를 매긴다', async () => {
+    const search = fakeSearch({});
+    const out = await verifyPlaces([{ day: 1, name: 'A', kind: 'place' }, { day: 1, name: 'B', kind: 'meal' }], [], search);
+    expect(out.map((i) => [i.order, i.start, i.moveToNext])).toEqual([[1, null, null], [2, null, null]]);
+  });
+});
+
+describe('휴무 정보 보존', () => {
+  it('확인한 장소는 휴무 정보를 들고 간다', async () => {
+    const search = fakeSearch({ '강릉시 오죽헌': [candidate({ name: '오죽헌', category: '문화유적' })] });
+    const [item] = await verifyPlaces([{ day: 1, name: '오죽헌', kind: 'place', closed: { onDay: true, note: '월요일 휴무' } }], ['강릉시'], search);
+    expect(item!.closed).toEqual({ onDay: true, note: '월요일 휴무' });
   });
 });

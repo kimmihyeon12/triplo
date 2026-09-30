@@ -113,6 +113,14 @@
   --color-meal-tint: #e4fcdc;
   --color-cafe-ink: #107c73;
   --color-cafe-tint: #dbfcf6;
+  /* 액티비티는 카페(청록)와 겹치지 않게 주황 계열. 쇼핑·기타는 가계부 쇼핑·기타와 같은 값이다.
+     대비 검사(check-contrast)가 hex만 읽으므로 var() 대신 값을 그대로 적는다. */
+  --color-activity-ink: #a5480c;
+  --color-activity-tint: #fff0e5;
+  --color-shopping-ink: #ba3d78;
+  --color-shopping-tint: #ffecf4;
+  --color-other-ink: #606f82;
+  --color-other-tint: #eef4fc;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
   /*
     일정 짜기(AI 진입)는 파랑→보라 그라데이션이다. 2026-09-29 1일차 칩의 남색 그라데이션도

@@ -23,6 +23,7 @@ import { createStop } from '../../util/factories';
 import {
   STOP_KIND_DEFAULT_NAME,
   STOP_KIND_LABEL,
+  STOP_KINDS,
   type StopKind,
   type Trip,
   type TripStop,
@@ -66,7 +67,7 @@ export class StopFormPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly pageBar = inject(PageBar);
 
-  readonly kinds: StopKind[] = ['place', 'meal', 'break', 'buffer'];
+  readonly kinds = STOP_KINDS;
   readonly kindLabel = STOP_KIND_LABEL;
   readonly kindDefault = STOP_KIND_DEFAULT_NAME;
 
@@ -112,7 +113,7 @@ export class StopFormPage {
   });
 
   readonly nameError = computed(() =>
-    this.kind() === 'place' && !this.name().trim() ? '장소 이름을 입력하세요.' : null,
+    STOP_KIND_DEFAULT_NAME[this.kind()] === '' && !this.name().trim() ? '이름을 입력하세요.' : null,
   );
   readonly stayError = computed(() => {
     const v = this.stayMinutes();
@@ -188,7 +189,7 @@ export class StopFormPage {
           this.placeRef.set(stop.placeRef ?? null);
         } else {
           const k = this.kindParam();
-          if (k && (this.kinds as string[]).includes(k)) this.setKind(k as StopKind);
+          if (k && (STOP_KINDS as readonly string[]).includes(k)) this.setKind(k as StopKind);
           const d = this.dateParam();
           if (
             d &&

@@ -149,9 +149,9 @@ export class TripDetailPage {
       queryParams: { ...(kind ? { kind } : {}), ...(date ? { date } : {}) },
     });
     return [
-      stop(null, '장소', 'place', 'add-stop'),
-      stop('meal', '식사', 'meal', 'add-meal'),
-      stop('break', '휴식', 'break', 'add-break'),
+      stop(null, STOP_KIND_LABEL.place, 'place', 'add-stop'),
+      stop('meal', STOP_KIND_LABEL.meal, 'meal', 'add-meal'),
+      stop('break', STOP_KIND_LABEL.break, 'break', 'add-break'),
       stop('buffer', '여유시간', 'buffer', 'add-buffer'),
       {
         label: '숙소',

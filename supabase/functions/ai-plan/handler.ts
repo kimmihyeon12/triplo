@@ -86,10 +86,20 @@ function validate(body: Partial<AiPlanInput> | null): AiPlanInput | null {
   if (typeof dayCount !== 'number' || !Number.isInteger(dayCount)) return null;
   if (dayCount < 1 || dayCount > MAX_DAYS) return null;
 
+  const partySize = body.partySize === undefined ? 1 : body.partySize;
+  const budget = body.budget === undefined ? null : body.budget;
+  const budgetBasis = body.budgetBasis === undefined ? 'group' : body.budgetBasis;
+  if (typeof partySize !== 'number' || !Number.isInteger(partySize) || partySize < 1 || partySize > 100) return null;
+  if (budget !== null && (typeof budget !== 'number' || !Number.isSafeInteger(budget) || budget < 0 || budget > 100_000_000)) return null;
+  if (budgetBasis !== 'person' && budgetBasis !== 'group') return null;
+  // 시작일은 요일별 휴무를 알려 주려고 받는다. 없으면 날짜 미정 여행이다.
+  const startDate = body.startDate === undefined || body.startDate === null ? null : body.startDate;
+  if (startDate !== null && !isIsoDate(startDate)) return null;
   const text = (value: unknown) => (typeof value === 'string' ? value : '');
   return {
     regions,
     dayCount,
+    partySize, budget, budgetBasis, startDate,
     companion: text(body.companion),
     transport: text(body.transport),
     pace: text(body.pace),
@@ -98,4 +108,11 @@ function validate(body: Partial<AiPlanInput> | null): AiPlanInput | null {
     bookedStay: text(body.bookedStay),
     extraNote: text(body.extraNote),
   };
+}
+
+/** 'YYYY-MM-DD'이고 실제로 있는 날짜인지 본다. 2026-13-01 같은 값은 거절한다. */
+function isIsoDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }

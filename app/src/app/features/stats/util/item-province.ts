@@ -1,4 +1,4 @@
-import { findRegionByCode, findRegionByName, isExactRegionName } from '../../../shared/util/korea-regions';
+import { findRegionByCode, findRegionByName, isExactRegionName, PROVINCE_SHORT_NAME } from '../../../shared/util/korea-regions';
 import type { TripRegion } from '../../trips/model/trip';
 import { regionCodeForAddress } from './province-match';
 
@@ -37,6 +37,8 @@ export function itemRegionCode(address: string, region: TripRegion | null): stri
 export function resolveRegion(region: TripRegion | null): { code: string; name: string } | null {
   if (!region) return null;
   if (region.regionCode) {
+    // 명시적인 시·도 코드에는 자치구 정보가 없다. 짧은 이름을 도시 별칭으로 재해석하지 않는다.
+    if (Object.hasOwn(PROVINCE_SHORT_NAME, region.regionCode)) return null;
     const found = findRegionByCode(region.regionCode);
     if (found) return { code: found.code, name: found.name };
   }

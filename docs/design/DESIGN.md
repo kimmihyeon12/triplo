@@ -33,7 +33,7 @@ description: Pretendard·딥 블루·중성 배경을 사용하는 모바일 우
 | 미확인·주의 | `warn-ink`, `warn-tint` |
 | 오류·충돌 | `danger-ink`, `danger-tint` |
 | 완료 | `ok-ink`, `ok-tint` |
-| 일정 분류 | 장소 `place-ink`·`place-tint`, 식사 `meal-ink`·`meal-tint`, 카페 `cafe-ink`·`cafe-tint`, 지역 `region-ink`·`region-tint` |
+| 일정 분류 | 관광 `place-ink`·`place-tint`, 액티비티 `activity-ink`·`activity-tint`, 식사 `meal-ink`·`meal-tint`, 카페 `cafe-ink`·`cafe-tint`, 쇼핑 `shopping-ink`·`shopping-tint`, 기타 `other-ink`·`other-tint`(쇼핑·기타는 가계부 같은 분류와 같은 값), 숙소 `stay-ink`·`stay-tint`, 지역 `region-ink`·`region-tint`. 라벨 원본은 `trips/model/trip.ts`의 `STOP_KIND_LABEL`·`PLAN_KIND_LABEL` |
 | 간격 | 기본 단위 4px. 화면 여백 16px, 넓은 화면 24px |
 | 모서리 | panel 16px, control-lg 12px, control 10px, cell 8px |
 | 서체 | `font-body`, `text-12`~`text-34`. 기본 본문 15px, 필드 라벨·안내 13px, 주요 화면 제목 22px |
@@ -87,7 +87,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 | 버튼 | `button[appButton]`, `a[appButton]` | default/primary/ghost/danger/icon. disabled/loading이면 실행과 라우팅을 차단. 네이티브 폼·링크 의미 유지 |
 | 입력 | `input[appInput]`, `select[appInput]`, `textarea[appInput]` | 네이티브 Forms·label 유지. 입력·선택 높이 44px, 모서리 10px. textarea는 여러 줄 높이 |
 | 필드 | `app-field` | label/inputId/hint. 입력 id를 inputId와 맞추고 힌트가 있으면 aria-describedby를 `<inputId>-hint`에 연결 |
-| 배지 | `span[appBadge]` | accent/place/region/stay/warn/danger/ok/meal/cafe/neutral. 상태 텍스트 필수. meal·cafe는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
+| 배지 | `span[appBadge]` | accent/place/activity/region/stay/warn/danger/ok/meal/cafe/shopping/other/neutral. 상태 텍스트 필수. place·activity·meal·cafe·shopping·other는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
 | 안내 | `div[appNotice]` | warn/danger/ok. 동적 오류 등 필요한 경우에만 소비자가 live region 지정 |
 | 로딩 | `app-spinner` | 장식용. 독립 로딩은 부모 role=status와 접근성 이름, 버튼은 aria-busy 제공 |
 | 알림 토스트 | `app-toast` | kind(success·info·error)/message/dismissed. 상단 바 아래·오류만 role=alert·닫기 버튼·위로 밀어 닫기(40px 초과). 성공·안내만 3초 뒤 닫힘 |

@@ -1,3 +1,4 @@
+import { costBasis, costRange, priceLabel, wonRange } from '../../../../shared/util/plan-estimate';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -19,9 +20,12 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { AiPlanStore } from '../../data/ai-plan-store';
 import { AI_PLAN_PROVIDER } from '../../data/ai-plan-provider';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
-import { STOP_KIND_LABEL } from '../../../trips/model/trip';
+import { PLAN_KIND_LABEL } from '../../../trips/model/trip';
+import { EXPENSE_CATEGORIES } from '../../../expenses/model/ledger';
+import { BUDGET_GROUPS } from '../../util/course';
+import { budgetGap, courseHeadline, groupText, legText } from '../../util/course-format';
 import { kindTone } from '../../../trips/util/kind-tone';
-import type { KoreaRegion } from '../../../../shared/util/korea-regions';
+import { type KoreaRegion, regionHint } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 import { AiQuota } from '../../../../core/ai-quota';
 import { UiMapLinks } from '../../../places/ui/map-links/map-links';
@@ -46,6 +50,11 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 })
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
+  readonly regionHint = regionHint;
+  readonly costBasis = costBasis;
+  readonly costRange = costRange;
+  readonly wonRange = wonRange;
+  readonly priceLabel = priceLabel;
   readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
@@ -54,7 +63,13 @@ export class AiPlanFlow {
   readonly companions = COMPANION;
   readonly paces = PACE;
   readonly transports = TRANSPORT;
-  readonly kindLabels = STOP_KIND_LABEL;
+  readonly kindLabels = PLAN_KIND_LABEL;
+  readonly budgetGroups = BUDGET_GROUPS;
+  readonly expenseLabels = EXPENSE_CATEGORIES;
+  readonly courseHeadline = courseHeadline;
+  readonly legText = legText;
+  readonly budgetGap = budgetGap;
+  readonly groupText = groupText;
   /** 분류 배지 색. 상세 화면과 같은 규칙을 쓴다. */
   readonly kindTone = kindTone;
   /** 사용자가 고친 일차가 반영된 목록. */
@@ -95,6 +110,8 @@ export class AiPlanFlow {
           : '날짜 미정',
       phase: 'step1' as Phase,
     },
+    { label: '인원', value: `${this.draft.partySize()}명`, phase: 'step2' as Phase },
+    { label: '여행 예산', value: this.draft.budget() === null ? '미정' : `${this.draft.budget()!.toLocaleString('ko-KR')}원 · ${this.draft.budgetBasis() === 'person' ? '1인 기준' : '전체 인원 기준'}`, phase: 'step2' as Phase },
     { label: '동행', value: this.companion(), phase: 'step2' as Phase },
     { label: '이동수단', value: this.transport(), phase: 'step2' as Phase },
     { label: '일정 밀도', value: this.pace(), phase: 'step2' as Phase },

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiPlanHandler } from '../../../../../../supabase/functions/ai-plan/handler';
+import { RESPONSE_SCHEMA } from '../../../../../../supabase/functions/ai-plan/prompt';
 import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
@@ -51,6 +52,19 @@ function setup(
 }
 
 describe('createAiPlanHandler', () => {
+  it('1인 예산과 전체 예산을 구별해 생성 조건으로 전달한다', async () => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, partySize: 3, budget: 100000, budgetBasis: 'person' }))).status).toBe(200);
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('3명');
+    expect(prompt.user).toContain('100000원 (1인 기준)');
+    expect(prompt.user).toContain('총예산 300000원');
+  });
+  it.each([{ partySize: 0 }, { partySize: 1.5 }, { budget: -1 }, { budget: '10000' }, { budgetBasis: 'night' }])('잘못된 예산 조건을 모델 호출 전에 거절한다: %j', async (extra) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, ...extra }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
   it('로그인하지 않으면 거절한다', async () => {
     const { handler } = setup();
     const res = await handler(
@@ -212,5 +226,71 @@ describe('createAiPlanHandler', () => {
     const { handler, refundQuota } = setup({ callModel: async () => '  ' });
     expect((await handler(post(BODY))).status).toBe(500);
     expect(refundQuota).toHaveBeenCalledWith('u1');
+  });
+});
+
+describe('AI 코스 프롬프트', () => {
+  it('코스 형식과 기본 분류 구성을 모델에 요구한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2 }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·기타·숙소');
+    expect(prompt.system).toContain('마지막 날에는 숙소를 넣지 않는다');
+    expect(prompt.user).toContain('관광 2~3곳');
+    expect(prompt.user).not.toContain('카페 2곳씩');
+  });
+  it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('관광 2~3곳');
+  });
+  it('응답 스키마가 코스 필드와 일곱 분류를 가진다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.kind.enum).toEqual(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소']);
+    expect(item.required).toEqual(expect.arrayContaining(['day', 'order', 'name', 'kind', 'start', 'estimate']));
+    expect(item.properties.moveToNext.properties.mode.enum).toEqual(['도보', '대중교통', '자가용', '택시']);
+  });
+});
+
+describe('AI 코스 휴무 정보', () => {
+  it('시작일이 있으면 일차별 날짜와 요일을 알려 준다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2, startDate: '2026-10-01' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('1일차 2026-10-01(목)');
+    expect(prompt.user).toContain('2일차 2026-10-02(금)');
+    expect(prompt.system).toContain('휴무');
+  });
+  it('시작일이 없으면 날짜를 쓰지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('1일차 20');
+  });
+  it.each(['2026-13-01', '10/01', 20261001])('잘못된 시작일은 거절한다: %s', async (startDate) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, startDate }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
+  it('응답 스키마에 휴무 정보가 있다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.closed).toMatchObject({ nullable: true, required: ['onDay', 'note'] });
+  });
+});
+
+describe('AI 코스 프롬프트 품질(2026-09-30 실제 생성 확인)', () => {
+  it('무료인 곳은 0원으로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('입장료가 없는 곳은 cost를 min=0, max=0');
+  });
+  it('휴무일이 없는 곳에는 closed를 쓰지 않게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('상시 영업이거나 휴무일이 없으면 closed=null');
+  });
+  it('예산이 있으면 예산 수준에 맞는 곳을 고르게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, budget: 500000 }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('숙소·식당은 예산 수준에 맞는 곳을 고른다');
   });
 });

@@ -90,3 +90,9 @@ KOE205 수정: signInWithOAuth의 options.queryParams.scope=profile_nickname으�
 카카오 KOE205 대응: 인증 요청은 profile_nickname만 사용하고 이메일·프로필 사진을 추가 요청하지 않는다. 서비스 닉네임은 인증 후 직접 입력한다. 카카오 Developers의 닉네임 동의항목 활성화와 Supabase Kakao 제공자의 Allow users without an email 설정이 필요하다.
 
 로컬 디자인 미리보기: development 구성에서만 designPreview=true이며 여행·계정·온보딩 진입을 허용한다. production과 test 구성은 false로 기존 인증 가드를 유지한다. 계정 미리보기는 화면용 표시이며 AuthStore에 가짜 세션을 넣거나 서버 계정을 만들지 않는다. 개발 설정 변경 후 서버 재시작과 브라우저 강력 새로고침이 필요하다.
+
+## ai-plan 예산·체류시간 확장 (2026-09-30)
+
+`ai-plan` Edge Function 요청에 optional partySize(1~100, 생략 1), budget(null 또는 0~100000000 원 정수), budgetBasis(person/group, 생략 group)가 추가된다. 응답 content의 items[].estimate에는 예상 단가·요금 단위·수량·산정 가정과 추천 체류 범위가 포함된다. 이전 응답에 estimate가 없으면 미정으로 표시한다. 키·모델 환경변수는 기존 설정을 유지한다. 실제 요금 검증 API는 연결하지 않았으며 생성 결과를 공식 요금으로 표시하지 않는다.
+
+배포 시 ai-plan과 프론트엔드 양쪽을 갱신해야 한다. 이번 변경은 기존 DB의 estimated_cost/stay_minutes/memo 필드를 사용한다. MCP 설정 변경은 없다. 상세 계약은 [자동생성 안내](ai-plan-estimates.md)를 따른다.

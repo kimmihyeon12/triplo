@@ -1,6 +1,5 @@
-import type { EXPENSE_CATEGORIES, ExpensePerson } from '../model/ledger';
-
-type ExpenseCategory = keyof typeof EXPENSE_CATEGORIES;
+import type { ExpenseCategory, ExpensePerson } from '../model/ledger';
+import type { PlanKind, StopKind } from '../../trips/model/trip';
 
 /** 지출 폼에서 고를 수 있는 일정 항목. */
 export interface ExpenseLink {
@@ -14,7 +13,7 @@ export interface ExpenseLink {
 interface StopLike {
   id: string;
   name: string;
-  kind: 'place' | 'meal' | 'break' | 'buffer';
+  kind: StopKind;
   excluded: boolean;
   estimatedCost?: number | null;
 }
@@ -26,23 +25,32 @@ interface StayLike {
 }
 
 /**
- * 일정 항목의 종류로 지출 분류를 정한다. 식사·카페는 식비, 장소는 관광·활동,
- * 숙소는 숙박이다. 여유시간처럼 종류로 알 수 없으면 기타로 둔다.
+ * 일정 분류 → 가계부 분류의 유일한 대응표. AI 예산 묶음도 이 표를 쓴다(2026-09-30 정산 라벨 통일).
+ * 식사·카페는 식비, 관광·액티비티는 관광·액티비티, 숙소는 숙박이다. 여유시간처럼 종류로
+ * 지출을 알 수 없으면 기타로 둔다.
  */
-const STOP_CATEGORY: Record<StopLike['kind'], ExpenseCategory> = {
+export const KIND_EXPENSE_CATEGORY: Record<PlanKind, ExpenseCategory> = {
+  place: 'activity',
+  activity: 'activity',
   meal: 'food',
   break: 'food',
-  place: 'activity',
+  shopping: 'shopping',
+  other: 'other',
   buffer: 'other',
+  stay: 'stay',
 };
+
+export function expenseCategoryOf(kind: PlanKind): ExpenseCategory {
+  return KIND_EXPENSE_CATEGORY[kind];
+}
 
 /** 지출에 연결할 수 있는 일정 항목. 일정에서 뺀 장소는 넣지 않는다. */
 export function expenseLinks(stops: readonly StopLike[], stays: readonly StayLike[]): ExpenseLink[] {
   return [
     ...stops
       .filter((s) => !s.excluded)
-      .map((s) => ({ id: s.id, name: s.name, estimatedCost: s.estimatedCost, category: STOP_CATEGORY[s.kind] })),
-    ...stays.map((s) => ({ id: s.id, name: s.name, estimatedCost: s.estimatedCost, category: 'stay' as const })),
+      .map((s) => ({ id: s.id, name: s.name, estimatedCost: s.estimatedCost, category: expenseCategoryOf(s.kind) })),
+    ...stays.map((s) => ({ id: s.id, name: s.name, estimatedCost: s.estimatedCost, category: expenseCategoryOf('stay') })),
   ];
 }
 
