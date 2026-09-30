@@ -1,17 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 
-/**
- * 관리자 진입 화면.
- *
- * 공지·문의 관리는 서버 표가 생긴 뒤에 붙인다(OpenSpec 14.8·14.9). 지금은
- * 어떤 일이 이 자리에 올지 보여주고 누를 수 없게 둔다. 링크처럼 보이면
- * 눌러 보고 아무 일도 없어 헷갈린다.
- */
+/** 관리자 진입 화면. 공지 관리와 문의 관리로 간다(2026-10-01). */
 @Component({
   selector: 'app-admin-home',
-  imports: [IconComponent],
+  imports: [IconComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-home.html',
 })

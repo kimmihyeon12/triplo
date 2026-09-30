@@ -1,0 +1,106 @@
+<form
+  class="page mx-auto my-0 flex max-w-105 flex-col gap-4 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  (submit)="save($event)"
+  [attr.aria-busy]="busy()"
+  novalidate
+  data-testid="admin-notice-form"
+>
+  <div class="flex items-center gap-2">
+    @if (status() === 'published') {
+      <span appBadge tone="ok" data-testid="admin-notice-status">발행됨</span>
+      <span class="text-12 text-ink-3">사용자에게 보이는 중이에요.</span>
+    } @else {
+      <span appBadge tone="warn" data-testid="admin-notice-status">초안</span>
+      <span class="text-12 text-ink-3">발행해야 사용자에게 보여요.</span>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="admin-notice-error">{{ message }}</div>
+  } @else if (saved()) {
+    <div appNotice tone="ok" role="status" data-testid="admin-notice-saved">저장했어요.</div>
+  }
+
+  <div>
+    <label class="mb-2 block text-13 font-bold" for="admin-notice-title">제목</label>
+    <input
+      appInput
+      id="admin-notice-title"
+      #titleInput
+      class="w-full"
+      [value]="title()"
+      (input)="title.set(titleInput.value); saved.set(false)"
+      [attr.maxlength]="titleMax"
+      [disabled]="busy()"
+      data-testid="admin-notice-title"
+    />
+    <p class="mt-1.5 text-right text-12 text-hint [font-variant-numeric:tabular-nums]">{{ title().length }} / {{ titleMax }}</p>
+  </div>
+
+  <div>
+    <label class="mb-2 block text-13 font-bold" for="admin-notice-body">본문</label>
+    <textarea
+      appInput
+      id="admin-notice-body"
+      #bodyInput
+      class="min-h-60 w-full resize-y py-3"
+      [value]="body()"
+      (input)="body.set(bodyInput.value); saved.set(false)"
+      [attr.maxlength]="bodyMax"
+      [disabled]="busy()"
+      data-testid="admin-notice-body"
+    ></textarea>
+    <p class="mt-1.5 text-right text-12 text-hint [font-variant-numeric:tabular-nums]">{{ body().length }} / {{ bodyMax }}</p>
+  </div>
+
+  @if (formError(); as message) {
+    <p class="text-12 text-danger-ink" role="alert" data-testid="admin-notice-form-error">{{ message }}</p>
+  }
+
+  @if (!isNew()) {
+    <div class="flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel">
+      <button
+        appButton
+        type="button"
+        class="btn w-full"
+        [disabled]="busy()"
+        (click)="togglePublished()"
+        data-testid="admin-notice-publish"
+      >
+        {{ status() === 'published' ? '발행 취소' : '발행' }}
+      </button>
+      @if (confirmDelete()) {
+        <p class="text-12 text-danger-ink" data-testid="admin-notice-delete-confirm">
+          지우면 되돌릴 수 없어요. 한 번 더 누르면 지웁니다.
+        </p>
+      }
+      <button
+        appButton
+        type="button"
+        variant="danger"
+        class="btn w-full"
+        [disabled]="busy()"
+        (click)="remove()"
+        data-testid="admin-notice-delete"
+      >
+        {{ confirmDelete() ? '정말 지우기' : '삭제' }}
+      </button>
+    </div>
+  }
+
+  <div appActionBar class="action-bar">
+    <div class="action-bar__inner mx-auto my-0 flex max-w-105 gap-2">
+      <button
+        appButton
+        type="submit"
+        variant="primary"
+        class="btn"
+        [disabled]="!!formError() || busy()"
+        [loading]="busy()"
+        data-testid="admin-notice-save"
+      >
+        저장
+      </button>
+    </div>
+  </div>
+</form>
