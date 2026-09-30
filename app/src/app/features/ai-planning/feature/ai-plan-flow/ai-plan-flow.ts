@@ -21,6 +21,9 @@ import { AiPlanStore } from '../../data/ai-plan-store';
 import { AI_PLAN_PROVIDER } from '../../data/ai-plan-provider';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { PLAN_KIND_LABEL } from '../../../trips/model/trip';
+import { EXPENSE_CATEGORIES } from '../../../expenses/model/ledger';
+import { BUDGET_GROUPS } from '../../util/course';
+import { areaOf, budgetGap, courseHeadline, legText } from '../../util/course-format';
 import { kindTone } from '../../../trips/util/kind-tone';
 import { type KoreaRegion, regionHint } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
@@ -60,6 +63,12 @@ export class AiPlanFlow {
   readonly paces = PACE;
   readonly transports = TRANSPORT;
   readonly kindLabels = PLAN_KIND_LABEL;
+  readonly budgetGroups = BUDGET_GROUPS;
+  readonly expenseLabels = EXPENSE_CATEGORIES;
+  readonly courseHeadline = courseHeadline;
+  readonly legText = legText;
+  readonly areaOf = areaOf;
+  readonly budgetGap = budgetGap;
   /** 분류 배지 색. 상세 화면과 같은 규칙을 쓴다. */
   readonly kindTone = kindTone;
   /** 사용자가 고친 일차가 반영된 목록. */
