@@ -76,7 +76,7 @@
                   >
                     <app-icon name="plus" [size]="14" />
                     <span class="font-medium">{{ m.label }}</span>
-                    <span class="text-12 text-hint">{{ m.short }}</span>
+                    @if (regionHint(m); as hint) {<span class="text-12 text-hint">{{ hint }}</span>}
                   </button>
                 </li>
               }

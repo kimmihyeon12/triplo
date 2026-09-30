@@ -158,8 +158,32 @@ export function searchRegions(query: string, limit = 8): readonly KoreaRegion[] 
       byProvince.push(region);
   }
   // 여행 목적지는 시·도 전체도 선택한다. 통계용 시·군·구 원본 목록은 유지한다.
+  // '광주'·'전남'처럼 없어진 이름으로 쳐도 지금의 시·도 전체가 나와야 한다.
+  const legacy = new Set(
+    Object.entries(LEGACY_PROVINCE_NAME).filter(([name]) => name.startsWith(q)).map(([, code]) => code),
+  );
   const whole: KoreaRegion[] = KOREA_PROVINCES
-    .filter(p => p.short.startsWith(q) || p.name.startsWith(q))
+    .filter(p => p.short.startsWith(q) || p.name.startsWith(q) || legacy.has(p.code))
     .map(p => ({ code: p.code, name: p.short, label: `${p.short} 전체`, province: p.name, provinceCode: p.code, short: p.short }));
+  // 옛 광주광역시 자치구를 전남 시·군보다 앞에 둔다. 코드 순으로 두면 8개 안에
+  // 강진군·고흥군이 먼저 차서 광주를 찾은 사람이 자치구를 고를 수 없다.
+  const gwangju = '광주'.startsWith(q) || q.startsWith('광주');
+  byProvince.sort((a, b) => Number(gwangju && FORMER_GWANGJU.has(b.code)) - Number(gwangju && FORMER_GWANGJU.has(a.code)));
   return [...whole, ...starts, ...contains, ...byProvince].slice(0, limit);
+}
+
+/** 2026-07-01 통합 전 광주광역시였던 자치구. */
+const FORMER_GWANGJU = new Set(['12_동구', '12_서구', '12_남구', '12_북구', '12_광산구']);
+
+/**
+ * 검색 후보 옆에 붙일 보조 표기. 이름에 이미 시·도가 보이면 비운다.
+ * '서울 전체 서울', '강서구(서울) 서울'처럼 같은 말이 두 번 나오지 않게 한다.
+ * 통합특별시 전체는 짧은 이름만으로 무엇이 합쳐졌는지 알기 어려워 정식 명칭을 쓴다.
+ */
+export function regionHint(region: KoreaRegion): string | null {
+  if (!region.code.includes('_')) {
+    const suffix = region.province.startsWith(region.short) ? region.province.slice(region.short.length) : '';
+    return /^(특별시|광역시|특별자치시|특별자치도|도)$/.test(suffix) ? null : region.province;
+  }
+  return region.label.includes(region.short) ? null : region.short;
 }

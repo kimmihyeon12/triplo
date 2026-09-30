@@ -22,7 +22,7 @@ import { AI_PLAN_PROVIDER } from '../../data/ai-plan-provider';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { STOP_KIND_LABEL } from '../../../trips/model/trip';
 import { kindTone } from '../../../trips/util/kind-tone';
-import type { KoreaRegion } from '../../../../shared/util/korea-regions';
+import { type KoreaRegion, regionHint } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 import { AiQuota } from '../../../../core/ai-quota';
 import { UiMapLinks } from '../../../places/ui/map-links/map-links';
@@ -47,6 +47,7 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 })
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
+  readonly regionHint = regionHint;
   readonly costBasis = costBasis;
   readonly costRange = costRange;
   readonly wonRange = wonRange;
