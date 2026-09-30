@@ -4,6 +4,7 @@ import {
   costRange,
   parsePlanEstimate,
   summarizeEstimates,
+  summarizeGroups,
 } from '../../../shared/util/plan-estimate';
 
 describe('AI 예상 비용과 체류시간', () => {
@@ -137,5 +138,19 @@ describe('AI 예상 비용과 체류시간', () => {
       1,
     );
     expect(items[0]).toMatchObject({ estimate: { cost: null, stay: null } });
+  });
+});
+
+describe('summarizeGroups', () => {
+  it('분류 묶음별로 합계와 미정 개수를 센다', () => {
+    const cost = (min: number, max: number) => ({ cost: { min, max, basis: 'group' as const, quantity: 1, assumption: 'x' }, stay: null });
+    const out = summarizeGroups([
+      { group: 'food', estimate: cost(10000, 12000) }, { group: 'food' },
+      { group: 'stay', estimate: cost(90000, 120000) },
+    ], 2, ['food', 'stay', 'activity', 'shopping', 'other'] as const);
+    expect(out.food).toEqual({ min: 10000, max: 12000, known: 1, unknown: 1 });
+    expect(out.stay.max).toBe(120000);
+    expect(out.activity).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+    expect(out.other).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
   });
 });

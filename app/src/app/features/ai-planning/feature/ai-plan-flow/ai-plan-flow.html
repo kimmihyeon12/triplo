@@ -446,14 +446,15 @@
           </span>
         </label>
 
-        @for (group of draft.dayGroups(); track group.day) {
+        @for (group of draft.courses(); track group.day) {
           <section [attr.aria-labelledby]="'ai-day-title-' + group.day" [attr.data-testid]="'ai-day-group-' + group.day">
             <div class="border-t border-border bg-canvas px-4 py-3">
               <h3 class="text-15 font-bold" [id]="'ai-day-title-' + group.day">{{ group.day }}일차</h3>
-              <p class="text-12 text-ink-3 mt-1 tabular-nums">{{ group.selectedCount }}곳 선택 · 예상 {{ wonRange(group.costs.known ? group.costs : null) }} · 미정 {{ group.costs.unknown }}곳</p>
+              <p class="text-12 text-ink-3 mt-1 tabular-nums">{{ group.entries.length }}곳</p>
             </div>
             <ul class="picks flex flex-col">
-          @for (item of group.items; track item.id) {
+          @for (entry of group.entries; track entry.item.id) {
+          @let item = entry.item;
             <!--
               여행 상세의 장소 목록과 같은 격자·여백·위계를 쓴다. 담기 전과 담은
               뒤가 같은 모양이라야 무엇이 일정에 들어갈지 미리 읽을 수 있다.

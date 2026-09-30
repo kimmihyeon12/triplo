@@ -1,4 +1,6 @@
-import { summarizeEstimates } from '../../../shared/util/plan-estimate';
+import { summarizeEstimates, summarizeGroups } from '../../../shared/util/plan-estimate';
+import { expenseCategoryOf } from '../../expenses/util/expense-link';
+import { BUDGET_GROUPS, buildCourses, type BudgetGroup } from '../util/course';
 import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
@@ -70,12 +72,24 @@ export class AiPlanStore {
   });
   readonly totalBudget = computed(() => this.budget() === null ? null : this.budget()! * (this.budgetBasis() === 'person' ? this.partySize() : 1));
   readonly budgetExceeded = computed(() => this.totalBudget() !== null && this.costSummary().max > this.totalBudget()!);
-  readonly dayGroups = computed(() => this.dayChoices().map(day => {
-    const items = this.items().filter(item => item.day === day);
-    const selected = items.filter(item => this.selected().has(item.id));
-    return { day, items, selectedCount: selected.length, costs: summarizeEstimates(selected, this.partySize()) };
-  }).filter(group => group.items.length > 0));
-  readonly costSummary = computed(() => summarizeEstimates(this.items().filter(i => this.selected().has(i.id)), this.partySize()));
+  /** 일차별 시간순 코스. 선택·일차 이동을 반영한다. 화면과 담기가 같이 쓴다. */
+  readonly courses = computed(() => buildCourses(this.results(), this.selected(), this.dayOverrides(), this.dayChoices()));
+  /** 선택된 항목을 코스 순서대로. 옮긴 항목은 옮긴 일차로 들어 있다. */
+  private readonly selectedEntries = computed(() => this.courses().flatMap((c) => c.entries).filter((e) => e.selected));
+  private readonly selectedItems = computed(() => this.selectedEntries().map((e) => e.item));
+  readonly costSummary = computed(() => summarizeEstimates(this.selectedItems(), this.partySize()));
+  /** 가계부 분류와 같은 칸으로 나눈 합계. 담은 뒤 실제 지출과 같은 분류로 비교할 수 있다. */
+  readonly groupSummary = computed(() =>
+    summarizeGroups(
+      this.selectedItems().map((i) => ({ group: expenseCategoryOf(i.kind) as BudgetGroup, estimate: i.estimate })),
+      this.partySize(),
+      BUDGET_GROUPS,
+    ),
+  );
+  /** 예산 − 예상 상한. 음수면 초과다. 예산이 없으면 null. */
+  readonly budgetRemaining = computed(() => (this.totalBudget() === null ? null : this.totalBudget()! - this.costSummary().max));
+  /** 날짜 미정이면 숙소를 숙박으로 담을 수 없다. 선택된 숙소가 있을 때 안내한다. */
+  readonly staysNeedDates = computed(() => !this.startDate() && this.selectedItems().some((i) => i.kind === 'stay'));
   readonly results = this.state.results;
   readonly selected = this.state.selected;
   readonly dayOverrides = this.state.dayOverrides;
@@ -271,7 +285,7 @@ export class AiPlanStore {
       regions: [...this.regions()],
       startDate: this.startDate() || null,
       endDate: this.endDate() || null,
-      items: this.items().filter((i) => this.selected().has(i.id)),
+      items: this.selectedEntries().map((e) => ({ ...e.item, start: e.start })),
     };
   }
 }

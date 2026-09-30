@@ -114,3 +114,28 @@ export function summarizeEstimates(
     days: [...days].sort(([a], [b]) => a - b).map(([day, costs]) => ({ day, ...costs })),
   };
 }
+
+type RangeTotal = { min: number; max: number; known: number; unknown: number };
+
+/**
+ * 묶음별 예상 합계. 묶음 이름은 호출하는 쪽이 정한다(AI 일정은 가계부 분류를 쓴다).
+ * 요금이 미정이면 미정 개수로만 센다. 0원으로 채우지 않는다.
+ */
+export function summarizeGroups<K extends string>(
+  items: readonly { group: K; estimate?: PlanEstimate }[],
+  partySize: number,
+  groups: readonly K[],
+): Record<K, RangeTotal> {
+  const out = Object.fromEntries(groups.map((g) => [g, { min: 0, max: 0, known: 0, unknown: 0 }])) as Record<K, RangeTotal>;
+  for (const item of items) {
+    const target = out[item.group];
+    if (!target) continue;
+    const range = costRange(item.estimate, partySize);
+    if (range) {
+      target.min += range.min;
+      target.max += range.max;
+      target.known++;
+    } else target.unknown++;
+  }
+  return out;
+}

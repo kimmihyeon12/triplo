@@ -21,11 +21,11 @@ it('선택·일차 변경에 따라 추정 합계를 다시 계산하고 미정�
   store.set('partySize', 3);
   await store.generate();
   expect(store.costSummary()).toMatchObject({ min: 3000, max: 6000, known: 1, unknown: 1 });
-  expect(store.dayGroups()).toHaveLength(1);
+  expect(store.courses()).toHaveLength(1);
   store.set('budget', 0);
   expect(store.budgetExceeded()).toBe(true);
   store.setDay('ai-0', 2);
-  expect(store.dayGroups().map(g => g.day)).toEqual([1, 2]);
+  expect(store.courses().map(g => g.day)).toEqual([1, 2]);
   expect(store.costSummary().days).toMatchObject([{ day: 1, unknown: 1 }, { day: 2, max: 6000 }]);
   store.toggle('ai-0');
   expect(store.costSummary()).toMatchObject({ min: 0, max: 0, known: 0, unknown: 1 });
@@ -48,7 +48,7 @@ function candidate(name: string): PlaceCandidate {
     roadAddress: '',
     lat: 37.8,
     lng: 128.9,
-    category: '관광명소',
+    category: name.includes('호텔') ? '숙박' : '관광명소',
     url: null,
   };
 }
@@ -282,5 +282,51 @@ describe('AiPlanStore 일차 변경', () => {
     long.set('startDate', '2026-10-01');
     long.set('endDate', '2026-10-12');
     expect(long.dayChoices().length).toBe(12);
+  });
+});
+
+function undatedTrip(ai?: AiPlanProvider): AiPlanStore {
+  const store = setup(ai);
+  store.set('regions', ['강릉']);
+  return store;
+}
+
+describe('AiPlanStore 코스와 예산 묶음', () => {
+  const est = (max: number) => ({ cost: { min: max, max, basis: 'group' as const, quantity: 1, assumption: 'x' }, stay: null });
+  it('코스와 분류별 합계를 계산하고 해제·일차 이동을 반영한다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 1, start: '10:00', moveToNext: null, name: '안목해변', kind: 'activity', estimate: est(5000) },
+      { day: 1, order: 2, start: '12:00', moveToNext: null, name: '중앙시장', kind: 'shopping', estimate: est(20000) },
+    ] }));
+    store.set('budget', 10000);
+    await store.generate();
+    expect(store.courses()[0]!.entries).toHaveLength(2);
+    expect(store.groupSummary().activity.max).toBe(5000);
+    expect(store.budgetRemaining()).toBeLessThan(0);
+    store.toggle(store.courses()[0]!.entries[1]!.item.id);
+    expect(store.budgetRemaining()).toBe(5000);
+    expect(store.groupSummary().shopping).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+    store.setDay(store.courses()[0]!.entries[0]!.item.id, 2);
+    expect(store.courses().map(c => c.day)).toEqual([1, 2]);
+    expect(store.courses()[1]!.entries[0]).toMatchObject({ moved: true, start: null });
+  });
+  it('담기 선택은 코스 순서를 따르고 옮긴 항목은 시각이 없다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 2, start: '12:00', moveToNext: null, name: '초당순두부마을', kind: 'meal' },
+      { day: 1, order: 1, start: '10:00', moveToNext: null, name: '안목해변', kind: 'place' },
+    ] }));
+    await store.generate();
+    expect(store.selection().items.map(i => [i.name, i.start])).toEqual([['안목해변', '10:00'], ['초당순두부마을', '12:00']]);
+    store.setDay(store.courses()[0]!.entries[0]!.item.id, 2);
+    expect(store.selection().items.map(i => [i.name, i.day, i.start])).toEqual([['초당순두부마을', 1, '12:00'], ['안목해변', 2, null]]);
+  });
+  it('날짜 미정이면 선택된 숙소가 있을 때 안내 신호를 켠다', async () => {
+    const store = undatedTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 1, start: null, moveToNext: null, name: '강릉 호텔', kind: 'stay' },
+    ] }));
+    await store.generate();
+    expect(store.staysNeedDates()).toBe(true);
+    store.toggle(store.courses()[0]!.entries[0]!.item.id);
+    expect(store.staysNeedDates()).toBe(false);
   });
 });

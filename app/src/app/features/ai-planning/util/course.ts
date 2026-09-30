@@ -1,4 +1,5 @@
 import { haversineKm } from '../../trips/util/itinerary';
+import type { ExpenseCategory } from '../../expenses/model/ledger';
 import type { MoveMode, PlanItem } from '../model/ai-plan';
 
 /** 카드 사이의 이동. 수단·분은 모델 추정, 직선거리는 확인된 좌표로 계산한 값이다. */
@@ -82,3 +83,7 @@ export function buildCourses(
   }
   return courses;
 }
+
+/** AI 예산 묶음. 가계부 분류와 같은 키를 쓰고, 계산하지 않는 교통만 뺀다. */
+export type BudgetGroup = Exclude<ExpenseCategory, 'transport'>;
+export const BUDGET_GROUPS: readonly BudgetGroup[] = ['food', 'stay', 'activity', 'shopping', 'other'];
