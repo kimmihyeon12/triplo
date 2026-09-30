@@ -210,7 +210,7 @@ export class AiPlanStore {
     this.running = controller;
     patchState(this.state, { phase: 'generating', error: null });
     try {
-      const items = await this.provider.generate(
+      const generated = await this.provider.generate(
         {
           regions: this.regions(),
           dayCount: this.dayCount(),
@@ -227,6 +227,10 @@ export class AiPlanStore {
         controller.signal,
       );
       if (controller.signal.aborted) return;
+      // 마지막 날 밤에는 묵지 않는다. 당일치기면 숙소가 하나도 없어야 한다. 모델이 지시를
+      // 어기고 넣어도 여기서 뺀다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
+      const lastDay = this.dayCount();
+      const items = generated.filter((i) => !(i.kind === 'stay' && i.day >= lastDay));
       if (!items.length) {
         patchState(this.state, {
           phase: 'summary',

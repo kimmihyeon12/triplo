@@ -330,3 +330,20 @@ describe('AiPlanStore 코스와 예산 묶음', () => {
     expect(store.staysNeedDates()).toBe(false);
   });
 });
+
+describe('AiPlanStore 마지막 날 숙소', () => {
+  const stay = (day: number, name: string) => ({ day, order: 9, start: null, moveToNext: null, name, kind: 'stay' as const });
+  it('당일치기에는 숙소를 넣지 않는다', async () => {
+    const store = setup(fakeAi({ generate: async () => [ITEMS[0]!, stay(1, '강릉 호텔')] }));
+    store.set('regions', ['강릉']);
+    store.set('startDate', '2026-10-01');
+    store.set('endDate', '2026-10-01');
+    await store.generate();
+    expect(store.results().map((i) => i.name)).toEqual(['안목해변']);
+  });
+  it('여러 날 여행이면 마지막 날 숙소만 뺀다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [stay(1, '첫날 호텔'), stay(2, '둘째 호텔'), stay(3, '셋째 호텔')] }));
+    await store.generate();
+    expect(store.results().map((i) => i.name)).toEqual(['첫날 호텔', '둘째 호텔']);
+  });
+});

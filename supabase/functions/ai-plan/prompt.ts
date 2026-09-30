@@ -175,14 +175,17 @@ export function buildUserPrompt(r: AiPlanInput): string {
   if (clip(r.mustGo)) lines.push(`꼭 갈 장소: ${clip(r.mustGo)}`);
   if (clip(r.bookedStay)) lines.push(`이미 정한 숙소: ${clip(r.bookedStay)}`);
 
+  const dayTrip = r.dayCount === 1;
   // 요청이 범위를 정했으면 기본 개수를 아예 적지 않는다.
   if (!scoped)
     lines.push(
       '',
       `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광 2~${PER_DAY.sight}곳,` +
-        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜고` +
-        ` 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`,
+        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
+        (dayTrip ? '줘.' : `고 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`),
     );
+  // 당일치기는 요청 범위와 상관없이 숙소를 넣지 않는다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
+  if (dayTrip) lines.push('당일치기라 숙소는 넣지 않는다.');
 
   return lines.join('\n');
 }

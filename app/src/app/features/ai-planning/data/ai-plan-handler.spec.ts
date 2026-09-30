@@ -294,3 +294,18 @@ describe('AI 코스 프롬프트 품질(2026-09-30 실제 생성 확인)', () =>
     expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('숙소·식당은 예산 수준에 맞는 곳을 고른다');
   });
 });
+
+describe('AI 코스 당일치기', () => {
+  it('당일치기면 숙소를 넣지 말라고 알린다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1 }));
+    const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user;
+    expect(user).toContain('당일치기라 숙소는 넣지 않는다');
+    expect(user).not.toContain('숙소 1곳을 그날 마지막에');
+  });
+  it('추가 요청이 범위를 정해도 당일치기 규칙은 남긴다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1, extraNote: '맛집만 3곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).toContain('당일치기라 숙소는 넣지 않는다');
+  });
+});
