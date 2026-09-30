@@ -30,8 +30,8 @@
               @if (inquiry.replies.length > 0 && !inquiry.readAt) {
                 <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
               }
-              <span appBadge [tone]="tone(inquiry)" class="flex-none">{{
-                statusLabel[inquiry.status]
+              <span appBadge [tone]="delivers ? tone(inquiry) : 'neutral'" class="flex-none">{{
+                delivers ? statusLabel[inquiry.status] : '기기에만 저장'
               }}</span>
               <span
                 class="flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
@@ -53,7 +53,11 @@
                 </p>
               </div>
             } @empty {
-              <p class="text-12 text-ink-3">답변을 준비하고 있어요.</p>
+              @if (delivers) {
+                <p class="text-12 text-ink-3">답변을 준비하고 있어요.</p>
+              } @else {
+                <p class="text-12 text-ink-3">이 기기에만 저장된 기록이라 운영자에게 전달되지 않았어요.</p>
+              }
             }
           </details>
         </li>

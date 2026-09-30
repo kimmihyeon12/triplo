@@ -29,6 +29,7 @@ import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 })
 export class InquiryFormPage {
   private readonly support = inject(SUPPORT_REPOSITORY);
+  readonly delivers = this.support.delivers;
   private readonly router = inject(Router);
 
   readonly kinds = INQUIRY_KINDS;

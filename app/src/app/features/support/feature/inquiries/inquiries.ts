@@ -26,6 +26,8 @@ import type { BadgeTone } from '../../../../shared/util/badge-tone';
 })
 export class InquiriesPage {
   private readonly support = inject(SUPPORT_REPOSITORY);
+  /** 운영자에게 전달되지 않는 기기 저장이면 상태 대신 '기기에만 저장'으로 보인다. */
+  readonly delivers = this.support.delivers;
 
   readonly kindLabel = INQUIRY_KIND_LABEL;
   readonly statusLabel = INQUIRY_STATUS_LABEL;

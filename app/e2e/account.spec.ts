@@ -114,7 +114,9 @@ test('문의 목록이 먼저 보이고 보내기는 따로 연다', async ({ pa
   const list = page.getByTestId('inquiry-list').locator('li');
   await expect(list).toHaveCount(1);
   await expect(list.first()).toContainText('기능 제안');
-  await expect(list.first()).toContainText('접수됨');
+  // 서버에 연결되기 전에는 접수된 것처럼 보이지 않는다(감리 P2-01).
+  await expect(list.first()).toContainText('기기에만 저장');
+  await expect(list.first()).not.toContainText('접수됨');
 });
 
 test('보낸 문의는 새로 열어도 남아 있다', async ({ page }) => {
