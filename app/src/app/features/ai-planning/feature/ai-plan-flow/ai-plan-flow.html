@@ -437,40 +437,13 @@
                     }}</strong>
                     <!-- 지도 링크는 여행 상세와 같이 이름 줄 오른쪽 끝에 둔다. -->
                     <span class="item__maps ml-auto inline-flex flex-none gap-1">
-                      <a
-                        class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                        appMapLink [href]="naverLink(item.name, item.address)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        [attr.aria-label]="item.name + ' 네이버지도에서 검색'"
-                        [attr.data-testid]="'ai-naver-' + item.id"
-                      >
-                        <img
-                          class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                          src="brand/navermap.png"
-                          width="26"
-                          height="26"
-                          alt=""
-                          aria-hidden="true"
-                        />
-                      </a>
-                      <a
-                        class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                        appMapLink [href]="kakaoLink(item.name, item.address)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        [attr.aria-label]="item.name + ' 카카오맵에서 검색'"
-                        [attr.data-testid]="'ai-kakao-' + item.id"
-                      >
-                        <img
-                          class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                          src="brand/kakaomap.png"
-                          width="26"
-                          height="26"
-                          alt=""
-                          aria-hidden="true"
-                        />
-                      </a>
+                      <app-map-links
+                        [name]="item.name"
+                        [naverHref]="naverLink(item.name, item.address)"
+                        [kakaoHref]="kakaoLink(item.name, item.address)"
+                        [naverTestId]="'ai-naver-' + item.id"
+                        [kakaoTestId]="'ai-kakao-' + item.id"
+                      />
                     </span>
                   </span>
                   <!-- 분류와 주소는 장소 검색에서 온 값이다. AI가 쓴 설명은 쓰지 않는다. -->

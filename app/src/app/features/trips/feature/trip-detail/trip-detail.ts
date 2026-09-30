@@ -57,7 +57,7 @@ import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { ToastService } from '../../../../core/toast-service';
 import { canDeleteTrip, tripPeople } from '../../util/sharing';
-import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
+import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -68,7 +68,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
-    UiMapLink,
+    UiMapLinks,
     UiButton,
     UiBadge,
     UiNotice,

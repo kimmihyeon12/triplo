@@ -24,12 +24,12 @@ import { kindTone } from '../../../trips/util/kind-tone';
 import type { KoreaRegion } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
 import { AiQuota } from '../../../../core/ai-quota';
-import { UiMapLink } from '../../../../shared/ui/map-link/map-link';
+import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 @Component({
   selector: 'app-ai-plan-flow',
   imports: [
-    UiMapLink,
+    UiMapLinks,
     UiButton,
     UiInput,
     UiBadge,
