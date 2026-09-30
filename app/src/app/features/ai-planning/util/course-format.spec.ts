@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { areaOf, budgetGap, courseHeadline, formatDuration, legText } from './course-format';
+import { areaOf, budgetGap, courseHeadline, formatDuration, groupText, legText } from './course-format';
 
 describe('코스 카드 문구', () => {
   it('체류시간을 시간·분으로 쓴다', () => {
@@ -24,5 +24,11 @@ describe('코스 카드 문구', () => {
     expect(budgetGap(15000)).toBe('여유 15,000원');
     expect(budgetGap(-2500)).toBe('초과 2,500원');
     expect(budgetGap(0)).toBe('여유 0원');
+  });
+  it('예산 묶음은 금액·미정 개수·없음을 겹치지 않게 쓴다', () => {
+    expect(groupText({ min: 3000, max: 5000, known: 1, unknown: 0 })).toBe('3,000~5,000원');
+    expect(groupText({ min: 3000, max: 5000, known: 1, unknown: 2 })).toBe('3,000~5,000원 · 미정 2곳');
+    expect(groupText({ min: 0, max: 0, known: 0, unknown: 1 })).toBe('미정 1곳');
+    expect(groupText({ min: 0, max: 0, known: 0, unknown: 0 })).toBe('없음');
   });
 });

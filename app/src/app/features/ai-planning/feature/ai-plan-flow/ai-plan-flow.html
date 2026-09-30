@@ -421,9 +421,7 @@
             <dt class="text-ink-2">
               {{ expenseLabels[g] }}@if (g === 'shopping') {<span class="text-12 text-ink-3"> (선택 지출)</span>}
             </dt>
-            <dd class="text-right tabular-nums">
-              {{ wonRange(sum.known ? sum : null) }}@if (sum.unknown) {<span class="text-12 text-ink-3"> · 미정 {{ sum.unknown }}곳</span>}
-            </dd>
+            <dd class="text-right tabular-nums" [class.text-ink-3]="!sum.known">{{ groupText(sum) }}</dd>
           }
         </dl>
         <p class="mt-3 text-12 leading-normal text-ink-3">
@@ -495,19 +493,22 @@
                       [attr.data-testid]="'ai-pick-' + item.id"
                     />
                     <span class="item__main flex min-w-0 flex-col gap-1">
-                      <span class="text-12 text-ink-3 tabular-nums" [attr.data-testid]="'ai-start-' + item.id">{{
-                        courseHeadline(entry.start, item.estimate?.stay?.max ?? null, kindLabels[item.kind], areaOf(item.address))
-                      }}</span>
-                      <span class="item__title flex items-start gap-1.5 text-15">
-                        <strong class="item__name min-w-0 truncate" [title]="item.name">{{ item.name }}</strong>
-                        <span appBadge tone="ok">실존 확인</span>
-                        <span class="ml-auto flex-none text-right text-14 font-medium tabular-nums" [attr.data-testid]="'ai-price-' + item.id">
+                      <!-- 요금은 시각 줄 오른쪽에 둔다. 이름 줄에 두면 좁은 화면에서 이름이 먼저 잘린다. -->
+                      <span class="flex items-start gap-2">
+                        <span class="min-w-0 flex-1 text-12 text-ink-3 tabular-nums" [attr.data-testid]="'ai-start-' + item.id">{{
+                          courseHeadline(entry.start, item.estimate?.stay?.max ?? null, kindLabels[item.kind], areaOf(item.address))
+                        }}</span>
+                        <span class="flex-none text-right text-14 font-medium tabular-nums" [attr.data-testid]="'ai-price-' + item.id">
                           @if (range) {
                             {{ wonRange(range) }}<span class="block text-12 font-normal text-ink-3">AI 추정</span>
                           } @else {
                             <span class="text-12 font-normal text-ink-3">요금 미정</span>
                           }
                         </span>
+                      </span>
+                      <span class="item__title flex flex-wrap items-center gap-x-1.5 gap-y-1 text-15">
+                        <strong class="item__name min-w-0 wrap-anywhere">{{ item.name }}</strong>
+                        <span appBadge tone="ok">실존 확인</span>
                       </span>
                     </span>
                   </label>
