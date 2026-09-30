@@ -152,3 +152,25 @@ describe('parseAiItems 코스 필드', () => {
     expect(parseAiItems(json([{ day: 1, name: 'A', kind: '장소' }]), 1)[0]).toMatchObject({ order: 1, start: null, moveToNext: null, kind: 'place' });
   });
 });
+
+describe('parseAiItems 최종 검토 보완', () => {
+  const json = (items: unknown[]) => JSON.stringify({ items });
+  it('같은 숙소가 다른 날에 나오면 날마다 남긴다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: '호텔', kind: '숙소' },
+      { day: 2, order: 1, name: '호텔', kind: '숙소' },
+      { day: 2, order: 2, name: '호텔', kind: '숙소' },
+      { day: 2, order: 3, name: '경포대', kind: '관광' },
+      { day: 3, order: 1, name: '경포대', kind: '관광' },
+    ]), 3);
+    expect(out.map((i) => [i.day, i.name])).toEqual([[1, '호텔'], [2, '호텔'], [2, '경포대']]);
+  });
+  it('모델 순서를 쓸 수 있으면 빠진 자리를 그대로 남긴다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: 'A', kind: '관광' },
+      { day: 1, order: 2, name: '', kind: '관광' },
+      { day: 1, order: 3, name: 'C', kind: '관광' },
+    ]), 1);
+    expect(out.map((i) => [i.name, i.order])).toEqual([['A', 1], ['C', 3]]);
+  });
+});

@@ -90,12 +90,15 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
     if (item.day < 1 || item.day > dayCount) continue;
     if (typeof item.name !== 'string') continue;
     const name = item.name.trim().slice(0, MAX_NAME);
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
+    const kind = KIND_BY_LABEL[String(item.kind ?? '')] ?? 'place';
+    // 숙소는 여러 밤 같은 곳에 묵으므로 날마다 한 번씩 받는다. 담을 때 이어지는 밤을 합친다.
+    const key = kind === 'stay' ? `stay:${item.day}:${name}` : name;
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
     out.push({
       day: item.day,
       name,
-      kind: KIND_BY_LABEL[String(item.kind ?? '')] ?? 'place',
+      kind,
       rawOrder: item.order,
       start: parseStart(item.start),
       moveToNext: parseMove(item.moveToNext),
@@ -123,7 +126,9 @@ function settleOrder(items: Draft[]): void {
     const sorted = usable ? [...group].sort((a, b) => (a.rawOrder as number) - (b.rawOrder as number)) : group;
     let last: string | null = null;
     sorted.forEach((item, index) => {
-      item.order = index + 1;
+      // 쓸 수 있는 모델 순서는 그대로 둔다. 다시 매기면 빠진 항목의 자리가 사라져
+      // 이어지지 않은 두 곳 사이에 모델 이동시간이 붙는다.
+      item.order = usable ? (item.rawOrder as number) : index + 1;
       if (item.start !== null && last !== null && item.start < last) item.start = null;
       if (item.start !== null) last = item.start;
     });
