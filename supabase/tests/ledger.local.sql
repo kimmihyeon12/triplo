@@ -20,6 +20,8 @@ insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('222222
 \ir ../migrations/20260929000003_remove_ledger_person.sql
 \ir ../migrations/20260929000005_trip_members.sql
 \ir ../migrations/20260929000006_drop_redundant_split_fkey.sql
+\ir ../migrations/20260929000007_preview_my_role.sql
+\ir ../migrations/20260930000000_receipt_balance_guard.sql
 \set ON_ERROR_STOP 0
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
@@ -35,6 +37,8 @@ select 'e1 update' as t, save_expense('t1', '{"id":"e1","title":"저녁","date":
 select 'e1 stale delete' as t, delete_expense('t1', 'e1', 1);
 select 'e1 delete' as t, delete_expense('t1', 'e1', 2);
 select 'after delete' as t, (select count(*) from expenses) exp, (select count(*) from expense_splits) splits;
+-- 수령은 남은 빚 안에서만 기록된다(20260930 마이그레이션). 민지가 5,000원을 빚지게 둔다.
+select 'e2 for receipt' as t, save_expense('t1', '{"id":"e2","title":"커피","date":"2026-10-10","category":"cafe","amount":10000,"paidBy":"self","splits":[{"personId":"self","amount":5000},{"personId":"p2","amount":5000}],"memo":"","linkId":null,"personal":false}'::jsonb, 0) as v;
 select add_receipt('t1', '{"id":"r1","from":"p2","to":"self","amount":5000}'::jsonb);
 select cancel_receipt('t1', 'r1', '실수');
 select 'receipt' as t, amount, cancelled_reason from settlement_receipts;
