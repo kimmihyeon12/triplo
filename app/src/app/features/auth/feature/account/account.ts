@@ -13,6 +13,7 @@ import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiSwitch } from '../../../../shared/ui/switch/switch';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { avatarTone } from '../../../../shared/util/avatar-tone';
 
 /**
  * 내 정보 화면.
@@ -42,6 +43,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 })
 export class AccountPage {
   readonly auth = inject(AuthStore);
+  readonly tone = avatarTone;
   private readonly router = inject(Router);
   private readonly support = inject(SUPPORT_REPOSITORY);
 

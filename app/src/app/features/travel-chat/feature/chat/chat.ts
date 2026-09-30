@@ -10,7 +10,8 @@ import {
 } from '@angular/core';
 import { PageBar } from '../../../../core/page-bar';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
-import { createRegion, createTrip } from '../../../trips/util/factories';
+import { createTrip } from '../../../trips/util/factories';
+import { draftTripRegions } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
@@ -122,12 +123,15 @@ export class ChatPage implements OnInit {
     this.dismissedIds.set([...this.dismissedIds(), messageId]);
   }
 
-  /** 초안이 가리키는 지역으로 빈 여행을 세운다. 날짜는 아직 정하지 않는다. */
+  /**
+   * 담을 장소의 주소가 가리키는 시·군·구로 빈 여행을 세운다. 날짜는 아직 정하지 않는다.
+   * 모델이 쓴 지역 이름('서울')으로 만들지 않는다(draftTripRegions).
+   */
   private blankTrip(draft: ChatDraft): Trip {
-    const names = draft.action === 'append' ? draft.regions : [];
+    const regions = draft.action === 'append' ? draftTripRegions(draft) : [];
     return createTrip({
-      title: names.length ? `${names.join('·')} 여행` : '새 여행',
-      regions: names.map((name, i) => createRegion(name, i)),
+      title: regions.length ? `${regions.map((r) => r.name).join('·')} 여행` : '새 여행',
+      regions,
     });
   }
 }

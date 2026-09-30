@@ -41,10 +41,6 @@ export class VoxelScene {
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.domElement.setAttribute('aria-hidden', 'true');
-    // OrbitControls가 캔버스에 touch-action: none을 건다. 자식이 부모를 덮으므로
-    // 호스트에 pan-y를 줘도 소용이 없고, 지도 위에서 한 손가락으로 화면을 내릴
-    // 수 없다. 세로 스크롤만 브라우저에 돌려준다.
-    this.renderer.domElement.style.touchAction = 'pan-y';
     host.appendChild(this.renderer.domElement);
     // ACESFilmic은 흰 지형을 회색으로 눌러 바다와 구분되지 않게 만든다.
     // 색을 그대로 통과시키고 광량으로만 밝기를 맞춘다.
@@ -66,6 +62,11 @@ export class VoxelScene {
     floor.receiveShadow = true;
     this.scene.add(floor);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    // OrbitControls는 만들어질 때 캔버스에 touch-action: none을 건다. 자식이 부모를
+    // 덮으므로 호스트에 pan-y를 줘도 소용이 없고, 지도 위에서 한 손가락으로 화면을
+    // 내릴 수 없다. 그래서 컨트롤을 만든 뒤에 세로 스크롤만 브라우저에 돌려준다.
+    // 먼저 걸면 컨트롤이 덮어써서 지도가 화면을 채운 모바일에서 갇힌다.
+    this.renderer.domElement.style.touchAction = 'pan-y';
     this.controls.enableRotate = false;
     this.controls.minZoom = 0.75;
     this.controls.maxZoom = 4;

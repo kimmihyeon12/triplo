@@ -1,10 +1,12 @@
 import { addDays, diffDays, isIsoDate } from '../../../shared/util/dates';
-import { createStop } from '../../trips/util/factories';
+import { findRegionByCode } from '../../../shared/util/korea-regions';
+import { regionCodeForAddress } from '../../stats/util/province-match';
+import { createRegion, createStop } from '../../trips/util/factories';
 import { appendStop, haversineKm, placeStopOnDate, removeStop } from '../../trips/util/itinerary';
 import { regionIdForAddress } from '../../trips/util/region-match';
 import type { GeoPoint } from '../../places/model/place';
-import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
-import type { ChatDraft } from '../model/chat';
+import type { IsoDate, Trip, TripRegion, TripStop } from '../../trips/model/trip';
+import type { AppendDraft, ChatDraft } from '../model/chat';
 import { describeStop, localChangeValid } from './local-command-draft';
 
 /**
@@ -294,4 +296,25 @@ function applyMove(trip: Trip, date: IsoDate | null, orderedStopIds: readonly st
     return order === undefined ? s : { ...s, order };
   });
   return { ...trip, stops };
+}
+
+/**
+ * 대화로 새 여행을 세울 때의 지역. 장소 검색으로 확인한 주소에서 시·군·구를 읽는다.
+ *
+ * 모델이 쓴 지역 이름('서울')은 쓰지 않는다. 저장하는 분류는 검증된 출처에서만
+ * 가져오고(AGENTS.md), 일반 여행 만들기도 시·군·구만 고르게 한다. 시·도 이름으로
+ * 만들면 어느 자치구인지 알 수 없어 통계와 편집 화면이 어긋난다.
+ * 읽지 못하면 지역 없이 둔다. 추측하지 않는다.
+ */
+export function draftTripRegions(draft: AppendDraft): TripRegion[] {
+  const regions: TripRegion[] = [];
+  for (const place of draft.places) {
+    if (!place.verified) continue;
+    const code = regionCodeForAddress(place.address);
+    const found = code ? findRegionByCode(code) : null;
+    if (!found || regions.some((r) => r.regionCode === found.code)) continue;
+    // 이름이 겹치는 자치구('중구')가 있어 이름으로 다시 찾지 않고 읽은 코드를 그대로 둔다.
+    regions.push({ ...createRegion(found.name, regions.length), regionCode: found.code });
+  }
+  return regions;
 }

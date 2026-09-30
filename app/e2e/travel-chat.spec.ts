@@ -240,3 +240,17 @@ test('키보드만으로 물어보고 확인 카드까지 간다', async ({ page
   await page.getByTestId('confirm-apply').focus();
   await expect(page.getByTestId('confirm-apply')).toBeFocused();
 });
+
+test('휴대폰에서 보내기를 한 번 누르면 키보드를 연 채 보내진다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.use.hasTouch, '터치 기기에서만 생기는 문제다');
+  await resetApp(page);
+  await openChat(page);
+  const input = page.getByTestId('chat-input');
+  await input.tap();
+  await input.fill('강릉 바다 보러 가고 싶어');
+  await page.getByTestId('chat-send').tap();
+  // 누르는 순간 입력창이 포커스를 잃으면 키보드가 닫히며 버튼이 움직여 한 번 더 눌러야 했다.
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue('');
+  await expect(page.getByText('강릉 바다 보러 가고 싶어')).toBeVisible();
+});

@@ -1,4 +1,5 @@
 import { UiField } from '../../../../shared/ui/field/field';
+import { NavigationHistory } from '../../../../core/navigation-history';
 import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -60,6 +61,7 @@ export class TripFormPage {
   readonly id = input<string | undefined>();
   readonly store = inject(TripEditorStore);
   private readonly router = inject(Router);
+  private readonly history = inject(NavigationHistory);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pageBar = inject(PageBar);
 
@@ -231,10 +233,12 @@ export class TripFormPage {
     if (!ok || this.destroyRef.destroyed || this.id() !== routeId) return;
 
     /*
-      새로 만든 경우에는 만들기 화면을 히스토리에서 치운다. 그대로 두면
-      상세에서 뒤로 갔을 때 방금 만든 여행의 빈 입력 폼이 다시 나타난다.
-      편집은 상세에서 들어온 것이므로 뒤로 가면 상세로 돌아가야 한다.
+      새로 만든 경우에는 만들기 화면을 상세로 바꿔 치운다. 그대로 두면 상세에서
+      뒤로 갔을 때 방금 만든 여행의 빈 입력 폼이 다시 나타난다.
+      편집은 들어온 화면(상세·목록)으로 기록을 되돌린다. 앞으로 이동하면
+      '목록 → 상세 → 편집 → 상세'가 되어 뒤로 가면 편집 폼이 다시 나왔다.
     */
-    void this.router.navigate(['/trips', next.id], { replaceUrl: !orig });
+    if (orig) this.history.leave(['/trips', next.id]);
+    else void this.router.navigate(['/trips', next.id], { replaceUrl: true });
   }
 }
