@@ -22,7 +22,7 @@ import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
 import { previewDraft, type DraftPreview } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { ToastService } from '../../../../core/toast-service';
 
 /** 대상 여행이 아직 없을 때 미리보기의 기준이 되는 빈 여행. */

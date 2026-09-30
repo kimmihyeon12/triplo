@@ -38,7 +38,7 @@ import {
   settlementText,
   transferSuggestions,
 } from '../../util/ledger';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
 import { ToastService } from '../../../../core/toast-service';
