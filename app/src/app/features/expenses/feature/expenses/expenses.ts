@@ -1,3 +1,4 @@
+import { formatWon } from '../../../../shared/util/won';
 import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import {
   ChangeDetectionStrategy,
@@ -250,7 +251,7 @@ export class Expenses {
     () =>
       '분류별 지출: ' +
       this.breakdown()
-        .map((r) => `${this.categoryLabel(r.category)} ${r.amount.toLocaleString('ko-KR')}원`)
+        .map((r) => `${this.categoryLabel(r.category)} ${formatWon(r.amount)}`)
         .join(', '),
   );
 

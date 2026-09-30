@@ -1,3 +1,4 @@
+import { formatWon } from '../../../shared/util/won';
 import type { Expense, ExpenseSplit, Ledger } from '../model/ledger';
 
 export const validMoney = (value: number): boolean =>
@@ -122,14 +123,13 @@ export function transferSuggestions(
  * 머리글은 붙이지 않는다. 개인 지출은 총금액에서 뺀다.
  */
 export function settlementText(ledger: Ledger): string {
-  const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
   const name = (id: string) => ledger.people.find((p) => p.id === id)?.name ?? '알 수 없음';
   const shared = ledger.expenses.filter((e) => !e.personal).reduce((n, e) => n + e.amount, 0);
   const transfers = transferSuggestions(ledger);
   return [
-    `총금액 ${won(shared)}`,
+    `총금액 ${formatWon(shared)}`,
     ...(transfers.length
-      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${won(t.amount)}`)
+      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${formatWon(t.amount)}`)
       : ['남은 정산 금액이 없어요.']),
   ].join('\n');
 }

@@ -1,3 +1,4 @@
+import { formatWon } from '../../../shared/util/won';
 import {
   sectionSummary,
   type ItinerarySection,
@@ -171,7 +172,7 @@ export async function renderItineraryPng(
           add(
             row.cost == null
               ? '예상 비용 미정'
-              : `예상 ${row.cost.toLocaleString('ko-KR')}원${row.name.startsWith('숙소 ·') ? ' · 숙박 전체 기준' : ''}`,
+              : `예상 ${formatWon(row.cost)}${row.name.startsWith('숙소 ·') ? ' · 숙박 전체 기준' : ''}`,
             15,
             false,
             INK_3,

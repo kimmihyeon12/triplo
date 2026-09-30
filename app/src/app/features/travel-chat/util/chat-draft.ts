@@ -1,3 +1,4 @@
+import { formatWon } from '../../../shared/util/won';
 import { addDays, diffDays, isIsoDate } from '../../../shared/util/dates';
 import { findRegionByCode } from '../../../shared/util/korea-regions';
 import { regionCodeForAddress } from '../../stats/util/province-match';
@@ -107,8 +108,8 @@ export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {
         ...value.stays.filter(s => JSON.stringify(draft.before.stays.find(b => b.id === s.id)) !== JSON.stringify(draft.after.stays.find(b => b.id === s.id))).map(s => ({id: s.id, name: `${s.name} · ${s.checkIn} ~ ${s.checkOut}`, added: false, removed: false})),
       ];
       const ledgerRows = (value: NonNullable<typeof draft.ledger>['before']) => [
-        ...(draft.ledger?.before.budget !== draft.ledger?.after.budget ? [{ id: 'budget', name: `예산 ${value.budget === null ? '미정' : value.budget.toLocaleString() + '원'}`, added: false, removed: false }] : []),
-        ...value.expenses.filter(e => JSON.stringify(draft.ledger?.before.expenses.find(b => b.id === e.id)) !== JSON.stringify(draft.ledger?.after.expenses.find(b => b.id === e.id))).map(e => ({ id: e.id, name: `${e.date} · ${e.title} · ${e.amount.toLocaleString()}원`, added: false, removed: false })),
+        ...(draft.ledger?.before.budget !== draft.ledger?.after.budget ? [{ id: 'budget', name: `예산 ${value.budget === null ? '미정' : formatWon(value.budget)}`, added: false, removed: false }] : []),
+        ...value.expenses.filter(e => JSON.stringify(draft.ledger?.before.expenses.find(b => b.id === e.id)) !== JSON.stringify(draft.ledger?.after.expenses.find(b => b.id === e.id))).map(e => ({ id: e.id, name: `${e.date} · ${e.title} · ${formatWon(e.amount)}`, added: false, removed: false })),
       ];
       return { title: draft.title, detailed: true, before: draft.ledger ? ledgerRows(draft.ledger.before) : describe(draft.before),
         after: draft.ledger ? ledgerRows(draft.ledger.after) : describe(draft.after), distanceDeltaKm: null,
