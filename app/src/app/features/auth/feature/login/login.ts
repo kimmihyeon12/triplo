@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { APP_VERSION } from '../../../../core/version';
@@ -34,6 +35,8 @@ import { takeReturn } from '../../util/return-to';
   templateUrl: './login.html',
 })
 export class LoginPage {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
 

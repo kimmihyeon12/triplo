@@ -221,7 +221,11 @@
   <!-- 로그인 버튼은 티켓 반권 안에 있다. 여기에는 안내만 남는다. -->
   @if (!settling()) {
     <p class="text-center text-12 leading-relaxed text-ink-3 select-none">
-      여행은 아직 이 기기에만 저장돼요. 계정별 저장과 다른 기기 동기화는 준비 중입니다.
+      @if (savesToServer) {
+        여행과 가계부는 로그인한 계정에 저장돼 다른 기기에서도 이어서 볼 수 있어요.
+      } @else {
+        미리보기에서는 여행이 이 기기에만 저장돼요.
+      }
     </p>
   }
 </div>

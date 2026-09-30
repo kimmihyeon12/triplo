@@ -12,7 +12,7 @@
   -->
   @if (auth.deleted()) {
     <div appNotice role="status" data-testid="account-deleted">
-      회원탈퇴가 완료되었습니다. 이 기기에 저장된 여행은 그대로 남아 있습니다.
+      회원탈퇴가 완료되었습니다.
     </div>
     <a appButton routerLink="/login" class="w-full">로그인 화면으로</a>
   }
@@ -108,14 +108,18 @@
     </section>
 
     <!--
-      아직 기기 저장이라는 사실을 알린다. 계정으로 로그인했으니 어디서든
-      보일 것이라 여기기 쉬운데, 그렇지 않다. 서버 저장이 붙으면 지운다.
+      어디에 저장되는지 알린다. 운영 앱은 계정별 서버 저장이고, 챗봇 대화·문의만 기기에
+      남는다. 테스트·미리보기는 모두 기기 저장이다(감리 P1-05).
     -->
     <p
       class="px-1 text-12 leading-relaxed text-ink-3"
       data-testid="login-storage-notice"
     >
-      여행은 아직 이 기기에만 저장되며, 계정별 저장·다른 기기와 동기화는 준비 중입니다.
+      @if (savesToServer) {
+        여행과 가계부는 이 계정에 저장돼 다른 기기에서도 보여요. 챗봇 대화와 문의는 이 기기에만 남아요.
+      } @else {
+        미리보기에서는 여행이 이 기기에만 저장돼요.
+      }
     </p>
 
     <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">소식</p>
@@ -234,8 +238,8 @@
     @if (leaving()) {
       <div class="rounded-panel bg-panel p-4 shadow-panel">
         <p class="mb-3 text-12 leading-normal text-ink-2">
-          탈퇴하면 이 서비스의 계정이 삭제되며 되돌릴 수 없습니다. Google·카카오 계정과 이 기기에
-          저장된 여행은 삭제되지 않습니다.
+          탈퇴하면 이 서비스의 계정과 내가 만든 여행·가계부가 삭제되며 되돌릴 수 없습니다.
+          Google·카카오 계정은 삭제되지 않습니다.
         </p>
         @if (auth.deletionEnabled()) {
           <label class="mb-2 block text-13" for="delete-confirmation"

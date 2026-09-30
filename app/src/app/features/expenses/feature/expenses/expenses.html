@@ -10,7 +10,11 @@
     <span>{{ store.current()?.title }}</span>
     <span class="text-ink-3">
       <span class="text-border-strong" aria-hidden="true">·</span>
-      이 기기에 저장 · 친구와 실시간으로 공유되지 않습니다
+      @if (savesToServer) {
+        함께하는 사람과 공동 지출을 같이 봐요 · 개인 지출은 나만 보여요
+      } @else {
+        이 기기에 저장 · 친구와 공유되지 않습니다
+      }
     </span>
   </p>
 

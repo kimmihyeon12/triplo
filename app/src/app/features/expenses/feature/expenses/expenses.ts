@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -66,6 +67,8 @@ import { AuthStore } from '../../../auth/data/auth-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Expenses {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly id = input.required<string>();
   /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
   readonly add = input<string | undefined>();
