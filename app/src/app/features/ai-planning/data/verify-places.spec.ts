@@ -1,7 +1,7 @@
 import { expect, it, describe, vi } from 'vitest';
 import type { PlaceCandidate } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
-import { kindFromCategory, verifyPlaces } from './verify-places';
+import { kindFromCategory, mustGoPlaces, verifyPlaces } from './verify-places';
 import type { AiItem } from '../util/ai-response';
 
 function candidate(partial: Partial<PlaceCandidate> & { name: string }): PlaceCandidate {
@@ -277,5 +277,37 @@ describe('휴무 정보 보존', () => {
     const search = fakeSearch({ '강릉시 오죽헌': [candidate({ name: '오죽헌', category: '문화유적' })] });
     const [item] = await verifyPlaces([{ day: 1, name: '오죽헌', kind: 'place', closed: { onDay: true, note: '월요일 휴무' } }], ['강릉시'], search);
     expect(item!.closed).toEqual({ onDay: true, note: '월요일 휴무' });
+  });
+});
+
+describe('mustGoPlaces', () => {
+  const found = (id: string, name: string, extra: Partial<VerifiedItemLike> = {}) => ({
+    id, day: 1, order: 1, start: null, moveToNext: null, name, kind: 'place' as const, verified: true,
+    note: '', address: '', location: { lat: 37, lng: 127 }, placeRef: { provider: 'kakao' as const, id, url: null }, ...extra,
+  });
+  type VerifiedItemLike = ReturnType<typeof found>;
+  const search = fakeSearch({
+    '수원 신가회전훠궈': [candidate({ id: 'k-singa', name: '신가회전훠궈 수원점', category: '음식점 > 중식' })],
+    '없는 가게': [],
+  });
+
+  it('결과에 없는 꼭 갈 장소를 검색해 1일차 끝에 넣는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈', [found('ai-0', '화성행궁')], search);
+    expect(extra).toEqual([expect.objectContaining({
+      id: 'must-0', day: 1, order: 2, name: '신가회전훠궈 수원점', kind: 'meal', verified: true, start: null, moveToNext: null,
+    })]);
+  });
+  it('이미 결과에 있으면 넣지 않는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈', [found('k-singa', '신가회전훠궈', { placeRef: { provider: 'kakao', id: 'k-singa', url: null } })], search);
+    expect(extra).toEqual([]);
+  });
+  it('여러 곳을 쉼표로 나눠 찾고, 찾지 못한 이름은 넣지 않는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈, 없는 가게', [], search);
+    expect(extra.map((i) => i.name)).toEqual(['신가회전훠궈 수원점']);
+  });
+  it('빈 입력이면 검색하지 않는다', async () => {
+    const spy = { ...search, search: vi.fn(search.search) };
+    expect(await mustGoPlaces('  ', [], spy)).toEqual([]);
+    expect(spy.search).not.toHaveBeenCalled();
   });
 });

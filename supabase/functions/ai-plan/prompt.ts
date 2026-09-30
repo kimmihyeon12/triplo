@@ -67,6 +67,7 @@ export const SYSTEM_PROMPT = [
   '',
   '선정 규칙:',
   '- 요청한 지역 안에 실제로 있는 장소만 넣는다. 인접 도시의 장소를 넣지 않는다.',
+  '- 꼭 갈 장소는 요청 지역 밖이어도 반드시 코스에 넣는다. 이름이 틀렸으면 지도에서 찾을 수 있는 정식 상호로 바로잡아 적는다.',
   '- 같은 장소를 두 번 넣지 않는다.',
   '- 유명한 곳만 나열하지 말고 성격이 다른 곳을 섞는다.',
   '- 하루 안에서는 서로 가까운 장소끼리 묶는다.',
@@ -172,7 +173,7 @@ export function buildUserPrompt(r: AiPlanInput): string {
   lines.push(`여행 인원: ${people}명`);
   lines.push(r.budget == null ? '여행 예산: 미정' : `여행 전체 기간 예산: ${r.budget}원 (${r.budgetBasis === 'person' ? '1인 기준' : '전체 인원 기준'}), 전체 인원 총예산 ${r.budget * (r.budgetBasis === 'person' ? people : 1)}원`);
   if (clip(r.taste)) lines.push(`취향: ${clip(r.taste)}`);
-  if (clip(r.mustGo)) lines.push(`꼭 갈 장소: ${clip(r.mustGo)}`);
+  if (clip(r.mustGo)) lines.push(`꼭 갈 장소(반드시 포함): ${clip(r.mustGo)}`);
   if (clip(r.bookedStay)) lines.push(`이미 정한 숙소: ${clip(r.bookedStay)}`);
 
   const dayTrip = r.dayCount === 1;

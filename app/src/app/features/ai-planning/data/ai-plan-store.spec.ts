@@ -347,3 +347,14 @@ describe('AiPlanStore 마지막 날 숙소', () => {
     expect(store.results().map((i) => i.name)).toEqual(['첫날 호텔', '둘째 호텔']);
   });
 });
+
+describe('AiPlanStore 꼭 갈 장소', () => {
+  it('모델이 빼먹은 꼭 갈 장소를 검색해 결과에 넣고 기본 선택한다', async () => {
+    const store = threeDayTrip();
+    store.set('mustGo', '수원 신가회전훠궈');
+    await store.generate();
+    const must = store.results().find((i) => i.name === '신가회전훠궈');
+    expect(must).toMatchObject({ day: 1, verified: true });
+    expect(store.selected().has(must!.id)).toBe(true);
+  });
+});

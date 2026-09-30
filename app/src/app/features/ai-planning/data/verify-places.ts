@@ -161,3 +161,45 @@ async function verifyOne(
     placeRef: null,
   };
 }
+
+/**
+ * 사용자가 적은 꼭 갈 장소를 직접 검색해, 결과에 없으면 1일차 끝에 더한다.
+ * 모델은 지역 밖이거나 이름이 조금 틀린 곳을 빼 버린다(2026-09-30 '수원 신가회전훠궈' 누락 확인).
+ * 사용자가 이름을 적은 곳이라 검색 첫 결과를 쓰며, 좌표·주소는 검색 결과에서만 가져온다.
+ */
+export async function mustGoPlaces(
+  input: string,
+  existing: readonly VerifiedItem[],
+  search: PlaceSearchProvider,
+): Promise<VerifiedItem[]> {
+  const terms = input.split(/[,，·\n]/).map((t) => t.trim()).filter(Boolean).slice(0, 5);
+  const added: VerifiedItem[] = [];
+  const has = (hit: PlaceCandidate) =>
+    [...existing, ...added].some(
+      (i) => i.placeRef?.id === hit.id || nameMatch(i.name, hit.name) !== null,
+    );
+  let order = Math.max(0, ...existing.filter((i) => i.day === 1).map((i) => i.order));
+  for (const term of terms) {
+    try {
+      const hit = (await search.search(term, { size: CANDIDATE_SIZE })).candidates[0];
+      if (!hit || has(hit)) continue;
+      added.push({
+        id: `must-${added.length}`,
+        day: 1,
+        order: ++order,
+        start: null,
+        moveToNext: null,
+        name: hit.name,
+        kind: kindFromCategory(hit.category, 'place'),
+        verified: true,
+        note: hit.category,
+        address: hit.roadAddress || hit.address,
+        location: { lat: hit.lat, lng: hit.lng },
+        placeRef: { provider: hit.provider, id: hit.id, url: hit.url },
+      });
+    } catch {
+      // 한 곳의 검색 실패가 나머지를 막지 않게 한다.
+    }
+  }
+  return added;
+}

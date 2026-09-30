@@ -309,3 +309,13 @@ describe('AI 코스 당일치기', () => {
     expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).toContain('당일치기라 숙소는 넣지 않는다');
   });
 });
+
+describe('AI 코스 꼭 갈 장소', () => {
+  it('꼭 갈 장소는 지역 밖이어도 반드시 넣고 정식 상호로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, mustGo: '수원 신가회전훠궈' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('꼭 갈 장소는 요청 지역 밖이어도 반드시 코스에 넣는다');
+    expect(prompt.user).toContain('꼭 갈 장소(반드시 포함): 수원 신가회전훠궈');
+  });
+});
