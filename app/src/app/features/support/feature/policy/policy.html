@@ -1,7 +1,9 @@
 <div
-  class="page mx-auto my-0 max-w-105 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
 >
   <article class="rounded-panel bg-panel p-5 shadow-panel">
+    <!-- 긴 글은 글줄만 640px로 좁힌다. 페이지는 다른 화면과 같은 940px이다(DESIGN.md 페이지 폭). -->
+    <div class="max-w-(--content-narrow)">
     <p class="mb-5 text-12 text-hint">{{ doc().updatedAt }} 기준</p>
 
     @for (section of doc().sections; track section.heading) {
@@ -12,5 +14,6 @@
         }
       </section>
     }
+    </div>
   </article>
 </div>

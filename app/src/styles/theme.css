@@ -163,7 +163,10 @@
   --sp-8: 32px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur: 160ms;
-  --content-max: 960px;
+  /* 페이지 폭은 기본 하나(940px)다. 640px은 초대장·긴 글 본문·챗봇 대화에만 쓴다
+     (DESIGN.md 페이지 폭). 화면에서 숫자로 폭을 정하지 않는다. */
+  --content-max: 940px;
+  --content-narrow: 640px;
 }
 details.menu-sheet > .menu-backdrop {
   opacity: 0;

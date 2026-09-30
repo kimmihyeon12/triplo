@@ -1,5 +1,5 @@
 <!-- 미리보기가 길어 저장 버튼이 스크롤 아래로 밀리므로 하단에 고정한다. -->
-<div class="mx-auto max-w-180 px-4 py-6 pb-[calc(var(--sp-6)+80px)] md:px-6">
+<div class="mx-auto max-w-(--content-max) px-4 py-6 pb-[calc(var(--sp-6)+80px)] md:px-6">
   <p class="mb-6 text-14 text-ink-2">필요한 일정만 골라 한 장의 이미지로 저장하세요.</p>
   @if (store.current(); as trip) {
     <section class="mb-6 rounded-panel bg-panel p-4 shadow-panel">
@@ -54,7 +54,7 @@
           appButton
           type="button"
           variant="primary"
-          class="w-full [@media(min-width:_720px)]:w-auto [@media(min-width:_720px)]:px-8"
+          class="w-full"
           [loading]="busy()"
           (click)="download()"
           data-testid="download-itinerary"

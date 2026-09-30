@@ -11,7 +11,7 @@
     넓은 화면에서도 한 줄이 길어지지 않게 가둔다. 글줄이 화면 끝까지 늘어나면
     눈이 다음 줄 첫머리를 찾지 못해 읽기가 느려진다.
   -->
-  <div class="mx-auto flex w-full max-w-160 flex-1 flex-col gap-3 px-4 py-2">
+  <div class="mx-auto flex w-full max-w-(--content-narrow) flex-1 flex-col gap-3 px-4 py-2">
     <!--
       아직 아무 말도 오가지 않았을 때. 빈 화면만 두면 무엇을 물어도 되는지
       알 수 없어 입력창 앞에서 멈춘다. 제목과 안내로 대화의 목적을
@@ -133,7 +133,7 @@
 -->
 @if (chips().length > 0 && !pending()) {
   <div
-    class="mx-auto flex w-full max-w-160 flex-none gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
+    class="mx-auto flex w-full max-w-(--content-narrow) flex-none gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [@media(min-width:_720px)]:flex-wrap [@media(min-width:_720px)]:overflow-visible"
     data-testid="chat-chips"
   >
     @for (chip of chips(); track chip) {
@@ -157,7 +157,7 @@
     표시줄 높이(약 34px)만큼 빈 띠가 생겨 입력창이 떠 보였다.
   -->
   <div
-    class="mx-auto w-full max-w-160 px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] has-[textarea:focus]:pb-2"
+    class="mx-auto w-full max-w-(--content-narrow) px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom,0px))] has-[textarea:focus]:pb-2"
   >
     @if (turnsLeft() === 0) {
       <p class="mb-2 text-12 leading-normal text-ink-3" data-testid="chat-limit-note">
