@@ -1,4 +1,6 @@
-import { costBasis, costRange, priceLabel, wonRange } from '../../../../shared/util/plan-estimate';
+import { wonRange } from '../../../../shared/util/plan-estimate';
+import { aiStopMemo } from '../../../trips/util/ai-selection';
+import type { CourseEntry } from '../../util/course';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -23,7 +25,7 @@ import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/m
 import { PLAN_KIND_LABEL } from '../../../trips/model/trip';
 import { EXPENSE_CATEGORIES } from '../../../expenses/model/ledger';
 import { BUDGET_GROUPS } from '../../util/course';
-import { budgetGap, courseHeadline, groupText, legText } from '../../util/course-format';
+import { budgetGap, groupText, legText } from '../../util/course-format';
 import { kindTone } from '../../../trips/util/kind-tone';
 import { type KoreaRegion, regionHint } from '../../../../shared/util/korea-regions';
 import { COMPANION, PACE, TRANSPORT, type Phase, type AiPlanSelection } from '../../model/ai-plan';
@@ -51,10 +53,7 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
   readonly regionHint = regionHint;
-  readonly costBasis = costBasis;
-  readonly costRange = costRange;
   readonly wonRange = wonRange;
-  readonly priceLabel = priceLabel;
   readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
@@ -66,10 +65,14 @@ export class AiPlanFlow {
   readonly kindLabels = PLAN_KIND_LABEL;
   readonly budgetGroups = BUDGET_GROUPS;
   readonly expenseLabels = EXPENSE_CATEGORIES;
-  readonly courseHeadline = courseHeadline;
   readonly legText = legText;
   readonly budgetGap = budgetGap;
   readonly groupText = groupText;
+
+  /** 담으면 저장될 비고를 그대로 보여 준다. 옮긴 항목은 추천 시각이 미정이다. */
+  stopMemo(entry: CourseEntry): string {
+    return aiStopMemo({ ...entry.item, start: entry.start }, this.draft.partySize());
+  }
   /** 분류 배지 색. 상세 화면과 같은 규칙을 쓴다. */
   readonly kindTone = kindTone;
   /** 사용자가 고친 일차가 반영된 목록. */

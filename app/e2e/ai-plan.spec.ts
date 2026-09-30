@@ -47,8 +47,9 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(summary).toContainText('96,000~130,000원');
   await expect(page.getByTestId('ai-budget-groups')).toContainText('미정 1곳');
   await expect(page.getByTestId('ai-budget-remaining')).toContainText('초과');
-  await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('1인당 3,000~5,000원 × 2명');
-  await expect(page.getByTestId('ai-start-ai-1')).toContainText('1시간 30분');
+  // 시각·요금·체류·휴무는 담으면 저장될 비고 하나에만 보인다.
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 요금 6,000~10,000원 (2명 · 테스트용 입장료 예시)');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 체류 60~90분');
   await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
   await expect(page.getByTestId('ai-day-group-2')).toContainText('속초관광수산시장');
   await page.getByTestId('ai-day-ai-1').selectOption('2');
@@ -79,17 +80,18 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   await fillConditions(page, '2026-10-01', '2026-10-02');
   await page.getByTestId('ai-generate').click();
   await expect(page.getByTestId('ai-result')).toBeVisible();
-  await expect(page.getByTestId('ai-start-ai-0')).toHaveText('10:00 (1시간 30분)');
+  await expect(page.getByTestId('ai-memo-ai-0')).toContainText('- 시각 10:00');
   await expect(page.getByTestId('ai-leg-ai-1')).toContainText('도보 약 15분 · AI 추정');
   // 오죽헌 다음 항목은 장소 확인에 실패해 빠졌다. 모델 이동은 맞지 않으므로 직선거리만 보인다.
   await expect(page.getByTestId('ai-leg-ai-3')).toContainText('직선');
   await expect(page.getByTestId('ai-leg-ai-3')).not.toContainText('AI 추정');
-  await expect(page.getByTestId('ai-price-ai-1')).toContainText('AI 추정');
-  await expect(page.getByTestId('ai-price-ai-0')).toContainText('무료');
-  await expect(page.getByTestId('ai-estimate-ai-0')).toContainText('요금 기준: 무료');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('AI 추정');
+  await expect(page.getByTestId('ai-memo-ai-0')).toContainText('- 요금 무료');
+  // 금액·체류는 비고와 겹치지 않게 카드에 따로 보이지 않는다.
+  await expect(page.getByTestId('ai-card-ai-0').getByText('체류', { exact: false })).toHaveCount(1);
   // 휴무는 AI 추정으로 밝히고 확인을 권한다. 선택은 그대로 둔다.
   await expect(page.getByTestId('ai-closed-badge-ai-1')).toHaveText('휴무일 · AI 추정');
-  await expect(page.getByTestId('ai-closed-ai-1')).toContainText('AI 추정');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 테스트용 매주 목요일 휴무 예시');
   await expect(page.getByTestId('ai-pick-ai-1')).toBeChecked();
   await expect(page.getByTestId('ai-budget-groups')).toContainText('숙박');
   await expect(page.getByTestId('ai-budget-groups')).toContainText('관광·액티비티');
