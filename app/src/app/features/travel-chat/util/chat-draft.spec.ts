@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDraft, previewDraft } from './chat-draft';
+import { applyDraft, draftTripRegions, previewDraft } from './chat-draft';
 import type { ChatDraft } from '../model/chat';
 import type { Trip, TripStop } from '../../trips/model/trip';
 
@@ -251,5 +251,39 @@ describe('applyDraft', () => {
       ],
     });
     expect(next.stops[0]!.date).toBeNull();
+  });
+});
+
+describe('draftTripRegions', () => {
+  const place = (name: string, address: string, verified = true) => ({
+    id: name, day: 1, name, kind: 'place' as const, verified, note: '',
+    address, location: { lat: 37.5, lng: 127.1 }, placeRef: null,
+  });
+
+  // 모델이 '서울'이라고 답해도 여행 지역은 확인한 장소 주소의 시·군·구로 정한다.
+  // 일반 여행 만들기처럼 시·도 이름으로는 여행이 만들어지지 않는다.
+  it('모델이 쓴 시·도 이름 대신 장소 주소에서 시·군·구를 읽는다', () => {
+    const regions = draftTripRegions({
+      action: 'append',
+      regions: ['서울'],
+      places: [
+        place('광나루한강공원', '서울 강동구 선사로 83-66'),
+        place('경복궁', '서울 종로구 사직로 161'),
+        place('암사동유적', '서울 강동구 올림픽로 875'),
+      ],
+    });
+    expect(regions.map((r) => [r.name, r.regionCode])).toEqual([
+      ['강동구', '11_강동구'],
+      ['종로구', '11_종로구'],
+    ]);
+  });
+
+  it('확인하지 못한 장소와 읽지 못한 주소는 지역을 만들지 않는다', () => {
+    const regions = draftTripRegions({
+      action: 'append',
+      regions: ['서울'],
+      places: [place('없는곳', '서울 강남구 테헤란로 1', false), place('주소없음', '')],
+    });
+    expect(regions).toEqual([]);
   });
 });
