@@ -39,26 +39,9 @@ import { supabaseLedgerDataClient } from './features/expenses/data/ledger-data-c
 import { clearLegacyLocalLedgers } from './features/expenses/data/legacy-ledger-cleanup';
 import { SUPPORT_REPOSITORY } from './features/support/data/support-repository';
 import { LocalSupportRepository } from './features/support/data/local-support-repository';
-import { FixtureMapProvider } from './features/places/data/fixture/fixture-map-provider';
-import { FixturePlaceSearch } from './features/places/data/fixture/fixture-place-search';
-import { KakaoMapProvider } from './features/places/data/kakao/kakao-map-provider';
-import { KakaoPlaceSearch } from './features/places/data/kakao/kakao-place-search';
 import { MapConfig } from './features/places/data/map-config';
-import { MAP_PROVIDER } from './features/places/data/map-provider';
-import { PLACE_SEARCH } from './features/places/data/place-search';
-import { AI_PLAN_PROVIDER } from './features/ai-planning/data/ai-plan-provider';
-import { RECEIPT_SCANNER } from './features/expenses/data/receipt-scanner';
-import { EdgeReceiptScanner } from './features/expenses/data/edge-receipt-scanner';
-import { FixtureReceiptScanner } from './features/expenses/data/fixture-receipt-scanner';
-import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
-import { FixtureAiProvider } from './features/ai-planning/data/fixture-ai-provider';
-import {
-  CHAT_HISTORY,
-  CHAT_PROVIDER,
-  FixtureChatProvider,
-  EdgeChatProvider,
-  LocalChatHistory,
-} from './features/travel-chat/travel-chat';
+import { CHAT_HISTORY, LocalChatHistory } from './features/travel-chat/travel-chat';
+import { ADAPTER_PROVIDERS } from './adapters';
 
 /** 브라우저가 localStorage 접근을 막으면 예외 대신 실패 상태로 이어지도록 감싼다. */
 class SafeLocalStorage implements KeyValueStorage {
@@ -78,8 +61,6 @@ class SafeLocalStorage implements KeyValueStorage {
     this.store.removeItem(key);
   }
 }
-
-const useFixture = environment.mapProvider === 'fixture';
 
 /**
  * 기기에 남기는 계정별 기록의 열쇠를 만든다. 읽고 쓸 때마다 지금 계정을 본다.
@@ -188,18 +169,8 @@ export const appConfig: ApplicationConfig = {
       useFactory: () =>
         new LocalSupportRepository(new SafeLocalStorage(), accountKey('support')),
     },
-    // 지도 표시와 장소 검색은 별개 어댑터다. 테스트 앱은 외부 호출 없는 픽스처를 쓴다.
-    { provide: MAP_PROVIDER, useExisting: useFixture ? FixtureMapProvider : KakaoMapProvider },
-    { provide: PLACE_SEARCH, useExisting: useFixture ? FixturePlaceSearch : KakaoPlaceSearch },
-    // AI 일정은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.
-    { provide: AI_PLAN_PROVIDER, useExisting: useFixture ? FixtureAiProvider : EdgeAiProvider },
-    // 실제 실행은 로그인된 Edge AI, 테스트·시안은 외부 호출 없는 고정 응답.
-    { provide: CHAT_PROVIDER, useExisting: useFixture ? FixtureChatProvider : EdgeChatProvider },
-    // 사진으로 지출 입력도 같은 Edge 구성을 쓴다. 사진은 저장하지 않는다.
-    {
-      provide: RECEIPT_SCANNER,
-      useExisting: useFixture ? FixtureReceiptScanner : EdgeReceiptScanner,
-    },
+    // 지도·장소 검색·AI 어댑터. 테스트 빌드는 파일째 고정 응답으로 바뀐다(adapters.ts).
+    ...ADAPTER_PROVIDERS,
     // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
     {
       provide: CHAT_HISTORY,
