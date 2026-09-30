@@ -7,7 +7,12 @@ import type { GeoPoint, PlaceRef } from '../../places/model/place';
 export type IsoDate = string;
 export type HHmm = string;
 
-export type StopKind = 'place' | 'meal' | 'break' | 'buffer';
+export type StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer';
+/** AI 코스와 화면이 쓰는 분류. 숙소는 일반 장소가 아니라 stays로 담는다. */
+export type PlanKind = Exclude<StopKind, 'buffer'> | 'stay';
+
+/** 장소 추가·수정 화면과 선택 목록의 순서. */
+export const STOP_KINDS: readonly StopKind[] = ['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer'];
 export type ReservationState = 'unknown' | 'reserved' | 'not_reserved';
 /** 'verified'는 실제 장소 검색 결과의 좌표를 사용자가 선택한 경우에만 쓴다. 추정 좌표는 만들지 않는다. */
 export type LocationStatus = 'unverified' | 'verified';
@@ -106,18 +111,43 @@ export interface Trip {
   sharing?: TripSharing;
 }
 
+/**
+ * 분류 라벨의 유일한 원본. 다른 기능은 자체 표를 두지 않고 이것을 쓴다(2026-09-30 분류 통일).
+ * 저장값 'place'는 예전 '장소'이며 라벨만 '관광'으로 바꿨다. 'break'도 라벨만 카페다.
+ * 저장값을 바꾸지 않아야 기존 일정이 깨지지 않는다.
+ */
 export const STOP_KIND_LABEL: Record<StopKind, string> = {
-  place: '장소',
+  place: '관광',
+  activity: '액티비티',
   meal: '식사',
-  // 저장값은 'break'를 유지한다. 라벨만 바꿔 기존 일정이 깨지지 않게 한다.
   break: '카페',
+  shopping: '쇼핑',
+  other: '기타',
   buffer: '여유시간',
 };
 
+export const PLAN_KIND_LABEL: Record<PlanKind, string> = {
+  place: STOP_KIND_LABEL.place,
+  activity: STOP_KIND_LABEL.activity,
+  meal: STOP_KIND_LABEL.meal,
+  break: STOP_KIND_LABEL.break,
+  shopping: STOP_KIND_LABEL.shopping,
+  other: STOP_KIND_LABEL.other,
+  stay: '숙소',
+};
+
+/** 저장소·서버에서 읽은 분류. 모르는 값은 관광으로 둔다. 이전 앱이 모르는 값을 만나도 깨지지 않게 한다. */
+export function toStopKind(value: unknown): StopKind {
+  return (STOP_KINDS as readonly unknown[]).includes(value) ? (value as StopKind) : 'place';
+}
+
 export const STOP_KIND_DEFAULT_NAME: Record<StopKind, string> = {
   place: '',
+  activity: '',
   meal: '식사',
   break: '카페',
+  shopping: '',
+  other: '',
   buffer: '여유시간',
 };
 
