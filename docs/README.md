@@ -31,6 +31,7 @@
 | [AI-PLANNING.md](AI-PLANNING.md) | AI 일정 만들기의 모델 선택 근거, 키 설정, 무료 한도, 실제 검증 기록 |
 | [챗봇 설계](superpowers/specs/2026-09-17-travel-chat-design.md) | 대화형 여행 탐색 챗봇의 설계 결정과 근거. 요구사항은 기획안 35절과 OpenSpec에 있다 |
 | [관리자 권한 설계](superpowers/specs/2026-09-29-admin-access-design.md) | 관리자 판별 방식·`/admin` 진입 범위와 근거. 요구사항은 기획안 36절에 있다 |
+| [공지·문의 관리 설계](superpowers/specs/2026-10-01-support-admin-design.md) | 공지·문의 서버 저장과 관리자 공지·문의 관리 화면의 결정과 근거 |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
 
