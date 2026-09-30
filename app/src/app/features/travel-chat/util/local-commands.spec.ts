@@ -80,4 +80,9 @@ describe('local commands', () => {
     expect(localCommand('2일차 지도 열어줘', trip)?.localLink).toContain('day=2026-10-02');
     expect(localCommand('일정 텍스트로 복사해줘', trip)?.copyText).toContain('오죽헌');
   });
+  it('영업시간을 묻는 "몇 시에 열어"는 화면 열기 명령으로 가로채지 않는다', () => {
+    expect(localCommand('불국사 몇 시에 열어', null)).toBeNull();
+    expect(localCommand('오죽헌 몇 시에 열어?', trip)).toBeNull();
+    expect(localCommand('가계부 열어줘', trip)?.localLink).toContain('/expenses');
+  });
 });

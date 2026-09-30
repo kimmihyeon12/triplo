@@ -49,7 +49,6 @@ export class AiPlanFlow {
   readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
-  readonly saveFailed = input(false);
   readonly apply = output<AiPlanSelection>();
   readonly cancel = output<void>();
   readonly companions = COMPANION;

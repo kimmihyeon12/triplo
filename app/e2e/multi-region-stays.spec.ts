@@ -9,7 +9,7 @@ test.describe('3박 4일 두 지역·두 숙소', () => {
       title: '강릉 속초',
       start: '2026-05-01',
       end: '2026-05-04',
-      regions: ['강릉', '속초'],
+      regions: ['강릉시', '속초시'],
     });
     await expect(page.getByTestId('trip-period')).toContainText('3박 4일');
     await expect(page.getByTestId('trip-regions')).toContainText('강릉');
@@ -50,7 +50,7 @@ test.describe('3박 4일 두 지역·두 숙소', () => {
     const day3 = page.getByTestId('day-2026-05-03');
     await expect(day3.getByTestId('day-stay-info')).toContainText('A 숙소 체크아웃');
     await expect(day3.getByTestId('day-stay-info')).toContainText('B 숙소 체크인');
-    await expect(day3.getByText('강릉 → 속초 이동 · 시간 미확인')).toHaveCount(1);
+    await expect(day3.getByText('강릉시 → 속초시 이동 · 시간 미확인')).toHaveCount(1);
     await expect(day3.getByTestId('day-totals')).toContainText('체류 3시간 30분');
     // 장소 3개 + B 숙소 체크인이 한 자리를 차지하므로 그 사이 이동은 3구간이다.
     await expect(day3.getByTestId('day-totals')).toContainText('이동 3구간');

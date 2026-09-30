@@ -37,7 +37,7 @@ test.describe('여행 날짜: 당일, 날짜 미정 → 확정, 날짜 오류', 
   test('날짜 미정 초안에 장소를 담고 날짜를 정하면 미배치가 유지되고 날짜별 탭이 열린다', async ({
     page,
   }) => {
-    const id = await createTrip(page, { title: '어딘가', regions: ['부산'] });
+    const id = await createTrip(page, { title: '어딘가', regions: ['해운대구'] });
     await expect(page.getByTestId('trip-period')).toHaveText('날짜 미정');
     await addStop(page, id, { name: '해운대' });
     await addStop(page, id, { name: '광안리' });

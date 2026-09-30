@@ -23,7 +23,10 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·체류시간·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
   const editing = /옮|이동|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
   const querying = /일정|장소|미배치|체류시간|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);
-  if (!editing && !querying && !/열어/.test(text)) return null;
+  // 화면 열기는 여는 대상(가계부·지도·일정)이 있을 때만 명령이다. '불국사 몇 시에 열어'처럼
+  // 영업시간을 묻는 말까지 가로채 AI가 답하지 못했다(2026-09-30).
+  const openScreen = /(?:경비|가계부|지출|지도|일정)[^.?!]*열어/.test(text);
+  if (!editing && !querying && !openScreen) return null;
   // Recommendations and new-place creation belong to the existing provider flow.
   if (/추천|갈 만|가볼|일정 짜|일정 만들어|장소 추가|카페.*넣어/.test(text) && !editing) return null;
   if (!trip) return { text: '먼저 수정하거나 조회할 여행을 열어 주세요.' };
@@ -31,7 +34,7 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   if (/미배치/.test(text) && /모두|전부|전체/.test(text) && /배정|배치/.test(text) && !/카페|식사|식당|여유시간/.test(text)) return null;
   const query = !editing ? localQuery(text, trip, today) : null;
   if (query) return query;
-  if (/열어/.test(text)) {
+  if (openScreen) {
     if (/경비|가계부|지출/.test(text)) return { text: '여행 가계부를 열 수 있어요.', localLink: `/trips/${encodeURIComponent(trip.id)}/expenses` };
     if (/지도|일정/.test(text)) {
       const date = commandDate(text, trip, today);

@@ -9,7 +9,7 @@ test.describe('첫 흐름: 여행 생성 → 장소 1개 → 숙소 1개 → 보
       title: '강릉 주말',
       start: '2026-05-01',
       end: '2026-05-03',
-      regions: ['강릉'],
+      regions: ['강릉시'],
     });
     await expect(page.getByTestId('trip-title')).toHaveText('강릉 주말');
     await expect(page.getByTestId('trip-period')).toContainText('2박 3일');

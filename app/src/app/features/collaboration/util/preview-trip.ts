@@ -1,6 +1,6 @@
 import type { StopKind, Trip } from '../../trips/model/trip';
 import { createStay, createStop, createTrip } from '../../trips/util/factories';
-import type { InvitePreview } from '../data/trip-members-repository';
+import type { InvitePreview } from '../model/invite-preview';
 
 const KINDS: readonly StopKind[] = ['place', 'meal', 'break', 'buffer'];
 
