@@ -1,3 +1,4 @@
+import { summarizeEstimates } from '../../../shared/util/plan-estimate';
 import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
@@ -32,6 +33,9 @@ export class AiPlanStore {
     mustGo: '',
     bookedStay: '',
     extraNote: '',
+    partySize: 1,
+    budget: null as number | null,
+    budgetBasis: 'group' as 'person' | 'group',
     /** 생성해서 받은 목록. 만들기 전에는 비어 있다. */
     results: [] as readonly PlanItem[],
     selected: new Set<string>(),
@@ -55,6 +59,23 @@ export class AiPlanStore {
   readonly mustGo = this.state.mustGo;
   readonly bookedStay = this.state.bookedStay;
   readonly extraNote = this.state.extraNote;
+  readonly partySize = this.state.partySize;
+  readonly budget = this.state.budget;
+  readonly budgetBasis = this.state.budgetBasis;
+  readonly budgetError = computed(() => {
+    const people = this.partySize(), budget = this.budget();
+    if (!Number.isInteger(people) || people < 1 || people > 100) return '여행 인원은 1~100명 사이의 정수로 입력해 주세요.';
+    if (budget !== null && (!Number.isSafeInteger(budget) || budget < 0 || budget > 100_000_000)) return '예산은 0~100,000,000원 사이의 정수로 입력하거나 비워 주세요.';
+    return null;
+  });
+  readonly totalBudget = computed(() => this.budget() === null ? null : this.budget()! * (this.budgetBasis() === 'person' ? this.partySize() : 1));
+  readonly budgetExceeded = computed(() => this.totalBudget() !== null && this.costSummary().max > this.totalBudget()!);
+  readonly dayGroups = computed(() => this.dayChoices().map(day => {
+    const items = this.items().filter(item => item.day === day);
+    const selected = items.filter(item => this.selected().has(item.id));
+    return { day, items, selectedCount: selected.length, costs: summarizeEstimates(selected, this.partySize()) };
+  }).filter(group => group.items.length > 0));
+  readonly costSummary = computed(() => summarizeEstimates(this.items().filter(i => this.selected().has(i.id)), this.partySize()));
   readonly results = this.state.results;
   readonly selected = this.state.selected;
   readonly dayOverrides = this.state.dayOverrides;
@@ -170,7 +191,7 @@ export class AiPlanStore {
    * 실재를 확인한 것만 기본 선택한다. 실패하면 조건을 그대로 남긴다.
    */
   async generate(): Promise<void> {
-    if (!this.canLeaveStep1() || this.phase() === 'generating') return;
+    if (!this.canLeaveStep1() || this.budgetError() || this.phase() === 'generating') return;
     const controller = new AbortController();
     this.running = controller;
     patchState(this.state, { phase: 'generating', error: null });
@@ -186,6 +207,7 @@ export class AiPlanStore {
           mustGo: this.mustGo(),
           bookedStay: this.bookedStay(),
           extraNote: this.extraNote(),
+          partySize: this.partySize(), budget: this.budget(), budgetBasis: this.budgetBasis(),
         },
         controller.signal,
       );
@@ -245,6 +267,7 @@ export class AiPlanStore {
   selection(): AiPlanSelection {
     return {
       requestId: this.requestId,
+      partySize: this.partySize(),
       regions: [...this.regions()],
       startDate: this.startDate() || null,
       endDate: this.endDate() || null,

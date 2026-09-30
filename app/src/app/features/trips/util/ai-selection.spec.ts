@@ -1,6 +1,7 @@
 import { expect, it, describe } from 'vitest';
 import type { AiPlanSelection, PlanItem } from '../../ai-planning/model/ai-plan';
 import { selectionToTrip } from './ai-selection';
+import { tallyVisits } from '../../stats/util/visit-tally';
 
 function item(partial: Partial<PlanItem> & { id: string; name: string }): PlanItem {
   return {
@@ -28,6 +29,33 @@ function selection(partial: Partial<AiPlanSelection> = {}): AiPlanSelection {
 }
 
 describe('selectionToTrip', () => {
+  it('제주 전체를 제주시로 축소하지 않는다', () => {
+    const trip = selectionToTrip(selection({ regions: ['제주'], items: [item({ id: 'a', name: '주소 미정', address: '' })] }));
+    expect(trip.regions[0]?.regionCode).toBe('50');
+    expect(tallyVisits([trip], '2026-11-01').unclassifiedCount).toBe(1);
+  });
+  it('부산 전체 여행도 실제 주소의 구별로 집계하고 주소 미정은 임의 구에 넣지 않는다', () => {
+    const trip = selectionToTrip(selection({ regions: ['부산'], items: [
+      item({ id: 'a', name: '해운대', address: '부산 해운대구 우동 1' }),
+      item({ id: 'b', name: '영도', address: '부산 영도구 영선동 1' }),
+      item({ id: 'c', name: '주소 미정', address: '' }),
+    ] }));
+    expect(trip.regions[0]?.regionCode).toBe('26');
+    const stats = tallyVisits([trip], '2026-11-01');
+    expect(stats.regions.map(r => r.regionCode).sort()).toEqual(['26_영도구', '26_해운대구']);
+    expect(stats.unclassifiedCount).toBe(1);
+  });
+  it('사용자가 담은 AI 예상의 상한과 요금 기준을 계획값으로 보존한다', () => {
+    const trip = selectionToTrip(selection({ partySize: 2, items: [{ ...item({ id: 'a', name: '식당' }), estimate: {
+      cost: { min: 15000, max: 20000, basis: 'person', quantity: 1, assumption: '식사 1회' },
+      stay: { min: 45, max: 60, reason: '여유 있는 식사' },
+    } }] }));
+    expect(trip.stops[0]?.estimatedCost).toBe(40000);
+    expect(trip.stops[0]?.stayMinutes).toBe(60);
+    expect(trip.stops[0]?.memo).toContain('AI 추정');
+    expect(trip.stops[0]?.memo).toContain('1인당');
+    expect(trip.stops[0]?.memo).toContain('2명');
+  });
   it('확인된 장소의 좌표와 주소를 저장한다', () => {
     const trip = selectionToTrip(
       selection({

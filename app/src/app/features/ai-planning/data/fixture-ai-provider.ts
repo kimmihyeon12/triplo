@@ -14,7 +14,7 @@ import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-pla
  */
 const FIXTURE_ITEMS: readonly AiItem[] = [
   { day: 1, name: '안목해변', kind: 'place' },
-  { day: 1, name: '오죽헌', kind: 'place' },
+  { day: 1, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
   { day: 2, name: '속초관광수산시장', kind: 'meal' },
   { day: 2, name: '없는장소테스트', kind: 'place' },
 ];

@@ -1,3 +1,4 @@
+import type { PlanEstimate } from '../../../shared/model/plan-estimate';
 import type { GeoPoint, PlaceRef } from '../../places/model/place';
 import type { StopKind } from '../../trips/model/trip';
 
@@ -6,9 +7,10 @@ export type Phase = 'step1' | 'step2' | 'step3' | 'summary' | 'generating' | 're
 
 /**
  * 결과 목록의 한 줄. 이름과 일차는 모델이 내고, 좌표·주소·분류는 장소 검색으로
- * 확인한 값이다. 모델이 쓴 설명은 사실과 다를 때가 많아 쓰지 않는다.
+ * 확인한 값이다. 모델의 예상 비용·체류시간은 별도 추정 정보로 유지한다.
  */
 export interface VerifiedItem {
+  readonly estimate?: PlanEstimate;
   readonly id: string;
   readonly day: number;
   readonly name: string;
@@ -29,6 +31,7 @@ export const PACE = ['여유롭게', '보통', '알차게'] as const;
 export const TRANSPORT = ['자가용', '대중교통', '도보 중심'] as const;
 
 export interface AiPlanSelection {
+  readonly partySize?: number;
   readonly requestId: string;
   readonly regions: string[];
   readonly startDate: string | null;

@@ -51,6 +51,19 @@ function setup(
 }
 
 describe('createAiPlanHandler', () => {
+  it('1인 예산과 전체 예산을 구별해 생성 조건으로 전달한다', async () => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, partySize: 3, budget: 100000, budgetBasis: 'person' }))).status).toBe(200);
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('3명');
+    expect(prompt.user).toContain('100000원 (1인 기준)');
+    expect(prompt.user).toContain('총예산 300000원');
+  });
+  it.each([{ partySize: 0 }, { partySize: 1.5 }, { budget: -1 }, { budget: '10000' }, { budgetBasis: 'night' }])('잘못된 예산 조건을 모델 호출 전에 거절한다: %j', async (extra) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, ...extra }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
   it('로그인하지 않으면 거절한다', async () => {
     const { handler } = setup();
     const res = await handler(

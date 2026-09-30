@@ -86,10 +86,17 @@ function validate(body: Partial<AiPlanInput> | null): AiPlanInput | null {
   if (typeof dayCount !== 'number' || !Number.isInteger(dayCount)) return null;
   if (dayCount < 1 || dayCount > MAX_DAYS) return null;
 
+  const partySize = body.partySize === undefined ? 1 : body.partySize;
+  const budget = body.budget === undefined ? null : body.budget;
+  const budgetBasis = body.budgetBasis === undefined ? 'group' : body.budgetBasis;
+  if (typeof partySize !== 'number' || !Number.isInteger(partySize) || partySize < 1 || partySize > 100) return null;
+  if (budget !== null && (typeof budget !== 'number' || !Number.isSafeInteger(budget) || budget < 0 || budget > 100_000_000)) return null;
+  if (budgetBasis !== 'person' && budgetBasis !== 'group') return null;
   const text = (value: unknown) => (typeof value === 'string' ? value : '');
   return {
     regions,
     dayCount,
+    partySize, budget, budgetBasis,
     companion: text(body.companion),
     transport: text(body.transport),
     pace: text(body.pace),

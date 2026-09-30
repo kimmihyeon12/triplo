@@ -141,11 +141,11 @@
         <!-- 목록에서 고르게 해 지명 표기를 한 가지로 맞춘다. -->
         @if (!regionInput().trim()) {
           <p id="region-search-hint" class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
-            시·군 이름을 검색해 고르세요. 지역은 선택 사항입니다.
+            부산·서울 전체 또는 시·군·구를 검색해 고르세요. 지역은 선택 사항입니다.
           </p>
         } @else if (regionMatches().length === 0) {
           <p id="region-search-hint" class="field__hint mt-2 block text-12 text-hint leading-[1.45]">
-            찾는 지역이 없습니다. 시·군 이름이나 도 이름으로 다시 검색해 보세요.
+            찾는 지역이 없습니다. 시·도 또는 시·군·구 이름으로 다시 검색해 보세요.
           </p>
         } @else {
           <ul
@@ -166,7 +166,7 @@
                   [attr.data-testid]="'region-match-' + m.name"
                 >
                   <app-icon name="plus" [size]="14" />
-                  <span class="font-medium">{{ m.name }}</span>
+                  <span class="font-medium">{{ m.label }}</span>
                   <span class="text-12 text-hint">{{ m.short }}</span>
                 </button>
               </li>

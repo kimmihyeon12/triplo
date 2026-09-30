@@ -122,6 +122,7 @@ async function verifyOne(
     day: item.day,
     name: item.name,
     kind: item.kind,
+    ...(item.estimate ? { estimate: item.estimate } : {}),
   };
   try {
     const hit = await findPlace(item.name, regions, search);

@@ -9,6 +9,68 @@ import { FAIL_FLAG, STORAGE_KEY, resetApp } from './helpers';
 const AI_FAIL = 'tc.test.aiFail';
 const AI_DELAY = 'tc.test.aiDelayMs';
 
+test('부산 전체를 한 번에 선택해 생성 조건으로 전달한다', async ({ page }) => {
+  await resetApp(page);
+  await page.goto('/trips/ai');
+  await page.getByTestId('ai-region-input').fill('부산');
+  await expect(page.getByTestId('ai-region-matches').getByRole('option').first()).toContainText('부산 전체');
+  await page.getByTestId('ai-region-match-부산').click();
+  await expect(page.getByTestId('ai-region-list')).toContainText('부산');
+  await page.getByTestId('ai-next-1').click();
+  await page.getByTestId('ai-next-2').click();
+  await page.getByTestId('ai-next-3').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('부산');
+});
+
+test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저장한다', async ({ page }, testInfo) => {
+  await resetApp(page);
+  await page.goto('/trips/ai');
+  await page.getByTestId('ai-region-input').fill('강릉');
+  await page.getByTestId('ai-region-match-강릉시').click();
+  await page.getByTestId('ai-start').fill('2026-10-01');
+  await page.getByTestId('ai-end').fill('2026-10-02');
+  await page.getByTestId('ai-next-1').click();
+  await page.getByTestId('ai-party-size').fill('0');
+  await expect(page.getByTestId('ai-budget-error')).toBeVisible();
+  await expect(page.getByTestId('ai-next-2')).toBeDisabled();
+  await page.getByTestId('ai-party-size').fill('2');
+  await page.getByTestId('ai-budget').fill('4000');
+  await page.getByTestId('ai-budget-basis').selectOption('person');
+  await page.screenshot({ path: testInfo.outputPath('budget-input.png'), fullPage: true });
+  await page.getByTestId('ai-next-2').click();
+  await page.getByTestId('ai-next-3').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('4,000원 · 1인 기준');
+  await page.getByTestId('ai-generate').click();
+  const summary = page.getByTestId('ai-cost-summary');
+  await expect(summary).toContainText('6,000~10,000원');
+  await expect(summary).toContainText('미정 2곳');
+  await expect(summary).toContainText('예산을 초과');
+  await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('1인당 3,000~5,000원 × 2명');
+  await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('60~90분');
+  await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
+  await expect(page.getByTestId('ai-day-group-2')).toContainText('속초관광수산시장');
+  await page.getByTestId('ai-day-ai-1').selectOption('2');
+  await expect(page.getByTestId('ai-day-group-1')).not.toContainText('오죽헌');
+  await expect(page.getByTestId('ai-day-group-2')).toContainText('오죽헌');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('cost-results.png'), fullPage: true });
+  await page.getByTestId('ai-pick-ai-1').uncheck();
+  await expect(summary).toContainText('미정 · 2명 전체');
+  await page.getByTestId('ai-pick-ai-1').check();
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  const stop = await page.evaluate((key) => {
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    const trips = Object.values(saved.trips) as { stops: { name: string; estimatedCost: number; stayMinutes: number; memo: string }[] }[];
+    return trips[0]!.stops.find(s => s.name === '오죽헌');
+  }, STORAGE_KEY);
+  expect(stop).toMatchObject({ estimatedCost: 10000, stayMinutes: 90 });
+  expect(stop?.memo).toContain('AI 추정');
+  expect(stop?.memo).toContain('2명');
+});
+
 /** 조건 세 단계를 지나 요약 화면까지 간다. */
 async function fillConditions(page: Page, start: string, end: string): Promise<void> {
   await page.goto('/trips/ai');
@@ -154,7 +216,7 @@ test('일차를 바꾸면 목록이 일차 순으로 다시 늘어선다', async
   await expect(page.getByTestId('ai-result')).toBeVisible();
 
   // 픽스처는 안목해변(1일)·오죽헌(1일)·속초관광수산시장(2일)을 낸다.
-  const days = () => page.locator('[data-testid^="ai-day-"]').evaluateAll((els) =>
+  const days = () => page.locator('select[data-testid^="ai-day-"]').evaluateAll((els) =>
     els.map((e) => Number((e as HTMLSelectElement).value)),
   );
   expect(await days()).toEqual([1, 1, 2]);

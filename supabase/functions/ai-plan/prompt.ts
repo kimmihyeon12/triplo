@@ -5,6 +5,9 @@
  */
 
 export interface AiPlanInput {
+  partySize?: number;
+  budget?: number | null;
+  budgetBasis?: 'person' | 'group';
   regions: string[];
   dayCount: number;
   companion: string;
@@ -45,7 +48,15 @@ export const SYSTEM_PROMPT = [
   '- 같은 장소를 두 번 넣지 않는다.',
   '- 유명한 곳만 나열하지 말고 성격이 다른 곳을 섞는다.',
   '- 하루 안에서는 서로 가까운 장소끼리 묶는다.',
-  '- 영업시간, 좌표, 가격, 전화번호는 쓰지 않는다. 그런 정보는 우리가 따로 확인한다.',
+  '- 영업시간, 좌표, 전화번호는 쓰지 않는다. 그런 정보는 우리가 따로 확인한다.',
+  '',
+  '예상 비용과 체류시간:',
+  '- estimate.cost에 원화 단가 범위 min/max, 기준 basis(person=1인당 1회, group=일행 전체 1회, room_night=객실당 1박), 수량 quantity, 계산 가정 assumption을 적는다.',
+  '- person의 quantity는 1인당 이용 횟수다. 인원은 서버/앱에서 별도로 곱하므로 중복 반영하지 않는다. room_night의 quantity는 객실 수×박 수다.',
+  '- 요금의 출처를 조회할 도구가 없다. 금액은 AI 예상일 뿐이며 공식·확인됨·최신이라는 표현이나 출처 URL을 만들지 않는다. 추정이 어려우면 cost=null로 둔다. 미정을 0원으로 채우지 않는다.',
+  '- assumption에는 성인 일반 입장권 1장, 아메리카노 1잔, 피자 S 1판 등 포함 상품과 수량의 계산 가정을 적는다. 할인·아동요금은 인원 구성을 모르므로 단정하지 않는다.',
+  '- estimate.stay에는 추천 체류시간 범위(분) min/max와 여행 속도에 맞춘 이유 reason을 적는다. 알 수 없으면 null로 둔다. 이동시간은 포함하지 않는다.',
+  '- 예산은 여행 전체 기준이며 숙박·교통에 쓸 여유를 남기는 후보를 고른다. 예산을 맞추려고 단가를 낮추거나 예산 내라고 보장하지 않는다.',
 ].join('\n');
 
 /** 응답 구조를 고정한다. Gemini는 `additionalProperties`를 모르므로 넣지 않는다. */
@@ -57,11 +68,21 @@ export const RESPONSE_SCHEMA = {
       items: {
         type: 'object',
         properties: {
+          estimate: { type: 'object', properties: {
+            cost: { type: 'object', nullable: true, properties: {
+              min: { type: 'integer' }, max: { type: 'integer' },
+              basis: { type: 'string', enum: ['person', 'group', 'room_night'] },
+              quantity: { type: 'integer' }, assumption: { type: 'string' },
+            }, required: ['min', 'max', 'basis', 'quantity', 'assumption'] },
+            stay: { type: 'object', nullable: true, properties: {
+              min: { type: 'integer' }, max: { type: 'integer' }, reason: { type: 'string' },
+            }, required: ['min', 'max', 'reason'] },
+          }, required: ['cost', 'stay'] },
           day: { type: 'integer' },
           name: { type: 'string' },
           kind: { type: 'string', enum: ['장소', '식사', '카페'] },
         },
-        required: ['day', 'name', 'kind'],
+        required: ['day', 'name', 'kind', 'estimate'],
       },
     },
   },
@@ -109,6 +130,9 @@ export function buildUserPrompt(r: AiPlanInput): string {
     `이동수단: ${clip(r.transport)}`,
     `일정 밀도: ${clip(r.pace)}`,
   );
+  const people = r.partySize ?? 1;
+  lines.push(`여행 인원: ${people}명`);
+  lines.push(r.budget == null ? '여행 예산: 미정' : `여행 전체 기간 예산: ${r.budget}원 (${r.budgetBasis === 'person' ? '1인 기준' : '전체 인원 기준'}), 전체 인원 총예산 ${r.budget * (r.budgetBasis === 'person' ? people : 1)}원`);
   if (clip(r.taste)) lines.push(`취향: ${clip(r.taste)}`);
   if (clip(r.mustGo)) lines.push(`꼭 갈 장소: ${clip(r.mustGo)}`);
   if (clip(r.bookedStay)) lines.push(`이미 정한 숙소: ${clip(r.bookedStay)}`);

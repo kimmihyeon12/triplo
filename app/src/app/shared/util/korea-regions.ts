@@ -157,5 +157,9 @@ export function searchRegions(query: string, limit = 8): readonly KoreaRegion[] 
     else if (region.province.toLowerCase().includes(q) || region.short.toLowerCase().includes(q))
       byProvince.push(region);
   }
-  return [...starts, ...contains, ...byProvince].slice(0, limit);
+  // 여행 목적지는 시·도 전체도 선택한다. 통계용 시·군·구 원본 목록은 유지한다.
+  const whole: KoreaRegion[] = KOREA_PROVINCES
+    .filter(p => p.short.startsWith(q) || p.name.startsWith(q))
+    .map(p => ({ code: p.code, name: p.short, label: `${p.short} 전체`, province: p.name, provinceCode: p.code, short: p.short }));
+  return [...whole, ...starts, ...contains, ...byProvince].slice(0, limit);
 }

@@ -102,6 +102,11 @@ describe('이름으로 찾기', () => {
 });
 
 describe('지역 검색', () => {
+  it('부산 전체를 자치구보다 먼저 선택할 수 있다', () => {
+    expect(searchRegions('부산')[0]).toMatchObject({ name: '부산', label: '부산 전체', code: '26' });
+    expect(searchRegions('부산광역시')[0]?.name).toBe('부산');
+    expect(searchRegions('해운대')[0]?.name).toBe('해운대구');
+  });
   it('접미사 없이 쳐도 찾는다', () => {
     // 사용자는 '여수'까지만 치지 '여수시'라고 치지 않는다.
     const found = searchRegions('여수');

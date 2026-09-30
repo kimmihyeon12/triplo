@@ -1,3 +1,4 @@
+import { parsePlanEstimate, type PlanEstimate } from '../../../shared/util/plan-estimate';
 import type { StopKind } from '../../trips/model/trip';
 
 /**
@@ -18,6 +19,7 @@ const KIND_BY_LABEL: Readonly<Record<string, StopKind>> = {
 };
 
 export interface AiItem {
+  readonly estimate?: PlanEstimate;
   readonly day: number;
   readonly name: string;
   readonly kind: StopKind;
@@ -38,7 +40,8 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
   const seen = new Set<string>();
   for (const entry of raw) {
     if (out.length >= MAX_ITEMS) break;
-    const item = entry as { day?: unknown; name?: unknown; kind?: unknown };
+    if (!entry || typeof entry !== 'object') continue;
+    const item = entry as { day?: unknown; name?: unknown; kind?: unknown; estimate?: unknown };
     if (typeof item.day !== 'number' || !Number.isInteger(item.day)) continue;
     if (item.day < 1 || item.day > dayCount) continue;
     if (typeof item.name !== 'string') continue;
@@ -49,6 +52,7 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
       day: item.day,
       name,
       kind: KIND_BY_LABEL[String(item.kind ?? '')] ?? 'place',
+      ...(item.estimate !== undefined ? { estimate: parsePlanEstimate(item.estimate) } : {}),
     });
   }
   return out;

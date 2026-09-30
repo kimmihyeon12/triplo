@@ -1,3 +1,4 @@
+import { costBasis, costRange, wonRange } from '../../../../shared/util/plan-estimate';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -46,6 +47,9 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 })
 export class AiPlanFlow {
   readonly draft = inject(AiPlanStore);
+  readonly costBasis = costBasis;
+  readonly costRange = costRange;
+  readonly wonRange = wonRange;
   readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);
@@ -95,6 +99,8 @@ export class AiPlanFlow {
           : '날짜 미정',
       phase: 'step1' as Phase,
     },
+    { label: '인원', value: `${this.draft.partySize()}명`, phase: 'step2' as Phase },
+    { label: '여행 예산', value: this.draft.budget() === null ? '미정' : `${this.draft.budget()!.toLocaleString('ko-KR')}원 · ${this.draft.budgetBasis() === 'person' ? '1인 기준' : '전체 인원 기준'}`, phase: 'step2' as Phase },
     { label: '동행', value: this.companion(), phase: 'step2' as Phase },
     { label: '이동수단', value: this.transport(), phase: 'step2' as Phase },
     { label: '일정 밀도', value: this.pace(), phase: 'step2' as Phase },

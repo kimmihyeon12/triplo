@@ -33,6 +33,9 @@ export class EdgeAiProvider implements AiPlanProvider {
         remaining?: number;
       }>('ai-plan', {
         regions: [...request.regions],
+        partySize: request.partySize ?? 1,
+        budget: request.budget ?? null,
+        budgetBasis: request.budgetBasis ?? 'group',
         dayCount: request.dayCount,
         companion: request.companion,
         transport: request.transport,

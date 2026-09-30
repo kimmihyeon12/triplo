@@ -13,6 +13,32 @@ const ITEMS: readonly AiItem[] = [
   { day: 2, name: '없는곳', kind: 'place' },
 ];
 
+it('선택·일차 변경에 따라 추정 합계를 다시 계산하고 미정을 보존한다', async () => {
+  const store = threeDayTrip(fakeAi({ generate: async () => [
+    { ...ITEMS[0]!, estimate: { cost: { min: 1000, max: 2000, basis: 'person', quantity: 1, assumption: '입장 1회' }, stay: null } },
+    ITEMS[1]!,
+  ] }));
+  store.set('partySize', 3);
+  await store.generate();
+  expect(store.costSummary()).toMatchObject({ min: 3000, max: 6000, known: 1, unknown: 1 });
+  expect(store.dayGroups()).toHaveLength(1);
+  store.set('budget', 0);
+  expect(store.budgetExceeded()).toBe(true);
+  store.setDay('ai-0', 2);
+  expect(store.dayGroups().map(g => g.day)).toEqual([1, 2]);
+  expect(store.costSummary().days).toMatchObject([{ day: 1, unknown: 1 }, { day: 2, max: 6000 }]);
+  store.toggle('ai-0');
+  expect(store.costSummary()).toMatchObject({ min: 0, max: 0, known: 0, unknown: 1 });
+});
+
+it('잘못된 인원·예산이면 생성하지 않고 입력 오류를 보여준다', async () => {
+  const store = threeDayTrip();
+  store.set('partySize', 0);
+  await store.generate();
+  expect(store.phase()).not.toBe('result');
+  expect(store.budgetError()).toBeTruthy();
+});
+
 function candidate(name: string): PlaceCandidate {
   return {
     provider: 'kakao',

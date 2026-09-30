@@ -115,7 +115,7 @@ describe('tallyVisits', () => {
     const jeju = createTrip({
       startDate: '2026-08-10',
       endDate: '2026-08-12',
-      regions: [createRegion('제주', 0, 'j1')],
+      regions: [createRegion('제주시', 0, 'j1')],
       stops: [
         createStop({ name: '성산일출봉', regionId: 'j1' }),
         createStop({ name: '한라산', regionId: 'j1' }),
@@ -234,15 +234,12 @@ describe('tallyDistricts', () => {
     ]);
   });
 
-  /*
-    주소가 없으면 여행 지역으로 되돌아간다. '서울'은 시·도 이름이라 그
-    시·도의 지역 하나로 읽히며, 어느 자치구인지까지는 알 수 없다.
-  */
-  it('주소가 없으면 여행 지역으로 센다', () => {
+  // 서울 전체만 골랐고 주소도 없으면 방문한 구를 알 수 없다.
+  it('시·도 전체 여행의 주소 미정 장소를 임의 자치구에 넣지 않는다', () => {
     const trip = seoulTrip(['']);
     const result = tallyDistricts([trip], TODAY, '11');
-    expect(result.regions).toHaveLength(1);
-    expect(result.regions[0].regionCode.startsWith('11_')).toBe(true);
+    expect(result.regions).toEqual([]);
+    expect(result.unclassifiedCount).toBe(1);
   });
 
   it('선택한 시·도 밖의 장소는 세지 않는다', () => {
