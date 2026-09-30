@@ -163,7 +163,7 @@
 <!-- z-index를 주면 쌓임 맥락이 생겨 메뉴가 배경 아래 갇힌다. -->
                 <app-row-menu
                   class="absolute right-3 top-3"
-                  [items]="tripMenu"
+                  [items]="canDeleteTrip(trip) ? tripMenu : memberMenu"
                   [ariaLabel]="trip.title + ' 더보기'"
                   [testId]="'trip-menu-' + trip.id"
                   (selected)="onTripMenu($event, trip)"
@@ -188,18 +188,29 @@
                   '지출 미설정'·'동행 준비 중'은 어느 여행에서나 똑같이 나와
                   알려 주는 것이 없으므로 뺐다.
                 -->
-                <p class="card__meta flex flex-wrap items-center gap-x-1.5 gap-y-1 mt-3 text-12 text-ink-3">
-                  @if (trip.regions.length > 0) {
-                    <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
+                <!-- 라벨 줄 오른쪽 끝에 함께하는 사람을 둔다(2026-09-29 사용자 결정). -->
+                <div class="mt-3 flex items-end gap-2">
+                  <p class="card__meta flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1 text-12 text-ink-3">
+                    @if (trip.regions.length > 0) {
+                      <span appBadge class="cell cell--region">{{ regionPath(trip) }}</span>
+                    }
+                    <!--
+                      장소·숙소 수를 일정 화면과 같은 장소·숙소 색 라벨로 둔다. 회색 글자는
+                      칙칙했고 아이콘은 이 카드에만 있어 어색했다(2026-09-29 사용자 결정).
+                    -->
+                    <span appBadge tone="place" [attr.data-testid]="'trip-counts-' + trip.id"
+                      >장소 {{ trip.stops.length }}</span
+                    ><span appBadge tone="stay">숙소 {{ trip.stays.length }}</span>
+                  </p>
+                  @if (members(trip); as m) {
+                    <app-member-stack
+                      [me]="m.me"
+                      [others]="m.others"
+                      [label]="m.label"
+                      [attr.data-testid]="'trip-shared-' + trip.id"
+                    />
                   }
-                  <!--
-                    장소·숙소 수를 일정 화면과 같은 장소·숙소 색 라벨로 둔다. 회색 글자는
-                    칙칙했고 아이콘은 이 카드에만 있어 어색했다(2026-09-29 사용자 결정).
-                  -->
-                  <span appBadge tone="place" [attr.data-testid]="'trip-counts-' + trip.id"
-                    >장소 {{ trip.stops.length }}</span
-                  ><span appBadge tone="stay">숙소 {{ trip.stays.length }}</span>
-                </p>
+                </div>
                 </a>
                 @if (deleteTripId() === trip.id) {
                   <div

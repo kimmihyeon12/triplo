@@ -45,7 +45,7 @@ test.describe('사진으로 지출 입력', () => {
     await expect(page.getByTestId('receipt-save')).toHaveText('2건 저장');
     await page.getByTestId('receipt-save').click();
 
-    await expect(page.getByTestId('scan-status')).toContainText('2건을 기록했어요');
+    await expect(page.getByTestId('success-toast')).toContainText('2건을 기록했어요');
     const list = page.getByTestId('panel-expenses');
     await expect(list.getByText('생수')).toBeVisible();
     await expect(list.getByText('맥주')).toBeVisible();

@@ -40,5 +40,9 @@ export const ACCOUNT_ROUTES: Routes = [
     title: '내 정보',
   },
   // 공지·문의·약관은 support feature가 어느 주소에 붙을지 정한다.
-  ...SUPPORT_ROUTES.map((route) => ({ ...route, canActivate: [checkAuthentication] })),
+  // 약관·처리방침은 가입 전에 읽을 수 있어야 하므로 로그인을 묻지 않는다. 로그인 화면이
+  // '동의하는 것으로 본다'고 적으면서 읽을 길을 막고 있었다(2026-09-30 감리 P2-03).
+  ...SUPPORT_ROUTES.map((route) =>
+    route.data?.['kind'] ? route : { ...route, canActivate: [checkAuthentication] },
+  ),
 ];

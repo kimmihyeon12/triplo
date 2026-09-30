@@ -1,3 +1,4 @@
+import { formatWon } from '../../../shared/util/won';
 import type { Expense, ExpenseSplit, Ledger } from '../model/ledger';
 
 export const validMoney = (value: number): boolean =>
@@ -122,14 +123,13 @@ export function transferSuggestions(
  * 머리글은 붙이지 않는다. 개인 지출은 총금액에서 뺀다.
  */
 export function settlementText(ledger: Ledger): string {
-  const won = (n: number) => `${n.toLocaleString('ko-KR')}원`;
   const name = (id: string) => ledger.people.find((p) => p.id === id)?.name ?? '알 수 없음';
   const shared = ledger.expenses.filter((e) => !e.personal).reduce((n, e) => n + e.amount, 0);
   const transfers = transferSuggestions(ledger);
   return [
-    `총금액 ${won(shared)}`,
+    `총금액 ${formatWon(shared)}`,
     ...(transfers.length
-      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${won(t.amount)}`)
+      ? transfers.map((t) => `${name(t.from)} → ${name(t.to)} ${formatWon(t.amount)}`)
       : ['남은 정산 금액이 없어요.']),
   ].join('\n');
 }
@@ -162,4 +162,20 @@ export function isEvenSplit(amount: number, splits: readonly ExpenseSplit[]): bo
   } catch {
     return false;
   }
+}
+
+/**
+ * 정산할 사람을 지울 수 없는 이유. 지울 수 있으면 null.
+ * '나'는 기록하는 본인이라 남긴다. 지출·수령 기록에 있는 사람을 지우면
+ * 정산 금액이 맞지 않게 되므로, 그 기록을 먼저 고치게 한다.
+ */
+export function personRemovalBlock(ledger: Ledger, personId: string): string | null {
+  if (personId === 'self') return '나는 지울 수 없어요.';
+  const inExpense = ledger.expenses.some(
+    (e) => e.paidBy === personId || e.splits.some((s) => s.personId === personId),
+  );
+  if (inExpense) return '지출 기록에 있는 사람이라 지울 수 없어요. 그 지출에서 먼저 빼 주세요.';
+  if (ledger.receipts.some((r) => r.from === personId || r.to === personId))
+    return '수령 기록에 있는 사람이라 지울 수 없어요.';
+  return null;
 }

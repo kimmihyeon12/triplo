@@ -31,7 +31,7 @@
 
 ## 4. 서버
 
-마이그레이션 `supabase/migrations/20260929100000_profiles_role.sql`을 추가한다. 가계부 작업(`feat/supabase-ledger`)이 `20260929000002`까지 사용하고 있으므로, 두 브랜치를 합칠 때 파일명이 겹치지 않도록 시각을 띄운다.
+마이그레이션 `supabase/migrations/20260930000002_profiles_role.sql`을 추가한다. 가계부 작업(`feat/supabase-ledger`)이 `20260929000002`까지 사용하고 있으므로, 두 브랜치를 합칠 때 파일명이 겹치지 않도록 시각을 띄운다.
 
 - `app_role` enum: `user`, `admin`.
 - `profiles(id uuid primary key references auth.users(id) on delete cascade, role app_role not null default 'user', created_at timestamptz not null default now())`.

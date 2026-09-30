@@ -36,6 +36,9 @@ export class SupabaseLedgerRepository implements LedgerRepository {
         case 'addPerson':
           await this.data.call('add_ledger_person', { p_trip_id: tripId, p_person: op.person });
           break;
+        case 'removePerson':
+          await this.data.call('remove_ledger_person', { p_trip_id: tripId, p_person_id: op.id });
+          break;
         case 'saveExpense': {
           const base = op.isNew ? 0 : (this.versions.get(op.expense.id) ?? 0);
           const next = (await this.data.call('save_expense', {

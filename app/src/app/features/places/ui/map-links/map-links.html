@@ -1,0 +1,36 @@
+<a
+  class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+  appMapLink
+  [href]="naverHref()"
+  target="_blank"
+  rel="noopener noreferrer"
+  [attr.aria-label]="name() + ' 네이버지도에서 검색'"
+  [attr.data-testid]="naverTestId()"
+>
+  <img
+    class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+    src="brand/navermap.png"
+    width="26"
+    height="26"
+    alt=""
+    aria-hidden="true"
+  />
+</a>
+<a
+  class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
+  appMapLink
+  [href]="kakaoHref()"
+  target="_blank"
+  rel="noopener noreferrer"
+  [attr.aria-label]="name() + ' 카카오맵에서 검색'"
+  [attr.data-testid]="kakaoTestId()"
+>
+  <img
+    class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
+    src="brand/kakaomap.png"
+    width="26"
+    height="26"
+    alt=""
+    aria-hidden="true"
+  />
+</a>

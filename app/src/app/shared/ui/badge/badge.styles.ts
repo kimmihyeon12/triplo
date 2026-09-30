@@ -8,6 +8,9 @@ export const BADGE_CLASSES = String.raw`
   [&.cell--warn]:text-warn-ink [&.cell--danger]:bg-danger-tint [&.cell--danger]:text-danger-ink
   [&.cell--ok]:bg-ok-tint [&.cell--ok]:text-ok-ink [&.cell--meal]:bg-meal-tint
   [&.cell--meal]:text-meal-ink [&.cell--cafe]:bg-cafe-tint [&.cell--cafe]:text-cafe-ink
+  [&.cell--activity]:bg-activity-tint [&.cell--activity]:text-activity-ink
+  [&.cell--shopping]:bg-shopping-tint [&.cell--shopping]:text-shopping-ink
+  [&.cell--other]:bg-other-tint [&.cell--other]:text-other-ink
   [&.cell--ghost]:bg-panel [&.cell--ghost]:text-ink-3
   [&.cell--ghost]:border-border [&.cell--solid-accent]:bg-accent-deep [&.cell--solid-accent]:text-white
   [&.cell--solid-accent]:font-bold

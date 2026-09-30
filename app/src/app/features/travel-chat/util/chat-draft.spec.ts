@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyDraft, previewDraft } from './chat-draft';
+import { applyDraft, draftTripRegions, previewDraft } from './chat-draft';
 import type { ChatDraft } from '../model/chat';
 import type { Trip, TripStop } from '../../trips/model/trip';
 
@@ -43,11 +43,11 @@ const day = '2026-10-01';
 describe('local preview density', () => {
   it('keeps changed stops but omits unchanged trip information', () => {
     const before = trip([stop('a', '안목해변', day, 0), stop('b', '오죽헌', day, 1)]);
-    const after = {...before, stops: before.stops.map(s => s.id === 'a' ? {...s, stayMinutes:60} : s)};
-    const view = previewDraft(before, {action:'local-change', title:'체류시간 변경', before, after});
+    const after = {...before, stops: before.stops.map(s => s.id === 'a' ? {...s, memo:'입장권 확인'} : s)};
+    const view = previewDraft(before, {action:'local-change', title:'메모 변경', before, after});
     expect(view.before.map(r => r.id)).toEqual(['a']);
     expect(view.after.map(r => r.id)).toEqual(['a']);
-    expect(view.after[0].name).toContain('60분');
+    expect(view.after[0].name).toContain('메모: 입장권 확인');
   });
   it('retains changed trip dates and removed stops for confirmation', () => {
     const before = trip([stop('a', '안목해변', day, 0)]);
@@ -55,6 +55,27 @@ describe('local preview density', () => {
     const view = previewDraft(before, {action:'local-change', title:'변경', before, after});
     expect(view.before.map(r => r.id)).toEqual(['trip','a']);
     expect(view.after.map(r => r.id)).toEqual(['trip']);
+  });
+  // 리팩터링 제안 C1·C2 전에 현재 동작을 고정한다: 바뀐 것만, 원래 순서대로 보인다.
+  it('shows only changed stays in their original order', () => {
+    const stay = (id: string, name: string, checkIn: string, checkOut: string) =>
+      ({ id, name, address: '', regionId: null, checkIn, checkOut, checkInTime: null, checkOutTime: null, memo: '', estimatedCost: null, location: null, placeRef: null }) as unknown as Trip['stays'][number];
+    const before = { ...trip(), stays: [stay('s1', 'A 숙소', '2026-10-01', '2026-10-02'), stay('s2', 'B 숙소', '2026-10-02', '2026-10-03')] };
+    const after = { ...before, stays: [stay('s0', 'C 숙소', '2026-10-01', '2026-10-02'), before.stays[0], { ...before.stays[1], checkOut: '2026-10-04' }] };
+    const view = previewDraft(before, { action: 'local-change', title: '숙소', before, after });
+    expect(view.before.map(r => r.name)).toEqual(['B 숙소 · 2026-10-02 ~ 2026-10-03']);
+    expect(view.after.map(r => r.name)).toEqual(['C 숙소 · 2026-10-01 ~ 2026-10-02', 'B 숙소 · 2026-10-02 ~ 2026-10-04']);
+  });
+  it('shows ledger changes instead of trip rows when a ledger change is attached', () => {
+    const expense = (id: string, title: string, amount: number) =>
+      ({ id, title, date: '2026-10-01', category: 'food', amount, paidBy: 'self', splits: [], memo: '', linkId: null, personal: false });
+    const people = [{ id: 'self', name: '나' }];
+    const ledgerBefore = { people, expenses: [expense('e1', '점심', 12000), expense('e2', '커피', 5000), expense('e3', '택시', 8000)], receipts: [], budget: null };
+    const ledgerAfter = { ...ledgerBefore, budget: 300000, expenses: [ledgerBefore.expenses[0], { ...ledgerBefore.expenses[1], amount: 6000 }, expense('e4', '저녁', 30000)] };
+    const t = trip();
+    const view = previewDraft(t, { action: 'local-change', title: '가계부', before: t, after: t, ledger: { before: ledgerBefore, after: ledgerAfter } });
+    expect(view.before.map(r => r.name)).toEqual(['예산 미정', '2026-10-01 · 커피 · 5,000원', '2026-10-01 · 택시 · 8,000원']);
+    expect(view.after.map(r => r.name)).toEqual(['예산 300,000원', '2026-10-01 · 커피 · 6,000원', '2026-10-01 · 저녁 · 30,000원']);
   });
 });
 
@@ -251,5 +272,39 @@ describe('applyDraft', () => {
       ],
     });
     expect(next.stops[0]!.date).toBeNull();
+  });
+});
+
+describe('draftTripRegions', () => {
+  const place = (name: string, address: string, verified = true) => ({
+    id: name, day: 1, name, kind: 'place' as const, verified, note: '',
+    address, location: { lat: 37.5, lng: 127.1 }, placeRef: null,
+  });
+
+  // 모델이 '서울'이라고 답해도 여행 지역은 확인한 장소 주소의 시·군·구로 정한다.
+  // 일반 여행 만들기처럼 시·도 이름으로는 여행이 만들어지지 않는다.
+  it('모델이 쓴 시·도 이름 대신 장소 주소에서 시·군·구를 읽는다', () => {
+    const regions = draftTripRegions({
+      action: 'append',
+      regions: ['서울'],
+      places: [
+        place('광나루한강공원', '서울 강동구 선사로 83-66'),
+        place('경복궁', '서울 종로구 사직로 161'),
+        place('암사동유적', '서울 강동구 올림픽로 875'),
+      ],
+    });
+    expect(regions.map((r) => [r.name, r.regionCode])).toEqual([
+      ['강동구', '11_강동구'],
+      ['종로구', '11_종로구'],
+    ]);
+  });
+
+  it('확인하지 못한 장소와 읽지 못한 주소는 지역을 만들지 않는다', () => {
+    const regions = draftTripRegions({
+      action: 'append',
+      regions: ['서울'],
+      places: [place('없는곳', '서울 강남구 테헤란로 1', false), place('주소없음', '')],
+    });
+    expect(regions).toEqual([]);
   });
 });

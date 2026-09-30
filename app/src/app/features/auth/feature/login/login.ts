@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { APP_VERSION } from '../../../../core/version';
@@ -9,30 +10,34 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { Router, RouterLink } from '@angular/router';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiBarcode } from '../../../../shared/ui/barcode/barcode';
 import { UiPostmark } from '../../../../shared/ui/postmark/postmark';
 import { UiTicketTilt } from '../../../../shared/ui/ticket-tilt/ticket-tilt';
+import { takeReturn } from '../../util/return-to';
 
 @Component({
   selector: 'app-login',
   imports: [
     UiButton,
     UiSpinner,
-    ErrorToast,
+    UiToast,
     IconComponent,
     UiBarcode,
     UiPostmark,
     UiTicketTilt,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
 })
 export class LoginPage {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
 
@@ -77,7 +82,10 @@ export class LoginPage {
       if (loading) return;
       if (leaves)
         void router
-          .navigateByUrl(this.auth.nickname() ? '/trips' : '/onboarding', { replaceUrl: true })
+          // 초대 링크로 왔다면 로그인 뒤 합류 화면으로 돌아간다. 닉네임이 없으면 설정 뒤에 돌아간다.
+          .navigateByUrl(this.auth.nickname() ? (takeReturn() ?? '/trips') : '/onboarding', {
+            replaceUrl: true,
+          })
           .finally(() => this.auth.settleCallback());
       else this.auth.settleCallback();
     });

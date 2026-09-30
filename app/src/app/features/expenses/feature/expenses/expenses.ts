@@ -1,3 +1,5 @@
+import { formatWon } from '../../../../shared/util/won';
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,7 +21,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
 import { estimatedCosts } from '../../../trips/util/estimated-cost';
 import { LEDGER_REPOSITORY } from '../../data/ledger-repository';
@@ -29,6 +31,7 @@ import { EXPENSE_CATEGORIES } from '../../model/ledger';
 import { categoryStyle } from '../../model/category-style';
 import type { Expense, Ledger } from '../../model/ledger';
 import {
+  personRemovalBlock,
   validateLedger,
   categoryBreakdown,
   duplicateTitleIds,
@@ -36,9 +39,12 @@ import {
   settlementText,
   transferSuggestions,
 } from '../../util/ledger';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { ExpenseForm } from '../../ui/expense-form/expense-form';
 import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
+import { ToastService } from '../../../../core/toast-service';
+import { myLedgerPersonId } from '../../../trips/util/sharing';
+import { AuthStore } from '../../../auth/data/auth-store';
 
 @Component({
   selector: 'app-expenses',
@@ -55,17 +61,25 @@ import { ReceiptScan } from '../../ui/receipt-scan/receipt-scan';
     UiEmptyState,
     UiRowMenu,
     UiTabs,
-    ErrorToast,
+    UiToast,
     ExpenseForm,
     ReceiptScan,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Expenses {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly id = input.required<string>();
   /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
   readonly add = input<string | undefined>();
   readonly store = inject(TripEditorStore);
+  private readonly auth = inject(AuthStore);
+  /** 가계부에서 나를 가리키는 칸. 합류한 친구의 기본 결제자가 주인이 되지 않게 한다. */
+  readonly me = computed(() => {
+    const trip = this.store.current();
+    return trip ? myLedgerPersonId(trip, this.auth.user()?.id ?? null) : 'self';
+  });
   private readonly repository = inject(LEDGER_REPOSITORY);
   readonly saver = new LedgerSaver(this.repository);
   private readRequest = 0;
@@ -79,7 +93,6 @@ export class Expenses {
   readonly blocked = signal(false);
   readonly formOpen = signal(false);
   readonly scanOpen = signal(false);
-  readonly scanStatus = signal('');
   /** 여행 날짜가 없을 때 사진 항목에 채울 날짜. */
   readonly today = new Date().toLocaleDateString('sv-SE');
   readonly editing = signal<Expense | null>(null);
@@ -90,10 +103,8 @@ export class Expenses {
   readonly receiptAmount = signal<number | null>(null);
   readonly cancelling = signal('');
   readonly cancelReason = signal('');
-  readonly copyStatus = signal('');
   /** 하단 버튼을 누른 손가락 근처에서도 결과가 보이도록 버튼 글자를 잠시 바꾼다. */
-  readonly copied = signal(false);
-  private copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly toast = inject(ToastService);
   readonly actual = computed(() => this.ledger().expenses.reduce((n, e) => n + e.amount, 0));
   readonly estimate = computed(() =>
     this.store.current() ? estimatedCosts(this.store.current()!) : { total: 0, unknown: 0 },
@@ -161,6 +172,19 @@ export class Expenses {
     }
     this.error.set(result.error);
     if (result.ledger) this.ledger.set(result.ledger);
+    // 다른 사람이 먼저 고쳤으면 열린 폼을 서버본으로 다시 채운다. 옛 값을 그대로 두면
+    // 같은 저장을 다시 눌렀을 때 동료의 변경을 덮는다(2026-09-30 감리 P1-03).
+    const open = this.editing();
+    if (result.conflict && open && result.ledger) {
+      const latest = result.ledger.expenses.find((e) => e.id === open.id) ?? null;
+      this.editing.set(latest);
+      if (!latest) this.formOpen.set(false);
+      this.error.set(
+        latest
+          ? '다른 사람이 먼저 이 지출을 고쳤어요. 최신 내용으로 다시 열었으니 확인하고 다시 저장해 주세요.'
+          : '다른 사람이 이 지출을 지웠어요.',
+      );
+    }
     return false;
   }
 
@@ -173,6 +197,16 @@ export class Expenses {
     }).then((ok) => {
       if (ok) this.personName.set('');
     });
+  }
+
+  /** 정산할 사람을 지운다. 기록에 있는 사람이면 지우지 않고 이유를 알린다. */
+  removePerson(id: string): void {
+    const blocked = personRemovalBlock(this.ledger(), id);
+    if (blocked) {
+      this.error.set(blocked);
+      return;
+    }
+    void this.persist({ ...this.ledger(), people: this.ledger().people.filter((p) => p.id !== id) });
   }
 
   /** 행마다 버튼을 늘어놓지 않고 더보기 한 곳에 모은다. */
@@ -217,7 +251,7 @@ export class Expenses {
     () =>
       '분류별 지출: ' +
       this.breakdown()
-        .map((r) => `${this.categoryLabel(r.category)} ${r.amount.toLocaleString('ko-KR')}원`)
+        .map((r) => `${this.categoryLabel(r.category)} ${formatWon(r.amount)}`)
         .join(', '),
   );
 
@@ -242,7 +276,6 @@ export class Expenses {
   }
 
   openScan(): void {
-    this.scanStatus.set('');
     this.scanOpen.set(true);
   }
 
@@ -257,7 +290,7 @@ export class Expenses {
     void this.persist({ ...previous, expenses: [...previous.expenses, ...rest] }).then((ok) => {
       if (!ok) return;
       this.scanOpen.set(false);
-      this.scanStatus.set(`사진에서 ${expenses.length}건을 기록했어요.`);
+      this.toast.success(`사진에서 ${expenses.length}건을 기록했어요.`);
     });
   }
 
@@ -303,14 +336,8 @@ export class Expenses {
 
   async copySettlement(): Promise<void> {
     const ok = await copyText(settlementText(this.ledger()));
-    clearTimeout(this.copiedTimer);
-    this.copied.set(ok);
-    if (ok) this.copiedTimer = setTimeout(() => this.copied.set(false), 2000);
-    this.copyStatus.set(
-      ok
-        ? '복사했어요. 메신저에 붙여 넣어 보내 주세요.'
-        : '복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.',
-    );
+    if (ok) this.toast.success('복사했어요. 메신저에 붙여 넣어 보내 주세요.');
+    else this.toast.error('복사하지 못했어요. 브라우저의 클립보드 권한을 확인해 주세요.');
   }
 
   /** 남은 정산을 한 번에 전액 수령으로 남긴다. 부분 수령은 개별 기록을 쓴다. */

@@ -1,9 +1,12 @@
+import { summarizeEstimates, summarizeGroups } from '../../../shared/util/plan-estimate';
+import { expenseCategoryOf } from '../../expenses/util/expense-link';
+import { BUDGET_GROUPS, buildCourses, type BudgetGroup } from '../util/course';
 import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
 import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regions';
 import { PLACE_SEARCH } from '../../places/data/place-search';
-import { verifyPlaces } from './verify-places';
+import { mustGoPlaces, verifyPlaces } from './verify-places';
 import {
   type Phase,
   type AiPlanSelection,
@@ -32,6 +35,9 @@ export class AiPlanStore {
     mustGo: '',
     bookedStay: '',
     extraNote: '',
+    partySize: 1,
+    budget: null as number | null,
+    budgetBasis: 'group' as 'person' | 'group',
     /** 생성해서 받은 목록. 만들기 전에는 비어 있다. */
     results: [] as readonly PlanItem[],
     selected: new Set<string>(),
@@ -55,6 +61,35 @@ export class AiPlanStore {
   readonly mustGo = this.state.mustGo;
   readonly bookedStay = this.state.bookedStay;
   readonly extraNote = this.state.extraNote;
+  readonly partySize = this.state.partySize;
+  readonly budget = this.state.budget;
+  readonly budgetBasis = this.state.budgetBasis;
+  readonly budgetError = computed(() => {
+    const people = this.partySize(), budget = this.budget();
+    if (!Number.isInteger(people) || people < 1 || people > 100) return '여행 인원은 1~100명 사이의 정수로 입력해 주세요.';
+    if (budget !== null && (!Number.isSafeInteger(budget) || budget < 0 || budget > 100_000_000)) return '예산은 0~100,000,000원 사이의 정수로 입력하거나 비워 주세요.';
+    return null;
+  });
+  readonly totalBudget = computed(() => this.budget() === null ? null : this.budget()! * (this.budgetBasis() === 'person' ? this.partySize() : 1));
+  readonly budgetExceeded = computed(() => this.totalBudget() !== null && this.costSummary().max > this.totalBudget()!);
+  /** 일차별 시간순 코스. 선택·일차 이동을 반영한다. 화면과 담기가 같이 쓴다. */
+  readonly courses = computed(() => buildCourses(this.results(), this.selected(), this.dayOverrides(), this.dayChoices()));
+  /** 선택된 항목을 코스 순서대로. 옮긴 항목은 옮긴 일차로 들어 있다. */
+  private readonly selectedEntries = computed(() => this.courses().flatMap((c) => c.entries).filter((e) => e.selected));
+  private readonly selectedItems = computed(() => this.selectedEntries().map((e) => e.item));
+  readonly costSummary = computed(() => summarizeEstimates(this.selectedItems(), this.partySize()));
+  /** 가계부 분류와 같은 칸으로 나눈 합계. 담은 뒤 실제 지출과 같은 분류로 비교할 수 있다. */
+  readonly groupSummary = computed(() =>
+    summarizeGroups(
+      this.selectedItems().map((i) => ({ group: expenseCategoryOf(i.kind) as BudgetGroup, estimate: i.estimate })),
+      this.partySize(),
+      BUDGET_GROUPS,
+    ),
+  );
+  /** 예산 − 예상 상한. 음수면 초과다. 예산이 없으면 null. */
+  readonly budgetRemaining = computed(() => (this.totalBudget() === null ? null : this.totalBudget()! - this.costSummary().max));
+  /** 날짜 미정이면 숙소를 숙박으로 담을 수 없다. 선택된 숙소가 있을 때 안내한다. */
+  readonly staysNeedDates = computed(() => !this.startDate() && this.selectedItems().some((i) => i.kind === 'stay'));
   readonly results = this.state.results;
   readonly selected = this.state.selected;
   readonly dayOverrides = this.state.dayOverrides;
@@ -170,12 +205,12 @@ export class AiPlanStore {
    * 실재를 확인한 것만 기본 선택한다. 실패하면 조건을 그대로 남긴다.
    */
   async generate(): Promise<void> {
-    if (!this.canLeaveStep1() || this.phase() === 'generating') return;
+    if (!this.canLeaveStep1() || this.budgetError() || this.phase() === 'generating') return;
     const controller = new AbortController();
     this.running = controller;
     patchState(this.state, { phase: 'generating', error: null });
     try {
-      const items = await this.provider.generate(
+      const generated = await this.provider.generate(
         {
           regions: this.regions(),
           dayCount: this.dayCount(),
@@ -186,10 +221,16 @@ export class AiPlanStore {
           mustGo: this.mustGo(),
           bookedStay: this.bookedStay(),
           extraNote: this.extraNote(),
+          partySize: this.partySize(), budget: this.budget(), budgetBasis: this.budgetBasis(),
+          startDate: this.dateValidation().ok && this.startDate() ? this.startDate() : null,
         },
         controller.signal,
       );
       if (controller.signal.aborted) return;
+      // 마지막 날 밤에는 묵지 않는다. 당일치기면 숙소가 하나도 없어야 한다. 모델이 지시를
+      // 어기고 넣어도 여기서 뺀다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
+      const lastDay = this.dayCount();
+      const items = generated.filter((i) => !(i.kind === 'stay' && i.day >= lastDay));
       if (!items.length) {
         patchState(this.state, {
           phase: 'summary',
@@ -202,9 +243,11 @@ export class AiPlanStore {
       }
       // 장소 검색으로 위치를 확인한 것만 남긴다. 찾지 못한 이름은 좌표가 없어
       // 지도에 올릴 수 없고, 사용자가 그 이름만 보고 판단하기도 어렵다.
-      const found = (await verifyPlaces(items, this.regions(), this.placeSearch)).filter(
+      const verified = (await verifyPlaces(items, this.regions(), this.placeSearch)).filter(
         (i) => i.verified,
       );
+      // 사용자가 적은 꼭 갈 장소는 모델이 빼먹어도 직접 찾아 넣는다.
+      const found = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
       if (controller.signal.aborted) return;
       if (!found.length) {
         patchState(this.state, {
@@ -245,17 +288,18 @@ export class AiPlanStore {
   selection(): AiPlanSelection {
     return {
       requestId: this.requestId,
+      partySize: this.partySize(),
       regions: [...this.regions()],
       startDate: this.startDate() || null,
       endDate: this.endDate() || null,
-      items: this.items().filter((i) => this.selected().has(i.id)),
+      items: this.selectedEntries().map((e) => ({ ...e.item, start: e.start })),
     };
   }
 }
 
 function toGenerateError(error: unknown): GenerateError {
   const message = error instanceof Error ? error.message : '알 수 없는 오류가 생겼습니다.';
-  if (message.includes('오늘 사용량')) return { kind: 'quota', message };
+  if (/오늘 사용량|모두 썼어요|무료 사용량/.test(message)) return { kind: 'quota', message };
   if (message.includes('오래 걸립니다')) return { kind: 'timeout', message };
   // fetch가 네트워크에 닿지 못하면 'Failed to fetch'를 던진다.
   if (error instanceof TypeError)

@@ -9,7 +9,7 @@ async function setUpTrip(page: import('@playwright/test').Page): Promise<string>
     title: '부산 통영 여행',
     start: '2026-10-02',
     end: '2026-10-04',
-    regions: ['부산', '통영'],
+    regions: ['해운대구', '통영시'],
   });
   await addStop(page, id, { name: '광안리해수욕장', date: '2026-10-02', region: '부산' });
   await addStop(page, id, { name: '자갈치시장', date: '2026-10-02', region: '부산' });
@@ -67,7 +67,8 @@ test('티켓 머리글에 기간·지역·티켓 번호가 보이고 초대 화�
 
   const snapshot = page.locator('app-itinerary-snapshot');
   await expect(snapshot).toContainText('2박 3일');
-  await expect(snapshot).toContainText('부산 · 통영');
+  // 지역은 시·군·구 이름으로 보인다.
+  await expect(snapshot).toContainText('해운대구 · 통영시');
   const exportNo = (await snapshot.textContent())?.match(/TR-[A-Z0-9]{4}-[A-Z0-9]{4}/)?.[0];
   expect(exportNo, '티켓 번호가 영문과 숫자로 표시되어야 한다').toBeTruthy();
 

@@ -1,14 +1,22 @@
 <div
-  class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 pb-[calc(var(--sp-6)+80px)]"
+  class="mx-auto flex max-w-(--content-narrow) flex-col gap-6 px-4 py-6 pb-[calc(var(--sp-6)+80px)]"
   data-testid="invite-page"
 >
   <!-- 설명은 티켓 위에 짧게 둔다. 화면의 주인공은 티켓이다. -->
   <header class="flex flex-col gap-2 text-center">
     <p class="text-13 font-semibold text-accent-deep">함께 만드는 여행</p>
-    <h1 class="text-22 font-bold tracking-tight">초대장을 건네보세요</h1>
-    <p class="text-13 leading-relaxed text-ink-3">
-      링크를 받은 친구는 로그인 없이 일정을 볼 수 있고, 참여하면 장소를 함께 채울 수 있어요.
-    </p>
+    @if (isOwner()) {
+      <h1 class="text-22 font-bold tracking-tight">초대장을 건네보세요</h1>
+      <p class="text-13 leading-relaxed text-ink-3">
+        링크를 받은 친구는 로그인 없이 일정을 볼 수 있고, 함께하기를 누르면 일정과 가계부를 함께
+        고칠 수 있어요.
+      </p>
+    } @else {
+      <h1 class="text-22 font-bold tracking-tight">함께하는 여행이에요</h1>
+      <p class="text-13 leading-relaxed text-ink-3">
+        일정과 가계부를 함께 고칠 수 있어요. 초대 링크는 여행을 만든 사람이 보낼 수 있어요.
+      </p>
+    }
   </header>
 
   <!-- 불러오는 동안은 상단 바가 로딩을 알린다. 목록 화면과 같은 방식이다. -->
@@ -183,42 +191,130 @@
     </p>
   }
 
-  <!-- 하단: 링크 공유 -->
-  <section class="flex flex-col gap-3">
-    <div>
-      <button
-        appButton
-        type="button"
-        variant="primary"
-        class="btn w-full"
-        disabled
-        data-testid="invite-share"
-      >
-        <app-icon name="share" [size]="16" /> 초대 링크 공유
-      </button>
-      <p class="mt-1.5 text-center text-12 leading-relaxed text-ink-3">
-        링크 공유는 서버 연결 후에 열려요. 지금 만들 수 있는 주소는 이 기기의 일정만 가리켜서
-        친구에게 보내면 빈 화면이 열립니다.
-      </p>
-    </div>
+  <!-- 하단: 초대 링크(주인만)와 함께하는 사람 -->
+  @if (!loading()) {
+    <section class="flex flex-col gap-3">
+      @if (isOwner()) {
+        <!--
+          링크 카드: 제목 옆 새로고침 아이콘이 새 링크 만들기, 주 버튼이 복사, 취소는
+          카드 아래 작은 글자로 둔다. 흰 버튼 두 개를 나란히 두면 어느 것이 주 동작인지
+          흐려졌다(2026-09-29 사용자 결정).
+        -->
+        @if (link() || expiresAt()) {
+          <div class="flex flex-col gap-2 rounded-panel bg-panel p-4 shadow-panel" data-testid="invite-active">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-13 font-semibold">{{ link() ? '초대 링크' : '초대 링크가 있어요' }}</p>
+              <button
+                type="button"
+                class="-my-1.5 -mr-2 grid size-10 flex-none cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink-3 hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] disabled:opacity-40"
+                [disabled]="busy()"
+                (click)="createLink()"
+                aria-label="새 링크 만들기 · 앞 링크는 더 이상 쓸 수 없어요"
+                title="새 링크 만들기"
+                data-testid="invite-renew"
+              >
+                <app-icon name="refresh" [size]="18" />
+              </button>
+            </div>
+            @if (link(); as url) {
+              <p
+                class="rounded-control bg-ground-2 px-3 py-2.5 text-14 font-medium break-all select-all"
+                data-testid="invite-link"
+              >
+                {{ url }}
+              </p>
+              <p class="text-12 text-ink-3">{{ expiryLabel() }} · 링크는 지금만 보여요</p>
+              <div class="grid gap-2" [style.grid-template-columns]="canShare ? '1fr 1fr' : '1fr'">
+                <button appButton variant="primary" type="button" (click)="copyLink()" data-testid="invite-copy">
+                  링크 복사
+                </button>
+                @if (canShare) {
+                  <button appButton type="button" (click)="shareLink()">공유하기</button>
+                }
+              </div>
+            } @else {
+              <p class="text-12 leading-relaxed text-ink-3">
+                {{ expiryLabel() }}. 링크는 만들 때만 보여요. 다시 보내려면 오른쪽 위 새로고침으로
+                새 링크를 만들어 주세요.
+              </p>
+            }
+          </div>
+          <button
+            type="button"
+            class="mx-auto min-h-11 cursor-pointer border-0 bg-transparent px-3 text-13 text-ink-3 underline underline-offset-4 hover:text-danger-ink disabled:opacity-40"
+            [disabled]="busy()"
+            (click)="revokeLink()"
+            data-testid="invite-revoke"
+          >
+            링크 취소
+          </button>
+        } @else {
+          <button
+            appButton
+            type="button"
+            variant="primary"
+            class="btn w-full"
+            [disabled]="busy()"
+            (click)="createLink()"
+            data-testid="invite-create"
+          >
+            <app-icon name="share" [size]="16" /> 초대 링크 만들기
+          </button>
+          <p class="text-center text-12 leading-relaxed text-ink-3">
+            링크는 7일 동안 쓸 수 있어요. 새로 만들면 앞 링크는 더 이상 쓸 수 없어요.
+          </p>
+        }
+      }
 
-    <!-- 링크를 보낼 수 없는 동안에도 어떻게 보일지는 확인할 수 있다. -->
-    <div class="flex flex-col gap-2 border-t border-border pt-3">
-      <h2 class="text-14 font-bold">친구에게 어떻게 보일까요</h2>
-      <div class="grid gap-2 [@media(min-width:_520px)]:grid-cols-2">
-        <a appButton class="btn" [routerLink]="['/share-preview', id()]"
-          >로그인 전 · 보기만 가능</a
-        ><a
-          appButton
-          class="btn"
-          [routerLink]="['/share-preview', id()]"
-          [queryParams]="{ view: 'editor' }"
-          >로그인 후 · 함께 편집</a
-        >
+      <div class="rounded-panel bg-panel p-4 shadow-panel">
+        <h2 class="text-14 font-bold">함께하는 사람 · {{ memberList().length }}명</h2>
+        <ul class="mt-2 flex flex-col divide-y divide-border" data-testid="member-list">
+          @for (m of memberList(); track m.userId) {
+            <li class="flex min-h-12 items-center gap-3 py-2">
+              <span
+                class="flex size-8 flex-none items-center justify-center rounded-full text-13 font-bold"
+                [style.background]="tone(m.userId).bg"
+                [style.color]="tone(m.userId).fg"
+                aria-hidden="true"
+                >{{ (m.nickname || '친구').slice(0, 1) }}</span
+              >
+              <span class="min-w-0 flex-1 truncate text-14"
+                >{{ m.nickname || '친구' }}{{ m.userId === myId() ? ' (나)' : '' }}</span
+              >
+              @if (m.role === 'owner') {
+                <span class="flex-none text-12 text-ink-3">여행을 만든 사람</span>
+              } @else if (!isOwner()) {
+                <span class="flex-none text-12 text-ink-3">초대받은 사람</span>
+              } @else {
+                <span class="flex-none text-12 text-ink-3">초대받은 사람</span>
+                <button
+                  appButton
+                  type="button"
+                  class="btn btn--sm"
+                  [disabled]="busy()"
+                  (click)="removeMember(m)"
+                  [attr.data-testid]="'member-remove-' + m.userId"
+                >
+                  {{ confirming() === m.userId ? '정말 뺄까요?' : '빼기' }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
       </div>
-      <p class="text-12 leading-relaxed text-ink-3">
-        미리보기는 이 기기의 일정으로 열립니다.
-      </p>
-    </div>
-  </section>
+
+      @if (!isOwner()) {
+        <button
+          appButton
+          type="button"
+          class="btn w-full"
+          [disabled]="busy()"
+          (click)="leave()"
+          data-testid="trip-leave"
+        >
+          {{ confirming() === 'leave' ? '정말 나갈까요? 한 번 더 누르면 나가요' : '여행에서 나가기' }}
+        </button>
+      }
+    </section>
+  }
 </div>

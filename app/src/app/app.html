@@ -165,7 +165,12 @@
   <router-outlet />
 </main>
 
-<!-- 여행 불러오기·저장·삭제 실패처럼 여러 화면에서 나는 오류를 한 자리에 띄운다. -->
-@if (toast.message()) {
-  <app-error-toast [message]="toast.message()" (dismissed)="toast.dismiss()" />
+<!-- 성공·안내·오류 알림을 모든 화면에서 같은 자리(위쪽)에 띄운다. -->
+@if (toast.current(); as t) {
+  <app-toast
+    [kind]="t.kind"
+    [message]="t.message"
+    [action]="t.action"
+    (dismissed)="toast.dismiss()"
+  />
 }

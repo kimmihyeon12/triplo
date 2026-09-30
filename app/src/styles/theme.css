@@ -82,6 +82,7 @@
   --color-danger-fill: #fbcfcb;
   --color-ok-ink: #067d5f;
   --color-ok-tint: #defcef;
+  --color-ok-fill: #b3edd5;
   /*
     기록 지도 전용: 원본 2.5D 블록 시각화의 바다와 방문 빈도.
     지형은 순백에 가깝게 두므로 바다가 너무 옅으면 한반도 윤곽이 사라진다.
@@ -112,6 +113,14 @@
   --color-meal-tint: #e4fcdc;
   --color-cafe-ink: #107c73;
   --color-cafe-tint: #dbfcf6;
+  /* 액티비티는 카페(청록)와 겹치지 않게 주황 계열. 쇼핑·기타는 가계부 쇼핑·기타와 같은 값이다.
+     대비 검사(check-contrast)가 hex만 읽으므로 var() 대신 값을 그대로 적는다. */
+  --color-activity-ink: #a5480c;
+  --color-activity-tint: #fff0e5;
+  --color-shopping-ink: #ba3d78;
+  --color-shopping-tint: #ffecf4;
+  --color-other-ink: #606f82;
+  --color-other-tint: #eef4fc;
   --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
   /*
     일정 짜기(AI 진입)는 파랑→보라 그라데이션이다. 2026-09-29 1일차 칩의 남색 그라데이션도
@@ -162,7 +171,10 @@
   --sp-8: 32px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur: 160ms;
-  --content-max: 960px;
+  /* 페이지 폭은 기본 하나(940px)다. 640px은 초대장·긴 글 본문·챗봇 대화에만 쓴다
+     (DESIGN.md 페이지 폭). 화면에서 숫자로 폭을 정하지 않는다. */
+  --content-max: 940px;
+  --content-narrow: 640px;
 }
 details.menu-sheet > .menu-backdrop {
   opacity: 0;
@@ -196,27 +208,10 @@ body:has(.chat-sheet) {
 }
 
 /*
-  여행 상세의 떠 있는 대화 버튼은 오류 알림과 같은 자리(오른쪽 아래)에 선다.
-  그대로 두면 알림이 버튼을 덮어 누를 수 없다. 버튼이 있는 화면에서만
-  알림을 그 높이만큼 위로 민다.
-
-  값은 버튼 56px에 동작 바 위 여백 12px과 알림과의 간격 12px을 더한 것이다.
+  오류 알림은 모든 화면에서 같은 자리(화면 아래)에 뜨고 하단 버튼 줄·대화 버튼 위에
+  겹쳐 보인다(2026-09-29 사용자 결정). 화면마다 버튼 높이만큼 올리면 자리가 달라져
+  알림을 찾는 눈이 헤맨다. 알림은 닫기·밀어 닫기로 바로 걷어 낼 수 있다.
 */
-body:has([data-testid='open-chat']) {
-  --toast-bottom-offset: 80px;
-}
-
-/*
-  하단 고정 버튼 줄(action-bar: 저장·지출 기록 등)이 있는 화면도 같은 이유로 민다.
-  버튼 줄 높이 64px에 간격 8px. 여행 상세처럼 버튼 줄 위에 챗봇 버튼까지 있으면
-  둘 다 피한다(2026-09-29, 알림이 저장 버튼을 덮은 것을 보고 더함).
-*/
-body:has(.action-bar) {
-  --toast-bottom-offset: 72px;
-}
-body:has(.action-bar):has([data-testid='open-chat']) {
-  --toast-bottom-offset: 132px;
-}
 
 details.menu-sheet[open] > .menu-backdrop {
   opacity: 1;

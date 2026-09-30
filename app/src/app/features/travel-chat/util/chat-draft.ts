@@ -1,10 +1,14 @@
+import type { Ledger } from '../../expenses/model/ledger';
+import { formatWon } from '../../../shared/util/won';
 import { addDays, diffDays, isIsoDate } from '../../../shared/util/dates';
-import { createStop } from '../../trips/util/factories';
+import { findRegionByCode } from '../../../shared/util/korea-regions';
+import { regionCodeForAddress } from '../../stats/util/province-match';
+import { createRegion, createStop } from '../../trips/util/factories';
 import { appendStop, haversineKm, placeStopOnDate, removeStop } from '../../trips/util/itinerary';
 import { regionIdForAddress } from '../../trips/util/region-match';
 import type { GeoPoint } from '../../places/model/place';
-import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
-import type { ChatDraft } from '../model/chat';
+import type { IsoDate, Trip, TripRegion, TripStop } from '../../trips/model/trip';
+import type { AppendDraft, ChatDraft } from '../model/chat';
 import { describeStop, localChangeValid } from './local-command-draft';
 
 /**
@@ -97,19 +101,16 @@ export function nearestOrder(
 export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {
   switch (draft.action) {
     case 'local-change': {
-      const tripChanged = draft.before.title !== draft.after.title
-        || draft.before.startDate !== draft.after.startDate || draft.before.endDate !== draft.after.endDate;
-      const describe = (value: Trip) => [
-        ...(tripChanged ? [{ id: 'trip', name: `${value.title} · ${value.startDate ?? '날짜 미정'} ~ ${value.endDate ?? '미정'}`, added: false, removed: false }] : []),
-        ...value.stops.filter(s => JSON.stringify(draft.before.stops.find(b => b.id === s.id)) !== JSON.stringify(draft.after.stops.find(b => b.id === s.id))).map(s => row(s, { name: describeStop(s) })),
-        ...value.stays.filter(s => JSON.stringify(draft.before.stays.find(b => b.id === s.id)) !== JSON.stringify(draft.after.stays.find(b => b.id === s.id))).map(s => ({id: s.id, name: `${s.name} · ${s.checkIn} ~ ${s.checkOut}`, added: false, removed: false})),
-      ];
-      const ledgerRows = (value: NonNullable<typeof draft.ledger>['before']) => [
-        ...(draft.ledger?.before.budget !== draft.ledger?.after.budget ? [{ id: 'budget', name: `예산 ${value.budget === null ? '미정' : value.budget.toLocaleString() + '원'}`, added: false, removed: false }] : []),
-        ...value.expenses.filter(e => JSON.stringify(draft.ledger?.before.expenses.find(b => b.id === e.id)) !== JSON.stringify(draft.ledger?.after.expenses.find(b => b.id === e.id))).map(e => ({ id: e.id, name: `${e.date} · ${e.title} · ${e.amount.toLocaleString()}원`, added: false, removed: false })),
-      ];
-      return { title: draft.title, detailed: true, before: draft.ledger ? ledgerRows(draft.ledger.before) : describe(draft.before),
-        after: draft.ledger ? ledgerRows(draft.ledger.after) : describe(draft.after), distanceDeltaKm: null,
+      const { ledger } = draft;
+      if (ledger) {
+        const changes = ledgerChanges(ledger.before, ledger.after);
+        return { title: draft.title, detailed: true, before: ledgerPreviewRows(ledger.before, changes),
+          after: ledgerPreviewRows(ledger.after, changes), distanceDeltaKm: null,
+          applicable: localChangeValid(trip, draft) };
+      }
+      const changes = tripChanges(draft.before, draft.after);
+      return { title: draft.title, detailed: true, before: tripPreviewRows(draft.before, changes),
+        after: tripPreviewRows(draft.after, changes), distanceDeltaKm: null,
         applicable: localChangeValid(trip, draft) };
     }
     case 'assign-unassigned': {
@@ -135,6 +136,64 @@ export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {
     case 'reschedule':
       return previewReschedule(trip, draft.stopId, draft.date);
   }
+}
+
+/**
+ * 두 목록에서 내용이 달라진 항목의 id. 한쪽에만 있는 항목(추가·삭제)도 들어간다.
+ * 비교 기준은 전과 같이 JSON 표현이고, 같은 id가 여럿이면 첫 항목을 본다.
+ * 항목마다 상대 목록을 다시 훑던 방식을 id별 Map 한 번으로 바꿨다(리팩터링 제안 C2).
+ */
+function changedIds<T extends { readonly id: string }>(before: readonly T[], after: readonly T[]): ReadonlySet<string> {
+  const index = (items: readonly T[]) => {
+    const map = new Map<string, string>();
+    for (const item of items) if (!map.has(item.id)) map.set(item.id, JSON.stringify(item));
+    return map;
+  };
+  const prev = index(before);
+  const next = index(after);
+  const changed = new Set<string>();
+  for (const id of new Set([...prev.keys(), ...next.keys()])) if (prev.get(id) !== next.get(id)) changed.add(id);
+  return changed;
+}
+
+interface TripChanges {
+  readonly tripInfo: boolean;
+  readonly stops: ReadonlySet<string>;
+  readonly stays: ReadonlySet<string>;
+}
+
+function tripChanges(before: Trip, after: Trip): TripChanges {
+  return {
+    tripInfo: before.title !== after.title || before.startDate !== after.startDate || before.endDate !== after.endDate,
+    stops: changedIds(before.stops, after.stops),
+    stays: changedIds(before.stays, after.stays),
+  };
+}
+
+/** 확인 카드의 한쪽(전 또는 후) 여행에서 바뀐 것만 원래 순서대로 행으로 만든다(리팩터링 제안 C1). */
+function tripPreviewRows(value: Trip, changes: TripChanges): DraftRow[] {
+  return [
+    ...(changes.tripInfo ? [{ id: 'trip', name: `${value.title} · ${value.startDate ?? '날짜 미정'} ~ ${value.endDate ?? '미정'}`, added: false, removed: false }] : []),
+    ...value.stops.filter(s => changes.stops.has(s.id)).map(s => row(s, { name: describeStop(s) })),
+    ...value.stays.filter(s => changes.stays.has(s.id)).map(s => ({ id: s.id, name: `${s.name} · ${s.checkIn} ~ ${s.checkOut}`, added: false, removed: false })),
+  ];
+}
+
+interface LedgerChanges {
+  readonly budget: boolean;
+  readonly expenses: ReadonlySet<string>;
+}
+
+function ledgerChanges(before: Ledger, after: Ledger): LedgerChanges {
+  return { budget: before.budget !== after.budget, expenses: changedIds(before.expenses, after.expenses) };
+}
+
+/** 확인 카드의 한쪽 가계부에서 바뀐 예산과 지출만 행으로 만든다(리팩터링 제안 C1). */
+function ledgerPreviewRows(value: Ledger, changes: LedgerChanges): DraftRow[] {
+  return [
+    ...(changes.budget ? [{ id: 'budget', name: `예산 ${value.budget === null ? '미정' : formatWon(value.budget)}`, added: false, removed: false }] : []),
+    ...value.expenses.filter(e => changes.expenses.has(e.id)).map(e => ({ id: e.id, name: `${e.date} · ${e.title} · ${formatWon(e.amount)}`, added: false, removed: false })),
+  ];
 }
 
 function previewMove(
@@ -294,4 +353,25 @@ function applyMove(trip: Trip, date: IsoDate | null, orderedStopIds: readonly st
     return order === undefined ? s : { ...s, order };
   });
   return { ...trip, stops };
+}
+
+/**
+ * 대화로 새 여행을 세울 때의 지역. 장소 검색으로 확인한 주소에서 시·군·구를 읽는다.
+ *
+ * 모델이 쓴 지역 이름('서울')은 쓰지 않는다. 저장하는 분류는 검증된 출처에서만
+ * 가져오고(AGENTS.md), 일반 여행 만들기도 시·군·구만 고르게 한다. 시·도 이름으로
+ * 만들면 어느 자치구인지 알 수 없어 통계와 편집 화면이 어긋난다.
+ * 읽지 못하면 지역 없이 둔다. 추측하지 않는다.
+ */
+export function draftTripRegions(draft: AppendDraft): TripRegion[] {
+  const regions: TripRegion[] = [];
+  for (const place of draft.places) {
+    if (!place.verified) continue;
+    const code = regionCodeForAddress(place.address);
+    const found = code ? findRegionByCode(code) : null;
+    if (!found || regions.some((r) => r.regionCode === found.code)) continue;
+    // 이름이 겹치는 자치구('중구')가 있어 이름으로 다시 찾지 않고 읽은 코드를 그대로 둔다.
+    regions.push({ ...createRegion(found.name, regions.length), regionCode: found.code });
+  }
+  return regions;
 }

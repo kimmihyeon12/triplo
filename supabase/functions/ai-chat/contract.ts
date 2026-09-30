@@ -3,7 +3,7 @@ export interface ChatWireReply {
   kind: 'explore' | 'draft' | 'reference' | 'outside' | 'refusal';
   text: string;
   regions: string[];
-  places: {day: number; name: string; kind: 'place' | 'meal' | 'break' | 'buffer'}[];
+  places: {day: number; name: string; kind: 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer'}[];
   chips: string[];
   reference: {subject: string; body: string; links: {label: string; url: string}[]} | null;
   edit: null;
@@ -18,7 +18,7 @@ export function normalizeChatResponse(content: string): ChatWireReply {
   const places: ChatWireReply['places'] = [];
   if (raw.kind === 'draft' && Array.isArray(raw.places)) {
     for (const place of raw.places.slice(0, 30)) {
-      if (!place || !Number.isInteger(place.day) || place.day < 1 || place.day > 30 || typeof place.name !== 'string' || !place.name.trim() || place.name.length > 120 || !['place','meal','break','buffer'].includes(place.kind)) throw new Error('invalid_response');
+      if (!place || !Number.isInteger(place.day) || place.day < 1 || place.day > 30 || typeof place.name !== 'string' || !place.name.trim() || place.name.length > 120 || !['place','activity','meal','break','shopping','other','buffer'].includes(place.kind)) throw new Error('invalid_response');
       places.push({day: place.day, name: place.name.trim(), kind: place.kind});
     }
   }

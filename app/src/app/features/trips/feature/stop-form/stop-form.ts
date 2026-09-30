@@ -1,4 +1,5 @@
 import { UiField } from '../../../../shared/ui/field/field';
+import { NavigationHistory } from '../../../../core/navigation-history';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiInput } from '../../../../shared/ui/input/input';
@@ -22,6 +23,7 @@ import { createStop } from '../../util/factories';
 import {
   STOP_KIND_DEFAULT_NAME,
   STOP_KIND_LABEL,
+  STOP_KINDS,
   type StopKind,
   type Trip,
   type TripStop,
@@ -61,10 +63,11 @@ export class StopFormPage {
 
   readonly store = inject(TripEditorStore);
   private readonly router = inject(Router);
+  private readonly history = inject(NavigationHistory);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pageBar = inject(PageBar);
 
-  readonly kinds: StopKind[] = ['place', 'meal', 'break', 'buffer'];
+  readonly kinds = STOP_KINDS;
   readonly kindLabel = STOP_KIND_LABEL;
   readonly kindDefault = STOP_KIND_DEFAULT_NAME;
 
@@ -77,7 +80,6 @@ export class StopFormPage {
   readonly address = signal('');
   readonly regionId = signal('');
   readonly date = signal('');
-  readonly stayMinutes = signal<number | string | null>(null);
   readonly fixedTime = signal('');
   readonly estimatedCost = signal<number | null>(null);
   readonly costValid = computed(
@@ -110,19 +112,12 @@ export class StopFormPage {
   });
 
   readonly nameError = computed(() =>
-    this.kind() === 'place' && !this.name().trim() ? '장소 이름을 입력하세요.' : null,
+    STOP_KIND_DEFAULT_NAME[this.kind()] === '' && !this.name().trim() ? '이름을 입력하세요.' : null,
   );
-  readonly stayError = computed(() => {
-    const v = this.stayMinutes();
-    if (v === null || v === '' || v === undefined) return null;
-    const n = Number(v);
-    return Number.isInteger(n) && n >= 0 ? null : '0 이상의 분 단위로 입력하세요.';
-  });
   readonly canSave = computed(
     () =>
       !this.nameError() &&
       this.costValid() &&
-      !this.stayError() &&
       this.store.saveState() !== 'saving',
   );
 
@@ -157,7 +152,6 @@ export class StopFormPage {
       this.address.set('');
       this.regionId.set('');
       this.date.set('');
-      this.stayMinutes.set(null);
       this.fixedTime.set('');
       this.memo.set('');
       this.estimatedCost.set(null);
@@ -178,7 +172,6 @@ export class StopFormPage {
           this.address.set(stop.address);
           this.regionId.set(stop.regionId ?? '');
           this.date.set(stop.date ?? '');
-          this.stayMinutes.set(stop.stayMinutes);
           this.fixedTime.set(stop.fixedTime ?? '');
           this.memo.set(stop.memo);
           this.estimatedCost.set(stop.estimatedCost ?? null);
@@ -186,7 +179,7 @@ export class StopFormPage {
           this.placeRef.set(stop.placeRef ?? null);
         } else {
           const k = this.kindParam();
-          if (k && (this.kinds as string[]).includes(k)) this.setKind(k as StopKind);
+          if (k && (STOP_KINDS as readonly string[]).includes(k)) this.setKind(k as StopKind);
           const d = this.dateParam();
           if (
             d &&
@@ -236,8 +229,6 @@ export class StopFormPage {
     event.preventDefault();
     const trip = this.trip();
     if (!trip || !this.canSave()) return;
-    const raw = this.stayMinutes();
-    const stayMinutes = raw === null || raw === '' ? null : Number(raw);
     const base = this.editing();
     const address = this.address().trim();
     const stop = createStop({
@@ -249,7 +240,7 @@ export class StopFormPage {
       // 지역은 고르게 하지 않고 주소에서 찾는다. 대개 답이 하나뿐이다.
       regionId: regionIdForAddress(address, trip.regions),
       date: this.date() || null,
-      stayMinutes,
+      // 체류시간은 입력받지 않는다(2026-09-30). 수정할 때는 base에 든 저장값을 그대로 보유한다.
       fixedTime: this.fixedTime() || null,
       memo: this.memo().trim(),
       estimatedCost: this.estimatedCost(),
@@ -260,9 +251,8 @@ export class StopFormPage {
     const next = base ? updateStop(trip, stop) : appendStop(trip, stop);
     const ok = await this.store.commit(next);
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
-      // 일을 마친 폼은 히스토리에서 치운다. 그대로 두면 상세에서 뒤로 갔을 때
-      // 방금 저장한 활동의 입력 화면이 다시 나타난다.
-      void this.router.navigate(this.backLink(), { queryParams: this.backQuery(), replaceUrl: true });
+      // 일을 마친 폼은 히스토리에서 치운다(NavigationHistory.leave).
+      this.history.leave(this.backLink(), this.backQuery());
   }
 
   async remove(): Promise<void> {
@@ -272,6 +262,6 @@ export class StopFormPage {
     const ok = await this.store.commit(removeStop(trip, base.id));
     if (ok && !this.destroyRef.destroyed && this.id() === trip.id)
       // 지운 활동의 폼으로 되돌아갈 수 있으면 없는 것을 편집하게 된다.
-      void this.router.navigate(this.backLink(), { queryParams: this.backQuery(), replaceUrl: true });
+      this.history.leave(this.backLink(), this.backQuery());
   }
 }

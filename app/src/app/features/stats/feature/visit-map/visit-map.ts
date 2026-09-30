@@ -1,4 +1,5 @@
 ﻿import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { nameTemporary } from '../../util/visible-markers';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -16,11 +17,11 @@ import type { ExcludedReasons, RegionVisitCount, VisitedPlace } from '../../mode
 import { VoxelScene } from '../../ui/voxel-scene';
 import type { MapLabel, RegionMapMarker } from '../../model/map-marker';
 import { regionMarkers } from '../../util/region-markers';
-import { SavedMapPlaces } from '../../data/saved-map-places';
 import { VISIT_STEPS, visitStyle, type VisitPalette } from '../../util/visit-style';
 import { monthlyVisits } from '../../util/monthly-visits';
 import type { VisitSpot } from '../../util/visit-spots';
 import type { SpotAt } from '../../util/block-layout';
+import { ToastService } from '../../../../core/toast-service';
 
 /** 경계 파일이 쓰는 속성 이름. 상세는 public/geo/README.md를 따른다. */
 const codeOf = (p: Record<string, unknown>): string => String(p['cd']);
@@ -29,7 +30,7 @@ const nameOf = (p: Record<string, unknown>): string => String(p['nm']);
 @Component({
   selector: 'app-visit-map',
   imports: [DecimalPipe, RouterLink, UiButton, UiInput, IconComponent, UiNotice, UiSpinner],
-  providers: [LocalVisitStats, SavedMapPlaces],
+  providers: [LocalVisitStats],
   templateUrl: './visit-map.html',
   host: { class: 'block bg-ground text-ink' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,7 +39,6 @@ export class VisitMapPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly repository = inject(LocalVisitStats);
-  private readonly savedPlaces = inject(SavedMapPlaces);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('mapHost');
   private scene?: VoxelScene;
@@ -74,7 +74,7 @@ export class VisitMapPage {
   readonly counts = this.actual;
   readonly layers = signal(true);
   readonly locating = signal(false);
-  readonly locationNotice = signal('');
+  private readonly toast = inject(ToastService);
   readonly places = signal<VisitedPlace[]>([]);
   readonly year = signal(new Date().getFullYear());
   readonly steps = VISIT_STEPS;
@@ -115,7 +115,7 @@ export class VisitMapPage {
     // 혼자 남았으므로 겹칠 상대가 없다. 이름표를 늘 보여준다.
     return this.labels()
       .filter(label => label.id === picked)
-      .map(label => ({ ...label, labelHidden: false }));
+      .map(label => nameTemporary(label, this.names, this.selected()));
   });
 
   constructor() {
@@ -133,11 +133,10 @@ export class VisitMapPage {
     const controller = new AbortController();
     this.controller = controller;
     try {
-      const [response, summary, markers, spots] = await Promise.all([
+      // 여행은 한 번만 읽어 집계·마커·지점을 같은 목록에서 계산한다(mapSnapshot).
+      const [response, { summary, markers, spots }] = await Promise.all([
         fetch('/geo/korea-municipalities-2026.geo.json', { signal: controller.signal }),
-        this.repository.provinceCounts('all'),
-        this.savedPlaces.read('all'),
-        this.repository.spots(),
+        this.repository.mapSnapshot('all'),
       ]);
       if (!response.ok) throw new Error('Boundary load failed');
       const geo = await response.json() as GeoCollection;
@@ -240,9 +239,9 @@ export class VisitMapPage {
   }
 
   locate(): void {
-    if (!navigator.geolocation) { this.locationNotice.set('이 브라우저에서는 현재 위치를 확인할 수 없어요.'); return; }
+    if (!navigator.geolocation) { this.toast.error('이 브라우저에서는 현재 위치를 확인할 수 없어요.'); return; }
     this.locating.set(true);
-    this.locationNotice.set('현재 위치를 확인하고 있어요.');
+    this.toast.info('현재 위치를 확인하고 있어요.');
     navigator.geolocation.getCurrentPosition(position => {
       if (this.destroyRef.destroyed) return;
       this.locating.set(false);
@@ -252,14 +251,14 @@ export class VisitMapPage {
         return polygons.some(rings => pointInPolygon(point, rings.map(ring => ring.map(([x, y]) => ({ x, y })))));
       });
       const code = feature ? codeOf(feature.properties) : undefined;
-      if (!code || !this.names[code]) { this.locationNotice.set('현재 위치가 지원하는 행정구역 경계 안에 없어요.'); return; }
+      if (!code || !this.names[code]) { this.toast.error('현재 위치가 지원하는 행정구역 경계 안에 없어요.'); return; }
       void this.select(code);
       this.scene?.focus(code);
-      this.locationNotice.set(`현재 위치가 속한 ${this.names[code]} 지역이에요. 위치는 저장하지 않아요.`);
+      this.toast.info(`현재 위치가 속한 ${this.names[code]} 지역이에요. 위치는 저장하지 않아요.`);
     }, () => {
       if (this.destroyRef.destroyed) return;
       this.locating.set(false);
-      this.locationNotice.set('위치를 확인하지 못했어요. 위치 권한을 확인하거나 지역을 직접 선택해 주세요.');
+      this.toast.error('위치를 확인하지 못했어요. 위치 권한을 확인하거나 지역을 직접 선택해 주세요.');
     }, { timeout: 10000, maximumAge: 60000 });
   }
 }

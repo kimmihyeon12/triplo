@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
+import { TripAccessError, TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
 import type { LedgerRows } from './ledger-rows';
 
 /** Supabase 호출을 이 좁은 창구 뒤에 둔다. 저장소 로직은 가짜로 테스트한다. */
@@ -9,11 +9,17 @@ export interface LedgerDataClient {
   call(fn: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
-/** 가계부 함수의 오류 코드: P0409 충돌, P0422 분담 합계 불일치. */
+/**
+ * 가계부 함수의 오류 코드: P0409 충돌, P0404 접근 불가(빠진 멤버·보이지 않는 기록), P0422 분담 합계 불일치,
+ * 23503 지우려는 사람을 다른 기기의 기록이 가리킴.
+ */
 export function toLedgerError(error: { code?: string } | null): Error {
   if (error?.code === 'P0409') return new TripConflictError();
+  if (error?.code === 'P0404') return new TripAccessError();
   if (error?.code === 'P0422')
     return new TripSaveError('분담 금액 합계가 실제 지출과 일치해야 합니다.');
+  if (error?.code === '23503')
+    return new TripSaveError('지출·수령 기록에 있는 사람이라 지울 수 없어요. 새로 불러와 확인해 주세요.');
   return new TripSaveError();
 }
 

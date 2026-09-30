@@ -6,15 +6,18 @@ import { Router } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
-import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { formatKoreanDate } from '../../../../shared/util/dates';
 import { RESERVATION_LABEL, type Trip, type AccommodationStay } from '../../model/trip';
 import { nightCoverage, stayIssues, stayNightCount } from '../../util/stays';
+import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 @Component({
   host: { class: 'block' },
   selector: 'app-trip-stays',
-  imports: [UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
+  imports: [
+    UiMapLinks, UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-stays.html',
 })

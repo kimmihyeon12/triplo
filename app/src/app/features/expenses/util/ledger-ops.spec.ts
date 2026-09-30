@@ -66,6 +66,14 @@ describe('ledgerOps', () => {
     expect(JSON.stringify(result)).toBe(JSON.stringify(after));
   });
 
+  it('빠진 사람은 다른 동작을 모두 마친 뒤 지운다', () => {
+    const withFriend: Ledger = { ...base, people: [...base.people, { id: 'p3', name: '준호' }] };
+    const after: Ledger = { ...base, expenses: [expense('a')] };
+    const ops = ledgerOps(withFriend, after);
+    expect(ops.at(-1)).toEqual({ kind: 'removePerson', id: 'p3' });
+    expect(JSON.stringify(ops.reduce(applyOp, withFriend))).toBe(JSON.stringify(after));
+  });
+
   it('되돌리기 방향이면 추가된 지출은 삭제가 된다', () => {
     const after: Ledger = { ...base, expenses: [...base.expenses, expense('new')] };
     expect(ledgerOps(after, base)).toEqual([{ kind: 'deleteExpense', id: 'new' }]);

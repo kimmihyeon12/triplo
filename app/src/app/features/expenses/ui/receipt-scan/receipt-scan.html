@@ -121,6 +121,9 @@
               {{ strokes().length ? '칠한 줄 읽기' : '사진 읽기' }}
             </button>
           </div>
+          @if (aiHint(); as hint) {
+            <p class="text-12 text-ink-3" data-testid="receipt-quota-hint">{{ hint }}</p>
+          }
         </div>
       }
       @case ('review') {

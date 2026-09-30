@@ -219,7 +219,7 @@
                 >
                   <app-empty-state
                     title="이 날 일정이 없어요"
-                    hint="장소나 식사·휴식을 추가하면 순서대로 정리돼요."
+                    hint="관광·식사·카페 같은 일정을 추가하면 순서대로 정리돼요."
                   />
                 </section>
               } @else {
@@ -244,15 +244,6 @@
                     </button>
                   }
                 </div>
-                @if (sortNotice(); as notice) {
-                  <p
-                    class="text-12 leading-normal sort-notice mb-2 rounded-control bg-ok-tint text-ok-ink leading-[1.6] py-2 px-3"
-                    role="status"
-                    data-testid="sort-nearest-notice"
-                  >
-                    {{ notice }}
-                  </p>
-                }
                 <ol
                   class="items flex flex-col bg-panel rounded-panel overflow-hidden [box-shadow:var(--shadow-panel)]"
                   data-testid="day-items"
@@ -313,38 +304,11 @@
                               seg.stay.name
                             }}</strong>
                             <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
-                              <a
-                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="naverUrl(seg.stay)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.aria-label]="seg.stay.name + ' 네이버지도에서 검색'"
-                              >
-                                <img
-                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                                  src="brand/navermap.png"
-                                  width="26"
-                                  height="26"
-                                  alt=""
-                                  aria-hidden="true"
-                                />
-                              </a>
-                              <a
-                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="kakaoUrl(seg.stay)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.aria-label]="seg.stay.name + ' 카카오맵에서 검색'"
-                              >
-                                <img
-                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                                  src="brand/kakaomap.png"
-                                  width="26"
-                                  height="26"
-                                  alt=""
-                                  aria-hidden="true"
-                                />
-                              </a>
+                              <app-map-links
+                                [name]="seg.stay.name"
+                                [naverHref]="naverUrl(seg.stay)"
+                                [kakaoHref]="kakaoUrl(seg.stay)"
+                              />
                             </span>
                           </div>
                           <!--
@@ -372,11 +336,6 @@
                                   [size]="14"
                                 />
                               </button>
-                              @if (copiedId() === seg.stay.id) {
-                                <span class="flex-none text-ok-ink font-medium" role="status"
-                                  >복사됨</span
-                                >
-                              }
                             </div>
                           }
                           <div
@@ -408,9 +367,8 @@
                             </p>
                           }
                           @if (seg.stay.memo) {
-                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">
-                              {{ seg.stay.memo }}
-                            </div>
+                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
+                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stay.memo }}</div>
                           }
                           <span
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
@@ -557,38 +515,11 @@
                               본문 묶음 전체에 같은 오른쪽 여백(pr-16)을 준다.
                             -->
                             <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
-                              <a
-                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="naverUrl(seg.stop)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.aria-label]="seg.stop.name + ' 네이버지도에서 검색'"
-                              >
-                                <img
-                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                                  src="brand/navermap.png"
-                                  width="26"
-                                  height="26"
-                                  alt=""
-                                  aria-hidden="true"
-                                />
-                              </a>
-                              <a
-                                class="mapbtn [-webkit-tap-highlight-color:transparent] relative inline-flex items-center justify-center no-underline rounded-cell [transition:opacity_var(--dur)_var(--ease-out)] after:absolute after:w-11 after:h-11 after:[content:''] after:top-[50%] after:left-[50%] after:transform-[translate(-50%,-50%)] hover:opacity-[0.75]"
-                                [href]="kakaoUrl(seg.stop)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                [attr.aria-label]="seg.stop.name + ' 카카오맵에서 검색'"
-                              >
-                                <img
-                                  class="in-[.mapbtn]:block in-[.mapbtn]:rounded-cell"
-                                  src="brand/kakaomap.png"
-                                  width="26"
-                                  height="26"
-                                  alt=""
-                                  aria-hidden="true"
-                                />
-                              </a>
+                              <app-map-links
+                                [name]="seg.stop.name"
+                                [naverHref]="naverUrl(seg.stop)"
+                                [kakaoHref]="kakaoUrl(seg.stop)"
+                              />
                             </span>
                           </div>
 <!--
@@ -596,17 +527,9 @@
                             분류 배지는 그 아래 한 줄에 모은다.
                           -->
                           <!--
-                            체류시간은 적어 둔 경우에만 보여준다. '미정'을 적어 두면
-                            대부분의 카드에 같은 말이 붙어 읽을 것이 늘어나기만 한다.
-                            위치 미확인은 아래 배지 줄로 옮겼다.
+                            체류시간은 화면에서 쓰지 않는다(2026-09-30 사용자 결정). 저장된 값은
+                            보유하며, AI 일정의 추천 체류는 비고에 적는다.
                           -->
-                          @if (seg.stop.stayMinutes !== null) {
-                            <div
-                              class="item__meta flex flex-wrap items-center gap-1 text-12 leading-normal text-ink-3"
-                            >
-                              <span>체류 {{ minutes(seg.stop.stayMinutes) }}</span>
-                            </div>
-                          }
                           @if (seg.stop.address) {
                             <!--
                               주소 복사는 주소와 같은 행에 아이콘으로 둔다.
@@ -633,13 +556,6 @@
                                   [size]="14"
                                 />
                               </button>
-                              @if (copiedId() === seg.stop.id) {
-                                <span
-                                  class="item__copied flex-none text-ok-ink font-medium"
-                                  role="status"
-                                  >복사됨</span
-                                >
-                              }
                             </div>
                           }
                           @if (seg.stop.estimatedCost != null) {
@@ -648,11 +564,8 @@
                             </p>
                           }
                           @if (seg.stop.memo) {
-                            <div
-                              class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap"
-                            >
-                              {{ seg.stop.memo }}
-                            </div>
+                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
+                            <div class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stop.memo }}</div>
                           }
                           @if (copyFallback() && copyFallbackId() === seg.stop.id) {
                             <p class="text-12 leading-normal copy-fallback text-warn-ink">
@@ -768,21 +681,9 @@
                 data-testid="day-totals"
               >
                 <span class="totals__label text-16 font-bold">하루 합계</span>
-                <!--
-                  합계는 세어 본 값이라 본문으로 적는다. 전에는 체류 시간을
-                  place 배지로 두어 바로 위 일정의 '장소' 분류 배지와 같은
-                  색이 됐다. 배지는 '체류 미정'처럼 사용자가 아직 넣지 않은
-                  값이 있다는 상태에만 쓴다.
-                -->
+                <!-- 합계는 세어 본 값이라 본문으로 적는다. 체류시간은 화면에서 쓰지 않는다(2026-09-30). -->
                 <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-13 text-ink-2">
-                  <span>체류 {{ minutes(totals().stayMinutes) }}</span>
-                  <span class="text-border-strong" aria-hidden="true">·</span>
                   <span>이동 {{ totals().legCount }}구간 · 시간 미확인</span>
-                  @if (totals().unknownStayCount > 0) {
-                    <span appBadge class="cell cell--warn"
-                      >체류 미정 {{ totals().unknownStayCount }}개</span
-                    >
-                  }
                 </span>
               </div>
 
@@ -810,9 +711,9 @@
         }
 
         @if (overview().days.length > 0) {
-          <details class="panel bg-panel rounded-panel shadow-panel p-4" data-testid="overview-fold">
+          <details class="fold panel bg-panel rounded-panel shadow-panel p-4" data-testid="overview-fold">
             <summary
-              class="flex cursor-pointer list-none items-center gap-2 text-16 font-bold [&::-webkit-details-marker]:hidden"
+              class="-my-2.5 flex min-h-11 cursor-pointer list-none items-center gap-2 text-16 font-bold [&::-webkit-details-marker]:hidden"
             >
               <span
                 class="flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
@@ -867,14 +768,8 @@
                     <span
                       class="ov__meta text-12 leading-normal text-ink-3 flex gap-1 flex-wrap items-center"
                     >
-                      @if (d.totals.activeCount > 0) {
-                        <span>체류 {{ minutes(d.totals.stayMinutes) }}</span>
-                        @if (d.totals.unknownStayCount > 0) {
-                          <span>· 체류 미정 {{ d.totals.unknownStayCount }}</span>
-                        }
-                        @if (d.totals.legCount > 0) {
-                          <span>· 이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
-                        }
+                      @if (d.totals.activeCount > 0 && d.totals.legCount > 0) {
+                        <span>이동 {{ d.totals.unknownLegCount }}구간 미확인</span>
                       }
                       @if (d.fixedTimeConflictCount > 0) {
                         <span appBadge class="cell cell--danger"
@@ -986,10 +881,10 @@
         <details
           #addSheet
           appDismissible
-          class="menu-sheet relative w-full [@media(min-width:_720px)]:w-auto"
+          class="menu-sheet relative w-full"
         >
           <summary
-            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer [@media(min-width:_720px)]:px-8 list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
+            class="btn relative z-10001 flex min-h-11 w-full cursor-pointer list-none items-center justify-center gap-1.5 rounded-control border border-transparent bg-accent-deep px-5 text-14 font-semibold text-white [transition:background-color_var(--dur)_var(--ease-out)] [&::-webkit-details-marker]:hidden"
             data-testid="add-open"
           >
             일정 추가

@@ -29,6 +29,8 @@ export type { ExpenseLink } from '../../util/expense-link';
 })
 export class ExpenseForm {
   readonly people = input.required<ExpensePerson[]>();
+  /** 가계부에서 나를 가리키는 칸. 합류한 친구는 'self'(주인)가 아니다. */
+  readonly me = input('self');
   readonly links = input<ExpenseLink[]>([]);
   readonly initial = input<Expense | null>(null);
   /** 일정에서 바로 넘어온 경우 채워 둘 항목 id. 새 지출일 때만 쓴다. */
@@ -63,7 +65,7 @@ export class ExpenseForm {
           `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
       );
       this.category.set(e?.category ?? 'other');
-      this.paidBy.set(e?.paidBy ?? defaultPayer(people));
+      this.paidBy.set(e?.paidBy ?? defaultPayer(people, untracked(this.me)));
       this.linkId.set(e?.linkId ?? '');
       this.personal.set(e?.personal ?? false);
       this.selected.set(e?.splits.map((s) => s.personId) ?? people.map((p) => p.id));

@@ -9,15 +9,14 @@ description: Pretendard·딥 블루·중성 배경을 사용하는 모바일 우
 
 ## 시각 방향
 
-최신 채팅 후속 결정: 저장 완료 행은 제거하고 저장 성공 후 구름이 대화 메시지와 ‘여행 보기’ 링크로 안내한다. 아래 이전 완료 행 규칙을 대체한다. 추천 질문은 연한 파란색 알약 모양으로 복원하며, 메시지 스크롤 영역 밖과 추천 질문 줄에는 위아래 12px 여백을 둔다.
+### 현재 채팅 표현 (2026-09-30 코드 대조)
 
-채팅 확인 카드는 아바타 옆이 아닌 답변 아래 대화 영역 전체 너비에 둔다. 1px 중성 테두리와 16px 여백으로 변경 내용을 구분하고, 구분선 아래 왼쪽에는 배경 없는 ‘그대로 두기’, 오른쪽에는 파란 ‘변경 적용’을 둔다. 두 버튼은 높이 44px이며 적용 완료 뒤에는 상태와 되돌리기를 표시한다. 추천 질문은 중성 테두리의 44px 컨트롤, 전송 버튼은 입력창과 같은 10px 반경이다. 메시지 사이 간격은 24px다.
-
-채팅 입력창은 알약 모양 대신 공통 control 반경 10px를 사용한다. 메시지 말풍선의 18px 모서리와 입력창의 형태를 구분한다.
-
-채팅 메시지는 18px 모서리를 사용한다. 구름이 답변·응답 대기에만 아바타 방향의 작은 꼬리를 붙인다. 꼬리는 메시지와 같은 흰 배경·옅은 테두리로 이어지며, 사용자 메시지는 파란 배경에 꼬리 없이 표시한다.
-
-챗봇의 확정 캐릭터는 구름이 전신 2종이다. 작은 미소(`companion-cloud-sorry-v1.png`)는 대화·응답 준비·추천 결과, 졸림(`companion-cloud-sleepy-v1.png`)은 진입 버튼에 쓴다. 몸통을 자르는 크롭을 금지하며 대화 48px·헤더 56px로 표시한다. 채팅 버튼은 파란 배경·흰 ‘AI 채팅’ 글자(13px), 높이 44px, 좌측 여백 52px·우측 14px이고 56px 구름이를 왼쪽 아래 1px에 둔다. 중복 말풍선 아이콘은 넣지 않는다. 상세에서는 기존 일정 추가 바 위 위치와 안전 영역을 유지한다. 적용 근거와 검증은 [구름이 적용 기록](references/cloud-chat-preview.md)에 통합한다.
+- 대화 본문은 최대 `--content-narrow`(640px), 메시지 간격 12px. 글자 14px·줄 높이 22px·말풍선 상하 여백 8px다.
+- 확인 카드는 답변 아래에 배치한다. 작은 결정·추천 버튼은 32px 시각 높이와 44px 클릭 영역을 사용한다.
+- 저장 완료는 별도 고정 완료 행 없이 대화 메시지와 여행 보기 링크로 안내한다.
+- 전체 채팅은 빈 화면에서 `showMascot` 조건에 따라 72px 구름이를 표시한다. 상세 채팅 시트 헤더는 48px 구름이를 표시한다. 답변·대기 말풍선에 캐릭터를 반복하지 않는다.
+- 진입 버튼의 졸린 구름이와 대화용 작은 미소 이미지는 유지한다. 이미지 확대·크롭으로 몸통을 자르지 않는다.
+- 화면·입력창·버튼의 원본은 실제 공통 컴포넌트와 theme.css다. 아래 날짜별 채팅 후속 결정은 변경 이력이며 이 현재 요약과 충돌하면 이 요약을 우선한다.
 
 밝은 중성 배경 위 흰 카드, 명확한 텍스트 위계, 딥 블루 주 동작을 사용한다. 제목과 본문은 Pretendard 한 가족이며 숫자는 tabular-nums로 정렬한다. 상단에는 화면 제목을 표시하고 홈 링크에는 T 심볼을 사용한다. 뒤로 이동이 필요한 화면은 뒤로 가기 버튼을 표시한다.
 
@@ -34,11 +33,27 @@ description: Pretendard·딥 블루·중성 배경을 사용하는 모바일 우
 | 미확인·주의 | `warn-ink`, `warn-tint` |
 | 오류·충돌 | `danger-ink`, `danger-tint` |
 | 완료 | `ok-ink`, `ok-tint` |
-| 일정 분류 | 장소 `place-ink`·`place-tint`, 식사 `meal-ink`·`meal-tint`, 카페 `cafe-ink`·`cafe-tint`, 지역 `region-ink`·`region-tint` |
+| 일정 분류 | 관광 `place-ink`·`place-tint`, 액티비티 `activity-ink`·`activity-tint`, 식사 `meal-ink`·`meal-tint`, 카페 `cafe-ink`·`cafe-tint`, 쇼핑 `shopping-ink`·`shopping-tint`, 기타 `other-ink`·`other-tint`(쇼핑·기타는 가계부 같은 분류와 같은 값), 숙소 `stay-ink`·`stay-tint`, 지역 `region-ink`·`region-tint`. 라벨 원본은 `trips/model/trip.ts`의 `STOP_KIND_LABEL`·`PLAN_KIND_LABEL` |
 | 간격 | 기본 단위 4px. 화면 여백 16px, 넓은 화면 24px |
 | 모서리 | panel 16px, control-lg 12px, control 10px, cell 8px |
 | 서체 | `font-body`, `text-12`~`text-34`. 기본 본문 15px, 필드 라벨·안내 13px, 주요 화면 제목 22px |
-| 반응형 | sm 420px, md 720px, lg 960px. 일반 콘텐츠 최대 960px, 인증 폼 최대 420px |
+| 반응형 | sm 420px, md 720px, lg 960px. 페이지 폭은 아래 '페이지 폭'을 따른다 |
+
+### 페이지 폭 (2026-09-30 사용자 결정)
+
+기본 폭은 940px 하나다. 인증·초대·긴 글·대화만 예외로 좁힌다. 생성과 수정은 같은 화면이므로 같은 폭을 쓴다.
+
+| 쓰는 곳 | 폭 | 적용 |
+| --- | --- | --- |
+| 여행 목록·상세, AI 일정, 가계부, 통계, 여행·장소·숙소 생성과 수정, 내 정보, 공지·문의·약관 페이지, 설치, 이미지로 저장 | 940px | 페이지 `max-w-(--content-max)` |
+| 초대장·초대 합류 | 640px | 페이지 `max-w-(--content-narrow)` |
+| 약관 본문, 챗봇 대화 | 640px | 페이지는 940px이고 글줄 영역만 `max-w-(--content-narrow)` |
+| 로그인·온보딩 | 420px | 가운데 카드 `max-w-105` |
+
+- 하단 동작 바(`action-bar__inner`)는 그 페이지와 같은 토큰을 쓴다.
+- 빈 상태 카드처럼 가운데 놓이는 부품은 페이지 안에서 420px(`max-w-105`)로 좁힐 수 있다.
+- 화면에서 480px 이상의 폭을 숫자로 정하지 않는다. `npm run lint`의 `check-page-width`가 막는다. 이전에는 420·600·640·672·720·960px이 섞여 웹에서 화면을 옮길 때마다 폭이 바뀌었다.
+- 하단의 단일 주 버튼(일정 추가, 정산 복사, 이미지 저장)은 화면 크기와 상관없이 그 페이지 폭을 채운다. 동작 바가 본문과 같은 선에 맞춰진다. 웹에서 글자 폭만큼 줄이면 주 버튼으로 읽히지 않았다.
 
 색만으로 상태를 구분하지 않고 텍스트·아이콘을 함께 사용한다. 숙소색·주의색·완료색을 일반 강조색으로 돌려 쓰지 않는다. 같은 이유로 일정 분류에도 완료색·숙소색을 빌려 쓰지 않고 분류 전용 색을 쓴다. 소셜 로그인은 해당 제공자의 브랜드 토큰을 사용한다.
 
@@ -72,10 +87,10 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 | 버튼 | `button[appButton]`, `a[appButton]` | default/primary/ghost/danger/icon. disabled/loading이면 실행과 라우팅을 차단. 네이티브 폼·링크 의미 유지 |
 | 입력 | `input[appInput]`, `select[appInput]`, `textarea[appInput]` | 네이티브 Forms·label 유지. 입력·선택 높이 44px, 모서리 10px. textarea는 여러 줄 높이 |
 | 필드 | `app-field` | label/inputId/hint. 입력 id를 inputId와 맞추고 힌트가 있으면 aria-describedby를 `<inputId>-hint`에 연결 |
-| 배지 | `span[appBadge]` | accent/place/region/stay/warn/danger/ok/meal/cafe/neutral. 상태 텍스트 필수. meal·cafe는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
+| 배지 | `span[appBadge]` | accent/place/activity/region/stay/warn/danger/ok/meal/cafe/shopping/other/neutral. 상태 텍스트 필수. place·activity·meal·cafe·shopping·other는 일정 분류 전용이며 완료(ok)·숙소(stay)와 뜻이 겹치지 않도록 따로 둔 색이다 |
 | 안내 | `div[appNotice]` | warn/danger/ok. 동적 오류 등 필요한 경우에만 소비자가 live region 지정 |
 | 로딩 | `app-spinner` | 장식용. 독립 로딩은 부모 role=status와 접근성 이름, 버튼은 aria-busy 제공 |
-| 오류 토스트 | `app-error-toast` | message/dismissed. 하단 중앙·안전 영역·role=alert·닫기 버튼·아래로 밀어 닫기(40px 초과). 자동 소멸하지 않음 |
+| 알림 토스트 | `app-toast` | kind(success·info·error)/message/dismissed. 상단 바 아래·오류만 role=alert·닫기 버튼·위로 밀어 닫기(40px 초과). 성공·안내만 3초 뒤 닫힘 |
 | 하단 동작 바 | `div[appActionBar]` | 하단 고정·안전 영역. 내부 action-bar__inner에 주요 버튼 배치 |
 | 스위치 | `app-switch` | checked/disabled/label/changed. 누르는 즉시 반영되는 설정에 쓴다. 폼을 보내야 반영되는 자리에는 체크박스를 쓴다. 줄 전체가 버튼이면 `presentational`을 켜고 표시만 맡긴다 |
 
@@ -117,7 +132,8 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 
 - 버튼 로딩은 문구를 유지하고 내부 스피너·중복 실행 차단으로 표현한다. ‘화면으로 이동 중’ 같은 별도 문장을 추가하지 않는다.
 - 스피너는 `animate-spin`과 `border-r-transparent`로 열린 테두리를 회전시킨다. border shorthand가 투명 부분을 덮지 않게 한다. 모션 감소 설정은 `motion-reduce:animate-none`으로 존중한다.
-- 토스트는 연한 빨강 바탕(`danger-tint`)·연한 빨강 테두리(`danger-fill`)·옅은 그림자에 본문색 글자를 쓴다. 경고 아이콘은 원 없이 `danger-ink`로, 닫기 X는 본문색으로 둔다(2026-09-29 사용자 결정). 닫기 영역은 40px 이상 확보한다. 모바일 하단 안전 영역을 반영한다.
+- 토스트(`app-toast`, `ToastService`)는 성공·안내·오류 세 종류다(2026-09-29 사용자 결정). 성공은 연한 초록(`ok-tint`, 원 체크), 안내는 연한 파랑(`accent-tint`, 원 i), 오류는 연한 빨강(`danger-tint`, 경고 삼각형)이며 글자는 모두 본문색이다. 바탕은 70% 불투명도에 뒤를 흐리게(blur 16px·채도 160%) 하고 테두리는 두지 않는다(2026-09-29 사용자 결정). 성공·안내는 3초 뒤 스스로 닫히고 오류는 닫을 때까지 남는다. 모든 화면에서 상단 바 바로 아래 같은 자리에 뜨고 X나 위로 밀어 닫는다. 복사·기록·정렬 완료와 위치 확인 같은 한 번의 결과 알림은 화면 안 문장 대신 토스트로 보인다. 입력 칸 옆 경고(이름 중복 등)와 불러오는 중 표시는 그 자리에 둔다.
+- 앱 안의 움직임은 무엇이 바뀌었는지 알리는 곳에만 둔다(2026-09-29). 탭 밑줄은 하나를 선택한 탭으로 옮겨 미끄러지게 하고(`app-tabs`), 접는 카드(`details.fold`)는 지원하는 브라우저에서 높이가 늘어나며 열리고, 행 더보기 메뉴는 버튼 자리에서 작게 튀어나온다. 탭 내용·날짜 목록·폼이 떠오르며 바뀌는 전환은 쓰지 않는다(사용자 결정). 규칙은 `styles/effects.css`에 있고 모션 감소 설정에서는 멈춘다.
 - 작은 아이콘 버튼도 조작 영역은 최소 44px로 확보한다. 키보드 포커스를 숨기지 않는다.
 - **상태에 따라 값이 바뀌는 자리는 `[class.left-5]`가 아니라 `[style.left.px]`를 쓴다.** Tailwind는 소스에서 클래스 문자열을 찾아 CSS를 만드는데, `[class.xxx]` 표기는 그 문자열이 나타나지 않아 규칙이 만들어지지 않는다. 화면에서는 아무 일도 일어나지 않고 오류도 나지 않는다(2026-09-17 스위치 손잡이에서 확인). 색처럼 두 값 중 하나를 고르는 경우도 `[style.background]`에 토큰을 넣는다.
 - 아이콘은 Lucide 도형을 1.75px 둥근 선으로 그린다(2026-09-28). 직접 그린 경로는 아이콘마다 비율·모서리가 달라 촌스럽게 보였다. 새 아이콘도 Lucide에서 골라 [icon.ts](../../app/src/app/shared/ui/icon/icon.ts)에 원본 이름과 함께 넣고, 화면에 SVG를 따로 그리지 않는다(브랜드 T 표시 제외).

@@ -3,7 +3,7 @@ import type { Expense } from '../model/ledger';
 import { ledgerFromRows, type LedgerRows } from './ledger-rows';
 import { SupabaseLedgerRepository } from './supabase-ledger-repository';
 import { toLedgerError, type LedgerDataClient } from './ledger-data-client';
-import { TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
+import { TripAccessError, TripConflictError, TripSaveError } from '../../trips/data/trip-data-client';
 
 const expense: Expense = {
   id: 'e1',
@@ -111,11 +111,13 @@ describe('SupabaseLedgerRepository', () => {
       { kind: 'setBudget', budget: null },
       { kind: 'cancelReceipt', id: 'r1', reason: '실수' },
       { kind: 'addPerson', person: { id: 'p3', name: '준호' } },
+      { kind: 'removePerson', id: 'p3' },
     ]);
     expect(calls).toEqual([
       { fn: 'set_budget', args: { p_trip_id: 't1', p_budget: null } },
       { fn: 'cancel_receipt', args: { p_trip_id: 't1', p_receipt_id: 'r1', p_reason: '실수' } },
       { fn: 'add_ledger_person', args: { p_trip_id: 't1', p_person: { id: 'p3', name: '준호' } } },
+      { fn: 'remove_ledger_person', args: { p_trip_id: 't1', p_person_id: 'p3' } },
     ]);
   });
 });
@@ -127,5 +129,6 @@ describe('toLedgerError', () => {
     expect(split).toBeInstanceOf(TripSaveError);
     expect(split.message).toContain('분담 금액');
     expect(toLedgerError({ code: '42501' })).toBeInstanceOf(TripSaveError);
+    expect(toLedgerError({ code: 'P0404' })).toBeInstanceOf(TripAccessError);
   });
 });

@@ -1,6 +1,7 @@
 import { expect, it, describe } from 'vitest';
 import type { AiPlanSelection, PlanItem } from '../../ai-planning/model/ai-plan';
-import { selectionToTrip } from './ai-selection';
+import { aiStopMemo, selectionToTrip } from './ai-selection';
+import { tallyVisits } from '../../stats/util/visit-tally';
 
 function item(partial: Partial<PlanItem> & { id: string; name: string }): PlanItem {
   return {
@@ -13,6 +14,10 @@ function item(partial: Partial<PlanItem> & { id: string; name: string }): PlanIt
     address: partial.address ?? '강원 강릉시 어딘가',
     location: partial.location ?? { lat: 37.8, lng: 128.9 },
     placeRef: partial.placeRef ?? { provider: 'kakao', id: 'k1', url: null },
+    order: partial.order ?? 1,
+    start: partial.start ?? null,
+    moveToNext: partial.moveToNext ?? null,
+    ...(partial.estimate ? { estimate: partial.estimate } : {}),
   };
 }
 
@@ -28,6 +33,35 @@ function selection(partial: Partial<AiPlanSelection> = {}): AiPlanSelection {
 }
 
 describe('selectionToTrip', () => {
+  it('제주 전체를 제주시로 축소하지 않는다', () => {
+    const trip = selectionToTrip(selection({ regions: ['제주'], items: [item({ id: 'a', name: '주소 미정', address: '' })] }));
+    expect(trip.regions[0]?.regionCode).toBe('50');
+    expect(tallyVisits([trip], '2026-11-01').unclassifiedCount).toBe(1);
+  });
+  it('부산 전체 여행도 실제 주소의 구별로 집계하고 주소 미정은 임의 구에 넣지 않는다', () => {
+    const trip = selectionToTrip(selection({ regions: ['부산'], items: [
+      item({ id: 'a', name: '해운대', address: '부산 해운대구 우동 1' }),
+      item({ id: 'b', name: '영도', address: '부산 영도구 영선동 1' }),
+      item({ id: 'c', name: '주소 미정', address: '' }),
+    ] }));
+    expect(trip.regions[0]?.regionCode).toBe('26');
+    const stats = tallyVisits([trip], '2026-11-01');
+    expect(stats.regions.map(r => r.regionCode).sort()).toEqual(['26_영도구', '26_해운대구']);
+    expect(stats.unclassifiedCount).toBe(1);
+  });
+  it('사용자가 담은 AI 예상의 상한과 요금 기준을 계획값으로 보존한다', () => {
+    const trip = selectionToTrip(selection({ partySize: 2, items: [{ ...item({ id: 'a', name: '식당' }), estimate: {
+      cost: { min: 15000, max: 20000, basis: 'person', quantity: 1, assumption: '식사 1회' },
+      stay: { min: 45, max: 60, reason: '여유 있는 식사' },
+    } }] }));
+    expect(trip.stops[0]?.estimatedCost).toBe(40000);
+    // 체류시간은 칸에 저장하지 않고 비고에만 남긴다(2026-09-30).
+    expect(trip.stops[0]?.stayMinutes).toBeNull();
+    expect(trip.stops[0]?.memo).toContain('- 체류');
+    expect(trip.stops[0]?.memo).toContain('AI 추정');
+    expect(trip.stops[0]?.memo).toContain('- 요금');
+    expect(trip.stops[0]?.memo).toContain('2명');
+  });
   it('확인된 장소의 좌표와 주소를 저장한다', () => {
     const trip = selectionToTrip(
       selection({
@@ -106,4 +140,50 @@ describe('selectionToTrip', () => {
     expect(selectionToTrip(selection({ regions: [] })).title).toBe('새 여행');
   });
 
+});
+
+describe('selectionToTrip 코스 담기', () => {
+  const room = { cost: { min: 90000, max: 120000, basis: 'room_night' as const, quantity: 1, assumption: '2인 1실 1박' }, stay: null };
+  it('숙소는 그 일차 체크인·다음 날 체크아웃 숙박으로 담는다', () => {
+    const trip = selectionToTrip(selection({ items: [item({ id: 'h', name: '호텔', kind: 'stay', estimate: room })] }));
+    expect(trip.stops).toHaveLength(0);
+    expect(trip.stays[0]).toMatchObject({ name: '호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000, reservation: 'unknown' });
+  });
+  it('같은 숙소가 연속 일차면 하나로 합친다', () => {
+    const trip = selectionToTrip(selection({
+      endDate: '2026-10-03',
+      items: [item({ id: 'h1', name: '호텔', kind: 'stay', estimate: room }), item({ id: 'h2', day: 2, name: '호텔', kind: 'stay', estimate: room })],
+    }));
+    expect(trip.stays).toHaveLength(1);
+    expect(trip.stays[0]).toMatchObject({ checkIn: '2026-10-01', checkOut: '2026-10-03', estimatedCost: 240000 });
+  });
+  it('날짜 미정이면 숙소를 담지 않는다', () => {
+    const trip = selectionToTrip(selection({ startDate: null, endDate: null, items: [item({ id: 'h', name: '호텔', kind: 'stay' })] }));
+    expect(trip.stays).toHaveLength(0);
+    expect(trip.stops).toHaveLength(0);
+  });
+  it('코스 순서대로 담고 새 분류와 추천 시각 메모를 남긴다', () => {
+    const trip = selectionToTrip(selection({ items: [item({ id: 'a', name: 'A', kind: 'activity', start: '10:00' }), item({ id: 'b', name: 'B', kind: 'shopping' })] }));
+    expect(trip.stops.map((s) => [s.name, s.kind, s.order])).toEqual([['A', 'activity', 0], ['B', 'shopping', 1]]);
+    expect(trip.stops[0]!.memo).toContain('- 시각 10:00');
+    expect(trip.stops[0]!.fixedTime).toBeNull();
+    expect(trip.stops[1]!.memo).not.toContain('- 시각');
+  });
+});
+
+describe('selectionToTrip 휴무 메모', () => {
+  it('AI 추정 휴무 정보를 메모에 남긴다', () => {
+    const trip = selectionToTrip(selection({ items: [{ ...item({ id: 'a', name: 'A' }), closed: { onDay: true, note: '매주 월요일 휴무' } }] }));
+    expect(trip.stops[0]!.memo).toBe(['AI 추정', '- 매주 월요일 휴무'].join('\n'));
+  });
+});
+
+describe('aiStopMemo', () => {
+  it('화면 미리보기와 담은 메모가 같다', () => {
+    const est = { cost: { min: 3000, max: 5000, basis: 'person' as const, quantity: 1, assumption: '입장권' }, stay: { min: 60, max: 90, reason: 'x' } };
+    const picked = { ...item({ id: 'a', name: 'A', start: '10:00', estimate: est }), closed: { onDay: false, note: '매주 월요일 휴무' } };
+    const trip = selectionToTrip(selection({ partySize: 2, items: [picked] }));
+    expect(aiStopMemo(picked, 2)).toBe(trip.stops[0]!.memo);
+    expect(aiStopMemo(picked, 2)).toContain('- 시각 10:00');
+  });
 });

@@ -1,3 +1,4 @@
+import { FunctionError } from './function-error';
 import { computed, DestroyRef, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
@@ -215,7 +216,12 @@ export class AuthStore {
           skipBrowserRedirect: true,
           // `scopes` appends to Kakao defaults; singular `scope` replaces them.
           // Supabase's Kakao provider must allow users without an email.
-          ...(provider === 'kakao' ? { queryParams: { scope: 'profile_nickname' } } : {}),
+          // prompt=select_account: 로그아웃한 뒤에도 제공자가 마지막 계정으로 묻지 않고
+          // 로그인하면, 초대받은 친구가 여행을 만든 사람 계정으로 합류하게 된다(2026-09-29).
+          queryParams:
+            provider === 'kakao'
+              ? { scope: 'profile_nickname', prompt: 'select_account' }
+              : { prompt: 'select_account' },
         },
       });
       if (error || !data.url) throw error ?? new Error('No authorization URL');
@@ -270,8 +276,8 @@ export class AuthStore {
     // 그것을 꺼내 던져야 '하루 한도'와 '그 밖의 실패'를 나눌 수 있다.
     const response = (error as { context?: Response }).context;
     if (response instanceof Response) {
-      const parsed = (await response.json().catch(() => null)) as { error?: string } | null;
-      if (parsed?.error) throw new Error(parsed.error);
+      const parsed = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+      if (typeof parsed?.['error'] === 'string') throw new FunctionError(parsed['error'], parsed);
     }
     throw new Error('function_failed');
   }

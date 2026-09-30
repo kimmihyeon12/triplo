@@ -35,7 +35,10 @@ export const EXPENSE_CATEGORIES = {
   food: '식비',
   stay: '숙박',
   transport: '교통',
-  activity: '관광·활동',
+  // 일정 분류(관광·액티비티)와 라벨을 맞춘다. 저장 키 activity는 그대로다(2026-09-30).
+  activity: '관광·액티비티',
   shopping: '쇼핑',
   other: '기타',
 };
+
+export type ExpenseCategory = keyof typeof EXPENSE_CATEGORIES;

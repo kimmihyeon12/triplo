@@ -1,9 +1,15 @@
 import type { PlaceCandidate } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
 import { mapQuery } from '../../places/data/map-links';
-import type { StopKind } from '../../trips/model/trip';
+import type { PlanKind } from '../../trips/model/trip';
 import type { VerifiedItem } from '../model/ai-plan';
 import type { AiItem } from '../util/ai-response';
+
+/**
+ * 확인할 항목. 챗봇 제안처럼 순서·시각·이동이 없는 입력도 받는다. 없으면 응답 순서와 미정으로 채운다.
+ */
+export type VerifyInput = Pick<AiItem, 'day' | 'name' | 'kind' | 'estimate'> &
+  Partial<Pick<AiItem, 'order' | 'start' | 'moveToNext' | 'closed'>>;
 
 /**
  * 모델이 낸 장소 이름을 실제 장소 검색으로 대조한다. 찾은 것만 확인된 장소로 두고
@@ -66,19 +72,20 @@ function bestMatch(asked: string, candidates: readonly PlaceCandidate[]): PlaceC
 }
 
 /**
- * 검색 분류로 종류를 다시 정한다. 모델은 주류제조업체를 식사로, 음식점을 카페로
- * 적는 일이 있다. 검색이 돌려준 분류가 더 정확하다.
+ * 검색 분류는 먹는 곳·숙박을 정확히 가르지만 관광·액티비티·쇼핑·기타는 가르지 못한다.
+ * 그래서 앞의 셋은 검색을 따르고, 나머지는 모델 분류를 쓴다. 모델이 먹는 곳·숙소라고
+ * 했는데 검색이 아니라고 하면 관광으로 낮춘다. 모델은 주류제조업체를 식사로 적는 일이 있다.
  */
-function kindFromCategory(category: string, fallback: StopKind): StopKind {
-  if (!category) return fallback;
+export function kindFromCategory(category: string, fallback: PlanKind): PlanKind {
   if (category.includes('카페') || category.includes('디저트')) return 'break';
   if (category.includes('음식점') || category.includes('식당')) return 'meal';
-  // 먹는 곳으로 볼 수 없는 분류면 장소로 둔다.
-  return 'place';
+  if (category.includes('숙박')) return 'stay';
+  if (!category) return fallback;
+  return fallback === 'meal' || fallback === 'break' || fallback === 'stay' ? 'place' : fallback;
 }
 
 export async function verifyPlaces(
-  items: readonly AiItem[],
+  items: readonly VerifyInput[],
   regions: readonly string[],
   search: PlaceSearchProvider,
 ): Promise<VerifiedItem[]> {
@@ -112,7 +119,7 @@ async function findPlace(
 }
 
 async function verifyOne(
-  item: AiItem,
+  item: VerifyInput,
   index: number,
   regions: readonly string[],
   search: PlaceSearchProvider,
@@ -122,6 +129,11 @@ async function verifyOne(
     day: item.day,
     name: item.name,
     kind: item.kind,
+    order: item.order ?? index + 1,
+    start: item.start ?? null,
+    moveToNext: item.moveToNext ?? null,
+    ...(item.closed ? { closed: item.closed } : {}),
+    ...(item.estimate ? { estimate: item.estimate } : {}),
   };
   try {
     const hit = await findPlace(item.name, regions, search);
@@ -148,4 +160,46 @@ async function verifyOne(
     location: null,
     placeRef: null,
   };
+}
+
+/**
+ * 사용자가 적은 꼭 갈 장소를 직접 검색해, 결과에 없으면 1일차 끝에 더한다.
+ * 모델은 지역 밖이거나 이름이 조금 틀린 곳을 빼 버린다(2026-09-30 '수원 신가회전훠궈' 누락 확인).
+ * 사용자가 이름을 적은 곳이라 검색 첫 결과를 쓰며, 좌표·주소는 검색 결과에서만 가져온다.
+ */
+export async function mustGoPlaces(
+  input: string,
+  existing: readonly VerifiedItem[],
+  search: PlaceSearchProvider,
+): Promise<VerifiedItem[]> {
+  const terms = input.split(/[,，·\n]/).map((t) => t.trim()).filter(Boolean).slice(0, 5);
+  const added: VerifiedItem[] = [];
+  const has = (hit: PlaceCandidate) =>
+    [...existing, ...added].some(
+      (i) => i.placeRef?.id === hit.id || nameMatch(i.name, hit.name) !== null,
+    );
+  let order = Math.max(0, ...existing.filter((i) => i.day === 1).map((i) => i.order));
+  for (const term of terms) {
+    try {
+      const hit = (await search.search(term, { size: CANDIDATE_SIZE })).candidates[0];
+      if (!hit || has(hit)) continue;
+      added.push({
+        id: `must-${added.length}`,
+        day: 1,
+        order: ++order,
+        start: null,
+        moveToNext: null,
+        name: hit.name,
+        kind: kindFromCategory(hit.category, 'place'),
+        verified: true,
+        note: hit.category,
+        address: hit.roadAddress || hit.address,
+        location: { lat: hit.lat, lng: hit.lng },
+        placeRef: { provider: hit.provider, id: hit.id, url: hit.url },
+      });
+    } catch {
+      // 한 곳의 검색 실패가 나머지를 막지 않게 한다.
+    }
+  }
+  return added;
 }

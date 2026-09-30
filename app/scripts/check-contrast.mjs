@@ -15,7 +15,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(resolve(here, '../src/styles/theme.css'), 'utf-8');
 
 /** 배지·안내처럼 글자를 얹는 색 쌍. 이름은 theme.css의 토큰 접두사다. */
-const PAIRS = ['place', 'stay', 'region', 'meal', 'cafe', 'warn', 'danger', 'ok', 'accent'];
+const PAIRS = ['place', 'activity', 'shopping', 'other', 'stay', 'region', 'meal', 'cafe', 'warn', 'danger', 'ok', 'accent'];
 
 const token = (name) => {
   const match = css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`));

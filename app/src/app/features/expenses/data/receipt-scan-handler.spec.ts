@@ -3,6 +3,7 @@ import {
   createReceiptScanHandler,
   MAX_IMAGE_CHARS,
 } from '../../../../../../supabase/functions/receipt-scan/handler';
+import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
  * Edge Function 핸들러를 앱 테스트에서 그대로 검증한다. ai-plan과 같은 구조다.
@@ -22,14 +23,21 @@ function setup(
   overrides: {
     getUser?: (token: string) => Promise<{ id: string } | null>;
     callModel?: (r: { system: string; image: string; mimeType: string }) => Promise<string>;
+    consumeQuota?: (userId: string) => Promise<number>;
   } = {},
 ) {
   const callModel = overrides.callModel ?? vi.fn(async () => '{"store":"","total":0,"items":[]}');
+  const consumeQuota = vi.fn(overrides.consumeQuota ?? (async () => 9));
+  const refundQuota = vi.fn(async () => {});
   return {
     callModel,
+    consumeQuota,
+    refundQuota,
     handler: createReceiptScanHandler({
       getUser: overrides.getUser ?? (async () => ({ id: 'u1' })),
       callModel,
+      consumeQuota,
+      refundQuota,
     }),
   };
 }
@@ -82,7 +90,7 @@ describe('createReceiptScanHandler', () => {
     const { handler } = setup({ callModel: async () => '{"items":[1]}' });
     const res = await handler(post(BODY));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ content: '{"items":[1]}' });
+    expect(await res.json()).toEqual({ content: '{"items":[1]}', remaining: 9 });
   });
 
   it('하루 한도 초과는 429로 알린다', async () => {
@@ -103,5 +111,57 @@ describe('createReceiptScanHandler', () => {
     const res = await handler(post(BODY));
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe('scan_failed');
+  });
+
+  it('성공하면 차감하고 남은 횟수를 돌려준다', async () => {
+    const { handler, consumeQuota } = setup();
+    const res = await handler(post(BODY));
+    expect((await res.json()).remaining).toBe(9);
+    expect(consumeQuota).toHaveBeenCalledWith('u1');
+  });
+
+  it('너무 큰 사진·잘못된 형식은 차감하지 않는다', async () => {
+    const { handler, consumeQuota } = setup();
+    expect((await handler(post({ ...BODY, image: 'A'.repeat(MAX_IMAGE_CHARS + 1) }))).status).toBe(413);
+    expect((await handler(post({ ...BODY, mimeType: 'image/gif' }))).status).toBe(400);
+    expect(consumeQuota).not.toHaveBeenCalled();
+  });
+
+  it('내 한도를 넘으면 사진을 읽지 않고 429 user_limit', async () => {
+    const { handler, callModel } = setup({
+      consumeQuota: async () => {
+        throw new UserLimitError(10);
+      },
+    });
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: 'user_limit', limit: 10 });
+    expect(callModel).not.toHaveBeenCalled();
+  });
+
+  it('모델이 실패하면 되돌린다', async () => {
+    const { handler, refundQuota } = setup({
+      callModel: async () => {
+        throw new Error('quota_exceeded');
+      },
+    });
+    expect((await handler(post(BODY))).status).toBe(429);
+    expect(refundQuota).toHaveBeenCalledWith('u1');
+  });
+
+  it('한도 확인이 실패하면 503', async () => {
+    const { handler, callModel } = setup({
+      consumeQuota: async () => {
+        throw new Error('quota_check_failed');
+      },
+    });
+    expect((await handler(post(BODY))).status).toBe(503);
+    expect(callModel).not.toHaveBeenCalled();
+  });
+
+  it('모델이 빈 답을 주면 실패로 알리고 되돌린다', async () => {
+    const { handler, refundQuota } = setup({ callModel: async () => '' });
+    expect((await handler(post(BODY))).status).toBe(500);
+    expect(refundQuota).toHaveBeenCalledWith('u1');
   });
 });

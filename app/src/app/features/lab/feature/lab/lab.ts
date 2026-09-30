@@ -17,7 +17,7 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSwitch } from '../../../../shared/ui/switch/switch';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
-import { ErrorToast } from '../../../../shared/ui/error-toast/error-toast';
+import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 
 @Component({
@@ -32,7 +32,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
     UiSpinner,
     UiSwitch,
     UiActionBar,
-    ErrorToast,
+    UiToast,
     IconComponent,
   ],
   templateUrl: './lab.html',

@@ -22,7 +22,8 @@ import { ChatConfirmCard } from '../chat-confirm-card/chat-confirm-card';
 import type { ChatDraft, ChatError, ChatMessage } from '../../model/chat';
 import { previewDraft, type DraftPreview } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
-import { copyText } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
+import { ToastService } from '../../../../core/toast-service';
 
 /** 대상 여행이 아직 없을 때 미리보기의 기준이 되는 빈 여행. */
 const EMPTY_TRIP: Trip = {
@@ -69,6 +70,8 @@ export class ChatThread {
   readonly messages = input.required<readonly ChatMessage[]>();
   readonly chips = input.required<readonly string[]>();
   readonly pending = input(false);
+  /** 빈 화면에 구름이를 세울지. 머리글에 이미 구름이가 있는 시트는 끈다. */
+  readonly showMascot = input(true);
   readonly error = input<ChatError | null>(null);
   readonly trip = input<Trip | null>(null);
   /** 이미 반영한 초안의 말풍선 id. 되돌리기 버튼만 남긴다. */
@@ -77,6 +80,8 @@ export class ChatThread {
   readonly dismissedIds = input<readonly string[]>([]);
   /** 남은 호출 횟수. 0이면 새 대화를 권한다. */
   readonly turnsLeft = input(0);
+  /** 오늘 AI 질문이 거의 남지 않았을 때의 안내. 없으면 null. */
+  readonly aiHint = input<string | null>(null);
 
   readonly send = output<string>();
   readonly apply = output<{ messageId: string; draft: ChatDraft }>();
@@ -85,15 +90,15 @@ export class ChatThread {
   readonly cancel = output<void>();
 
   readonly draftText = signal('');
-  readonly copyStatus = signal('');
+  private readonly toast = inject(ToastService);
 
   clearComposer(): void {
     this.draftText.set('');
-    this.copyStatus.set('');
   }
 
   async copyResult(text: string): Promise<void> {
-    this.copyStatus.set(await copyText(text) ? '일정을 복사했어요.' : '복사하지 못했어요. 답변의 텍스트를 선택해 복사해 주세요.');
+    if (await copyText(text)) this.toast.success('일정을 복사했어요.');
+    else this.toast.error('복사하지 못했어요. 답변의 텍스트를 선택해 복사해 주세요.');
   }
 
   /** 빈 화면의 안내. 어디서 열었는지에 따라 할 수 있는 일이 다르다. */

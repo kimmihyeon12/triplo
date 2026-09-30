@@ -35,7 +35,11 @@ export function commandTargets(text: string, trip: Trip, today: string, includeE
     if (!date) return '여행 기간 안의 날짜를 하나만 지정해 주세요.';
     targets = targets.filter(s => s.date === date);
   }
-  if (/카페/.test(scope)) targets = targets.filter(s => s.kind === 'break');
+  if (/액티비티|체험/.test(scope)) targets = targets.filter(s => s.kind === 'activity');
+  else if (/쇼핑/.test(scope)) targets = targets.filter(s => s.kind === 'shopping');
+  else if (/기타/.test(scope)) targets = targets.filter(s => s.kind === 'other');
+  else if (/관광/.test(scope)) targets = targets.filter(s => s.kind === 'place');
+  else if (/카페/.test(scope)) targets = targets.filter(s => s.kind === 'break');
   else if (/식사|식당/.test(scope)) targets = targets.filter(s => s.kind === 'meal');
   else if (/여유시간/.test(scope)) targets = targets.filter(s => s.kind === 'buffer');
   else if (!named.length && !/미배치|일차|오늘|내일|전체|전부|모두|\d{4}-\d{2}-\d{2}/.test(scope)) return '변경할 장소 이름이나 전체 대상을 알려 주세요.';

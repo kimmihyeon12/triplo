@@ -5,7 +5,9 @@ import { change, type LocalResult } from './local-command-draft';
 import { commandDate, commandTargets } from './local-command-targets';
 import { localQuery } from './local-queries';
 
-const HELP = '장소 이름과 변경할 값을 명확히 알려 주세요. 예: 오죽헌 2일차로 옮겨 / 오죽헌 체류시간 60분으로 바꿔';
+const HELP = '장소 이름과 변경할 값을 명확히 알려 주세요. 예: 오죽헌 2일차로 옮겨 / 오죽헌 메모에 입장권 확인 추가해';
+/** 체류시간은 화면에서 없앴다(2026-09-30 사용자 결정). 저장값은 보유하지만 명령으로 바꾸거나 세지 않는다. */
+const STAY_NOTICE = '체류시간은 이제 일정에 따로 적지 않아요. 필요하면 비고(메모)에 적어 주세요. 예: 오죽헌 메모에 체류 1시간 추가해';
 const END = '(?:해줘|해주세요|해요|해|줘|주세요|바꿔줘|바꿔|변경해|설정해|설정|수정해|수정)?[.!?]*';
 
 function select(text: string, trip: Trip, today: string, includeExcluded = false): TripStop[] | string {
@@ -19,11 +21,14 @@ function select(text: string, trip: Trip, today: string, includeExcluded = false
 export function localCommand(input: string, trip: Trip | null, today = todayIso()): LocalResult | null {
   let text = input.trim();
   if (/(?:\d+일차|오늘|내일|\d{4}-\d{2}-\d{2})(?:으로|로)$/.test(text)) text += ' 옮겨';
-  if (/체류시간.*\d+(?:시간|분)(?:으로|로)$/.test(text)) text += ' 바꿔';
-  if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·체류시간·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
+  if (/체류시간/.test(text)) return { text: STAY_NOTICE };
+  if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
   const editing = /옮|이동|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
-  const querying = /일정|장소|미배치|체류시간|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);
-  if (!editing && !querying && !/열어/.test(text)) return null;
+  const querying = /일정|장소|미배치|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);
+  // 화면 열기는 여는 대상(가계부·지도·일정)이 있을 때만 명령이다. '불국사 몇 시에 열어'처럼
+  // 영업시간을 묻는 말까지 가로채 AI가 답하지 못했다(2026-09-30).
+  const openScreen = /(?:경비|가계부|지출|지도|일정)[^.?!]*열어/.test(text);
+  if (!editing && !querying && !openScreen) return null;
   // Recommendations and new-place creation belong to the existing provider flow.
   if (/추천|갈 만|가볼|일정 짜|일정 만들어|장소 추가|카페.*넣어/.test(text) && !editing) return null;
   if (!trip) return { text: '먼저 수정하거나 조회할 여행을 열어 주세요.' };
@@ -31,7 +36,7 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   if (/미배치/.test(text) && /모두|전부|전체/.test(text) && /배정|배치/.test(text) && !/카페|식사|식당|여유시간/.test(text)) return null;
   const query = !editing ? localQuery(text, trip, today) : null;
   if (query) return query;
-  if (/열어/.test(text)) {
+  if (openScreen) {
     if (/경비|가계부|지출/.test(text)) return { text: '여행 가계부를 열 수 있어요.', localLink: `/trips/${encodeURIComponent(trip.id)}/expenses` };
     if (/지도|일정/.test(text)) {
       const date = commandDate(text, trip, today);
@@ -86,11 +91,6 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
     if (typeof targets === 'string') return {text: targets};
     if (!targets.length) return {text: '옮길 장소가 없어요.'};
     return change(trip, targets.filter(s => s.date !== null).reduce((next, s) => placeStopOnDate(next, s.id, null), trip), '장소 미배치로 변경');
-  }
-  match = text.match(new RegExp(`^(.+?)\\s*체류시간(?:을)?\\s*(?:전부 |모두 )?(?:(\\d+)시간)?\\s*(?:(\\d+)분)?(?:으로|로)?\\s*${END}$`));
-  if (match && (match[2] || match[3])) {
-    const minutes = Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
-    return minutes > 0 && minutes <= 1440 ? update(match[1], {stayMinutes: minutes}, `체류시간 ${minutes}분`) : {text: '체류시간은 1~1440분으로 입력해 주세요.'};
   }
   match = text.match(/^(.+?)\s*(?:방문 시각 |시각 )?고정(?:을)? (?:전부 |모두 )?(?:해제해|풀어)(?:줘)?$/);
   if (match) return update(match[1], {fixedTime: null}, '방문 시각 고정 해제');

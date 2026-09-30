@@ -11,8 +11,8 @@ import { IconComponent } from './shared/ui/icon/icon';
 import { NavigationHistory } from './core/navigation-history';
 import { PageBar } from './core/page-bar';
 import { PageTools } from './shared/ui/page-tools/page-tools';
-import { ErrorToast } from './shared/ui/error-toast/error-toast';
-import { ErrorToastService } from './core/error-toast-service';
+import { UiToast } from './shared/ui/toast/toast';
+import { ToastService } from './core/toast-service';
 import { NetworkActivity } from './core/network-activity';
 import { AuthStore } from './features/auth/data/auth-store';
 import {
@@ -22,13 +22,13 @@ import {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, IconComponent, PageTools, ErrorToast],
+  imports: [RouterOutlet, RouterLink, IconComponent, PageTools, UiToast],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
 })
 export class App {
   private readonly router = inject(Router);
-  readonly toast = inject(ErrorToastService);
+  readonly toast = inject(ToastService);
   readonly navigating = this.router.currentNavigation;
   private readonly network = inject(NetworkActivity);
   /** 네트워크 요청이 진행 중일 때만, 지연 없이 상단 바에 로딩을 보인다. */

@@ -37,7 +37,7 @@
           "app/src/app/features/trips/feature/trip-detail/trip-detail.html"
         ],
         "createdAt": "2026-09-15T13:34:37.047Z",
-        "reason": "오탐: 탐지기 정규식이 Tailwind 임의값의 종료 문자 ]를 인식하지 못해, [transition:background-color_...] 이후에 이어지는 [@media(min-width:_720px)] 반응형 유틸리티의 min-width까지 전환 값으로 잘못 읽는다. 탐지값 3건 모두 min-width였고 실제 전환 대상은 background-color(L286,L494)와 border-color(L811)뿐이라 레이아웃을 유발하지 않는다. 같은 class의 settle 애니메이션도 background-color만 변경한다(app/src/styles/effects.css)."
+        "reason": "agent triage 2026-09-29: flagged lines only transition background-color; detector matched 'width' inside [@media(min-width:_720px)] condition, not an animated layout property"
       }
     ]
   }

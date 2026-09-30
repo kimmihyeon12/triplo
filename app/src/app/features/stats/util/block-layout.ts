@@ -38,11 +38,18 @@ export function buildBlockLayout(grid: VoxelGrid, counts: ReadonlyMap<string, nu
     const list = byRegion.get(cell.regionCode);
     if (list) list.push(cell); else byRegion.set(cell.regionCode, [cell]);
   }
-  /** 그 지역 칸 중 목표에 가장 가까운 것. 목표가 경계 밖이어도 지역을 넘지 않는다. */
+  /**
+   * 그 지역 칸 중 목표에 가장 가까운 것. 목표가 경계 밖이어도 지역을 넘지 않는다.
+   *
+   * 칸보다 작은 지역(서울 자치구 대부분·부산·인천의 구 등 50곳)은 칸을 하나도
+   * 받지 못한다. 그때는 목표에 가장 가까운 칸을 빌린다. 빌리지 않으면 다녀온
+   * 지역 목록에는 나오는데 지도에는 칠할 곳이 없다(2026-09-30 확인).
+   */
   const nearestCell = (code: string, x: number, y: number): Cell | null => {
     const own = byRegion.get(code);
-    if (!own?.length) return null;
-    return own.reduce((a, b) => Math.hypot(a.x - x, a.y - y) <= Math.hypot(b.x - x, b.y - y) ? a : b);
+    const pool = own?.length ? own : grid.cells;
+    if (!pool.length) return null;
+    return pool.reduce((a, b) => Math.hypot(a.x - x, a.y - y) <= Math.hypot(b.x - x, b.y - y) ? a : b);
   };
 
   for (const [code, center] of grid.centers) {

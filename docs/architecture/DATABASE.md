@@ -2,7 +2,7 @@
 
 여행과 가계부를 계정별로 저장하는 표 구조다. 원본 마이그레이션은 `supabase/migrations/`에 있고, 앱 모델은 `app/src/app/features/trips/model/trip.ts`다. 이 문서는 두 곳의 대응 관계와 설계 결정을 기록한다.
 
-2026-09-17 작성, 2026-09-29 원격 적용·저장 함수 추가. 적용 여부는 아래 '적용 현황'을 본다.
+2026-09-17 작성, 2026-09-30 소스 대조. 아래 '적용 현황'은 당시 원격 실행 기록이며 이번 문서 갱신에서 원격 상태를 재조회하지 않았다. 구현 SQL과 원격 적용 완료를 구분한다.
 
 ## 전체 관계
 
@@ -113,19 +113,12 @@ trip_regions       trip_stops      accommodation_stays
 
 ## 접근 제어
 
-네 표 모두 Row Level Security를 켠다. 규칙은 하나다. **본인 여행만 읽고 쓴다.**
+2026-09-29부터 규칙은 **참여한 여행만 읽고, 쓰기는 함수로만 한다**이다(`20260929000005_trip_members.sql`). 그 전에는 '본인 여행만 읽고 쓴다'였다.
 
-`trips`는 `owner_id`를 직접 본다. 딸린 세 표는 `owns_trip(trip_id)` 함수로 여행의 주인을 확인한다. 같은 규칙을 세 번 적지 않기 위해서다.
-
-표 권한은 `authenticated`에만 준다(`20260929000001_trip_grants.sql`). 이 프로젝트는 새 표에 권한을 자동으로 주지 않아, 원격 적용 뒤 비로그인 요청이 `permission denied for table trips`로 막히는 것을 보고 확인했다. 비로그인(`anon`)은 표도 저장 함수도 쓸 수 없다.
-
-```sql
-create function owns_trip(target text) returns boolean ...
-  select exists (
-    select 1 from public.trips
-    where id = target and owner_id = (select auth.uid())
-  );
-```
+- **읽기:** 모든 여행·가계부 표는 `is_trip_member(trip_id)`로 멤버만 읽는다. 개인 지출과 그 분담은 쓴 사람(`expenses.created_by`)만 본다. `trip_members`는 같은 여행 멤버끼리, `trip_invites`는 주인만 읽는다.
+- **쓰기:** `authenticated`의 insert·update·delete 권한을 모두 거뒀다. 여행 저장(`save_trip`)·삭제(`delete_trip`)·가계부 함수·초대 함수만 쓴다. 이 함수들은 `security definer`라 RLS를 건너뛰므로 **함수 안에서 멤버·주인을 확인한다.** 버전·분담 합계 검사를 표 직접 쓰기로 우회하지 못하게 하기 위해서다.
+- **확인 함수:** `is_trip_member`·`is_trip_owner`도 `security definer`다. 정책이 `trip_members`를 읽을 때 그 정책이 다시 걸려 돌지 않게 한다.
+- **비로그인(`anon`):** 표 권한이 없고, 초대 미리보기(`preview_trip_invite`)만 부를 수 있다.
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
 
@@ -142,6 +135,30 @@ insert into public.profiles (id, role)
 select id, 'admin' from auth.users where email = '<관리자 이메일>'
 on conflict (id) do update set role = excluded.role;
 ```
+
+## 멤버와 초대 (2026-09-29)
+
+| 표 | 담는 것 |
+| --- | --- |
+| `trip_members` | 여행·사용자·역할(`owner`·`editor`)·합류 시점 닉네임. 기존 여행은 주인 행으로 채웠다. 새 여행은 `save_trip`이 주인 행을 넣는다 |
+| `trip_invites` | 여행마다 하나(`trip_id` 기본 키). 코드의 SHA-256 해시·만든 사람·7일 만료. 새로 만들면 앞 코드는 무효, 지우면 취소 |
+
+| 함수 | 누가 | 하는 일 |
+| --- | --- | --- |
+| `create_trip_invite(trip)` → 코드 | 주인 | 헷갈리는 글자를 뺀 8자 코드를 만들어 해시만 저장하고 코드를 돌려준다. 코드는 다시 볼 수 없다 |
+| `revoke_trip_invite(trip)` | 주인 | 초대를 지운다 |
+| `preview_trip_invite(code)` → json | 누구나 | 제목·기간·지역·장소(이름·분류·날짜·순서·고정 시각)·숙소(이름·체크인·체크아웃)·주인 닉네임. 메모·예약·금액·주소·가계부·여행 id는 없다 |
+| `join_trip(code)` → 여행 id | 로그인한 사람 | editor로 넣는다(이미 멤버면 그대로). 처음 합류하면 가계부에 그 사람 이름을 더하고, 가계부의 '나'를 주인 닉네임으로 바꾼다 |
+| `leave_trip(trip)` | 주인 아닌 멤버 | 스스로 나간다. 주인은 `P0422` |
+| `remove_trip_member(trip, user)` | 주인 | 멤버를 뺀다. 빠진 사람이 쓴 지출은 남는다 |
+| `delete_trip(trip)` | 주인 | 여행을 지운다(cascade) |
+
+- 코드는 대문자로 바꾸고 문자·숫자만 남겨 해시한다(`abcd-efgh`도 같다). 없는 코드·만료·취소는 모두 `invite_invalid`(`P0404`)로 같게 알린다.
+- 남의 여행 id로 `save_trip`을 부르면 `P0404`다(예전에는 기본 키 중복 `23505`).
+- 개인 지출은 쓴 사람만 고치고 지운다. 남의 공동 지출을 개인으로 돌려 감추는 것도 막는다.
+- `expense_splits (expense_id, trip_id)`가 `expenses (id, trip_id)`를 가리켜 분담이 다른 여행의 지출에 달리지 않는다.
+
+로컬 확인: `supabase/tests/trip-members.local.sql`. 기존 `save-trip.local.sql`·`ledger.local.sql`도 이 마이그레이션을 포함해 주인 동작이 그대로인지 확인한다.
 
 ## 저장 방식
 
@@ -175,14 +192,15 @@ on conflict (id) do update set role = excluded.role;
 
 여행은 한 번에 통째로 저장하지만, 가계부는 **동작 하나씩** 저장한다(2026-09-29 사용자 결정). 친구 여럿이 동시에 지출을 더하는 경우가 흔하기 때문이다. 가계부 전체를 한 버전으로 묶으면 서로 다른 지출을 더해도 매번 충돌이 난다.
 
-앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가다.
+앱은 바꾸기 전/후 가계부를 `ledgerOps`(`app/.../expenses/util/ledger-ops.ts`)로 동작 목록으로 바꾸어 차례로 보낸다. 지출 화면의 저장과 챗봇의 적용·되돌리기가 같은 함수를 쓴다. 사람이 먼저 있어야 외래 키가 맞으므로 순서는 사람 → 예산 → 지출 저장 → 지출 삭제 → 수령 취소 → 수령 추가 → 사람 삭제다. 지우는 사람은 그를 가리키던 기록이 정리된 뒤에 지운다.
 
 | 함수 | 하는 일 |
 | --- | --- |
 | `add_ledger_person(trip, person)` | 사람을 더하거나 이름을 바꾼다 |
+| `remove_ledger_person(trip, person_id)` | 사람을 지운다. '나'는 거절(`P0422`), 기록이 가리키는 사람은 외래 키가 막는다(`23503`). `20260929000003` |
 | `save_expense(trip, expense, base_version) → integer` | 지출과 분담을 한 트랜잭션으로 저장하고 새 버전을 돌려준다 |
 | `delete_expense(trip, id, base_version)` | 지출을 지운다 |
-| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다 |
+| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다. 기록은 여행별로 직렬화하고 남은 잔액 안에서만 받는다. `20260930000000` |
 | `set_budget(trip, budget)` | 예산을 바꾸거나 비운다 |
 
 - 모든 함수는 `ledger_guard`로 로그인(`28000`)과 여행 소유(`P0404`)를 먼저 확인한다. `security invoker`라 RLS도 그대로 걸린다.
@@ -190,25 +208,32 @@ on conflict (id) do update set role = excluded.role;
 - 분담 합계가 지출 금액과 다르면 `P0422`로 거절하고 아무것도 바꾸지 않는다.
 - 읽기는 네 표를 동시에 select해 앱 모델로 합친다(`ledger-rows.ts`). 사람 '나'(`self`)가 없으면 처음 읽을 때 한 번 만든다.
 - 기기에 있던 가계부는 옮기지 않고 한 번 지운다(2026-09-29 사용자 결정).
+- 수령 기록(`add_receipt`)은 여행 가계부 단위 트랜잭션 잠금(`pg_advisory_xact_lock`)을 잡고, 앱의 `balances()`와 같은 식(공동 지출의 결제액 − 분담액, 취소되지 않은 수령의 보낸 금액 + · 받은 금액 −)으로 최신 잔액을 계산한다. 보내는 사람의 남은 빚이나 받는 사람의 남은 받을 돈을 넘으면 `P0409`로 거절하고, 같은 id의 재요청은 새로 기록하지 않는다. 두 브라우저가 같은 미수금을 동시에 수령 처리해 두 번 기록되던 문제를 막는다(2026-09-30 감리 P1-04). 잔액 계산 함수 `ledger_balance`는 로그인한 사람이 직접 부르지 못한다.
 
-로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다.
+로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다. `supabase/tests/receipt.local.sql`은 잔액 초과·반대 방향 거절, 부분 수령, 같은 id 재요청 무시, 취소 뒤 재기록을 검사하고, 파일 끝의 상태에서 두 세션이 같은 미수금을 동시에 수령하면 하나만 기록되는지 확인한다.
 
 ## 계정 삭제
 
 `delete-account` 함수는 `auth.users` 행을 실제로 지운다(soft delete가 아니다). `trips.owner_id`에 `on delete cascade`를 걸어 두었으므로 그 사람의 여행·지역·장소·숙소가 함께 사라진다.
 
-이 설정이 없으면 외래 키 위반으로 **탈퇴 자체가 실패**한다. `docs/HARNESS.md`가 "여행 테이블 연결 전에 삭제 정책을 확장해야 한다"고 적은 것이 이 지점이다.
+삭제 연쇄는 SQL 기준이며 실제 계정 탈퇴가 모든 관련 데이터에 미치는 영향은 별도 검증한다. 함수 배포·런타임 활성화·사진 Storage 등 향후 저장 대상의 정리 정책은 [HARNESS.md](../HARNESS.md)를 따른다.
 
 ## 아직 없는 것
 
-- **친구 공유 관련 표.** `TripParticipant`·`TripMember`·`TripInvite`·`TripShare`는 tasks 8.2 범위다. 그때 이 RLS 규칙도 "본인 여행"에서 "참여한 여행"으로 넓혀야 한다.
-- **AI 호출 횟수 기록.** 사용자별 하루 제한을 서버에서 세려면 표가 필요하다. tasks 13.12에서 다룬다.
+- **보기 전용 공유 링크 스냅숏(tasks 8.3).** 지금 초대 미리보기는 원본을 줄여 보여 줄 뿐 따로 저장한 스냅숏이 아니다.
+- **주인 승인·코드 시도 제한.** 2026-09-29 결정으로 이번 범위에서 뺐다.
 
 ## 적용 현황
+
+현재 소스에는 아래 원격 기록에 이어 `20260929000007_preview_my_role.sql`과 `20260930000000_receipt_balance_guard.sql`도 있다. 이번 점검에서는 두 파일의 존재와 구현을 확인했으며 원격 적용 여부는 확인하지 않았다. 수령 검증은 여행 가계부 단위 잠금·서버 잔액 검사를 구현하지만 실제 동시 요청 검증과는 구분한다.
 
 - 2026-09-17 마이그레이션 작성.
 - 2026-09-29 원격 적용(`npx supabase db push --linked`). 프로젝트 `wslqgfetdwcmqeztixvs`(PostgreSQL 17.6)에 세 마이그레이션(`20260917000000`, `20260929000000`, `20260929000001`)이 적용됐다.
 - 적용 후 확인: 비로그인 요청은 표·저장 함수 모두 `42501`로 거절. 로컬 PostgreSQL 17에서 저장 함수 동작(새 저장, 충돌 거절, 제약 위반 시 전체 되돌림, 다른 계정 차단, 비로그인 거절)을 확인했다.
 - 2026-09-29 가계부 마이그레이션(`20260929000002`) 원격 적용. 비로그인 요청은 가계부 표 다섯 개와 저장 함수 모두 `42501`로 거절됨을 확인했다. 적용 전에는 표가 없어 가계부 화면에서 404가 났다.
-- 2026-09-29 관리자 판별 마이그레이션(`20260929100000_profiles_role.sql`) 작성. 로컬 PostgreSQL 임시 DB 검증 완료, 원격 적용 전이다.
+- 2026-09-29 사람 삭제 함수(`20260929000003`) 원격 적용. 비로그인 호출은 `42501`로 거절됨을 확인했다.
+- 2026-09-29 AI 사용 횟수(`20260929000004`) 원격 적용. `ai_usage`(사용자·한국 날짜·기능별 횟수)와 `ai_quota_overrides`(사용자별 예외 한도)는 RLS를 켜고 사용자 권한을 주지 않는다. `consume_ai_quota`·`refund_ai_quota`는 `security definer`이며 `service_role`만 실행한다. 한도 초과는 `P0429`(detail에 적용 한도). 비로그인 요청은 `42501`로 거절됨을 확인했다. 자세한 규칙은 [AI-PLANNING.md](../AI-PLANNING.md).
+- 2026-09-29 친구 초대·함께 편집(`20260929000005`) 원격 적용, v0.9.0 배포. 비로그인 요청은 `trips`·`trip_members`·`trip_invites`·`expenses` 표와 `save_trip`·`join_trip`·`delete_trip`이 모두 `42501`, 초대 미리보기만 열려 잘못된 코드에 `invite_invalid`를 돌려줌을 확인했다. 실제 두 계정의 초대·합류·함께 편집은 사용자 확인 대상이다.
+- 2026-09-29 v0.9.0 배포 직후 가계부를 불러오지 못했다. 분담 → 지출 외래 키가 둘이 되어 PostgREST가 지출·분담을 함께 읽을 관계를 고르지 못했기 때문이다(PGRST201). 옛 `expense_splits_expense_id_fkey`를 지우는 `20260929000006`을 원격 적용하고, 같은 요청이 관계 오류 없이 권한 확인까지 가는 것을 확인했다. 표에 외래 키를 더할 때는 PostgREST가 같은 두 표 사이의 관계를 하나로 고를 수 있는지 함께 본다.
+- 2026-09-29 관리자 판별 마이그레이션(`20260930000002_profiles_role.sql`) 작성. 로컬 PostgreSQL 임시 DB 검증 완료, 원격 적용 전이다.
 - 아직 확인할 것: 실제 계정 두 개로 서로의 여행이 안 보이는지, 같은 계정 다른 기기 조회, 두 탭 충돌 알림, 계정 삭제 시 여행·가계부 연쇄 삭제, 실제 계정으로 지출 저장·수정·삭제와 챗봇 지출 적용.

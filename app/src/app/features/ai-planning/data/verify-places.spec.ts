@@ -1,7 +1,7 @@
 import { expect, it, describe, vi } from 'vitest';
 import type { PlaceCandidate } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
-import { verifyPlaces } from './verify-places';
+import { kindFromCategory, mustGoPlaces, verifyPlaces } from './verify-places';
 import type { AiItem } from '../util/ai-response';
 
 function candidate(partial: Partial<PlaceCandidate> & { name: string }): PlaceCandidate {
@@ -242,5 +242,72 @@ describe('verifyPlaces', () => {
     const [found] = await verifyPlaces([items[0]!], ['강릉'], search);
     expect(found!.verified).toBe(true);
     expect(found!.note).toBe('');
+  });
+});
+
+describe('kindFromCategory', () => {
+  it.each([
+    ['음식점 > 한식', 'place', 'meal'], ['카페', 'meal', 'break'], ['숙박 > 호텔', 'place', 'stay'],
+    ['관광명소', 'activity', 'activity'], ['시장', 'shopping', 'shopping'], ['관광명소', 'stay', 'place'],
+    ['문화유적', 'meal', 'place'], ['', 'shopping', 'shopping'], ['기차역', 'other', 'other'],
+  ] as const)('%s + 모델 %s → %s', (category, model, expected) => {
+    expect(kindFromCategory(category, model)).toBe(expected);
+  });
+});
+
+describe('코스 정보 보존', () => {
+  it('확인한 장소는 순서·시각·이동을 그대로 들고 간다', async () => {
+    const search = fakeSearch({ '강릉시 안목해변': [candidate({ name: '안목해변', category: '관광명소' })] });
+    const [item] = await verifyPlaces(
+      [{ day: 1, order: 2, start: '11:00', moveToNext: { mode: '도보', minutes: 5 }, name: '안목해변', kind: 'activity' }],
+      ['강릉시'],
+      search,
+    );
+    expect(item).toMatchObject({ verified: true, order: 2, start: '11:00', moveToNext: { mode: '도보', minutes: 5 }, kind: 'activity' });
+  });
+  it('순서·시각이 없는 챗봇 제안도 받아서 응답 순서를 매긴다', async () => {
+    const search = fakeSearch({});
+    const out = await verifyPlaces([{ day: 1, name: 'A', kind: 'place' }, { day: 1, name: 'B', kind: 'meal' }], [], search);
+    expect(out.map((i) => [i.order, i.start, i.moveToNext])).toEqual([[1, null, null], [2, null, null]]);
+  });
+});
+
+describe('휴무 정보 보존', () => {
+  it('확인한 장소는 휴무 정보를 들고 간다', async () => {
+    const search = fakeSearch({ '강릉시 오죽헌': [candidate({ name: '오죽헌', category: '문화유적' })] });
+    const [item] = await verifyPlaces([{ day: 1, name: '오죽헌', kind: 'place', closed: { onDay: true, note: '월요일 휴무' } }], ['강릉시'], search);
+    expect(item!.closed).toEqual({ onDay: true, note: '월요일 휴무' });
+  });
+});
+
+describe('mustGoPlaces', () => {
+  const found = (id: string, name: string, extra: Partial<VerifiedItemLike> = {}) => ({
+    id, day: 1, order: 1, start: null, moveToNext: null, name, kind: 'place' as const, verified: true,
+    note: '', address: '', location: { lat: 37, lng: 127 }, placeRef: { provider: 'kakao' as const, id, url: null }, ...extra,
+  });
+  type VerifiedItemLike = ReturnType<typeof found>;
+  const search = fakeSearch({
+    '수원 신가회전훠궈': [candidate({ id: 'k-singa', name: '신가회전훠궈 수원점', category: '음식점 > 중식' })],
+    '없는 가게': [],
+  });
+
+  it('결과에 없는 꼭 갈 장소를 검색해 1일차 끝에 넣는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈', [found('ai-0', '화성행궁')], search);
+    expect(extra).toEqual([expect.objectContaining({
+      id: 'must-0', day: 1, order: 2, name: '신가회전훠궈 수원점', kind: 'meal', verified: true, start: null, moveToNext: null,
+    })]);
+  });
+  it('이미 결과에 있으면 넣지 않는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈', [found('k-singa', '신가회전훠궈', { placeRef: { provider: 'kakao', id: 'k-singa', url: null } })], search);
+    expect(extra).toEqual([]);
+  });
+  it('여러 곳을 쉼표로 나눠 찾고, 찾지 못한 이름은 넣지 않는다', async () => {
+    const extra = await mustGoPlaces('수원 신가회전훠궈, 없는 가게', [], search);
+    expect(extra.map((i) => i.name)).toEqual(['신가회전훠궈 수원점']);
+  });
+  it('빈 입력이면 검색하지 않는다', async () => {
+    const spy = { ...search, search: vi.fn(search.search) };
+    expect(await mustGoPlaces('  ', [], spy)).toEqual([]);
+    expect(spy.search).not.toHaveBeenCalled();
   });
 });

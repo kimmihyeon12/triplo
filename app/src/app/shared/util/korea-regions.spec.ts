@@ -5,6 +5,7 @@ import {
   findRegionByCode,
   findRegionByName,
   provinceCodeOf,
+  regionHint,
   searchRegions,
 } from './korea-regions';
 
@@ -102,6 +103,11 @@ describe('이름으로 찾기', () => {
 });
 
 describe('지역 검색', () => {
+  it('부산 전체를 자치구보다 먼저 선택할 수 있다', () => {
+    expect(searchRegions('부산')[0]).toMatchObject({ name: '부산', label: '부산 전체', code: '26' });
+    expect(searchRegions('부산광역시')[0]?.name).toBe('부산');
+    expect(searchRegions('해운대')[0]?.name).toBe('해운대구');
+  });
   it('접미사 없이 쳐도 찾는다', () => {
     // 사용자는 '여수'까지만 치지 '여수시'라고 치지 않는다.
     const found = searchRegions('여수');
@@ -126,5 +132,38 @@ describe('지역 검색', () => {
 
   it('개수를 제한한다', () => {
     expect(searchRegions('구', 5)).toHaveLength(5);
+  });
+
+  /*
+    2026-07-01 통합 뒤에도 사용자는 '광주'로 찾는다. 통합특별시 전체와 옛 광주광역시
+    자치구 다섯 곳이 앞에 나와야 한다. 전에는 전남 군 이름순으로 8개가 차서
+    자치구 대부분이 잘렸다(2026-09-30 확인).
+  */
+  it('광주로 찾으면 전남광주 전체와 옛 광주 자치구를 앞에 둔다', () => {
+    const found = searchRegions('광주');
+    expect(found[0]).toMatchObject({ code: '12', name: '전남광주', label: '전남광주 전체' });
+    const codes = found.map((r) => r.code);
+    for (const code of ['12_동구', '12_서구', '12_남구', '12_북구', '12_광산구'])
+      expect(codes, code).toContain(code);
+    expect(codes).toContain('41_광주시');
+  });
+
+  it('옛 이름 전남으로도 전남광주 전체를 찾는다', () => {
+    expect(searchRegions('전남')[0]).toMatchObject({ code: '12', label: '전남광주 전체' });
+  });
+});
+
+describe('지역 보조 표기', () => {
+  it('이름에 이미 시·도가 드러나면 보조 표기를 비운다', () => {
+    expect(regionHint(searchRegions('서울')[0]!)).toBeNull();
+    expect(regionHint(findRegionByName('강서구(서울)')!)).toBeNull();
+  });
+
+  it('통합특별시 전체는 정식 명칭으로 알린다', () => {
+    expect(regionHint(searchRegions('광주')[0]!)).toBe('전남광주통합특별시');
+  });
+
+  it('시·도가 안 보이는 지역은 시·도 짧은 이름을 붙인다', () => {
+    expect(regionHint(findRegionByName('광산구')!)).toBe('전남광주');
   });
 });

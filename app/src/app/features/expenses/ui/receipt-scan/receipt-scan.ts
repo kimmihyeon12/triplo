@@ -23,7 +23,10 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { EXPENSE_CATEGORIES, type Expense, type ExpensePerson } from '../../model/ledger';
 import { RECEIPT_SCANNER } from '../../data/receipt-scanner';
 import { draftsToExpenses, type ReceiptDraft } from '../../util/receipt';
-import { drawStrokes, fitSize, renderReceipt, type HighlightStroke } from '../../util/image';
+import { drawStrokes, fitSize, type HighlightStroke } from '../../util/image';
+import { renderReceipt } from './render-receipt';
+import { AiQuota } from '../../../../core/ai-quota';
+import { defaultPayer } from '../../util/expense-link';
 
 type Step = 'pick' | 'mark' | 'scanning' | 'review';
 
@@ -53,12 +56,15 @@ type Step = 'pick' | 'mark' | 'scanning' | 'review';
 })
 export class ReceiptScan {
   readonly people = input.required<ExpensePerson[]>();
+  /** 가계부에서 나를 가리키는 칸. 합류한 친구는 'self'(주인)가 아니다. */
+  readonly me = input('self');
   /** 사진에 날짜가 없을 때 채울 날짜. 보통 여행 첫날이다. */
   readonly fallbackDate = input.required<string>();
   readonly saved = output<Expense[]>();
   readonly cancelled = output<void>();
 
   private readonly scanner = inject(RECEIPT_SCANNER);
+  readonly aiHint = inject(AiQuota).hint('receipt');
   readonly unavailable = this.scanner.unavailableReason();
   readonly categories = Object.entries(EXPENSE_CATEGORIES);
 
@@ -111,9 +117,15 @@ export class ReceiptScan {
       ctx.drawImage(image, 0, 0, width, height);
       drawStrokes(ctx, strokes, width, height);
     });
+    // 결제자 기본값은 나. 목록에 없으면(사람이 늦게 오거나 지워지면) 다시 고른다.
+    let chosen = false;
     effect(() => {
-      const first = this.people()[0]?.id;
-      if (first && !this.people().some((p) => p.id === this.paidBy())) this.paidBy.set(first);
+      const people = this.people();
+      if (!people.length) return;
+      if (!chosen || !people.some((p) => p.id === this.paidBy())) {
+        this.paidBy.set(defaultPayer(people, this.me()));
+        chosen = true;
+      }
     });
     inject(DestroyRef).onDestroy(() => {
       this.abort?.abort();

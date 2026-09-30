@@ -156,31 +156,6 @@
         class="field-row grid gap-3 grid-cols-[1fr_1fr] [@media(max-width:_420px)]:grid-cols-[1fr]"
       >
         <div class="field flex flex-col gap-1 mb-4">
-          <label class="field__label font-medium text-13 text-ink-2" for="stay"
-            >체류시간(분) <span class="text-ink-3 text-12 leading-normal">(선택)</span></label
-          >
-          <input
-            appInput
-            id="stay"
-            class="input in-[.kind]:absolute in-[.kind]:w-full in-[.kind]:h-full in-[.kind]:m-0 in-[.kind]:opacity-[0] in-[.kind]:cursor-pointer in-[.kind]:inset-0"
-            type="number"
-            inputmode="numeric"
-            min="0"
-            step="5"
-            [ngModel]="stayMinutes()"
-            (ngModelChange)="stayMinutes.set($event)"
-            name="stayMinutes"
-            placeholder="예: 60"
-            [attr.aria-invalid]="stayError() ? 'true' : null"
-            data-testid="stop-stay"
-          />
-          @if (stayError()) {
-            <p class="field__error text-12 text-danger-ink font-medium" role="alert">
-              {{ stayError() }}
-            </p>
-          }
-        </div>
-        <div class="field flex flex-col gap-1 mb-4">
           <label class="field__label font-medium text-13 text-ink-2" for="fixed"
             >고정 시각 <span class="text-ink-3 text-12 leading-normal">(예약 등, 선택)</span></label
           >

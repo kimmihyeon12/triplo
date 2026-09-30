@@ -10,7 +10,7 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
     const id = await createTrip(page, {
       start: '2026-05-01',
       end: '2026-05-04',
-      regions: ['강릉', '속초'],
+      regions: ['강릉시', '속초시'],
     });
     await addStop(page, id, { name: '1일차 장소', date: '2026-05-01', region: '강릉' });
     await addStop(page, id, { name: '3일차 장소', date: '2026-05-03', region: '속초' });
@@ -33,9 +33,9 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
     );
     await expect(page.getByTestId('trip-save')).toBeDisabled();
     // 지역 삭제 영향도 같은 상자에 표시
-    await page.getByRole('button', { name: '속초 삭제' }).click();
+    await page.getByRole('button', { name: '속초시 삭제' }).click();
     await expect(page.getByTestId('impact-box')).toContainText(
-      '지역 ‘속초’ 삭제: 장소 2개·숙소 1개',
+      '지역 ‘속초시’ 삭제: 장소 2개·숙소 1개',
     );
     await page.getByTestId('impact-confirm').check();
     await page.getByTestId('trip-save').click();
@@ -70,7 +70,7 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
 
     const items = page.getByTestId('day-items').locator('li.item strong');
     await expect(items).toHaveText(['첫째', '둘째', '셋째']);
-    await expect(page.getByTestId('day-totals')).toContainText('체류 1시간 30분');
+    await expect(page.getByTestId('day-totals')).toContainText('이동 2구간');
     await expect(page.getByTestId('fixed-conflict')).toBeVisible();
 
     await page.getByRole('button', { name: '둘째 위로' }).click();
@@ -80,10 +80,10 @@ test.describe('기간 단축 데이터 보존, 순서 변경·제외·합계', (
     await expect(page.getByRole('button', { name: '셋째 아래로' })).toBeDisabled();
 
     await chooseRowMenu(page, '셋째', '일정에서 제외');
-    await expect(page.getByTestId('day-totals')).toContainText('체류 1시간 15분');
+    await expect(page.getByTestId('day-totals')).toContainText('이동 1구간');
     await expect(page.getByTestId('day-items')).toContainText('제외됨');
     await chooseRowMenu(page, '셋째', '일정에 되돌리기');
-    await expect(page.getByTestId('day-totals')).toContainText('체류 1시간 30분');
+    await expect(page.getByTestId('day-totals')).toContainText('이동 2구간');
 
     await page.reload();
     await expect(items).toHaveText(['둘째', '첫째', '셋째']);

@@ -64,6 +64,15 @@ const PATHS = {
   // lucide: coffee
   break:
     'M10 2v2M14 2v2M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1M6 2v2',
+  // lucide: ticket
+  activity:
+    'M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2ZM13 5v2M13 17v2M13 11v2',
+  // lucide: shopping-bag
+  shopping:
+    'M16 10a4 4 0 0 1-8 0M3.103 6.034h17.794M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z',
+  // lucide: circle-ellipsis
+  other:
+    'M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M17 12h.01M12 12h.01M7 12h.01',
   // lucide: clock
   buffer:
     'M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 6v6l4 2',
@@ -76,6 +85,10 @@ const PATHS = {
   // lucide: triangle-alert
   alert:
     'M21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01',
+  // lucide: circle-check
+  'circle-check': 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20M9 12l2 2l4-4',
+  // lucide: info
+  info: 'M12 22a10 10 0 1 0 0-20a10 10 0 1 0 0 20M12 16v-4M12 8h.01',
   // lucide: eye
   eye:
     'M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0',

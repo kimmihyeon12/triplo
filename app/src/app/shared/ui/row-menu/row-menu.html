@@ -6,7 +6,7 @@
   (toggle)="onToggle(menu.open)"
 >
   <summary
-    class="flex size-9 cursor-pointer list-none items-center justify-center rounded-control text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] [&::-webkit-details-marker]:hidden"
+    class="relative flex size-9 cursor-pointer list-none items-center justify-center rounded-control after:absolute after:-inset-1 after:[content:''] text-ink-3 [transition:background-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:[outline-offset:2px] [&::-webkit-details-marker]:hidden"
     [attr.aria-label]="ariaLabel()"
     [attr.data-testid]="testId() || null"
   >

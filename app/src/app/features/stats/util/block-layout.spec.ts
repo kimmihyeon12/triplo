@@ -32,6 +32,17 @@ describe('block map aggregate clusters', () => {
     const second = buildBlockLayout(grid, new Map([['a', 5], ['b', 1000]]));
     expect(second.anchors.get('a')!.levels).toBe(first.anchors.get('a')!.levels);
   });
+  // 서울 자치구처럼 칸 크기보다 작은 지역은 칸을 하나도 받지 못한다(실제 경계에서 50곳).
+  // 그래도 다녀왔으면 지도에 보여야 한다. 중심에서 가장 가까운 칸을 빌려 칠한다.
+  it('paints a visited region too small to own a tile on the nearest tile', () => {
+    const tiny: VoxelGrid = { ...grid, centers: new Map([...grid.centers, ['tiny', { x: 42, y: 40 }]]) };
+    const byCount = buildBlockLayout(tiny, new Map([['tiny', 3]]));
+    expect(byCount.columns.some(c => c.visitRegion === 'tiny' && c.levels > 0)).toBe(true);
+    expect(byCount.anchors.get('tiny')?.cell).toMatchObject({ x: 40, y: 40 });
+    const bySpot = buildBlockLayout(tiny, new Map([['tiny', 1]]), 1, [{ regionCode: 'tiny', name: '작은 구', x: 71, y: 12, count: 1 }]);
+    expect(bySpot.spotCells[0]?.cell).toMatchObject({ x: 70, y: 10 });
+    expect(bySpot.columns.some(c => c.visitRegion === 'tiny' && c.levels > 0)).toBe(true);
+  });
   it('keeps all land white with no fabricated visits when the repository is empty', () => {
     const result = buildBlockLayout(grid, new Map());
     expect(result.columns).toHaveLength(cells.length);

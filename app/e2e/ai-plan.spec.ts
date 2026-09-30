@@ -3,17 +3,127 @@ import { FAIL_FLAG, STORAGE_KEY, resetApp } from './helpers';
 
 /**
  * AI 일정 만들기. 테스트 앱은 외부를 부르지 않는 픽스처 제공자를 쓴다.
- * 픽스처는 안목해변·오죽헌·속초관광수산시장을 찾고 '없는장소테스트'는 찾지 못한다.
+ * 픽스처는 안목해변(액티비티)·오죽헌(관광)·강릉 테스트 호텔(숙소)·속초관광수산시장(쇼핑)을 찾고
+ * '없는장소테스트'는 찾지 못한다. id는 응답 순서대로 ai-0~ai-4다.
  */
 
 const AI_FAIL = 'tc.test.aiFail';
 const AI_DELAY = 'tc.test.aiDelayMs';
 
+test('부산 전체를 한 번에 선택해 생성 조건으로 전달한다', async ({ page }) => {
+  await resetApp(page);
+  await page.goto('/trips/ai');
+  await page.getByTestId('ai-region-input').fill('부산');
+  await expect(page.getByTestId('ai-region-matches').getByRole('option').first()).toContainText('부산 전체');
+  await page.getByTestId('ai-region-match-부산').click();
+  await expect(page.getByTestId('ai-region-list')).toContainText('부산');
+  await page.getByTestId('ai-next-1').click();
+  await page.getByTestId('ai-next-2').click();
+  await page.getByTestId('ai-next-3').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('부산');
+});
+
+test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저장한다', async ({ page }, testInfo) => {
+  await resetApp(page);
+  await page.goto('/trips/ai');
+  await page.getByTestId('ai-region-input').fill('강릉');
+  await page.getByTestId('ai-region-match-강릉시').click();
+  await page.getByTestId('ai-start').fill('2026-10-01');
+  await page.getByTestId('ai-end').fill('2026-10-02');
+  await page.getByTestId('ai-next-1').click();
+  await page.getByTestId('ai-party-size').fill('0');
+  await expect(page.getByTestId('ai-budget-error')).toBeVisible();
+  await expect(page.getByTestId('ai-next-2')).toBeDisabled();
+  await page.getByTestId('ai-party-size').fill('2');
+  await page.getByTestId('ai-budget').fill('4000');
+  await page.getByTestId('ai-budget-basis').selectOption('person');
+  await page.screenshot({ path: testInfo.outputPath('budget-input.png'), fullPage: true });
+  await page.getByTestId('ai-next-2').click();
+  await page.getByTestId('ai-next-3').click();
+  await expect(page.getByTestId('ai-summary')).toContainText('4,000원 · 1인 기준');
+  await page.getByTestId('ai-generate').click();
+  const summary = page.getByTestId('ai-cost-summary');
+  // 안목해변 0원 + 오죽헌 1인 3,000~5,000원 × 2명 + 호텔 1박 90,000~120,000원. 시장은 미정.
+  await expect(summary).toContainText('96,000~130,000원');
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('미정 1곳');
+  await expect(page.getByTestId('ai-budget-remaining')).toContainText('초과');
+  // 시각·요금·체류·휴무는 담으면 저장될 비고 하나에만 보인다.
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 요금 6,000~10,000원 (2명 · 테스트용 입장료 예시)');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 체류 60~90분');
+  await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
+  await expect(page.getByTestId('ai-day-group-2')).toContainText('속초관광수산시장');
+  await page.getByTestId('ai-day-ai-1').selectOption('2');
+  await expect(page.getByTestId('ai-day-group-1')).not.toContainText('오죽헌');
+  await expect(page.getByTestId('ai-day-group-2')).toContainText('오죽헌');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('cost-results.png'), fullPage: true });
+  await page.getByTestId('ai-pick-ai-1').uncheck();
+  await expect(summary).toContainText('90,000~120,000원');
+  await page.getByTestId('ai-pick-ai-1').check();
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  const stop = await page.evaluate((key) => {
+    const saved = JSON.parse(localStorage.getItem(key)!);
+    const trips = Object.values(saved.trips) as { stops: { name: string; estimatedCost: number; stayMinutes: number | null; memo: string }[] }[];
+    return trips[0]!.stops.find(s => s.name === '오죽헌');
+  }, STORAGE_KEY);
+  expect(stop).toMatchObject({ estimatedCost: 10000, stayMinutes: null });
+  expect(stop?.memo).toContain('- 체류 60~90분');
+  expect(stop?.memo).toContain('AI 추정');
+  expect(stop?.memo).toContain('2명');
+});
+
+test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙박으로 담는다', async ({ page }, testInfo) => {
+  await resetApp(page);
+  await fillConditions(page, '2026-10-01', '2026-10-02');
+  await page.getByTestId('ai-generate').click();
+  await expect(page.getByTestId('ai-result')).toBeVisible();
+  await expect(page.getByTestId('ai-memo-ai-0')).toContainText('- 시각 10:00');
+  await expect(page.getByTestId('ai-leg-ai-1')).toContainText('도보 약 15분 · AI 추정');
+  // 오죽헌 다음 항목은 장소 확인에 실패해 빠졌다. 모델 이동은 맞지 않으므로 직선거리만 보인다.
+  await expect(page.getByTestId('ai-leg-ai-3')).toContainText('직선');
+  await expect(page.getByTestId('ai-leg-ai-3')).not.toContainText('AI 추정');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('AI 추정');
+  await expect(page.getByTestId('ai-memo-ai-0')).toContainText('- 요금 무료');
+  // 금액·체류는 비고와 겹치지 않게 카드에 따로 보이지 않는다.
+  await expect(page.getByTestId('ai-card-ai-0').getByText('체류', { exact: false })).toHaveCount(1);
+  // 휴무는 AI 추정으로 밝히고 확인을 권한다. 선택은 그대로 둔다.
+  await expect(page.getByTestId('ai-closed-badge-ai-1')).toHaveText('휴무일 · AI 추정');
+  await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 테스트용 매주 목요일 휴무 예시');
+  await expect(page.getByTestId('ai-pick-ai-1')).toBeChecked();
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('숙박');
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('관광·액티비티');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('course-results.png'), fullPage: true });
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  // 메모는 줄바꿈을 그대로 보여 준다. 템플릿의 들여쓰기가 앞 공백으로 새면 안 된다.
+  const memo = await page.locator('.item__memo').first().evaluate((el) => el.textContent ?? '');
+  expect(memo.startsWith('AI 추정')).toBe(true);
+  const saved = await page.evaluate((key) => {
+    const data = JSON.parse(localStorage.getItem(key)!);
+    const trip = Object.values(data.trips)[0] as {
+      stops: { name: string; kind: string; memo: string; fixedTime: string | null }[];
+      stays: { name: string; checkIn: string; checkOut: string; estimatedCost: number }[];
+    };
+    return { stops: trip.stops, stays: trip.stays };
+  }, STORAGE_KEY);
+  expect(saved.stays).toEqual([expect.objectContaining({ name: '강릉 테스트 호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000 })]);
+  expect(saved.stops.map((s) => [s.name, s.kind])).toEqual([['안목해변', 'activity'], ['오죽헌', 'place'], ['속초관광수산시장', 'shopping']]);
+  expect(saved.stops[0]!.memo).toContain('- 시각 10:00');
+  expect(saved.stops[1]!.memo).toContain('- 테스트용 매주 목요일 휴무 예시');
+  expect(saved.stops.every((s) => s.fixedTime === null)).toBe(true);
+});
+
 /** 조건 세 단계를 지나 요약 화면까지 간다. */
 async function fillConditions(page: Page, start: string, end: string): Promise<void> {
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-match-강릉').click();
+  await page.getByTestId('ai-region-match-강릉시').click();
   await page.getByTestId('ai-start').fill(start);
   await page.getByTestId('ai-end').fill(end);
   await page.getByTestId('ai-next-1').click();
@@ -39,7 +149,7 @@ test('위치를 확인한 장소만 보이고 좌표와 함께 담긴다', async
   await expect(page.getByTestId('ai-result')).toContainText('안목해변');
   await expect(page.getByTestId('ai-result')).not.toContainText('없는장소테스트');
   await expect(page.getByTestId('ai-pick-ai-0')).toBeChecked();
-  await expect(page.getByTestId('ai-commit')).toContainText('3개 담기');
+  await expect(page.getByTestId('ai-commit')).toContainText('4개 담기');
 
   // 검색에서 온 주소가 보인다. 모델이 쓴 설명이 아니다.
   await expect(page.getByTestId('ai-result')).toContainText('강원 강릉시 창해로14번길');
@@ -59,7 +169,7 @@ test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는�
   await resetApp(page);
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
-  await page.getByTestId('ai-region-match-강릉').click();
+  await page.getByTestId('ai-region-match-강릉시').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-02');
   await page.getByTestId('ai-next-1').click();
@@ -79,7 +189,10 @@ test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는�
 
   await page.evaluate((flag) => localStorage.setItem(flag, '1'), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
-  await expect(page.getByRole('alert')).toContainText('저장에 실패');
+  // 오류는 토스트 한 곳에서만 알린다. 화면에 같은 문장을 또 띄우지 않고, 고른 항목은 그대로 남는다.
+  await expect(page.getByTestId('error-toast')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(1);
+  await expect(page.getByTestId('ai-result')).toBeVisible();
   await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
   await page.getByTestId('ai-commit').click();
   await expect(page.getByTestId('trip-header')).toBeVisible();
@@ -150,15 +263,15 @@ test('일차를 바꾸면 목록이 일차 순으로 다시 늘어선다', async
   await page.getByTestId('ai-generate').click();
   await expect(page.getByTestId('ai-result')).toBeVisible();
 
-  // 픽스처는 안목해변(1일)·오죽헌(1일)·속초관광수산시장(2일)을 낸다.
-  const days = () => page.locator('[data-testid^="ai-day-"]').evaluateAll((els) =>
+  // 픽스처는 안목해변·오죽헌·강릉 테스트 호텔(1일)과 속초관광수산시장(2일)을 낸다.
+  const days = () => page.locator('select[data-testid^="ai-day-"]').evaluateAll((els) =>
     els.map((e) => Number((e as HTMLSelectElement).value)),
   );
-  expect(await days()).toEqual([1, 1, 2]);
+  expect(await days()).toEqual([1, 1, 1, 2]);
 
   // 첫 항목을 3일차로 보내면 그 줄이 맨 뒤로 가야 한다.
   await page.getByTestId('ai-day-ai-0').selectOption('3');
-  expect(await days()).toEqual([1, 2, 3]);
+  expect(await days()).toEqual([1, 1, 2, 3]);
 
   // 각 줄의 드롭다운 값이 그 줄의 장소를 따라가야 한다.
   const rows = await page.locator('.pickrow').evaluateAll((els) =>

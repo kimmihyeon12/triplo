@@ -12,7 +12,11 @@ test.beforeEach(async ({ page }) => {
   await resetApp(page);
   // 공지·문의 저장소를 한 번만 비운다. addInitScript로 두면 페이지를 다시
   // 열 때마다 실행되어 방금 저장한 문의까지 지운다.
-  await page.evaluate(() => localStorage.removeItem('tc.test.trips.v1.support'));
+  // 문의는 계정마다 다른 열쇠(….support.<계정>)에 있으므로 앞머리로 찾아 지운다.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith('tc.test.trips.v1.support')) localStorage.removeItem(key);
+  });
 });
 
 test('내 정보에서 닉네임을 그 자리에서 고친다', async ({ page }) => {
@@ -63,13 +67,13 @@ test('닉네임 편집을 취소하면 원래 이름이 남는다', async ({ pag
   await expect(page.getByTestId('login-account')).toContainText('여행테스터');
 });
 
-test('알림 스위치는 화면을 옮기지 않고 그 자리에서 바뀐다', async ({ page }) => {
+// 감리 P2-02: 알림 기능이 없는데 스위치가 켜고 꺼지고, 새로고침하면 다시 켜졌다.
+test('알림은 준비 중으로 꺼진 채 누를 수 없다', async ({ page }) => {
   await page.goto('/account');
   const toggle = page.getByTestId('toggle-notifications');
-  await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await toggle.click();
+  await expect(toggle).toBeDisabled();
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
-  await expect(page).toHaveURL(/\/account$/);
+  await expect(toggle).toContainText('준비 중');
 });
 
 test('공지사항을 열면 목록이 보이고 첫 글이 펼쳐진다', async ({ page }) => {
@@ -110,7 +114,9 @@ test('문의 목록이 먼저 보이고 보내기는 따로 연다', async ({ pa
   const list = page.getByTestId('inquiry-list').locator('li');
   await expect(list).toHaveCount(1);
   await expect(list.first()).toContainText('기능 제안');
-  await expect(list.first()).toContainText('접수됨');
+  // 서버에 연결되기 전에는 접수된 것처럼 보이지 않는다(감리 P2-01).
+  await expect(list.first()).toContainText('기기에만 저장');
+  await expect(list.first()).not.toContainText('접수됨');
 });
 
 test('보낸 문의는 새로 열어도 남아 있다', async ({ page }) => {

@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- 마이그레이션 파일명: `supabase/migrations/20260929100000_profiles_role.sql`.
+- 마이그레이션 파일명: `supabase/migrations/20260930000002_profiles_role.sql`.
 - 관리자 이메일을 코드·마이그레이션·문서·커밋 메시지에 적지 않는다.
 - `profiles`에는 insert·update·delete 정책을 두지 않는다. `authenticated`에는 `select`만, `anon`에는 아무 권한도 주지 않는다.
 - `is_admin()`은 `security definer`, `stable`, `set search_path = ''`이며 실행 권한은 `authenticated`만 가진다.
@@ -37,7 +37,7 @@
 ### Task 1: profiles 표와 is_admin 함수
 
 **Files:**
-- Create: `supabase/migrations/20260929100000_profiles_role.sql`
+- Create: `supabase/migrations/20260930000002_profiles_role.sql`
 - Test: 로컬 PostgreSQL 임시 DB (`C:\Program Files\PostgreSQL\17\bin\psql.exe`, 사용자 `postgres`, 비밀번호 `postgres`). 검증 스크립트는 scratchpad에 두고 커밋하지 않는다.
 
 **Interfaces:**
@@ -143,7 +143,7 @@ Run (Bash, worktree 루트):
 PSQL="/c/Program Files/PostgreSQL/17/bin/psql.exe"
 export PGPASSWORD=postgres
 "$PSQL" -U postgres -h localhost -c "drop database if exists tc_admin_verify" -c "create database tc_admin_verify"
-"$PSQL" -U postgres -h localhost -d tc_admin_verify -v migration="$(pwd)/supabase/migrations/20260929100000_profiles_role.sql" -f "<scratchpad>/verify-profiles.sql"
+"$PSQL" -U postgres -h localhost -d tc_admin_verify -v migration="$(pwd)/supabase/migrations/20260930000002_profiles_role.sql" -f "<scratchpad>/verify-profiles.sql"
 "$PSQL" -U postgres -h localhost -c "drop database tc_admin_verify"
 ```
 
@@ -152,7 +152,7 @@ Expected: `admin is_admin | t`, `admin sees rows | 1`, `user is_admin | f`, `use
 - [ ] **Step 4: Commit**
 
 ```bash
-git add supabase/migrations/20260929100000_profiles_role.sql
+git add supabase/migrations/20260930000002_profiles_role.sql
 git commit -m "feat: 관리자 판별용 profiles 표와 is_admin 함수를 둔다
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -716,7 +716,7 @@ on conflict (id) do update set role = excluded.role;
 ```
 ````
 
-"## 적용 현황"에 `- 2026-09-29 \`20260929100000_profiles_role.sql\` 작성. 로컬 PostgreSQL 검증 완료, 원격 적용은 <상태>.`를 추가한다.
+"## 적용 현황"에 `- 2026-09-29 \`20260930000002_profiles_role.sql\` 작성. 로컬 PostgreSQL 검증 완료, 원격 적용은 <상태>.`를 추가한다.
 
 - [ ] **Step 4: DEVELOPMENT.md**
 

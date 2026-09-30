@@ -1,0 +1,12 @@
+<span class="flex -space-x-1.5" aria-hidden="true">
+  <span
+    class="flex size-7 items-center justify-center rounded-full border-2 border-panel text-12 font-semibold"
+    [style.background]="tone().bg"
+    [style.color]="tone().fg"
+    >{{ me().initial }}</span
+  >
+  <span
+    class="flex size-7 items-center justify-center rounded-full border-2 border-panel bg-ground text-12 font-medium text-hint [box-shadow:inset_0_0_0_1px_var(--color-border)]"
+    >+{{ others() }}</span
+  >
+</span>

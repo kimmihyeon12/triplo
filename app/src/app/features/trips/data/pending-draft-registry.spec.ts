@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { createTrip } from '../util/factories';
 import { PendingDraftRegistry, sessionWatcher } from './pending-draft-registry';
 import { TRIP_REPOSITORY, type TripRepository } from './trip-repository';
-import { ErrorToastService } from '../../../core/error-toast-service';
+import { TripAccessError } from './trip-data-client';
+import { ToastService } from '../../../core/toast-service';
 
 describe('PendingDraftRegistry 계정 전환', () => {
   it('다른 계정으로 바뀌면 이전 계정의 실패 초안을 버린다', async () => {
@@ -20,7 +21,7 @@ describe('PendingDraftRegistry 계정 전환', () => {
     const pending = Injector.create({
       providers: [
         PendingDraftRegistry,
-        ErrorToastService,
+        ToastService,
         { provide: TRIP_REPOSITORY, useValue: repo },
       ],
     }).get(PendingDraftRegistry);
@@ -61,11 +62,31 @@ describe('저장 실패 알림', () => {
     const injector = Injector.create({
       providers: [
         PendingDraftRegistry,
-        ErrorToastService,
+        ToastService,
         { provide: TRIP_REPOSITORY, useValue: repo },
       ],
     });
     await injector.get(PendingDraftRegistry).save(createTrip());
-    expect(injector.get(ErrorToastService).message()).toBe('서버에 저장하지 못했어요.');
+    expect(injector.get(ToastService).current()).toEqual({ kind: 'error', message: '서버에 저장하지 못했어요.' });
+  });
+
+  it('접근할 수 없는 여행의 초대 저장은 다시 시도하지 않도록 초안을 버린다', async () => {
+    const repo: TripRepository = {
+      lastSkippedCount: 0,
+      list: async () => [],
+      get: async () => null,
+      save: async () => {
+        throw new TripAccessError();
+      },
+      remove: async () => undefined,
+    };
+    const injector = Injector.create({
+      providers: [PendingDraftRegistry, ToastService, { provide: TRIP_REPOSITORY, useValue: repo }],
+    });
+    const trip = createTrip();
+    const registry = injector.get(PendingDraftRegistry);
+    await registry.save(trip);
+    expect(registry.get(trip.id)).toBeUndefined();
+    expect(injector.get(ToastService).current()?.message).toContain('접근할 수 없어요');
   });
 });

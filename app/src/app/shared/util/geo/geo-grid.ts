@@ -154,6 +154,14 @@ export function buildGrid(collection: GeoCollection, options: GridOptions): Voxe
   for (const [code, sum] of sums) {
     centers.set(code, { x: sum.x / sum.n, y: sum.y / sum.n });
   }
+  // 칸보다 작은 지역(서울 자치구 대부분 등)은 칸을 받지 못해 평균을 낼 수 없다.
+  // 경계 상자의 가운데를 중심으로 둔다. 중심이 없으면 지도가 방문을 놓을 자리를
+  // 찾지 못해 다녀온 지역이 칠해지지 않는다(2026-09-30 확인).
+  for (const region of regions) {
+    if (centers.has(region.code)) continue;
+    const b = region.bounds;
+    centers.set(region.code, { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 });
+  }
 
   return { cells, cellSize: size, centers, bounds: all };
 }

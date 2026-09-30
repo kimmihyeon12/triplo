@@ -7,7 +7,15 @@ import type { GeoPoint, PlaceRef } from '../../places/model/place';
 export type IsoDate = string;
 export type HHmm = string;
 
-export type StopKind = 'place' | 'meal' | 'break' | 'buffer';
+export type StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer';
+/**
+ * AI 코스·챗봇 제안과 화면이 쓰는 분류. 일정 분류에 숙소를 더한 것이다.
+ * 숙소는 일반 장소가 아니라 stays로 담는다. AI 일정은 여유시간을 만들지 않지만 챗봇은 제안한다.
+ */
+export type PlanKind = StopKind | 'stay';
+
+/** 장소 추가·수정 화면과 선택 목록의 순서. */
+export const STOP_KINDS: readonly StopKind[] = ['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer'];
 export type ReservationState = 'unknown' | 'reserved' | 'not_reserved';
 /** 'verified'는 실제 장소 검색 결과의 좌표를 사용자가 선택한 경우에만 쓴다. 추정 좌표는 만들지 않는다. */
 export type LocationStatus = 'unverified' | 'verified';
@@ -77,6 +85,19 @@ export interface AccommodationStay {
 
 export type TripStatus = 'draft';
 
+/** 여행을 함께 쓰는 사람. 서버 저장에서만 채운다. */
+export interface TripMember {
+  userId: string;
+  nickname: string;
+  role: 'owner' | 'editor';
+}
+
+/** 서버 여행의 멤버와 나의 역할. 기기 저장 여행에는 없다. */
+export interface TripSharing {
+  role: 'owner' | 'editor';
+  members: TripMember[];
+}
+
 export interface Trip {
   id: string;
   title: string;
@@ -89,20 +110,53 @@ export interface Trip {
   createdAt: string;
   updatedAt: string;
   schemaVersion: 1;
+  /** 서버에서 읽을 때만 채운다. 저장(save_trip)은 이 값을 쓰지 않는다. */
+  sharing?: TripSharing;
 }
 
+/**
+ * 분류 라벨의 유일한 원본. 다른 기능은 자체 표를 두지 않고 이것을 쓴다(2026-09-30 분류 통일).
+ * 저장값 'place'는 예전 '장소'이며 라벨만 '관광'으로 바꿨다. 'break'도 라벨만 카페다.
+ * 저장값을 바꾸지 않아야 기존 일정이 깨지지 않는다.
+ */
 export const STOP_KIND_LABEL: Record<StopKind, string> = {
-  place: '장소',
+  place: '관광',
+  activity: '액티비티',
   meal: '식사',
-  // 저장값은 'break'를 유지한다. 라벨만 바꿔 기존 일정이 깨지지 않게 한다.
   break: '카페',
+  shopping: '쇼핑',
+  other: '기타',
   buffer: '여유시간',
 };
 
+export const PLAN_KIND_LABEL: Record<PlanKind, string> = {
+  place: STOP_KIND_LABEL.place,
+  activity: STOP_KIND_LABEL.activity,
+  meal: STOP_KIND_LABEL.meal,
+  break: STOP_KIND_LABEL.break,
+  shopping: STOP_KIND_LABEL.shopping,
+  other: STOP_KIND_LABEL.other,
+  buffer: STOP_KIND_LABEL.buffer,
+  stay: '숙소',
+};
+
+/** 저장소·서버에서 읽은 분류. 모르는 값은 관광으로 둔다. 이전 앱이 모르는 값을 만나도 깨지지 않게 한다. */
+export function toStopKind(value: unknown): StopKind {
+  return (STOP_KINDS as readonly unknown[]).includes(value) ? (value as StopKind) : 'place';
+}
+
+/** 통계의 '여행지' 필터에 드는 분류. 먹는 곳과 여유시간이 아닌 모든 장소다. */
+export function isSightseeing(kind: StopKind): boolean {
+  return kind === 'place' || kind === 'activity' || kind === 'shopping' || kind === 'other';
+}
+
 export const STOP_KIND_DEFAULT_NAME: Record<StopKind, string> = {
   place: '',
+  activity: '',
   meal: '식사',
   break: '카페',
+  shopping: '',
+  other: '',
   buffer: '여유시간',
 };
 

@@ -18,7 +18,7 @@ describe('local command routing', () => {
     const store = setup();
     const base = trip([stop('a', '오죽헌', '2026-10-01', 0)]);
     store.open('trip', base);
-    await store.send('오죽헌 체류시간 60분으로 바꿔');
+    await store.send('오죽헌 메모에 입장권 확인 추가해');
     const draft = store.messages().at(-1)!.draft!;
     store.setTrip({...base, title:'수정됨'});
     expect(await store.applyDraft(draft)).toBeNull();
@@ -57,13 +57,13 @@ describe('local command routing', () => {
     const store = setup(provider);
     const base = trip([stop('a', '오죽헌', '2026-10-01', 0)]);
     store.open('trip', base);
-    await store.send('오죽헌 체류시간 60분으로 바꿔');
+    await store.send('오죽헌 메모에 입장권 확인 추가해');
     expect(provider.calls).toBe(0);
     expect(store.trip()).toEqual(base);
     const updated = await store.applyDraft(store.messages().at(-1)!.draft!);
-    expect(updated!.stops[0].stayMinutes).toBe(60);
+    expect(updated!.stops[0].memo).toContain('입장권 확인');
     await store.send('방금 변경 되돌려');
-    expect((await store.applyDraft(store.messages().at(-1)!.draft!))!.stops[0].stayMinutes).toBeNull();
+    expect((await store.applyDraft(store.messages().at(-1)!.draft!))!.stops[0].memo).toBe('');
     expect(provider.calls).toBe(0);
   });
   it('saves ledger only on confirmation and restores it on undo', async () => {
@@ -484,6 +484,18 @@ describe('TravelChatStore 실패 처리', () => {
     store.open('list', null);
     await store.send('3일 쉬는데 어디 가지');
     expect(store.error()?.kind).toBe('quota');
+  });
+
+  it('내 한도·무료 한도 문구도 한도로 구분한다', async () => {
+    for (const message of [
+      '오늘 챗봇 질문을 30번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
+      '오늘 AI 무료 사용량이 모두 소진됐어요. 오후 5시쯤 다시 쓸 수 있어요.',
+    ]) {
+      const store = setup(fakeChat({ reply: async () => { throw new Error(message); } }));
+      store.open('list', null);
+      await store.send('3일 쉬는데 어디 가지');
+      expect(store.error()?.kind).toBe('quota');
+    }
   });
 
   it('시간 초과를 구분한다', async () => {

@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { AuthStore } from '../../auth/data/auth-store';
+import { AiQuota, aiLimitMessage } from '../../../core/ai-quota';
 import { parseReceipt, type ReceiptScanResult } from '../util/receipt';
 import type { ReceiptImage, ReceiptScanner } from './receipt-scanner';
 
@@ -10,6 +11,7 @@ import type { ReceiptImage, ReceiptScanner } from './receipt-scanner';
 @Injectable({ providedIn: 'root' })
 export class EdgeReceiptScanner implements ReceiptScanner {
   private readonly auth = inject(AuthStore);
+  private readonly quota = inject(AiQuota);
 
   unavailableReason(): string | null {
     if (!this.auth.available()) return 'AI 서버에 연결되지 않았어요. 직접 입력해 주세요.';
@@ -19,11 +21,15 @@ export class EdgeReceiptScanner implements ReceiptScanner {
 
   async scan(image: ReceiptImage, signal: AbortSignal): Promise<ReceiptScanResult> {
     try {
-      const { content } = await this.auth.callFunction<{ content: string }>(
+      const { content, remaining } = await this.auth.callFunction<{
+        content: string;
+        remaining?: number;
+      }>(
         'receipt-scan',
         { image: image.base64, mimeType: image.mimeType, highlighted: image.highlighted },
         signal,
       );
+      this.quota.record('receipt', remaining);
       return parseReceipt(content ?? '');
     } catch (error) {
       if (signal.aborted) throw error;
@@ -33,9 +39,9 @@ export class EdgeReceiptScanner implements ReceiptScanner {
 }
 
 function toUserError(error: unknown): Error {
+  const limit = aiLimitMessage('receipt', error);
+  if (limit) return new Error(limit);
   switch (error instanceof Error ? error.message : '') {
-    case 'quota_exceeded':
-      return new Error('오늘 사용량을 다 썼어요. 내일 다시 시도하거나 직접 입력해 주세요.');
     case 'authentication_required':
       return new Error('로그인이 필요합니다. 다시 로그인해 주세요.');
     case 'image_too_large':

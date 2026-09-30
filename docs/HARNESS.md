@@ -73,12 +73,14 @@ Supabase DB 선택과 초기 사용 대상(본인과 친구들)은 기획안에 
 지도 픽스처 검증과 실제 카카오 SDK·검색 결과 확인은 구분한다. 최신 검증 기록은 OpenSpec tasks를 따른다. 쿼터·과금·관리 화면 경로는 연결 시 제공자 콘솔과 공식 문서에서 확인한다.
 
 ## Supabase 소셜 로그인 연결
+
+2026-09-30 소스 기준으로 ai-plan·ai-chat·receipt-scan·delete-account 함수가 있다. 아래 배포·인증 기록은 당시 확인 결과이며 이번 갱신에서는 원격 상태를 조회하지 않았다.
 프로젝트 ref: `wslqgfetdwcmqeztixvs`. 사용자가 프로젝트 생성·공개 키 제공·Google 제공자 설정을 진행했다. 이전 ‘프로젝트 없음’ 기록은 당시 상태다. Google Client Secret은 Supabase 제공자 설정에만 입력한다.
 런타임 설정: app/public/supabase-config.example.json을 참고한 supabase-config.json(Git 제외). 지도 키 파일은 유지한다. Supabase URL Configuration의 Site URL은 http://localhost:4200, Redirect URL은 http://localhost:4200/auth/callback. Google 리디렉션 URI는 https://wslqgfetdwcmqeztixvs.supabase.co/auth/v1/callback 이다.
 실제 별도 브라우저에서 4200 /login → Supabase → accounts.google.com의 ‘로그인 - Google 계정’ 화면 도착을 확인했다. 사용자의 실제 Google 계정 인증 완료·DB 저장은 이 검증에 포함하지 않는다.
-배포된 AI Edge Function은 `ai-plan`과 `ai-chat`이다. AI 일정 만들기(`ai-plan`)는 2026-09-17, 채팅(`ai-chat`)은 2026-09-22 배포했다. 모델 키는 공통 `GEMINI_API_KEY` 비밀값으로 갖는다. 설정 절차와 검증 범위는 [AI-PLANNING.md](AI-PLANNING.md)를 따른다. 비밀값은 `npx supabase secrets set`으로 등록하며 앱 설정 파일에 넣지 않는다.
+기존 배포 기록에 나온 AI Edge Function은 `ai-plan`과 `ai-chat`이다. AI 일정 만들기(`ai-plan`)는 2026-09-17, 채팅(`ai-chat`)은 2026-09-22 배포했다. 모델 키는 공통 `GEMINI_API_KEY` 비밀값으로 갖는다. 설정 절차와 검증 범위는 [AI-PLANNING.md](AI-PLANNING.md)를 따른다. 비밀값은 `npx supabase secrets set`으로 등록하며 앱 설정 파일에 넣지 않는다.
 
-회원탈퇴 함수는 supabase/functions/delete-account/에 준비한다. 현재 CLI projects list는 Access token not provided를 반환하므로 관리 인증·배포 전이다. 프로젝트 터미널에서 `npx supabase login`으로 인증 후 `npx supabase functions deploy delete-account --project-ref wslqgfetdwcmqeztixvs`로 배포한다. 서버가 주입하는 SUPABASE_SERVICE_ROLE_KEY는 앱에 복사하지 않는다. 배포 확인 후 로컬 공개 설정의 accountDeletionEnabled를 true로 변경하고 별도 테스트 계정의 탈퇴를 검증한다. 기존 여행 테이블·사진 Storage 연결 전에 삭제 정책을 확장해야 한다.
+회원탈퇴 함수는 supabase/functions/delete-account/에 준비한다. 초기 연결 당시 CLI projects list는 Access token not provided를 반환했다. 이는 과거 실행 기록이며 현재 관리 인증·배포 상태는 다시 확인해야 한다. 프로젝트 터미널에서 `npx supabase login`으로 인증 후 `npx supabase functions deploy delete-account --project-ref wslqgfetdwcmqeztixvs`로 배포한다. 서버가 주입하는 SUPABASE_SERVICE_ROLE_KEY는 앱에 복사하지 않는다. 배포 확인 후 로컬 공개 설정의 accountDeletionEnabled를 true로 변경하고 별도 테스트 계정의 탈퇴를 검증한다. 현재 여행·가계부·멤버 테이블의 삭제 연쇄와 향후 사진 Storage의 삭제 정책을 실제 탈퇴 테스트로 확인해야 한다.
 참고: [Google Auth](https://supabase.com/docs/guides/auth/social-login/auth-google), [계정 삭제](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser).
 
 첫 가입: 카카오·Google 인증 후 닉네임만 입력한다. Supabase Auth Users의 user_metadata.travel_nickname 저장 성공 후 여행 목록으로 이동한다. 기존 닉네임이 있으면 입력을 생략한다. 카카오 로그인은 Supabase Authentication > Providers > Kakao 설정 후 공개 인증 설정 조회 결과에 따라 버튼이 활성화된다. 사용자 제공자 설정 완료 후 실제 accounts.kakao.com의 카카오계정 화면 도착을 확인했다. 실제 사용자 계정 인증 완료는 별도 확인 대상이다.
@@ -88,3 +90,9 @@ KOE205 수정: signInWithOAuth의 options.queryParams.scope=profile_nickname으�
 카카오 KOE205 대응: 인증 요청은 profile_nickname만 사용하고 이메일·프로필 사진을 추가 요청하지 않는다. 서비스 닉네임은 인증 후 직접 입력한다. 카카오 Developers의 닉네임 동의항목 활성화와 Supabase Kakao 제공자의 Allow users without an email 설정이 필요하다.
 
 로컬 디자인 미리보기: development 구성에서만 designPreview=true이며 여행·계정·온보딩 진입을 허용한다. production과 test 구성은 false로 기존 인증 가드를 유지한다. 계정 미리보기는 화면용 표시이며 AuthStore에 가짜 세션을 넣거나 서버 계정을 만들지 않는다. 개발 설정 변경 후 서버 재시작과 브라우저 강력 새로고침이 필요하다.
+
+## ai-plan 예산·체류시간 확장 (2026-09-30)
+
+`ai-plan` Edge Function 요청에 optional partySize(1~100, 생략 1), budget(null 또는 0~100000000 원 정수), budgetBasis(person/group, 생략 group)가 추가된다. 응답 content의 items[].estimate에는 예상 단가·요금 단위·수량·산정 가정과 추천 체류 범위가 포함된다. 이전 응답에 estimate가 없으면 미정으로 표시한다. 키·모델 환경변수는 기존 설정을 유지한다. 실제 요금 검증 API는 연결하지 않았으며 생성 결과를 공식 요금으로 표시하지 않는다.
+
+배포 시 ai-plan과 프론트엔드 양쪽을 갱신해야 한다. 이번 변경은 기존 DB의 estimated_cost/stay_minutes/memo 필드를 사용한다. MCP 설정 변경은 없다. 상세 계약은 [자동생성 안내](ai-plan-estimates.md)를 따른다.

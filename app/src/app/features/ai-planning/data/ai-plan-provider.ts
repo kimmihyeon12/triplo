@@ -3,11 +3,16 @@ import type { AiItem } from '../util/ai-response';
 
 /**
  * 일정 초안을 만들어 주는 제공자. 화면은 이 인터페이스만 사용한다.
- * 지금은 브라우저가 로컬 LLM을 직접 부르지만, 나중에 앱 서버를 두면
- * 서버를 부르는 구현으로 바꾸기만 하면 된다. 화면과 검증은 그대로 쓴다.
+ * 실행 앱은 서버의 Edge Function을 부르고 테스트 앱은 픽스처를 사용한다.
+ * 두 구현은 화면과 장소 검증 흐름을 공유한다.
  */
 
 export interface AiPlanRequest {
+  readonly partySize?: number;
+  /** 여행 시작일. 모델이 요일별 휴무를 따지는 데 쓴다. 날짜 미정이면 없다. */
+  readonly startDate?: string | null;
+  readonly budget?: number | null;
+  readonly budgetBasis?: 'person' | 'group';
   readonly regions: readonly string[];
   readonly dayCount: number;
   readonly companion: string;

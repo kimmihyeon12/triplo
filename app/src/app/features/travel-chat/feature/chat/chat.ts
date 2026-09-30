@@ -1,3 +1,4 @@
+import { ChatCardState } from '../../data/chat-card-state';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,11 +11,13 @@ import {
 } from '@angular/core';
 import { PageBar } from '../../../../core/page-bar';
 import { TripEditorStore } from '../../../trips/data/trip-editor-store';
-import { createRegion, createTrip } from '../../../trips/util/factories';
+import { createTrip } from '../../../trips/util/factories';
+import { draftTripRegions } from '../../util/chat-draft';
 import type { Trip } from '../../../trips/model/trip';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
+import { AiQuota } from '../../../../core/ai-quota';
 
 /**
  * 여행 목록에서 연 대화. 아직 대상 여행이 없으므로 전체 화면으로 연다.
@@ -38,14 +41,13 @@ import type { ChatDraft } from '../../model/chat';
   host: { class: 'flex h-[calc(100dvh-53px)] flex-col' },
 })
 export class ChatPage implements OnInit {
+  readonly aiHint = inject(AiQuota).hint('chat');
   readonly store = inject(TravelChatStore);
   private readonly editor = inject(TripEditorStore);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** 이미 반영한 말풍선. 그 카드에는 되돌리기만 남긴다. */
-  readonly appliedMessageId = signal<string | null>(null);
-  /** 사용자가 그대로 두기를 고른 초안. 카드를 접는다. */
-  readonly dismissedIds = signal<readonly string[]>([]);
+  /** 이미 반영한 카드(되돌리기만 남김)와 그대로 두기를 고른 카드(접음). */
+  readonly cards = new ChatCardState();
   readonly resetting = signal(false);
 
   constructor() {
@@ -80,8 +82,7 @@ export class ChatPage implements OnInit {
     this.resetting.set(true);
     try {
       await this.store.reset();
-      this.appliedMessageId.set(null);
-      this.dismissedIds.set([]);
+      this.cards.reset();
       this.thread()?.clearComposer();
     } finally {
       this.resetting.set(false);
@@ -105,7 +106,7 @@ export class ChatPage implements OnInit {
     const next = await this.store.applyDraft(event.draft);
     if (!next) return;
     if (!(await this.editor.commit(next)) || this.destroyRef.destroyed) return;
-    this.appliedMessageId.set(event.messageId);
+    this.cards.markApplied(event.messageId);
     this.store.notifyTripSaved(next.id);
   }
 
@@ -113,19 +114,22 @@ export class ChatPage implements OnInit {
     const previous = await this.store.undo();
     if (!previous) return;
     await this.editor.commit(previous);
-    this.appliedMessageId.set(null);
+    this.cards.clearApplied();
   }
 
   dismissDraft(messageId: string): void {
-    this.dismissedIds.set([...this.dismissedIds(), messageId]);
+    this.cards.dismiss(messageId);
   }
 
-  /** 초안이 가리키는 지역으로 빈 여행을 세운다. 날짜는 아직 정하지 않는다. */
+  /**
+   * 담을 장소의 주소가 가리키는 시·군·구로 빈 여행을 세운다. 날짜는 아직 정하지 않는다.
+   * 모델이 쓴 지역 이름('서울')으로 만들지 않는다(draftTripRegions).
+   */
   private blankTrip(draft: ChatDraft): Trip {
-    const names = draft.action === 'append' ? draft.regions : [];
+    const regions = draft.action === 'append' ? draftTripRegions(draft) : [];
     return createTrip({
-      title: names.length ? `${names.join('·')} 여행` : '새 여행',
-      regions: names.map((name, i) => createRegion(name, i)),
+      title: regions.length ? `${regions.map((r) => r.name).join('·')} 여행` : '새 여행',
+      regions,
     });
   }
 }

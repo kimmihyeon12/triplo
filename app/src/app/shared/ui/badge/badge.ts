@@ -17,6 +17,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     '[class.cell--ok]': "tone() === 'ok'",
     '[class.cell--meal]': "tone() === 'meal'",
     '[class.cell--cafe]': "tone() === 'cafe'",
+    '[class.cell--activity]': "tone() === 'activity'",
+    '[class.cell--shopping]': "tone() === 'shopping'",
+    '[class.cell--other]': "tone() === 'other'",
     '[class.cell--ghost]': "tone() === 'neutral'",
   },
 })

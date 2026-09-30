@@ -13,7 +13,7 @@ describe('parseAiItems', () => {
       2,
     );
     expect(items).toHaveLength(2);
-    expect(items[0]).toEqual({ day: 1, name: '안목해변', kind: 'place' });
+    expect(items[0]).toMatchObject({ day: 1, name: '안목해변', kind: 'place' });
   });
 
   it('종류를 우리 분류로 바꾼다', () => {
@@ -30,8 +30,8 @@ describe('parseAiItems', () => {
     expect(items.map((i) => i.kind)).toEqual(['meal', 'break', 'place']);
   });
 
-  it('모르는 종류는 장소로 둔다', () => {
-    const items = parseAiItems(JSON.stringify({ items: [{ day: 1, name: 'ㄱ', kind: '쇼핑' }] }), 1);
+  it('모르는 종류는 관광으로 둔다', () => {
+    const items = parseAiItems(JSON.stringify({ items: [{ day: 1, name: 'ㄱ', kind: '구경' }] }), 1);
     expect(items[0]!.kind).toBe('place');
   });
 
@@ -115,5 +115,80 @@ describe('parseAiItems', () => {
       1,
     );
     expect(items[0]!.name.length).toBeLessThanOrEqual(60);
+  });
+});
+
+describe('parseAiItems 코스 필드', () => {
+  const json = (items: unknown[]) => JSON.stringify({ items });
+  it('일곱 분류와 이전 라벨 장소를 읽는다', () => {
+    const out = parseAiItems(json(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소', '장소', '???'].map((kind, i) => ({ day: 1, name: `곳${i}`, kind }))), 1);
+    expect(out.map(i => i.kind)).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'other', 'stay', 'place', 'place']);
+  });
+  it('순서·시각·이동을 읽고 잘못된 값만 미정으로 둔다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: 'A', kind: '관광', start: '10:00', moveToNext: { mode: '도보', minutes: 10 } },
+      { day: 1, order: 2, name: 'B', kind: '식사', start: '25:00', moveToNext: { mode: '비행기', minutes: 10 } },
+      { day: 1, order: 3, name: 'C', kind: '카페', start: '13:30', moveToNext: { mode: '도보', minutes: 0 } },
+    ]), 1);
+    expect(out.map(i => [i.order, i.start, i.moveToNext])).toEqual([
+      [1, '10:00', { mode: '도보', minutes: 10 }], [2, null, null], [3, '13:30', null],
+    ]);
+  });
+  it('같은 날 시각이 거꾸로 가면 순서는 두고 뒤 항목 시각만 미정으로 둔다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: 'A', kind: '관광', start: '14:00' },
+      { day: 1, order: 2, name: 'B', kind: '관광', start: '11:00' },
+    ]), 1);
+    expect(out.map(i => [i.name, i.start])).toEqual([['A', '14:00'], ['B', null]]);
+  });
+  it('순서가 없거나 겹치면 응답 순서로 다시 매긴다', () => {
+    const out = parseAiItems(json([
+      { day: 1, name: 'A', kind: '관광' }, { day: 2, order: 1, name: 'C', kind: '관광' },
+      { day: 1, order: 1, name: 'B', kind: '관광' },
+    ]), 2);
+    expect(out.map(i => [i.name, i.day, i.order])).toEqual([['A', 1, 1], ['C', 2, 1], ['B', 1, 2]]);
+  });
+  it('이전 응답도 시각 없이 읽는다', () => {
+    expect(parseAiItems(json([{ day: 1, name: 'A', kind: '장소' }]), 1)[0]).toMatchObject({ order: 1, start: null, moveToNext: null, kind: 'place' });
+  });
+});
+
+describe('parseAiItems 최종 검토 보완', () => {
+  const json = (items: unknown[]) => JSON.stringify({ items });
+  it('같은 숙소가 다른 날에 나오면 날마다 남긴다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: '호텔', kind: '숙소' },
+      { day: 2, order: 1, name: '호텔', kind: '숙소' },
+      { day: 2, order: 2, name: '호텔', kind: '숙소' },
+      { day: 2, order: 3, name: '경포대', kind: '관광' },
+      { day: 3, order: 1, name: '경포대', kind: '관광' },
+    ]), 3);
+    expect(out.map((i) => [i.day, i.name])).toEqual([[1, '호텔'], [2, '호텔'], [2, '경포대']]);
+  });
+  it('모델 순서를 쓸 수 있으면 빠진 자리를 그대로 남긴다', () => {
+    const out = parseAiItems(json([
+      { day: 1, order: 1, name: 'A', kind: '관광' },
+      { day: 1, order: 2, name: '', kind: '관광' },
+      { day: 1, order: 3, name: 'C', kind: '관광' },
+    ]), 1);
+    expect(out.map((i) => [i.name, i.order])).toEqual([['A', 1], ['C', 3]]);
+  });
+});
+
+describe('parseAiItems 휴무 정보', () => {
+  const json = (items: unknown[]) => JSON.stringify({ items });
+  it('휴무 정보를 읽고 잘못된 값은 버린다', () => {
+    const out = parseAiItems(json([
+      { day: 1, name: 'A', kind: '관광', closed: { onDay: true, note: '매주 월요일 휴무' } },
+      { day: 1, name: 'B', kind: '관광', closed: { onDay: false, note: '  매주 화요일 휴무 ' } },
+      { day: 1, name: 'C', kind: '관광', closed: { onDay: 'yes', note: '월' } },
+      { day: 1, name: 'D', kind: '관광', closed: { onDay: true, note: '' } },
+      { day: 1, name: 'E', kind: '관광' },
+    ]), 1);
+    expect(out.map((i) => i.closed)).toEqual([
+      { onDay: true, note: '매주 월요일 휴무' },
+      { onDay: false, note: '매주 화요일 휴무' },
+      null, null, null,
+    ]);
   });
 });

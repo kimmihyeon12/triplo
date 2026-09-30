@@ -113,6 +113,31 @@ describe('격자 만들기', () => {
     expect(center!.y).toBeLessThan(0);
   });
 
+  // 서울 자치구처럼 칸보다 작은 지역은 칸을 받지 못한다. 중심까지 없으면 지도가
+  // 그 지역의 방문을 놓을 자리를 찾지 못한다.
+  it('칸을 받지 못한 작은 지역에도 중심을 낸다', () => {
+    const withTiny: GeoCollection = {
+      ...box,
+      features: [
+        ...box.features,
+        {
+          type: 'Feature',
+          properties: { code: 'T', name: '작은지역' },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [[[128.5, 36.5], [128.51, 36.5], [128.51, 36.51], [128.5, 36.51], [128.5, 36.5]]],
+          },
+        },
+      ],
+    };
+    const grid = buildGrid(withTiny, options);
+    expect(grid.cells.some((c) => c.regionCode === 'T')).toBe(false);
+    const center = grid.centers.get('T');
+    expect(center).toBeDefined();
+    // 경도 128.505는 기준점(127.5)에서 약 90km 동쪽이다.
+    expect(center!.x).toBeCloseTo(90.5, 0);
+  });
+
   it('지역이 없으면 빈 격자를 준다', () => {
     const empty: GeoCollection = { type: 'FeatureCollection', features: [] };
     const grid = buildGrid(empty, options);

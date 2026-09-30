@@ -115,7 +115,7 @@ describe('tallyVisits', () => {
     const jeju = createTrip({
       startDate: '2026-08-10',
       endDate: '2026-08-12',
-      regions: [createRegion('제주', 0, 'j1')],
+      regions: [createRegion('제주시', 0, 'j1')],
       stops: [
         createStop({ name: '성산일출봉', regionId: 'j1' }),
         createStop({ name: '한라산', regionId: 'j1' }),
@@ -234,15 +234,12 @@ describe('tallyDistricts', () => {
     ]);
   });
 
-  /*
-    주소가 없으면 여행 지역으로 되돌아간다. '서울'은 시·도 이름이라 그
-    시·도의 지역 하나로 읽히며, 어느 자치구인지까지는 알 수 없다.
-  */
-  it('주소가 없으면 여행 지역으로 센다', () => {
+  // 서울 전체만 골랐고 주소도 없으면 방문한 구를 알 수 없다.
+  it('시·도 전체 여행의 주소 미정 장소를 임의 자치구에 넣지 않는다', () => {
     const trip = seoulTrip(['']);
     const result = tallyDistricts([trip], TODAY, '11');
-    expect(result.regions).toHaveLength(1);
-    expect(result.regions[0].regionCode.startsWith('11_')).toBe(true);
+    expect(result.regions).toEqual([]);
+    expect(result.unclassifiedCount).toBe(1);
   });
 
   it('선택한 시·도 밖의 장소는 세지 않는다', () => {
@@ -373,5 +370,18 @@ describe('visitedPlacesIn', () => {
     expect(visitedPlacesIn([trip, pastTrip()], TODAY, '51').map((p) => p.name)).toEqual([
       '안목해변',
     ]);
+  });
+});
+
+describe('여행지 필터', () => {
+  it('관광·액티비티·쇼핑·기타를 함께 세고 식사는 뺀다', () => {
+    const trip = pastTrip({ stops: [
+      createStop({ name: '관광', kind: 'place', regionId: 'r1' }),
+      createStop({ name: '체험', kind: 'activity', regionId: 'r1' }),
+      createStop({ name: '쇼핑', kind: 'shopping', regionId: 'r1' }),
+      createStop({ name: '역', kind: 'other', regionId: 'r1' }),
+      createStop({ name: '식사', kind: 'meal', regionId: 'r1' }),
+    ] });
+    expect(visitedPlacesIn([trip], TODAY, '51', 'travel').map(p => p.name).sort()).toEqual(['관광', '쇼핑', '역', '체험']);
   });
 });

@@ -187,6 +187,32 @@ test('여행 상세에서 떠 있는 버튼으로 시트를 열고 순서를 고
   await expect(page.getByTestId('chat-sheet')).toHaveCount(0);
 });
 
+// 감리 P1-06: aria-modal인데 포커스를 옮기지 않아 Shift+Tab으로 뒤의 일정 추가가 잡혔고
+// Escape로도 닫히지 않았다.
+test('채팅 시트는 키보드 포커스를 가두고 Escape로 닫으면 연 버튼으로 돌아간다', async ({ page }) => {
+  await resetApp(page);
+  const tripId = await createTrip(page, { title: '강릉 여행', start: '2026-05-01', end: '2026-05-01' });
+  await page.goto(`/trips/${tripId}`);
+  const opener = page.getByTestId('open-chat');
+  await opener.focus();
+  await page.keyboard.press('Enter');
+  const sheet = page.getByTestId('chat-sheet');
+  await expect(sheet).toBeVisible();
+  const inside = () => page.evaluate(() => !!document.activeElement?.closest('[data-testid="chat-sheet"]'));
+  expect(await inside()).toBe(true);
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press('Shift+Tab');
+    expect(await inside(), `Shift+Tab ${i + 1}번째에도 시트 안이어야 한다`).toBe(true);
+  }
+  for (let i = 0; i < 12; i++) {
+    await page.keyboard.press('Tab');
+    expect(await inside(), `Tab ${i + 1}번째에도 시트 안이어야 한다`).toBe(true);
+  }
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0);
+  await expect(opener).toBeFocused();
+});
+
 test('시트 손잡이로 높이를 바꾼다', async ({ page }) => {
   await resetApp(page);
   const tripId = await createTrip(page, { title: '강릉 여행', regions: ['강릉시'] });
@@ -239,4 +265,18 @@ test('키보드만으로 물어보고 확인 카드까지 간다', async ({ page
   // 카드의 버튼에 탭으로 닿을 수 있어야 한다.
   await page.getByTestId('confirm-apply').focus();
   await expect(page.getByTestId('confirm-apply')).toBeFocused();
+});
+
+test('휴대폰에서 보내기를 한 번 누르면 키보드를 연 채 보내진다', async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.use.hasTouch, '터치 기기에서만 생기는 문제다');
+  await resetApp(page);
+  await openChat(page);
+  const input = page.getByTestId('chat-input');
+  await input.tap();
+  await input.fill('강릉 바다 보러 가고 싶어');
+  await page.getByTestId('chat-send').tap();
+  // 누르는 순간 입력창이 포커스를 잃으면 키보드가 닫히며 버튼이 움직여 한 번 더 눌러야 했다.
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue('');
+  await expect(page.getByText('강릉 바다 보러 가고 싶어')).toBeVisible();
 });

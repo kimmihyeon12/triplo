@@ -20,11 +20,14 @@ import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { VisitMapBanner } from '../../../stats/ui/visit-map-banner/visit-map-banner';
 import { CompanionFace } from '../../../travel-chat/companion';
+import { canDeleteTrip, memberSummary } from '../../util/sharing';
+import { UiMemberStack } from '../../../../shared/ui/member-stack/member-stack';
 
 @Component({
   selector: 'app-trip-list',
   providers: [TripListStore],
   imports: [
+    UiMemberStack,
     UiButton,
     UiNotice,
     UiBadge,
@@ -61,10 +64,21 @@ export class TripListPage implements OnInit {
   }
 
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthStore);
   readonly tripMenu: readonly RowMenuItem[] = [
     { id: 'edit', label: '여행 정보 수정', icon: 'edit' },
     { id: 'delete', label: '삭제', icon: 'trash', danger: true },
   ];
+  /** 함께 쓰는 여행의 멤버는 지우지 못한다. 대신 함께하는 사람 화면에서 나간다. */
+  readonly memberMenu: readonly RowMenuItem[] = [
+    { id: 'edit', label: '여행 정보 수정', icon: 'edit' },
+    { id: 'members', label: '함께하는 사람·나가기', icon: 'share' },
+  ];
+  /** 함께 쓰는 여행이면 나와 나머지 수. 로그인한 사람을 '나'로 본다. */
+  members(trip: Trip) {
+    return memberSummary(trip, this.auth.user()?.id ?? null);
+  }
+  readonly canDeleteTrip = canDeleteTrip;
   readonly deleteTripId = signal<string | null>(null);
 
   /**
@@ -74,7 +88,8 @@ export class TripListPage implements OnInit {
 
   onTripMenu(action: string, trip: Trip): void {
     if (action === 'edit') void this.router.navigate(['/trips', trip.id, 'edit']);
-    else if (action === 'delete') this.deleteTripId.set(trip.id);
+    else if (action === 'members') void this.router.navigate(['/trips', trip.id, 'invite']);
+    else if (action === 'delete' && canDeleteTrip(trip)) this.deleteTripId.set(trip.id);
   }
 
   async confirmDeleteTrip(id: string): Promise<void> {

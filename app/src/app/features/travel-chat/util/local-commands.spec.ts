@@ -8,10 +8,17 @@ const trip = createTrip({ title: '강릉 여행', startDate: '2026-10-01', endDa
   createStop({ id: 'b', name: '경포대', date: '2026-10-01', order: 1 }),
   createStop({ id: 'c', name: '커피집', kind: 'break' }),
 ] });
+describe('체류시간 명령(2026-09-30 화면에서 없앰)', () => {
+  it.each(['오죽헌 체류시간 1시간 30분으로 바꿔', '카페 체류시간 전부 40분으로', '체류시간 합계 알려줘'])('%s는 비고 안내만 한다', (text) => {
+    const result = localCommand(text, trip);
+    expect(result?.text).toContain('비고');
+    expect(result?.draft).toBeUndefined();
+  });
+});
+
 describe('local commands', () => {
   it.each([
     ['오죽헌 2일차로 옮겨', 'a', 'date', '2026-10-02'],
-    ['오죽헌 체류시간 1시간 30분으로 바꿔', 'a', 'stayMinutes', 90],
     ['오죽헌 오후 2시로 고정해', 'a', 'fixedTime', '14:00'],
     ['오죽헌 메모에 입장권 확인 추가해', 'a', 'memo', '입장권 확인'],
     ['경포대 이번 일정에서 제외해', 'b', 'excluded', true],
@@ -36,7 +43,6 @@ describe('local commands', () => {
   });
   it('answers stored queries and distinguishes missing durations', () => {
     expect(localCommand('2일차 일정 보여줘', trip)?.text).toContain('없');
-    expect(localCommand('체류시간 합계 알려줘', trip)?.text).toContain('미정 2');
     expect(localCommand('오죽헌 몇 일차에 넣었지?', trip)?.text).toContain('1일차');
     expect(localCommand('미배치 장소 알려줘', trip)?.text).toContain('커피집');
   });
@@ -66,7 +72,6 @@ describe('local commands', () => {
   });
   it('supports short commands, bulk durations and undecided dates', () => {
     expect(localCommand('오죽헌 2일차로', trip)?.draft).toBeTruthy();
-    expect(applyDraft(trip, localCommand('카페 체류시간 전부 40분으로', trip)!.draft!).stops[2].stayMinutes).toBe(40);
     const next = applyDraft(trip, localCommand('여행 날짜 미정으로 해줘', trip)!.draft!);
     expect(next.startDate).toBeNull();
     expect(new Set(next.stops.map(s => s.order)).size).toBe(next.stops.length);
@@ -79,5 +84,10 @@ describe('local commands', () => {
     expect(localCommand('중복 장소 찾아줘', {...trip, stops:[...trip.stops, {...trip.stops[0],id:'duplicate'}]})?.text).toContain('중복 후보');
     expect(localCommand('2일차 지도 열어줘', trip)?.localLink).toContain('day=2026-10-02');
     expect(localCommand('일정 텍스트로 복사해줘', trip)?.copyText).toContain('오죽헌');
+  });
+  it('영업시간을 묻는 "몇 시에 열어"는 화면 열기 명령으로 가로채지 않는다', () => {
+    expect(localCommand('불국사 몇 시에 열어', null)).toBeNull();
+    expect(localCommand('오죽헌 몇 시에 열어?', trip)).toBeNull();
+    expect(localCommand('가계부 열어줘', trip)?.localLink).toContain('/expenses');
   });
 });

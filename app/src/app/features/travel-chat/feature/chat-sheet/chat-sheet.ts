@@ -1,3 +1,4 @@
+import { ChatCardState } from '../../data/chat-card-state';
 import { CompanionFace } from '../../ui/companion-face/companion-face';
 import {
   ChangeDetectionStrategy,
@@ -12,10 +13,12 @@ import {
 } from '@angular/core';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiModal } from '../../../../shared/ui/modal/modal';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
 import type { Trip } from '../../../trips/model/trip';
+import { AiQuota } from '../../../../core/ai-quota';
 
 /**
  * 여행 상세에서 여는 대화. 하단 시트로 연다.
@@ -27,7 +30,7 @@ import type { Trip } from '../../../trips/model/trip';
 @Component({
   selector: 'app-chat-sheet',
   templateUrl: './chat-sheet.html',
-  imports: [CompanionFace, ChatThread, UiButton, IconComponent],
+  imports: [CompanionFace, ChatThread, UiButton, IconComponent, UiModal],
   providers: [TravelChatStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -39,12 +42,14 @@ export class ChatSheet {
   /** 반영한 여행. 상세 화면이 받아 저장한다. */
   readonly applied = output<Trip>();
 
+  readonly aiHint = inject(AiQuota).hint('chat');
+
   readonly store = inject(TravelChatStore);
 
   /** 시트를 전체 높이로 올렸는지. 처음에는 절반이다. */
   readonly expanded = signal(false);
-  readonly appliedMessageId = signal<string | null>(null);
-  readonly dismissedIds = signal<readonly string[]>([]);
+  /** 이미 반영한 카드와 그대로 두기를 고른 카드. 전체 채팅과 따로 둔다. */
+  readonly cards = new ChatCardState();
 
   /**
    * 시트 높이. 절반일 때 화면의 62%를 쓴다. 정확히 절반으로 두면 말풍선
@@ -68,8 +73,7 @@ export class ChatSheet {
     this.resetting.set(true);
     try {
       await this.store.reset();
-      this.appliedMessageId.set(null);
-      this.dismissedIds.set([]);
+      this.cards.reset();
       this.thread()?.clearComposer();
     } finally {
       this.resetting.set(false);
@@ -84,19 +88,19 @@ export class ChatSheet {
   async apply(event: { messageId: string; draft: ChatDraft }): Promise<void> {
     const next = await this.store.applyDraft(event.draft);
     if (!next) return;
-    this.appliedMessageId.set(event.messageId);
+    this.cards.markApplied(event.messageId);
     this.applied.emit(next);
   }
 
   async undo(): Promise<void> {
     const previous = await this.store.undo();
     if (!previous) return;
-    this.appliedMessageId.set(null);
+    this.cards.clearApplied();
     this.applied.emit(previous);
   }
 
   dismissDraft(messageId: string): void {
-    this.dismissedIds.set([...this.dismissedIds(), messageId]);
+    this.cards.dismiss(messageId);
   }
 
   /** 배경을 누르면 닫는다. 시트 안쪽 클릭은 올라오지 않게 막는다. */

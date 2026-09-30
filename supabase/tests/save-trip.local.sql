@@ -1,20 +1,26 @@
 -- 로컬 PostgreSQL에서 save_trip 동작을 확인한다. Supabase의 auth 스키마를 흉내 낸다.
 -- 실행: psql -U postgres -h localhost -c 'create database tc_check'
 --       psql -U postgres -h localhost -d tc_check -f supabase/tests/save-trip.local.sql
--- 기대: A new 1 / A stale conflict / 제약 위반 전체 되돌림 / A update 2 / B sees 0 / B steal 23505 / anon authentication_required
+-- 기대: A new 1 / A stale conflict / 제약 위반 전체 되돌림 / A update 2 / B sees 0 / B steal not_found(P0404, 멤버 아님) / anon authentication_required
 \set ON_ERROR_STOP 1
 create schema auth;
-create table auth.users (id uuid primary key);
+create schema extensions;
+create extension pgcrypto with schema extensions;
+create table auth.users (id uuid primary key, raw_user_meta_data jsonb not null default '{}');
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 do $$ begin
   if not exists (select from pg_roles where rolname = 'anon') then create role anon nologin; end if;
   if not exists (select from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
 end $$;
-grant usage on schema public, auth to authenticated;
+grant usage on schema public, auth, extensions to authenticated;
 insert into auth.users values ('11111111-1111-1111-1111-111111111111'), ('22222222-2222-2222-2222-222222222222');
 \ir ../migrations/20260917000000_create_trip_tables.sql
 \ir ../migrations/20260929000000_trip_version_and_save.sql
 \ir ../migrations/20260929000001_trip_grants.sql
+\ir ../migrations/20260929000002_ledger_tables.sql
+\ir ../migrations/20260929000003_remove_ledger_person.sql
+\ir ../migrations/20260929000005_trip_members.sql
+\ir ../migrations/20260929000006_drop_redundant_split_fkey.sql
 \set ON_ERROR_STOP 0
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';

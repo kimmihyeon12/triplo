@@ -13,6 +13,7 @@ import {
   Component,
   computed,
   effect,
+  untracked,
   inject,
   input,
   signal,
@@ -26,7 +27,6 @@ import {
   dayStops,
   dayTotals,
   fixedTimeConflicts,
-  formatMinutes,
   moveStay,
   moveStop,
   removeStop,
@@ -46,13 +46,17 @@ import { dayStayInfo, removeStay } from '../../util/stays';
 import { IconComponent, type IconName } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { PageBar } from '../../../../core/page-bar';
-import { copyText, kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
+import { copyText } from '../../../../core/clipboard';
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 import { ChatSheet } from '../../../travel-chat/travel-chat';
 import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
+import { ToastService } from '../../../../core/toast-service';
+import { canDeleteTrip, tripPeople } from '../../util/sharing';
+import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 /** `overview` folded into `days`; old links still resolve to the itinerary tab. */
 type Tab = 'days' | 'stays';
@@ -63,6 +67,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
+    UiMapLinks,
     UiButton,
     UiBadge,
     UiNotice,
@@ -143,9 +148,9 @@ export class TripDetailPage {
       queryParams: { ...(kind ? { kind } : {}), ...(date ? { date } : {}) },
     });
     return [
-      stop(null, '장소', 'place', 'add-stop'),
-      stop('meal', '식사', 'meal', 'add-meal'),
-      stop('break', '휴식', 'break', 'add-break'),
+      stop(null, STOP_KIND_LABEL.place, 'place', 'add-stop'),
+      stop('meal', STOP_KIND_LABEL.meal, 'meal', 'add-meal'),
+      stop('break', STOP_KIND_LABEL.break, 'break', 'add-break'),
       stop('buffer', '여유시간', 'buffer', 'add-buffer'),
       {
         label: '숙소',
@@ -204,10 +209,12 @@ export class TripDetailPage {
         action: null,
         tools: t
           ? {
-              people:
+              people: tripPeople(
+                t,
                 this.auth.user() && this.auth.nickname()
-                  ? [{ id: this.auth.user()!.id, name: this.auth.nickname()! }]
-                  : [],
+                  ? { id: this.auth.user()!.id, name: this.auth.nickname()! }
+                  : null,
+              ),
               inviteLink: ['/trips', t.id, 'invite'],
               menu: [
                 {
@@ -217,13 +224,21 @@ export class TripDetailPage {
                   testId: 'trip-edit',
                 },
                 { label: '이미지로 저장', icon: 'save', link: ['/trips', t.id, 'export'] },
-                {
-                  label: '여행 삭제',
-                  icon: 'trash',
-                  action: 'delete-trip',
-                  testId: 'trip-delete',
-                  danger: true,
-                },
+                // 함께 쓰는 여행의 멤버는 지우지 못한다. 함께하는 사람 화면에서 나간다.
+                canDeleteTrip(t)
+                  ? {
+                      label: '여행 삭제',
+                      icon: 'trash',
+                      action: 'delete-trip',
+                      testId: 'trip-delete',
+                      danger: true,
+                    }
+                  : {
+                      label: '함께하는 사람·나가기',
+                      icon: 'share',
+                      link: ['/trips', t.id, 'invite'],
+                      testId: 'trip-members',
+                    },
               ],
               onAction: (action) => {
                 if (action === 'delete-trip') this.deleteTripOpen.set(true);
@@ -235,6 +250,18 @@ export class TripDetailPage {
     effect(() => {
       const id = this.id();
       void this.store.open(id);
+    });
+    /*
+      저장 실패 알림에 다시 저장을 붙인다. 헤더의 다시 저장은 목록 아래에서 편집하면
+      화면 밖에 있고, 위로 올려도 상단 바 아래에 남는 오류 알림이 그 자리를 덮는다.
+      충돌은 다시 저장해도 풀리지 않으므로 붙이지 않는다.
+    */
+    effect(() => {
+      if (this.store.saveState() !== 'error') return;
+      const message = this.store.saveError() ?? '저장하지 못했어요.';
+      untracked(() =>
+        this.toast.error(message, { label: '다시 저장', run: () => void this.store.retrySave() }),
+      );
     });
     effect(() => {
       const day = this.selectedDay();
@@ -250,10 +277,6 @@ export class TripDetailPage {
 
   formatDate(d: IsoDate, short = false): string {
     return formatKoreanDate(d, { short });
-  }
-
-  minutes(m: number): string {
-    return formatMinutes(m);
   }
 
   summarize(names: string[]): string {
@@ -470,8 +493,7 @@ export class TripDetailPage {
     return dayStops(t, day).filter((s) => s.fixedTime === null && s.location !== null).length >= 2;
   });
 
-  /** 정렬 뒤 무엇이 자리를 지켰는지 알린다. 비면 표시하지 않는다. */
-  readonly sortNotice = signal<string | null>(null);
+  private readonly toast = inject(ToastService);
 
   async sortByNearest(): Promise<void> {
     const t = this.trip();
@@ -483,7 +505,8 @@ export class TripDetailPage {
     const kept: string[] = [];
     if (r.fixedCount > 0) kept.push(`고정 시각 ${r.fixedCount}개`);
     if (r.unlocatedCount > 0) kept.push(`위치 미확인 ${r.unlocatedCount}개`);
-    this.sortNotice.set(
+    // 정렬 뒤 무엇이 자리를 지켰는지 알린다.
+    this.toast.success(
       kept.length > 0
         ? `${r.sortedCount}개를 가까운 순으로 정렬했습니다. ${kept.join('·')}는 자리를 지켰습니다.`
         : `${r.sortedCount}개를 가까운 순으로 정렬했습니다.`,
@@ -495,6 +518,7 @@ export class TripDetailPage {
     if (ok) {
       this.copiedId.set(target.id);
       this.copyFallback.set(false);
+      this.toast.success('주소를 복사했어요.');
       setTimeout(() => this.copiedId.set(null), 1500);
     } else {
       this.copyFallback.set(true);

@@ -18,12 +18,26 @@ test('다녀온 여행이 없으면 빈 상태를 보여준다', async ({ page }
   await expect(page.getByTestId('block-map')).toHaveCount(0);
 });
 
+test('불러오는 동안에는 빈 상태를 보여주지 않는다', async ({ page }) => {
+  let release: () => void = () => {};
+  const held = new Promise<void>((r) => (release = r));
+  await page.route('**/geo/*.geo.json', async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.goto('/stats');
+  await page.waitForTimeout(500);
+  await expect(page.getByText('첫 여행을 기다리고 있어요')).toHaveCount(0);
+  release();
+  await expect(page.getByText('첫 여행을 기다리고 있어요')).toBeVisible();
+});
+
 test('날짜가 지나지 않은 여행은 통계에 넣지 않는다', async ({ page }) => {
   const id = await createTrip(page, {
     title: '앞으로 갈 여행',
     start: '2030-05-01',
     end: '2030-05-03',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2030-05-01' });
 
@@ -36,7 +50,7 @@ test('지난 여행의 장소를 지역별로 센다', async ({ page }) => {
     title: '강릉 여행',
     start: '2024-05-01',
     end: '2024-05-03',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
   await addStop(page, id, { name: '경포대', region: '강릉', date: '2024-05-02' });
@@ -44,9 +58,10 @@ test('지난 여행의 장소를 지역별로 센다', async ({ page }) => {
   await page.goto('/stats/details');
   await expect(page.getByTestId('stats-summary')).toContainText('2');
   // 지도를 읽을 수 없어도 같은 값을 볼 수 있어야 한다.
-  // 전국 격자는 시·도 단위이므로 '강릉'은 '강원'으로 모아 센다.
+  // 목록은 시·도 제목('강원') 아래 시·군·구 줄('강릉시')로 센다.
   await expect(page.getByTestId('block-map-list')).toContainText('강원');
-  await expect(page.getByTestId('block-map-list')).toContainText('2회');
+  await expect(page.getByTestId('block-map-list')).toContainText('강릉시');
+  await expect(page.getByTestId('block-map-list')).toContainText('2곳');
 });
 
 test('지역을 고르면 그곳에서 방문한 장소를 보여준다', async ({ page }) => {
@@ -54,12 +69,12 @@ test('지역을 고르면 그곳에서 방문한 장소를 보여준다', async 
     title: '강릉 여행',
     start: '2024-05-01',
     end: '2024-05-03',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉시/ }).click();
 
   await expect(page.getByTestId('stats-places')).toContainText('안목해변');
   // 방문으로 본 근거인 여행 종료일을 함께 보여준다.
@@ -71,23 +86,23 @@ test('장소를 누르면 그 여행으로 간다', async ({ page }) => {
     title: '강릉 여행',
     start: '2024-05-01',
     end: '2024-05-03',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉시/ }).click();
   await page.getByTestId('stats-places').getByRole('button').first().click();
 
   await expect(page).toHaveURL(new RegExp(`/trips/${id}$`));
 });
 
-test('서울은 자치구 지도를 한 단계 더 보여준다', async ({ page }) => {
+test('서울은 자치구 단위로 센다', async ({ page }) => {
   const id = await createTrip(page, {
     title: '서울 여행',
     start: '2024-05-01',
     end: '2024-05-03',
-    regions: ['서울'],
+    regions: ['종로구'],
   });
   // 자치구는 주소에서 읽는다. 지역 목록에는 '서울'만 담기기 때문이다.
   await addStop(page, id, {
@@ -97,9 +112,7 @@ test('서울은 자치구 지도를 한 단계 더 보여준다', async ({ page 
   });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /서울/ }).click();
-
-  // 전국이 아니라 서울 안을 보고 있다.
+  // 목록이 처음부터 시·군·구 단위라 서울 안의 자치구가 바로 보인다.
   await expect(page.getByTestId('block-map-list')).toContainText('강남구');
 
   await page.getByTestId('block-map-list').getByRole('button', { name: /강남구/ }).click();
@@ -111,12 +124,12 @@ test('전국 지도로 돌아간다', async ({ page }) => {
     title: '강릉 여행',
     start: '2024-05-01',
     end: '2024-05-03',
-    regions: ['강릉'],
+    regions: ['강릉시'],
   });
   await addStop(page, id, { name: '안목해변', region: '강릉', date: '2024-05-01' });
 
   await page.goto('/stats/details');
-  await page.getByTestId('block-map-list').getByRole('button', { name: /강원/ }).click();
+  await page.getByTestId('block-map-list').getByRole('button', { name: /강릉시/ }).click();
   await page.getByTestId('stats-back').click();
 
   await expect(page.getByTestId('stats-summary')).toBeVisible();
@@ -128,4 +141,12 @@ test('여행 목록에서 통계로 간다', async ({ page }) => {
   await page.goto('/trips');
   await page.getByTestId('go-stats').click();
   await expect(page).toHaveURL(/\/stats$/);
+});
+
+test('지도 위에서도 한 손가락으로 화면을 아래로 내릴 수 있다', async ({ page }) => {
+  await page.goto('/stats');
+  const canvas = page.locator('canvas').first();
+  await expect(canvas).toBeVisible();
+  // 지도 조작기가 만들어지며 거는 touch-action: none을 덮어써야 세로 스크롤이 산다.
+  await expect(canvas).toHaveCSS('touch-action', 'pan-y');
 });

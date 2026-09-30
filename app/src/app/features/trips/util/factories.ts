@@ -1,4 +1,4 @@
-import { findRegionByName } from '../../../shared/util/korea-regions';
+import { findRegionByName, provinceCodeByName, KOREA_PROVINCES } from '../../../shared/util/korea-regions';
 import {
   STOP_KIND_DEFAULT_NAME,
   type Trip,
@@ -79,6 +79,8 @@ export function createRegion(name: string, order: number, id?: string): TripRegi
   const trimmed = name.trim();
   // 지역은 고정 목록에서 고르므로 대부분 코드가 붙는다. 자유 입력으로 들어온
   // 이름은 코드 없이 남고, 통계에서 '분류되지 않음'으로 센다.
-  const code = findRegionByName(trimmed)?.code;
+  // 제주 전체의 짧은 이름 '제주'가 제주시 별칭보다 먼저 해석되어야 한다.
+  const whole = KOREA_PROVINCES.find(p => p.short === trimmed || p.name === trimmed);
+  const code = whole?.code ?? provinceCodeByName(trimmed) ?? findRegionByName(trimmed)?.code;
   return { id: id ?? newId(), name: trimmed, order, ...(code ? { regionCode: code } : {}) };
 }

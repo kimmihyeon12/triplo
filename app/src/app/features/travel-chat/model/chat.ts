@@ -48,7 +48,7 @@ export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule' | 'assign-
  * 일정에 담을 후보 장소. 모델은 이름과 일차만 내고, 나머지는 장소 검색으로
  * 대조한 결과다. `verified`가 거짓이면 좌표가 없어 담을 수 없다.
  */
-export type ChatPlace = VerifiedItem;
+export type ChatPlace = Omit<VerifiedItem, 'kind'> & { readonly kind: StopKind };
 
 /** 새 여행 또는 기존 여행에 장소를 더하는 초안. */
 export interface AppendDraft {

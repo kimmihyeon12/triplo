@@ -10,12 +10,11 @@ const signedIn: CanActivateFn = () => {
 
 export const routes: Routes = [
   {
-    path: 'share-preview/:id',
+    // 초대 링크. 로그인 전에도 보기 전용으로 열리므로 가드를 두지 않는다.
+    path: 'join/:code',
     loadComponent: () =>
-      import('./features/collaboration/feature/share-preview/share-preview').then(
-        (m) => m.SharePreview,
-      ),
-    title: '공유 일정 미리보기',
+      import('./features/collaboration/feature/join/join').then((m) => m.Join),
+    title: '여행 초대',
   },
   { path: '', pathMatch: 'full', redirectTo: 'trips' },
   {

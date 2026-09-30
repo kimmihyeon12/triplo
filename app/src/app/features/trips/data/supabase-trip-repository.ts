@@ -12,7 +12,11 @@ export class SupabaseTripRepository implements TripRepository {
   readonly lastSkippedCount = 0;
   private readonly versions = new Map<string, number>();
 
-  constructor(private readonly data: TripDataClient) {}
+  /** me: 지금 로그인한 사람의 id. 여행마다 내가 주인인지 멤버인지 정하는 데 쓴다. */
+  constructor(
+    private readonly data: TripDataClient,
+    private readonly me: () => string | null = () => null,
+  ) {}
 
   /**
    * 버전은 오르기만 한다. 저장 뒤 목록을 다시 읽을 때 저장보다 먼저 읽힌 응답이
@@ -21,13 +25,19 @@ export class SupabaseTripRepository implements TripRepository {
    */
   private remember(row: TripRow): Trip {
     this.versions.set(row.id, Math.max(this.versions.get(row.id) ?? 0, row.version));
-    return tripFromRow(row);
+    return tripFromRow(row, this.me());
   }
 
+  /**
+   * 목록은 처음 보는 여행의 버전만 기억한다. 이미 기억한 버전은 편집 기준이라 올리지 않는다.
+   * 올리면 충돌 뒤 목록을 다시 읽는 것만으로 v1을 바탕으로 한 초안이 서버 최신(v2)
+   * 기준으로 저장되어 동료의 변경을 덮어썼다(2026-09-30 감리 P1-02). 편집 기준은
+   * 상세를 열 때(get)와 저장에 성공할 때, 새로 불러오기(forget 뒤 get)로만 바뀐다.
+   */
   async list(): Promise<Trip[]> {
     const rows = await this.data.listRows();
     return rows
-      .map((r) => this.remember(r))
+      .map((r) => (this.versions.has(r.id) ? tripFromRow(r, this.me()) : this.remember(r)))
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
   }
 

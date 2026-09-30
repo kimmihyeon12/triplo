@@ -4,6 +4,7 @@ import type { Trip } from '../model/trip';
 import type { TripRow } from './trip-rows';
 import { SupabaseTripRepository } from './supabase-trip-repository';
 import {
+  TripAccessError,
   TripConflictError,
   TripSaveError,
   toTripError,
@@ -66,6 +67,32 @@ describe('SupabaseTripRepository', () => {
     expect(server.calls).toEqual([5]);
   });
 
+  // 감리 P1-02: 충돌 뒤 목록을 다시 읽으면 기억한 버전이 서버 최신(v2)으로 올라가, v1을
+  // 바탕으로 한 초안의 재저장이 승인되어 동료의 변경을 덮어썼다.
+  it('충돌 뒤 목록을 다시 읽어도 편집 기준 버전은 그대로라 옛 초안이 덮어쓰지 못한다', async () => {
+    const server = fakeServer();
+    const trip = createTrip({ title: '강릉' });
+    server.rows.set(trip.id, { trip, version: 1 });
+    const repo = new SupabaseTripRepository(server.client);
+    await repo.get(trip.id);
+    server.rows.set(trip.id, { trip: { ...trip, title: '동료가 고친 제목' }, version: 2 });
+    const draft = { ...trip, title: '내 옛 초안' };
+    await expect(repo.save(draft)).rejects.toBeInstanceOf(TripConflictError);
+    await repo.list();
+    await expect(repo.save(draft)).rejects.toBeInstanceOf(TripConflictError);
+    expect(server.rows.get(trip.id)!.trip.title).toBe('동료가 고친 제목');
+  });
+
+  it('목록에서만 본 여행은 그 버전으로 저장한다', async () => {
+    const server = fakeServer();
+    const trip = createTrip({ title: '강릉' });
+    server.rows.set(trip.id, { trip, version: 3 });
+    const repo = new SupabaseTripRepository(server.client);
+    await repo.list();
+    await repo.save(trip);
+    expect(server.calls).toEqual([3]);
+  });
+
   it('다른 곳에서 먼저 저장했으면 충돌 오류를 던지고, forget 후 다시 읽으면 저장된다', async () => {
     const server = fakeServer();
     const trip = createTrip({ title: '강릉' });
@@ -112,6 +139,37 @@ describe('SupabaseTripRepository', () => {
     server.rows.set(b.id, { trip: b, version: 1 });
     const repo = new SupabaseTripRepository(server.client);
     expect((await repo.list()).map((t) => t.title)).toEqual(['b', 'a']);
+  });
+});
+
+describe('SupabaseTripRepository 멤버', () => {
+  it('읽을 때 지금 로그인한 사람으로 역할을 정한다', async () => {
+    const trip = createTrip({ id: 't1', title: '함께' });
+    const client: TripDataClient = {
+      listRows: async () => [
+        {
+          ...rowOf(trip, 1),
+          owner_id: 'u-owner',
+          trip_members: [
+            { user_id: 'u-owner', role: 'owner', nickname: '주인', joined_at: '2026-09-29T00:00:00Z' },
+            { user_id: 'u-me', role: 'editor', nickname: '나', joined_at: '2026-09-29T01:00:00Z' },
+          ],
+        },
+      ],
+      getRow: async () => null,
+      saveTrip: async () => 1,
+      deleteTrip: async () => undefined,
+    };
+    expect((await new SupabaseTripRepository(client, () => 'u-owner').list())[0].sharing?.role).toBe('owner');
+    expect((await new SupabaseTripRepository(client, () => 'u-me').list())[0].sharing?.role).toBe('editor');
+  });
+});
+
+describe('toTripError 접근', () => {
+  it('P0404는 접근할 수 없다는 안내로 바꾼다', () => {
+    const error = toTripError({ code: 'P0404', message: 'not_found' });
+    expect(error).toBeInstanceOf(TripAccessError);
+    expect(error.message).toContain('접근할 수 없어요');
   });
 });
 

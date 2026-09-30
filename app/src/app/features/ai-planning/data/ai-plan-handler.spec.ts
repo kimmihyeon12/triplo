@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiPlanHandler } from '../../../../../../supabase/functions/ai-plan/handler';
+import { RESPONSE_SCHEMA } from '../../../../../../supabase/functions/ai-plan/prompt';
+import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
  * Edge Function의 핸들러를 앱 테스트에서 그대로 검증한다. delete-account와 같은
@@ -30,19 +32,39 @@ function setup(
   overrides: {
     getUser?: (token: string) => Promise<{ id: string } | null>;
     callModel?: (prompt: { system: string; user: string }) => Promise<string>;
+    consumeQuota?: (userId: string) => Promise<number>;
   } = {},
 ) {
   const callModel = overrides.callModel ?? vi.fn(async () => JSON.stringify({ items: [] }));
+  const consumeQuota = vi.fn(overrides.consumeQuota ?? (async () => 4));
+  const refundQuota = vi.fn(async () => {});
   return {
     callModel,
+    consumeQuota,
+    refundQuota,
     handler: createAiPlanHandler({
       getUser: overrides.getUser ?? (async () => ({ id: 'u1' })),
       callModel,
+      consumeQuota,
+      refundQuota,
     }),
   };
 }
 
 describe('createAiPlanHandler', () => {
+  it('1인 예산과 전체 예산을 구별해 생성 조건으로 전달한다', async () => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, partySize: 3, budget: 100000, budgetBasis: 'person' }))).status).toBe(200);
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('3명');
+    expect(prompt.user).toContain('100000원 (1인 기준)');
+    expect(prompt.user).toContain('총예산 300000원');
+  });
+  it.each([{ partySize: 0 }, { partySize: 1.5 }, { budget: -1 }, { budget: '10000' }, { budgetBasis: 'night' }])('잘못된 예산 조건을 모델 호출 전에 거절한다: %j', async (extra) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, ...extra }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
   it('로그인하지 않으면 거절한다', async () => {
     const { handler } = setup();
     const res = await handler(
@@ -91,7 +113,7 @@ describe('createAiPlanHandler', () => {
     const { handler } = setup({ callModel: async () => content });
     const res = await handler(post(BODY));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ content });
+    expect(await res.json()).toEqual({ content, remaining: 4 });
   });
 
   it('조건을 프롬프트에 담아 모델을 부른다', async () => {
@@ -147,5 +169,153 @@ describe('createAiPlanHandler', () => {
     const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0] as { user: string };
     // 긴 입력을 그대로 보내면 토큰만 쓰고 결과는 나아지지 않는다.
     expect(prompt.user.length).toBeLessThan(2000);
+  });
+
+  it('성공하면 한 번을 차감하고 남은 횟수를 함께 돌려준다', async () => {
+    const { handler, consumeQuota } = setup();
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(200);
+    expect((await res.json()).remaining).toBe(4);
+    expect(consumeQuota).toHaveBeenCalledWith('u1');
+  });
+
+  it('내 한도를 넘으면 모델을 부르지 않고 429 user_limit과 한도를 돌려준다', async () => {
+    const { handler, callModel } = setup({
+      consumeQuota: async () => {
+        throw new UserLimitError(5);
+      },
+    });
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: 'user_limit', limit: 5 });
+    expect(callModel).not.toHaveBeenCalled();
+  });
+
+  it('입력이 잘못되면 차감하지 않는다', async () => {
+    const { handler, consumeQuota } = setup();
+    expect((await handler(post({ ...BODY, regions: [] }))).status).toBe(400);
+    expect(consumeQuota).not.toHaveBeenCalled();
+  });
+
+  it('모델이 실패하면 차감한 한 번을 되돌린다', async () => {
+    for (const message of ['quota_exceeded', 'model_error_500']) {
+      const { handler, refundQuota } = setup({
+        callModel: async () => {
+          throw new Error(message);
+        },
+      });
+      await handler(post(BODY));
+      expect(refundQuota).toHaveBeenCalledWith('u1');
+    }
+  });
+
+  it('한도 확인이 실패하면 503 server_unavailable이고 모델을 부르지 않는다', async () => {
+    const { handler, callModel, refundQuota } = setup({
+      consumeQuota: async () => {
+        throw new Error('quota_check_failed');
+      },
+    });
+    const res = await handler(post(BODY));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'server_unavailable' });
+    expect(callModel).not.toHaveBeenCalled();
+    expect(refundQuota).not.toHaveBeenCalled();
+  });
+
+  it('모델이 빈 답을 주면 실패로 알리고 되돌린다', async () => {
+    const { handler, refundQuota } = setup({ callModel: async () => '  ' });
+    expect((await handler(post(BODY))).status).toBe(500);
+    expect(refundQuota).toHaveBeenCalledWith('u1');
+  });
+});
+
+describe('AI 코스 프롬프트', () => {
+  it('코스 형식과 기본 분류 구성을 모델에 요구한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2 }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·기타·숙소');
+    expect(prompt.system).toContain('마지막 날에는 숙소를 넣지 않는다');
+    expect(prompt.user).toContain('관광 2~3곳');
+    expect(prompt.user).not.toContain('카페 2곳씩');
+  });
+  it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('관광 2~3곳');
+  });
+  it('응답 스키마가 코스 필드와 일곱 분류를 가진다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.kind.enum).toEqual(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소']);
+    expect(item.required).toEqual(expect.arrayContaining(['day', 'order', 'name', 'kind', 'start', 'estimate']));
+    expect(item.properties.moveToNext.properties.mode.enum).toEqual(['도보', '대중교통', '자가용', '택시']);
+  });
+});
+
+describe('AI 코스 휴무 정보', () => {
+  it('시작일이 있으면 일차별 날짜와 요일을 알려 준다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2, startDate: '2026-10-01' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('1일차 2026-10-01(목)');
+    expect(prompt.user).toContain('2일차 2026-10-02(금)');
+    expect(prompt.system).toContain('휴무');
+  });
+  it('시작일이 없으면 날짜를 쓰지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('1일차 20');
+  });
+  it.each(['2026-13-01', '10/01', 20261001])('잘못된 시작일은 거절한다: %s', async (startDate) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, startDate }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
+  it('응답 스키마에 휴무 정보가 있다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.closed).toMatchObject({ nullable: true, required: ['onDay', 'note'] });
+  });
+});
+
+describe('AI 코스 프롬프트 품질(2026-09-30 실제 생성 확인)', () => {
+  it('무료인 곳은 0원으로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('입장료가 없는 곳은 cost를 min=0, max=0');
+  });
+  it('휴무일이 없는 곳에는 closed를 쓰지 않게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('상시 영업이거나 휴무일이 없으면 closed=null');
+  });
+  it('예산이 있으면 예산 수준에 맞는 곳을 고르게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, budget: 500000 }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('숙소·식당은 예산 수준에 맞는 곳을 고른다');
+  });
+});
+
+describe('AI 코스 당일치기', () => {
+  it('당일치기면 숙소를 넣지 말라고 알린다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1 }));
+    const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user;
+    expect(user).toContain('당일치기라 숙소는 넣지 않는다');
+    expect(user).not.toContain('숙소 1곳을 그날 마지막에');
+  });
+  it('추가 요청이 범위를 정해도 당일치기 규칙은 남긴다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1, extraNote: '맛집만 3곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).toContain('당일치기라 숙소는 넣지 않는다');
+  });
+});
+
+describe('AI 코스 꼭 갈 장소', () => {
+  it('꼭 갈 장소는 지역 밖이어도 반드시 넣고 정식 상호로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, mustGo: '수원 신가회전훠궈' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('꼭 갈 장소는 요청 지역 밖이어도 반드시 코스에 넣는다');
+    expect(prompt.user).toContain('꼭 갈 장소(반드시 포함): 수원 신가회전훠궈');
   });
 });

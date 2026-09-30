@@ -13,6 +13,32 @@ const ITEMS: readonly AiItem[] = [
   { day: 2, name: '없는곳', kind: 'place' },
 ];
 
+it('선택·일차 변경에 따라 추정 합계를 다시 계산하고 미정을 보존한다', async () => {
+  const store = threeDayTrip(fakeAi({ generate: async () => [
+    { ...ITEMS[0]!, estimate: { cost: { min: 1000, max: 2000, basis: 'person', quantity: 1, assumption: '입장 1회' }, stay: null } },
+    ITEMS[1]!,
+  ] }));
+  store.set('partySize', 3);
+  await store.generate();
+  expect(store.costSummary()).toMatchObject({ min: 3000, max: 6000, known: 1, unknown: 1 });
+  expect(store.courses()).toHaveLength(1);
+  store.set('budget', 0);
+  expect(store.budgetExceeded()).toBe(true);
+  store.setDay('ai-0', 2);
+  expect(store.courses().map(g => g.day)).toEqual([1, 2]);
+  expect(store.costSummary().days).toMatchObject([{ day: 1, unknown: 1 }, { day: 2, max: 6000 }]);
+  store.toggle('ai-0');
+  expect(store.costSummary()).toMatchObject({ min: 0, max: 0, known: 0, unknown: 1 });
+});
+
+it('잘못된 인원·예산이면 생성하지 않고 입력 오류를 보여준다', async () => {
+  const store = threeDayTrip();
+  store.set('partySize', 0);
+  await store.generate();
+  expect(store.phase()).not.toBe('result');
+  expect(store.budgetError()).toBeTruthy();
+});
+
 function candidate(name: string): PlaceCandidate {
   return {
     provider: 'kakao',
@@ -22,7 +48,7 @@ function candidate(name: string): PlaceCandidate {
     roadAddress: '',
     lat: 37.8,
     lng: 128.9,
-    category: '관광명소',
+    category: name.includes('호텔') ? '숙박' : '관광명소',
     url: null,
   };
 }
@@ -155,6 +181,17 @@ describe('AiPlanStore 생성', () => {
     expect(store.error()?.message).toContain('오늘 사용량');
   });
 
+  it('내 한도·무료 한도 문구도 한도로 구분한다', async () => {
+    for (const message of [
+      '오늘 AI 일정 만들기를 5번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
+      '오늘 AI 무료 사용량이 모두 소진됐어요. 오후 5시쯤 다시 쓸 수 있어요.',
+    ]) {
+      const store = threeDayTrip(fakeAi({ generate: async () => { throw new Error(message); } }));
+      await store.generate();
+      expect(store.error()?.kind).toBe('quota');
+    }
+  });
+
   it('시간 초과는 따로 구분한다', async () => {
     const store = threeDayTrip(
       fakeAi({
@@ -245,5 +282,79 @@ describe('AiPlanStore 일차 변경', () => {
     long.set('startDate', '2026-10-01');
     long.set('endDate', '2026-10-12');
     expect(long.dayChoices().length).toBe(12);
+  });
+});
+
+function undatedTrip(ai?: AiPlanProvider): AiPlanStore {
+  const store = setup(ai);
+  store.set('regions', ['강릉']);
+  return store;
+}
+
+describe('AiPlanStore 코스와 예산 묶음', () => {
+  const est = (max: number) => ({ cost: { min: max, max, basis: 'group' as const, quantity: 1, assumption: 'x' }, stay: null });
+  it('코스와 분류별 합계를 계산하고 해제·일차 이동을 반영한다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 1, start: '10:00', moveToNext: null, name: '안목해변', kind: 'activity', estimate: est(5000) },
+      { day: 1, order: 2, start: '12:00', moveToNext: null, name: '중앙시장', kind: 'shopping', estimate: est(20000) },
+    ] }));
+    store.set('budget', 10000);
+    await store.generate();
+    expect(store.courses()[0]!.entries).toHaveLength(2);
+    expect(store.groupSummary().activity.max).toBe(5000);
+    expect(store.budgetRemaining()).toBeLessThan(0);
+    store.toggle(store.courses()[0]!.entries[1]!.item.id);
+    expect(store.budgetRemaining()).toBe(5000);
+    expect(store.groupSummary().shopping).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+    store.setDay(store.courses()[0]!.entries[0]!.item.id, 2);
+    expect(store.courses().map(c => c.day)).toEqual([1, 2]);
+    expect(store.courses()[1]!.entries[0]).toMatchObject({ moved: true, start: null });
+  });
+  it('담기 선택은 코스 순서를 따르고 옮긴 항목은 시각이 없다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 2, start: '12:00', moveToNext: null, name: '초당순두부마을', kind: 'meal' },
+      { day: 1, order: 1, start: '10:00', moveToNext: null, name: '안목해변', kind: 'place' },
+    ] }));
+    await store.generate();
+    expect(store.selection().items.map(i => [i.name, i.start])).toEqual([['안목해변', '10:00'], ['초당순두부마을', '12:00']]);
+    store.setDay(store.courses()[0]!.entries[0]!.item.id, 2);
+    expect(store.selection().items.map(i => [i.name, i.day, i.start])).toEqual([['초당순두부마을', 1, '12:00'], ['안목해변', 2, null]]);
+  });
+  it('날짜 미정이면 선택된 숙소가 있을 때 안내 신호를 켠다', async () => {
+    const store = undatedTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 1, start: null, moveToNext: null, name: '강릉 호텔', kind: 'stay' },
+    ] }));
+    await store.generate();
+    expect(store.staysNeedDates()).toBe(true);
+    store.toggle(store.courses()[0]!.entries[0]!.item.id);
+    expect(store.staysNeedDates()).toBe(false);
+  });
+});
+
+describe('AiPlanStore 마지막 날 숙소', () => {
+  const stay = (day: number, name: string) => ({ day, order: 9, start: null, moveToNext: null, name, kind: 'stay' as const });
+  it('당일치기에는 숙소를 넣지 않는다', async () => {
+    const store = setup(fakeAi({ generate: async () => [ITEMS[0]!, stay(1, '강릉 호텔')] }));
+    store.set('regions', ['강릉']);
+    store.set('startDate', '2026-10-01');
+    store.set('endDate', '2026-10-01');
+    await store.generate();
+    expect(store.results().map((i) => i.name)).toEqual(['안목해변']);
+  });
+  it('여러 날 여행이면 마지막 날 숙소만 뺀다', async () => {
+    const store = threeDayTrip(fakeAi({ generate: async () => [stay(1, '첫날 호텔'), stay(2, '둘째 호텔'), stay(3, '셋째 호텔')] }));
+    await store.generate();
+    expect(store.results().map((i) => i.name)).toEqual(['첫날 호텔', '둘째 호텔']);
+  });
+});
+
+describe('AiPlanStore 꼭 갈 장소', () => {
+  it('모델이 빼먹은 꼭 갈 장소를 검색해 결과에 넣고 기본 선택한다', async () => {
+    const store = threeDayTrip();
+    store.set('mustGo', '수원 신가회전훠궈');
+    await store.generate();
+    const must = store.results().find((i) => i.name === '신가회전훠궈');
+    expect(must).toMatchObject({ day: 1, verified: true });
+    expect(store.selected().has(must!.id)).toBe(true);
   });
 });

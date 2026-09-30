@@ -2,8 +2,8 @@ import { computed, inject, Injectable } from '@angular/core';
 import { patchState, signalState } from '@ngrx/signals';
 import type { Trip } from '../model/trip';
 import { TRIP_REPOSITORY } from './trip-repository';
-import { TripConflictError } from './trip-data-client';
-import { ErrorToastService } from '../../../core/error-toast-service';
+import { TripAccessError, TripConflictError } from './trip-data-client';
+import { ToastService } from '../../../core/toast-service';
 
 export interface PendingDraft {
   readonly trip: Trip;
@@ -16,7 +16,7 @@ export interface PendingDraft {
 @Injectable({ providedIn: 'root' })
 export class PendingDraftRegistry {
   private readonly repo = inject(TRIP_REPOSITORY);
-  private readonly toast = inject(ErrorToastService);
+  private readonly toast = inject(ToastService);
   private readonly state = signalState({
     session: 'local',
     generation: 0,
@@ -72,10 +72,16 @@ export class PendingDraftRegistry {
         return true;
       } catch (error) {
         if (generation === this.generation() && this.get(id)?.version === version) {
+          // 접근할 수 없는 여행은 다시 저장해도 소용없으므로 초안을 버리고 알리기만 한다.
+          if (error instanceof TripAccessError) {
+            this.discard(id);
+            this.toast.error(error.message);
+            return false;
+          }
           // 충돌은 다시 저장해도 풀리지 않는다. 화면이 새로 불러오기를 권하도록 구분한다.
           const state = error instanceof TripConflictError ? 'conflict' : 'error';
           this.put(id, { trip: snapshot, version, state, error: errorMessage(error) });
-          this.toast.show(errorMessage(error));
+          this.toast.error(errorMessage(error));
         }
         return false;
       }
