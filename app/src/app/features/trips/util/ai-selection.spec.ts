@@ -14,6 +14,10 @@ function item(partial: Partial<PlanItem> & { id: string; name: string }): PlanIt
     address: partial.address ?? '강원 강릉시 어딘가',
     location: partial.location ?? { lat: 37.8, lng: 128.9 },
     placeRef: partial.placeRef ?? { provider: 'kakao', id: 'k1', url: null },
+    order: partial.order ?? 1,
+    start: partial.start ?? null,
+    moveToNext: partial.moveToNext ?? null,
+    ...(partial.estimate ? { estimate: partial.estimate } : {}),
   };
 }
 
@@ -134,4 +138,33 @@ describe('selectionToTrip', () => {
     expect(selectionToTrip(selection({ regions: [] })).title).toBe('새 여행');
   });
 
+});
+
+describe('selectionToTrip 코스 담기', () => {
+  const room = { cost: { min: 90000, max: 120000, basis: 'room_night' as const, quantity: 1, assumption: '2인 1실 1박' }, stay: null };
+  it('숙소는 그 일차 체크인·다음 날 체크아웃 숙박으로 담는다', () => {
+    const trip = selectionToTrip(selection({ items: [item({ id: 'h', name: '호텔', kind: 'stay', estimate: room })] }));
+    expect(trip.stops).toHaveLength(0);
+    expect(trip.stays[0]).toMatchObject({ name: '호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000, reservation: 'unknown' });
+  });
+  it('같은 숙소가 연속 일차면 하나로 합친다', () => {
+    const trip = selectionToTrip(selection({
+      endDate: '2026-10-03',
+      items: [item({ id: 'h1', name: '호텔', kind: 'stay', estimate: room }), item({ id: 'h2', day: 2, name: '호텔', kind: 'stay', estimate: room })],
+    }));
+    expect(trip.stays).toHaveLength(1);
+    expect(trip.stays[0]).toMatchObject({ checkIn: '2026-10-01', checkOut: '2026-10-03', estimatedCost: 240000 });
+  });
+  it('날짜 미정이면 숙소를 담지 않는다', () => {
+    const trip = selectionToTrip(selection({ startDate: null, endDate: null, items: [item({ id: 'h', name: '호텔', kind: 'stay' })] }));
+    expect(trip.stays).toHaveLength(0);
+    expect(trip.stops).toHaveLength(0);
+  });
+  it('코스 순서대로 담고 새 분류와 추천 시각 메모를 남긴다', () => {
+    const trip = selectionToTrip(selection({ items: [item({ id: 'a', name: 'A', kind: 'activity', start: '10:00' }), item({ id: 'b', name: 'B', kind: 'shopping' })] }));
+    expect(trip.stops.map((s) => [s.name, s.kind, s.order])).toEqual([['A', 'activity', 0], ['B', 'shopping', 1]]);
+    expect(trip.stops[0]!.memo).toContain('AI 추천 시각 10:00');
+    expect(trip.stops[0]!.fixedTime).toBeNull();
+    expect(trip.stops[1]!.memo).not.toContain('AI 추천 시각');
+  });
 });

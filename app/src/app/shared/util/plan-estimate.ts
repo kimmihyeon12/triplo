@@ -78,9 +78,15 @@ export function costBasis(estimate: PlanEstimate | undefined, partySize: number)
   return `${unit} · ${cost.assumption}`;
 }
 
-export function estimateMemo(estimate: PlanEstimate | undefined, partySize: number): string {
-  if (!estimate?.cost && !estimate?.stay) return '';
+/**
+ * 담을 때 메모에 남기는 AI 추정 근거. 추천 시각은 고정 시각으로 저장하지 않고 여기에만 남긴다.
+ * 이동시간은 경로시간 저장 규칙에 걸리고 순서가 바뀌면 틀린 값이 되므로 남기지 않는다.
+ */
+export function estimateMemo(estimate: PlanEstimate | undefined, partySize: number, start?: string | null): string {
+  if (!estimate?.cost && !estimate?.stay)
+    return start ? ['AI 추천 계획 · 방문 전 확인하세요', `AI 추천 시각 ${start}`].join('\n') : '';
   const lines = ['AI 추정 계획 · 공식 요금 및 실제 지출과 다름'];
+  if (start) lines.push(`AI 추천 시각 ${start}`);
   if (estimate.cost)
     lines.push(
       `예상 비용 ${wonRange(costRange(estimate, partySize))} (${costBasis(estimate, partySize)})`,
