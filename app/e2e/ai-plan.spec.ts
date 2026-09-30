@@ -84,6 +84,12 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   await expect(page.getByTestId('ai-leg-ai-3')).toContainText('직선');
   await expect(page.getByTestId('ai-leg-ai-3')).not.toContainText('AI 추정');
   await expect(page.getByTestId('ai-price-ai-1')).toContainText('AI 추정');
+  await expect(page.getByTestId('ai-price-ai-0')).toContainText('무료');
+  await expect(page.getByTestId('ai-estimate-ai-0')).toContainText('요금 기준: 무료');
+  // 휴무는 AI 추정으로 밝히고 확인을 권한다. 선택은 그대로 둔다.
+  await expect(page.getByTestId('ai-closed-badge-ai-1')).toHaveText('휴무일 · AI 추정');
+  await expect(page.getByTestId('ai-closed-ai-1')).toContainText('지도에서 확인');
+  await expect(page.getByTestId('ai-pick-ai-1')).toBeChecked();
   await expect(page.getByTestId('ai-budget-groups')).toContainText('숙박');
   await expect(page.getByTestId('ai-budget-groups')).toContainText('관광·액티비티');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -103,6 +109,7 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   expect(saved.stays).toEqual([expect.objectContaining({ name: '강릉 테스트 호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000 })]);
   expect(saved.stops.map((s) => [s.name, s.kind])).toEqual([['안목해변', 'activity'], ['오죽헌', 'place'], ['속초관광수산시장', 'shopping']]);
   expect(saved.stops[0]!.memo).toContain('AI 추천 시각 10:00');
+  expect(saved.stops[1]!.memo).toContain('AI 추정 휴무');
   expect(saved.stops.every((s) => s.fixedTime === null)).toBe(true);
 });
 

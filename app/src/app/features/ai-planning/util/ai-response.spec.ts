@@ -174,3 +174,21 @@ describe('parseAiItems 최종 검토 보완', () => {
     expect(out.map((i) => [i.name, i.order])).toEqual([['A', 1], ['C', 3]]);
   });
 });
+
+describe('parseAiItems 휴무 정보', () => {
+  const json = (items: unknown[]) => JSON.stringify({ items });
+  it('휴무 정보를 읽고 잘못된 값은 버린다', () => {
+    const out = parseAiItems(json([
+      { day: 1, name: 'A', kind: '관광', closed: { onDay: true, note: '매주 월요일 휴무' } },
+      { day: 1, name: 'B', kind: '관광', closed: { onDay: false, note: '  매주 화요일 휴무 ' } },
+      { day: 1, name: 'C', kind: '관광', closed: { onDay: 'yes', note: '월' } },
+      { day: 1, name: 'D', kind: '관광', closed: { onDay: true, note: '' } },
+      { day: 1, name: 'E', kind: '관광' },
+    ]), 1);
+    expect(out.map((i) => i.closed)).toEqual([
+      { onDay: true, note: '매주 월요일 휴무' },
+      { onDay: false, note: '매주 화요일 휴무' },
+      null, null, null,
+    ]);
+  });
+});

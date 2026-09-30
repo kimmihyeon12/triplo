@@ -66,9 +66,17 @@ export function wonRange(range: { min: number; max: number } | null): string {
   return range.min === range.max ? `${fmt(range.min)}원` : `${fmt(range.min)}~${fmt(range.max)}원`;
 }
 
+/** 장소 한 곳의 요금 표시. 0원은 무료, 없으면 미정이다. 합계 칸은 금액 계산이라 wonRange를 쓴다. */
+export function priceLabel(range: { min: number; max: number } | null): string {
+  if (range && range.max === 0) return '무료';
+  return wonRange(range);
+}
+
 export function costBasis(estimate: PlanEstimate | undefined, partySize: number): string {
   const cost = estimate?.cost;
   if (!cost || !costRange(estimate, partySize)) return '요금 정보 미정';
+  // 무료는 단가·수량을 곱해 보여 줄 필요가 없다. '0원 × 1회'는 읽기만 어렵다.
+  if (cost.max === 0) return `무료 · ${cost.assumption}`;
   const unit =
     cost.basis === 'person'
       ? `1인당 ${wonRange(cost)} × ${partySize}명 × ${cost.quantity}회`
@@ -89,7 +97,7 @@ export function estimateMemo(estimate: PlanEstimate | undefined, partySize: numb
   if (start) lines.push(`AI 추천 시각 ${start}`);
   if (estimate.cost)
     lines.push(
-      `예상 비용 ${wonRange(costRange(estimate, partySize))} (${costBasis(estimate, partySize)})`,
+      `예상 비용 ${priceLabel(costRange(estimate, partySize))} (${costBasis(estimate, partySize)})`,
     );
   if (estimate.stay)
     lines.push(`추천 체류 ${estimate.stay.min}~${estimate.stay.max}분 · ${estimate.stay.reason}`);

@@ -5,6 +5,9 @@ import {
   parsePlanEstimate,
   summarizeEstimates,
   summarizeGroups,
+  priceLabel,
+  costBasis,
+  estimateMemo,
 } from '../../../shared/util/plan-estimate';
 
 describe('AI 예상 비용과 체류시간', () => {
@@ -152,5 +155,18 @@ describe('summarizeGroups', () => {
     expect(out.stay.max).toBe(120000);
     expect(out.activity).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
     expect(out.other).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+  });
+});
+
+describe('무료 표시', () => {
+  const free = { cost: { min: 0, max: 0, basis: 'group' as const, quantity: 1, assumption: '입장 무료' }, stay: null };
+  it('0원 요금은 무료로 쓴다', () => {
+    expect(priceLabel(costRange(free, 2))).toBe('무료');
+    expect(priceLabel(null)).toBe('미정');
+    expect(priceLabel({ min: 1000, max: 2000 })).toBe('1,000~2,000원');
+  });
+  it('요금 기준과 메모도 무료로 쓴다', () => {
+    expect(costBasis(free, 2)).toBe('무료 · 입장 무료');
+    expect(estimateMemo(free, 2)).toContain('예상 비용 무료');
   });
 });

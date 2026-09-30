@@ -168,3 +168,10 @@ describe('selectionToTrip 코스 담기', () => {
     expect(trip.stops[1]!.memo).not.toContain('AI 추천 시각');
   });
 });
+
+describe('selectionToTrip 휴무 메모', () => {
+  it('AI 추정 휴무 정보를 메모에 남긴다', () => {
+    const trip = selectionToTrip(selection({ items: [{ ...item({ id: 'a', name: 'A' }), closed: { onDay: true, note: '매주 월요일 휴무' } }] }));
+    expect(trip.stops[0]!.memo).toContain('AI 추정 휴무: 매주 월요일 휴무');
+  });
+});

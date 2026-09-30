@@ -1,6 +1,6 @@
 import { parsePlanEstimate, type PlanEstimate } from '../../../shared/util/plan-estimate';
 import type { PlanKind } from '../../trips/model/trip';
-import type { AiMove, MoveMode } from '../model/ai-plan';
+import type { AiMove, ClosedInfo, MoveMode } from '../model/ai-plan';
 
 export type { AiMove, MoveMode };
 
@@ -37,6 +37,8 @@ export interface AiItem {
   /** 추천 도착 시각 'HH:mm'. 형식이 틀리거나 앞 항목보다 이르면 미정이다. */
   readonly start: string | null;
   readonly moveToNext: AiMove | null;
+  /** AI 추정 휴무 정보. 없거나 잘못되면 null이다. */
+  readonly closed?: ClosedInfo | null;
   readonly name: string;
   readonly kind: PlanKind;
 }
@@ -45,6 +47,15 @@ function parseStart(value: unknown): string | null {
   if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return null;
   const [h, m] = value.split(':').map(Number);
   return h! <= 23 && m! <= 59 ? value : null;
+}
+
+/** 휴무 정보는 onDay가 참·거짓이고 설명이 있을 때만 받는다. 설명은 짧게 자른다. */
+function parseClosed(value: unknown): ClosedInfo | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as { onDay?: unknown; note?: unknown };
+  if (typeof v.onDay !== 'boolean' || typeof v.note !== 'string') return null;
+  const note = v.note.trim().slice(0, 80);
+  return note ? { onDay: v.onDay, note } : null;
 }
 
 function parseMove(value: unknown): AiMove | null {
@@ -62,6 +73,7 @@ interface Draft {
   rawOrder: unknown;
   start: string | null;
   moveToNext: AiMove | null;
+  closed: ClosedInfo | null;
   estimate?: PlanEstimate;
   order: number;
 }
@@ -84,7 +96,7 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
     if (!entry || typeof entry !== 'object') continue;
     const item = entry as {
       day?: unknown; name?: unknown; kind?: unknown; estimate?: unknown;
-      order?: unknown; start?: unknown; moveToNext?: unknown;
+      order?: unknown; start?: unknown; moveToNext?: unknown; closed?: unknown;
     };
     if (typeof item.day !== 'number' || !Number.isInteger(item.day)) continue;
     if (item.day < 1 || item.day > dayCount) continue;
@@ -102,6 +114,7 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
       rawOrder: item.order,
       start: parseStart(item.start),
       moveToNext: parseMove(item.moveToNext),
+      closed: parseClosed(item.closed),
       ...(item.estimate !== undefined ? { estimate: parsePlanEstimate(item.estimate) } : {}),
       order: 0,
     });

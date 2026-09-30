@@ -500,7 +500,7 @@
                         }}</span>
                         <span class="flex-none text-right text-14 font-medium tabular-nums" [attr.data-testid]="'ai-price-' + item.id">
                           @if (range) {
-                            {{ wonRange(range) }}<span class="block text-12 font-normal text-ink-3">AI 추정</span>
+                            {{ priceLabel(range) }}<span class="block text-12 font-normal text-ink-3">AI 추정</span>
                           } @else {
                             <span class="text-12 font-normal text-ink-3">요금 미정</span>
                           }
@@ -509,6 +509,10 @@
                       <span class="item__title flex flex-wrap items-center gap-x-1.5 gap-y-1 text-15">
                         <strong class="item__name min-w-0 wrap-anywhere">{{ item.name }}</strong>
                         <span appBadge tone="ok">실존 확인</span>
+                        <!-- 휴무는 AI가 아는 영업정보라 추정으로 밝힌다. 확정처럼 보이면 가도 되는지 판단을 그르친다. -->
+                        @if (item.closed?.onDay) {
+                          <span appBadge tone="warn" [attr.data-testid]="'ai-closed-badge-' + item.id">휴무일 · AI 추정</span>
+                        }
                       </span>
                     </span>
                   </label>
@@ -517,6 +521,11 @@
                   <div class="col-start-2 mt-1 text-12 leading-normal text-ink-3" [attr.data-testid]="'ai-estimate-' + item.id">
                     @if (range) {
                       <p>요금 기준: {{ costBasis(item.estimate, draft.partySize()) }}</p>
+                    }
+                    @if (item.closed; as closed) {
+                      <p [class.text-warn-ink]="closed.onDay" [attr.data-testid]="'ai-closed-' + item.id">
+                        휴무 정보(AI 추정): {{ closed.note }} · 방문 전 지도에서 확인하세요
+                      </p>
                     }
                     @if (item.estimate?.stay; as stay) {
                       <p>추천 체류 {{ stay.min }}~{{ stay.max }}분 · {{ stay.reason }}</p>

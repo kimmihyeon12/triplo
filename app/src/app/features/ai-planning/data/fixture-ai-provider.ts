@@ -26,7 +26,7 @@ const estimate = (
 
 const FIXTURE_ITEMS: readonly AiItem[] = [
   { day: 1, order: 1, start: '10:00', moveToNext: { mode: '도보', minutes: 15 }, name: '안목해변', kind: 'activity', estimate: estimate(0, 0, 'group', '테스트용 무료 예시', [60, 90]) },
-  { day: 1, order: 2, start: '12:00', moveToNext: { mode: '자가용', minutes: 20 }, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
+  { day: 1, order: 2, start: '12:00', moveToNext: { mode: '자가용', minutes: 20 }, name: '오죽헌', kind: 'place', closed: { onDay: true, note: '테스트용 매주 목요일 휴무 예시' }, estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
   { day: 1, order: 3, start: '14:00', moveToNext: null, name: '없는장소테스트', kind: 'place' },
   { day: 1, order: 4, start: '20:00', moveToNext: null, name: '강릉 테스트 호텔', kind: 'stay', estimate: estimate(90000, 120000, 'room_night', '테스트용 2인 1실 1박 예시', null) },
   { day: 2, order: 1, start: '11:00', moveToNext: null, name: '속초관광수산시장', kind: 'shopping' },

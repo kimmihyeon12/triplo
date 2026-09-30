@@ -67,8 +67,8 @@ describe('EdgeAiProvider', () => {
       })),
     });
     expect(await provider.generate(REQUEST, new AbortController().signal)).toEqual([
-      { day: 1, order: 1, start: null, moveToNext: null, name: '불국사', kind: 'place' },
-      { day: 1, order: 2, start: null, moveToNext: null, name: '함양집', kind: 'meal' },
+      { day: 1, order: 1, start: null, moveToNext: null, closed: null, name: '불국사', kind: 'place' },
+      { day: 1, order: 2, start: null, moveToNext: null, closed: null, name: '함양집', kind: 'meal' },
     ]);
   });
 
@@ -141,5 +141,13 @@ describe('EdgeAiProvider', () => {
     await expect(provider.generate(REQUEST, new AbortController().signal)).rejects.toThrow(
       '오늘 AI 일정 만들기를 5번 모두 썼어요. 내일 0시에 다시 쓸 수 있어요.',
     );
+  });
+});
+
+describe('EdgeAiProvider 시작일', () => {
+  it('시작일을 함께 보낸다', async () => {
+    const { provider, auth } = setup();
+    await provider.generate({ ...REQUEST, startDate: '2026-10-01' }, new AbortController().signal);
+    expect(auth.callFunction.mock.calls[0]![1]).toMatchObject({ startDate: '2026-10-01' });
   });
 });

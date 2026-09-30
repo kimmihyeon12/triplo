@@ -271,3 +271,11 @@ describe('코스 정보 보존', () => {
     expect(out.map((i) => [i.order, i.start, i.moveToNext])).toEqual([[1, null, null], [2, null, null]]);
   });
 });
+
+describe('휴무 정보 보존', () => {
+  it('확인한 장소는 휴무 정보를 들고 간다', async () => {
+    const search = fakeSearch({ '강릉시 오죽헌': [candidate({ name: '오죽헌', category: '문화유적' })] });
+    const [item] = await verifyPlaces([{ day: 1, name: '오죽헌', kind: 'place', closed: { onDay: true, note: '월요일 휴무' } }], ['강릉시'], search);
+    expect(item!.closed).toEqual({ onDay: true, note: '월요일 휴무' });
+  });
+});

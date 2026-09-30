@@ -10,6 +10,15 @@ export interface AiMove {
   readonly minutes: number;
 }
 
+/**
+ * 정기휴무 정보. 모델이 아는 영업정보라 AI 추정이며, 화면에서 확인 링크와 함께 보이고
+ * 일정 필드에는 저장하지 않는다. onDay는 그 일차 날짜가 휴무일에 걸리는지다.
+ */
+export interface ClosedInfo {
+  readonly onDay: boolean;
+  readonly note: string;
+}
+
 /** 3단계 입력 → 조건 요약 → 생성 중 → 결과 선택. */
 export type Phase = 'step1' | 'step2' | 'step3' | 'summary' | 'generating' | 'result';
 
@@ -29,6 +38,8 @@ export interface VerifiedItem {
   readonly start: string | null;
   /** 다음 항목까지의 이동. AI 추정이며 화면에만 보이고 저장하지 않는다. */
   readonly moveToNext: AiMove | null;
+  /** AI 추정 휴무 정보. 없으면 모름이다. */
+  readonly closed?: ClosedInfo | null;
   /** 검색으로 실재를 확인했는지. 확인한 항목만 기본 선택 대상이다. */
   readonly verified: boolean;
   /** 검색 결과의 분류. 모델이 지어낸 설명을 쓰지 않는다. */

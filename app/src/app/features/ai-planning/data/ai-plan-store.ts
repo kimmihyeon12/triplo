@@ -222,6 +222,7 @@ export class AiPlanStore {
           bookedStay: this.bookedStay(),
           extraNote: this.extraNote(),
           partySize: this.partySize(), budget: this.budget(), budgetBasis: this.budgetBasis(),
+          startDate: this.dateValidation().ok && this.startDate() ? this.startDate() : null,
         },
         controller.signal,
       );

@@ -57,7 +57,7 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
         placeRef: item.placeRef,
         estimatedCost: costRange(item.estimate, partySize)?.max ?? null,
         stayMinutes: item.estimate?.stay?.max ?? null,
-        memo: estimateMemo(item.estimate, partySize, item.start),
+        memo: withClosed(estimateMemo(item.estimate, partySize, item.start), item.closed),
       }),
     );
   }
@@ -73,8 +73,13 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
       estimatedCost: cost,
       location: first.location,
       placeRef: first.placeRef,
-      memo: estimateMemo(first.estimate, partySize),
+      memo: withClosed(estimateMemo(first.estimate, partySize), first.closed),
     }),
   );
   return created.length ? { ...trip, stays: [...trip.stays, ...created] } : trip;
+}
+
+/** 휴무는 영업정보라 일정 필드에 넣지 않고 AI 추정임을 밝혀 메모에만 남긴다. */
+function withClosed(memo: string, closed: PlanItem['closed']): string {
+  return closed ? [memo, `AI 추정 휴무: ${closed.note}`].filter(Boolean).join('\n') : memo;
 }

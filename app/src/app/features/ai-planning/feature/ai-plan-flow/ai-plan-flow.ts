@@ -1,4 +1,4 @@
-import { costBasis, costRange, wonRange } from '../../../../shared/util/plan-estimate';
+import { costBasis, costRange, priceLabel, wonRange } from '../../../../shared/util/plan-estimate';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -54,6 +54,7 @@ export class AiPlanFlow {
   readonly costBasis = costBasis;
   readonly costRange = costRange;
   readonly wonRange = wonRange;
+  readonly priceLabel = priceLabel;
   readonly aiHint = inject(AiQuota).hint('plan');
   private readonly provider = inject(AI_PLAN_PROVIDER);
   readonly saving = input(false);

@@ -9,6 +9,8 @@ import type { AiItem } from '../util/ai-response';
 
 export interface AiPlanRequest {
   readonly partySize?: number;
+  /** 여행 시작일. 모델이 요일별 휴무를 따지는 데 쓴다. 날짜 미정이면 없다. */
+  readonly startDate?: string | null;
   readonly budget?: number | null;
   readonly budgetBasis?: 'person' | 'group';
   readonly regions: readonly string[];

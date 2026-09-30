@@ -9,7 +9,7 @@ import type { AiItem } from '../util/ai-response';
  * 확인할 항목. 챗봇 제안처럼 순서·시각·이동이 없는 입력도 받는다. 없으면 응답 순서와 미정으로 채운다.
  */
 export type VerifyInput = Pick<AiItem, 'day' | 'name' | 'kind' | 'estimate'> &
-  Partial<Pick<AiItem, 'order' | 'start' | 'moveToNext'>>;
+  Partial<Pick<AiItem, 'order' | 'start' | 'moveToNext' | 'closed'>>;
 
 /**
  * 모델이 낸 장소 이름을 실제 장소 검색으로 대조한다. 찾은 것만 확인된 장소로 두고
@@ -132,6 +132,7 @@ async function verifyOne(
     order: item.order ?? index + 1,
     start: item.start ?? null,
     moveToNext: item.moveToNext ?? null,
+    ...(item.closed ? { closed: item.closed } : {}),
     ...(item.estimate ? { estimate: item.estimate } : {}),
   };
   try {
