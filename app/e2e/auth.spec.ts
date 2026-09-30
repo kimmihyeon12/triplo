@@ -194,6 +194,22 @@ test('로그인하지 않은 사용자의 내 정보 직접 접근은 로그인�
   await expect(page.getByTestId('login-account')).toHaveCount(0);
 });
 
+// 감리 P2-03: 로그인 화면은 '동의하는 것으로 본다'고 적으면서 문서명을 링크 없이 두었고
+// 약관 주소도 로그인을 요구해, 가입 전에 읽을 방법이 없었다.
+test('로그인 전에도 이용약관과 개인정보 처리방침을 읽을 수 있다', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByTestId('login-terms').click();
+  await expect(page).toHaveURL(/\/account\/terms$/);
+  await expect(page.locator('main')).toContainText('예약·결제·발권을 대행하지 않습니다');
+  await page.goto('/login');
+  await page.getByTestId('login-privacy').click();
+  await expect(page).toHaveURL(/\/account\/privacy$/);
+  await expect(page.locator('main')).toContainText('무엇을 받나요');
+  // 공지·문의는 계정이 있어야 하므로 여전히 로그인으로 보낸다.
+  await page.goto('/account/inquiries');
+  await expect(page).toHaveURL('http://localhost:4300/login');
+});
+
 for (const path of [
   '/trips',
   '/trips/new',

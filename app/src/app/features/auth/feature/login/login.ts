@@ -10,7 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
@@ -30,6 +30,7 @@ import { takeReturn } from '../../util/return-to';
     UiBarcode,
     UiPostmark,
     UiTicketTilt,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
