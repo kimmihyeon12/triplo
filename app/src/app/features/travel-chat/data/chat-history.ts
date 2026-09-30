@@ -57,13 +57,22 @@ function isMessage(value: unknown): value is ChatMessage {
  * 잃는 것보다 낫고, 저장 형식이 바뀌어도 앞선 기록이 화면을 막지 않는다.
  */
 export class LocalChatHistory implements ChatHistoryStore {
+  /**
+   * 열쇠는 계정마다 달라야 한다. 함수로 받으면 읽고 쓸 때마다 지금 계정의 열쇠를 쓴다.
+   * 하나의 열쇠를 쓰면 같은 기기에서 계정을 바꿨을 때 이전 계정의 대화가 보이고
+   * 다음 모델 요청에도 실렸다(2026-09-30 감리 P1-01).
+   */
   constructor(
     private readonly storage: KeyValueStorage,
-    private readonly key: string,
+    private readonly key: string | (() => string),
   ) {}
 
+  private get storageKey(): string {
+    return typeof this.key === 'function' ? this.key() : this.key;
+  }
+
   private read(): Record<string, ChatMessage[]> {
-    const raw = this.storage.getItem(this.key);
+    const raw = this.storage.getItem(this.storageKey);
     if (!raw) return {};
     try {
       const parsed = JSON.parse(raw) as HistoryFile;
@@ -82,7 +91,7 @@ export class LocalChatHistory implements ChatHistoryStore {
   private write(threads: Record<string, ChatMessage[]>): void {
     const file: HistoryFile = { version: 1, threads };
     try {
-      this.storage.setItem(this.key, JSON.stringify(file));
+      this.storage.setItem(this.storageKey, JSON.stringify(file));
     } catch {
       // 저장 공간이 차도 대화는 이어질 수 있어야 한다. 화면 상태가 원본이다.
     }

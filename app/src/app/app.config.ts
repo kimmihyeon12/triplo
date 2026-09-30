@@ -81,6 +81,24 @@ class SafeLocalStorage implements KeyValueStorage {
 
 const useFixture = environment.mapProvider === 'fixture';
 
+/**
+ * 기기에 남기는 계정별 기록의 열쇠를 만든다. 읽고 쓸 때마다 지금 계정을 본다.
+ *
+ * 예전에는 계정과 무관한 열쇠 하나(`….chat`, `….support`)를 써서 같은 기기에서 계정을
+ * 바꾸면 이전 계정의 대화·문의가 보였다(2026-09-30 감리 P1-01). 그 공용 기록은 누구
+ * 것인지 알 수 없으므로 계정으로 옮기지 않고 지운다. 여행을 서버로 옮길 때와 같은 기준이다.
+ */
+function accountKey(kind: 'chat' | 'support'): () => string {
+  const auth = inject(AuthStore);
+  const base = `${environment.storageKey}.${kind}`;
+  try {
+    localStorage.removeItem(base);
+  } catch {
+    // 저장소 접근이 막힌 브라우저에서도 앱은 뜬다.
+  }
+  return () => `${base}.${auth.user()?.id ?? 'guest'}`;
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -164,10 +182,11 @@ export const appConfig: ApplicationConfig = {
       },
     },
     // 공지·문의도 같은 자리에 둔다. 서버가 붙으면 구현만 갈아 끼운다.
+    // 기기에 남기는 문의·대화는 계정마다 다른 열쇠에 둔다(감리 P1-01).
     {
       provide: SUPPORT_REPOSITORY,
       useFactory: () =>
-        new LocalSupportRepository(new SafeLocalStorage(), `${environment.storageKey}.support`),
+        new LocalSupportRepository(new SafeLocalStorage(), accountKey('support')),
     },
     // 지도 표시와 장소 검색은 별개 어댑터다. 테스트 앱은 외부 호출 없는 픽스처를 쓴다.
     { provide: MAP_PROVIDER, useExisting: useFixture ? FixtureMapProvider : KakaoMapProvider },
@@ -184,8 +203,7 @@ export const appConfig: ApplicationConfig = {
     // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
     {
       provide: CHAT_HISTORY,
-      useFactory: () =>
-        new LocalChatHistory(new SafeLocalStorage(), `${environment.storageKey}.chat`),
+      useFactory: () => new LocalChatHistory(new SafeLocalStorage(), accountKey('chat')),
     },
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
     provideServiceWorker('ngsw-worker.js', {

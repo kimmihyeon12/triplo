@@ -12,7 +12,11 @@ test.beforeEach(async ({ page }) => {
   await resetApp(page);
   // 공지·문의 저장소를 한 번만 비운다. addInitScript로 두면 페이지를 다시
   // 열 때마다 실행되어 방금 저장한 문의까지 지운다.
-  await page.evaluate(() => localStorage.removeItem('tc.test.trips.v1.support'));
+  // 문의는 계정마다 다른 열쇠(….support.<계정>)에 있으므로 앞머리로 찾아 지운다.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith('tc.test.trips.v1.support')) localStorage.removeItem(key);
+  });
 });
 
 test('내 정보에서 닉네임을 그 자리에서 고친다', async ({ page }) => {
