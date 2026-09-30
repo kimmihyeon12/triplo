@@ -43,11 +43,11 @@ const day = '2026-10-01';
 describe('local preview density', () => {
   it('keeps changed stops but omits unchanged trip information', () => {
     const before = trip([stop('a', '안목해변', day, 0), stop('b', '오죽헌', day, 1)]);
-    const after = {...before, stops: before.stops.map(s => s.id === 'a' ? {...s, stayMinutes:60} : s)};
-    const view = previewDraft(before, {action:'local-change', title:'체류시간 변경', before, after});
+    const after = {...before, stops: before.stops.map(s => s.id === 'a' ? {...s, memo:'입장권 확인'} : s)};
+    const view = previewDraft(before, {action:'local-change', title:'메모 변경', before, after});
     expect(view.before.map(r => r.id)).toEqual(['a']);
     expect(view.after.map(r => r.id)).toEqual(['a']);
-    expect(view.after[0].name).toContain('60분');
+    expect(view.after[0].name).toContain('메모: 입장권 확인');
   });
   it('retains changed trip dates and removed stops for confirmation', () => {
     const before = trip([stop('a', '안목해변', day, 0)]);

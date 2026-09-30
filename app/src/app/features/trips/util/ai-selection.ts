@@ -56,8 +56,9 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
         location: item.location,
         placeRef: item.placeRef,
         estimatedCost: costRange(item.estimate, partySize)?.max ?? null,
-        stayMinutes: item.estimate?.stay?.max ?? null,
-        memo: withClosed(estimateMemo(item.estimate, partySize, item.start), item.closed),
+        // 체류시간 칸은 화면에서 없앴다(2026-09-30). 추천 체류는 비고(메모)에만 남긴다.
+        stayMinutes: null,
+        memo: aiStopMemo(item, partySize),
       }),
     );
   }
@@ -73,10 +74,19 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
       estimatedCost: cost,
       location: first.location,
       placeRef: first.placeRef,
-      memo: withClosed(estimateMemo(first.estimate, partySize), first.closed),
+      memo: aiStopMemo(first, partySize),
     }),
   );
   return created.length ? { ...trip, stays: [...trip.stays, ...created] } : trip;
+}
+
+/**
+ * 담을 때 저장하는 비고. 결과 화면도 이 함수로 미리 보여 준다. 담기 전과 담은 뒤의
+ * 비고가 같아야 무엇이 저장될지 읽을 수 있다. 숙소는 체크인 시각을 따로 두지 않으므로
+ * 추천 시각을 적지 않는다.
+ */
+export function aiStopMemo(item: PlanItem, partySize: number): string {
+  return withClosed(estimateMemo(item.estimate, partySize, item.kind === 'stay' ? null : item.start), item.closed);
 }
 
 /** 휴무는 영업정보라 일정 필드에 넣지 않고 AI 추정임을 밝혀 메모에만 남긴다. */

@@ -1,6 +1,6 @@
 import { expect, it, describe } from 'vitest';
 import type { AiPlanSelection, PlanItem } from '../../ai-planning/model/ai-plan';
-import { selectionToTrip } from './ai-selection';
+import { aiStopMemo, selectionToTrip } from './ai-selection';
 import { tallyVisits } from '../../stats/util/visit-tally';
 
 function item(partial: Partial<PlanItem> & { id: string; name: string }): PlanItem {
@@ -55,7 +55,9 @@ describe('selectionToTrip', () => {
       stay: { min: 45, max: 60, reason: '여유 있는 식사' },
     } }] }));
     expect(trip.stops[0]?.estimatedCost).toBe(40000);
-    expect(trip.stops[0]?.stayMinutes).toBe(60);
+    // 체류시간은 칸에 저장하지 않고 비고에만 남긴다(2026-09-30).
+    expect(trip.stops[0]?.stayMinutes).toBeNull();
+    expect(trip.stops[0]?.memo).toContain('- 체류');
     expect(trip.stops[0]?.memo).toContain('AI 추정');
     expect(trip.stops[0]?.memo).toContain('- 요금');
     expect(trip.stops[0]?.memo).toContain('2명');
@@ -173,5 +175,15 @@ describe('selectionToTrip 휴무 메모', () => {
   it('AI 추정 휴무 정보를 메모에 남긴다', () => {
     const trip = selectionToTrip(selection({ items: [{ ...item({ id: 'a', name: 'A' }), closed: { onDay: true, note: '매주 월요일 휴무' } }] }));
     expect(trip.stops[0]!.memo).toBe(['AI 추정', '- 매주 월요일 휴무'].join('\n'));
+  });
+});
+
+describe('aiStopMemo', () => {
+  it('화면 미리보기와 담은 메모가 같다', () => {
+    const est = { cost: { min: 3000, max: 5000, basis: 'person' as const, quantity: 1, assumption: '입장권' }, stay: { min: 60, max: 90, reason: 'x' } };
+    const picked = { ...item({ id: 'a', name: 'A', start: '10:00', estimate: est }), closed: { onDay: false, note: '매주 월요일 휴무' } };
+    const trip = selectionToTrip(selection({ partySize: 2, items: [picked] }));
+    expect(aiStopMemo(picked, 2)).toBe(trip.stops[0]!.memo);
+    expect(aiStopMemo(picked, 2)).toContain('- 시각 10:00');
   });
 });

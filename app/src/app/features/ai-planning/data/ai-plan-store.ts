@@ -6,7 +6,7 @@ import { patchState, signalState } from '@ngrx/signals';
 import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
 import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regions';
 import { PLACE_SEARCH } from '../../places/data/place-search';
-import { verifyPlaces } from './verify-places';
+import { mustGoPlaces, verifyPlaces } from './verify-places';
 import {
   type Phase,
   type AiPlanSelection,
@@ -210,7 +210,7 @@ export class AiPlanStore {
     this.running = controller;
     patchState(this.state, { phase: 'generating', error: null });
     try {
-      const items = await this.provider.generate(
+      const generated = await this.provider.generate(
         {
           regions: this.regions(),
           dayCount: this.dayCount(),
@@ -227,6 +227,10 @@ export class AiPlanStore {
         controller.signal,
       );
       if (controller.signal.aborted) return;
+      // 마지막 날 밤에는 묵지 않는다. 당일치기면 숙소가 하나도 없어야 한다. 모델이 지시를
+      // 어기고 넣어도 여기서 뺀다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
+      const lastDay = this.dayCount();
+      const items = generated.filter((i) => !(i.kind === 'stay' && i.day >= lastDay));
       if (!items.length) {
         patchState(this.state, {
           phase: 'summary',
@@ -239,9 +243,11 @@ export class AiPlanStore {
       }
       // 장소 검색으로 위치를 확인한 것만 남긴다. 찾지 못한 이름은 좌표가 없어
       // 지도에 올릴 수 없고, 사용자가 그 이름만 보고 판단하기도 어렵다.
-      const found = (await verifyPlaces(items, this.regions(), this.placeSearch)).filter(
+      const verified = (await verifyPlaces(items, this.regions(), this.placeSearch)).filter(
         (i) => i.verified,
       );
+      // 사용자가 적은 꼭 갈 장소는 모델이 빼먹어도 직접 찾아 넣는다.
+      const found = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
       if (controller.signal.aborted) return;
       if (!found.length) {
         patchState(this.state, {

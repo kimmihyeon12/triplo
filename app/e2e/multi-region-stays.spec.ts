@@ -51,7 +51,7 @@ test.describe('3박 4일 두 지역·두 숙소', () => {
     await expect(day3.getByTestId('day-stay-info')).toContainText('A 숙소 체크아웃');
     await expect(day3.getByTestId('day-stay-info')).toContainText('B 숙소 체크인');
     await expect(day3.getByText('강릉시 → 속초시 이동 · 시간 미확인')).toHaveCount(1);
-    await expect(day3.getByTestId('day-totals')).toContainText('체류 3시간 30분');
+    await expect(day3.getByTestId('day-totals')).not.toContainText('체류');
     // 장소 3개 + B 숙소 체크인이 한 자리를 차지하므로 그 사이 이동은 3구간이다.
     await expect(day3.getByTestId('day-totals')).toContainText('이동 3구간');
 

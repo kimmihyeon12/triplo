@@ -18,7 +18,7 @@ describe('local command routing', () => {
     const store = setup();
     const base = trip([stop('a', '오죽헌', '2026-10-01', 0)]);
     store.open('trip', base);
-    await store.send('오죽헌 체류시간 60분으로 바꿔');
+    await store.send('오죽헌 메모에 입장권 확인 추가해');
     const draft = store.messages().at(-1)!.draft!;
     store.setTrip({...base, title:'수정됨'});
     expect(await store.applyDraft(draft)).toBeNull();
@@ -57,13 +57,13 @@ describe('local command routing', () => {
     const store = setup(provider);
     const base = trip([stop('a', '오죽헌', '2026-10-01', 0)]);
     store.open('trip', base);
-    await store.send('오죽헌 체류시간 60분으로 바꿔');
+    await store.send('오죽헌 메모에 입장권 확인 추가해');
     expect(provider.calls).toBe(0);
     expect(store.trip()).toEqual(base);
     const updated = await store.applyDraft(store.messages().at(-1)!.draft!);
-    expect(updated!.stops[0].stayMinutes).toBe(60);
+    expect(updated!.stops[0].memo).toContain('입장권 확인');
     await store.send('방금 변경 되돌려');
-    expect((await store.applyDraft(store.messages().at(-1)!.draft!))!.stops[0].stayMinutes).toBeNull();
+    expect((await store.applyDraft(store.messages().at(-1)!.draft!))!.stops[0].memo).toBe('');
     expect(provider.calls).toBe(0);
   });
   it('saves ledger only on confirmation and restores it on undo', async () => {

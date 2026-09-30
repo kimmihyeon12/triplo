@@ -294,3 +294,28 @@ describe('AI 코스 프롬프트 품질(2026-09-30 실제 생성 확인)', () =>
     expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('숙소·식당은 예산 수준에 맞는 곳을 고른다');
   });
 });
+
+describe('AI 코스 당일치기', () => {
+  it('당일치기면 숙소를 넣지 말라고 알린다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1 }));
+    const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user;
+    expect(user).toContain('당일치기라 숙소는 넣지 않는다');
+    expect(user).not.toContain('숙소 1곳을 그날 마지막에');
+  });
+  it('추가 요청이 범위를 정해도 당일치기 규칙은 남긴다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 1, extraNote: '맛집만 3곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).toContain('당일치기라 숙소는 넣지 않는다');
+  });
+});
+
+describe('AI 코스 꼭 갈 장소', () => {
+  it('꼭 갈 장소는 지역 밖이어도 반드시 넣고 정식 상호로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, mustGo: '수원 신가회전훠궈' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('꼭 갈 장소는 요청 지역 밖이어도 반드시 코스에 넣는다');
+    expect(prompt.user).toContain('꼭 갈 장소(반드시 포함): 수원 신가회전훠궈');
+  });
+});

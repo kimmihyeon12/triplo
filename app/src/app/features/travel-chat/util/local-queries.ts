@@ -38,17 +38,13 @@ export function localQuery(text: string, trip: Trip, today: string): LocalResult
   if (/추천|갈 만|가볼|영업|날씨|검색/.test(text)) return null;
   const targets = commandTargets(`${text} 전체`, trip, today);
   if (typeof targets === 'string') return { text: targets };
-  if (/체류시간/.test(text)) {
-    if (/안 정|없는|미정|누락/.test(text)) return list('체류시간 미정', targets.filter(s => s.stayMinutes === null).map(s => s.name));
-    return { text: `저장된 체류시간 합계 ${targets.reduce((n, s) => n + (s.stayMinutes ?? 0), 0)}분 · 미정 ${targets.filter(s => s.stayMinutes === null).length}곳. 이동시간은 포함하지 않았어요.` };
-  }
   if (/날짜 없는|미배치/.test(text)) return list('미배치 장소', active.filter(s => s.date === null).map(s => s.name));
   if (/주소|좌표|위치/.test(text) && /없는|미정|누락|미확인/.test(text)) return list('위치 미확인', targets.filter(s => !s.location).map(s => s.name));
   if (/예상.*비용|계획.*금액/.test(text)) return { text: `장소 예상 비용 합계 ${formatWon(targets.reduce((n, s) => n + (s.estimatedCost ?? 0), 0))} · 미정 ${targets.filter(s => s.estimatedCost == null).length}곳. 실제 지출과 별개예요.` };
   if (/일정|장소|카페|식사|식당|몇 개|몇 곳/.test(text)) {
     // A malformed date filter must not silently return all days.
     if (/\d+일차|오늘|내일/.test(text) && !commandDate(text, trip, today)) return { text: '여행 기간 안의 날짜를 알려 주세요.' };
-    const result = list(`${trip.title} · 저장된 장소 ${targets.length}곳`, [...targets].sort((a,b) => (a.date ?? 'z').localeCompare(b.date ?? 'z') || a.order - b.order).map(s => `${dateLabel(trip, s.date)} · ${s.name}${s.fixedTime ? ` · ${s.fixedTime}` : ''}${s.stayMinutes !== null ? ` · ${s.stayMinutes}분` : ''}`));
+    const result = list(`${trip.title} · 저장된 장소 ${targets.length}곳`, [...targets].sort((a,b) => (a.date ?? 'z').localeCompare(b.date ?? 'z') || a.order - b.order).map(s => `${dateLabel(trip, s.date)} · ${s.name}${s.fixedTime ? ` · ${s.fixedTime}` : ''}`));
     if (/복사|내보내/.test(text)) result.copyText = result.text;
     return result;
   }

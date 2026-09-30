@@ -80,7 +80,6 @@ export class StopFormPage {
   readonly address = signal('');
   readonly regionId = signal('');
   readonly date = signal('');
-  readonly stayMinutes = signal<number | string | null>(null);
   readonly fixedTime = signal('');
   readonly estimatedCost = signal<number | null>(null);
   readonly costValid = computed(
@@ -115,17 +114,10 @@ export class StopFormPage {
   readonly nameError = computed(() =>
     STOP_KIND_DEFAULT_NAME[this.kind()] === '' && !this.name().trim() ? '이름을 입력하세요.' : null,
   );
-  readonly stayError = computed(() => {
-    const v = this.stayMinutes();
-    if (v === null || v === '' || v === undefined) return null;
-    const n = Number(v);
-    return Number.isInteger(n) && n >= 0 ? null : '0 이상의 분 단위로 입력하세요.';
-  });
   readonly canSave = computed(
     () =>
       !this.nameError() &&
       this.costValid() &&
-      !this.stayError() &&
       this.store.saveState() !== 'saving',
   );
 
@@ -160,7 +152,6 @@ export class StopFormPage {
       this.address.set('');
       this.regionId.set('');
       this.date.set('');
-      this.stayMinutes.set(null);
       this.fixedTime.set('');
       this.memo.set('');
       this.estimatedCost.set(null);
@@ -181,7 +172,6 @@ export class StopFormPage {
           this.address.set(stop.address);
           this.regionId.set(stop.regionId ?? '');
           this.date.set(stop.date ?? '');
-          this.stayMinutes.set(stop.stayMinutes);
           this.fixedTime.set(stop.fixedTime ?? '');
           this.memo.set(stop.memo);
           this.estimatedCost.set(stop.estimatedCost ?? null);
@@ -239,8 +229,6 @@ export class StopFormPage {
     event.preventDefault();
     const trip = this.trip();
     if (!trip || !this.canSave()) return;
-    const raw = this.stayMinutes();
-    const stayMinutes = raw === null || raw === '' ? null : Number(raw);
     const base = this.editing();
     const address = this.address().trim();
     const stop = createStop({
@@ -252,7 +240,7 @@ export class StopFormPage {
       // 지역은 고르게 하지 않고 주소에서 찾는다. 대개 답이 하나뿐이다.
       regionId: regionIdForAddress(address, trip.regions),
       date: this.date() || null,
-      stayMinutes,
+      // 체류시간은 입력받지 않는다(2026-09-30). 수정할 때는 base에 든 저장값을 그대로 보유한다.
       fixedTime: this.fixedTime() || null,
       memo: this.memo().trim(),
       estimatedCost: this.estimatedCost(),

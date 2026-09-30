@@ -67,6 +67,7 @@ export const SYSTEM_PROMPT = [
   '',
   '선정 규칙:',
   '- 요청한 지역 안에 실제로 있는 장소만 넣는다. 인접 도시의 장소를 넣지 않는다.',
+  '- 꼭 갈 장소는 요청 지역 밖이어도 반드시 코스에 넣는다. 이름이 틀렸으면 지도에서 찾을 수 있는 정식 상호로 바로잡아 적는다.',
   '- 같은 장소를 두 번 넣지 않는다.',
   '- 유명한 곳만 나열하지 말고 성격이 다른 곳을 섞는다.',
   '- 하루 안에서는 서로 가까운 장소끼리 묶는다.',
@@ -172,17 +173,20 @@ export function buildUserPrompt(r: AiPlanInput): string {
   lines.push(`여행 인원: ${people}명`);
   lines.push(r.budget == null ? '여행 예산: 미정' : `여행 전체 기간 예산: ${r.budget}원 (${r.budgetBasis === 'person' ? '1인 기준' : '전체 인원 기준'}), 전체 인원 총예산 ${r.budget * (r.budgetBasis === 'person' ? people : 1)}원`);
   if (clip(r.taste)) lines.push(`취향: ${clip(r.taste)}`);
-  if (clip(r.mustGo)) lines.push(`꼭 갈 장소: ${clip(r.mustGo)}`);
+  if (clip(r.mustGo)) lines.push(`꼭 갈 장소(반드시 포함): ${clip(r.mustGo)}`);
   if (clip(r.bookedStay)) lines.push(`이미 정한 숙소: ${clip(r.bookedStay)}`);
 
+  const dayTrip = r.dayCount === 1;
   // 요청이 범위를 정했으면 기본 개수를 아예 적지 않는다.
   if (!scoped)
     lines.push(
       '',
       `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광 2~${PER_DAY.sight}곳,` +
-        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜고` +
-        ` 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`,
+        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
+        (dayTrip ? '줘.' : `고 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`),
     );
+  // 당일치기는 요청 범위와 상관없이 숙소를 넣지 않는다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
+  if (dayTrip) lines.push('당일치기라 숙소는 넣지 않는다.');
 
   return lines.join('\n');
 }
