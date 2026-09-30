@@ -13,10 +13,10 @@ import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-pla
  * 마지막 하나는 일부러 없는 이름을 두어 '직접 확인 필요' 경로를 검증한다.
  */
 const FIXTURE_ITEMS: readonly AiItem[] = [
-  { day: 1, name: '안목해변', kind: 'place' },
-  { day: 1, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
-  { day: 2, name: '속초관광수산시장', kind: 'meal' },
-  { day: 2, name: '없는장소테스트', kind: 'place' },
+  { day: 1, order: 1, start: null, moveToNext: null, name: '안목해변', kind: 'place' },
+  { day: 1, order: 2, start: null, moveToNext: null, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
+  { day: 2, order: 1, start: null, moveToNext: null, name: '속초관광수산시장', kind: 'meal' },
+  { day: 2, order: 2, start: null, moveToNext: null, name: '없는장소테스트', kind: 'place' },
 ];
 
 /** 테스트에서 실패·지연을 흉내 내기 위한 값. 테스트 앱에서만 설정한다. */
