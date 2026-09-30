@@ -496,7 +496,7 @@
                       <!-- 요금은 시각 줄 오른쪽에 둔다. 이름 줄에 두면 좁은 화면에서 이름이 먼저 잘린다. -->
                       <span class="flex items-start gap-2">
                         <span class="min-w-0 flex-1 text-12 text-ink-3 tabular-nums" [attr.data-testid]="'ai-start-' + item.id">{{
-                          courseHeadline(entry.start, item.estimate?.stay?.max ?? null, kindLabels[item.kind], areaOf(item.address))
+                          courseHeadline(entry.start, item.estimate?.stay?.max ?? null)
                         }}</span>
                         <span class="flex-none text-right text-14 font-medium tabular-nums" [attr.data-testid]="'ai-price-' + item.id">
                           @if (range) {
@@ -521,8 +521,9 @@
                     @if (item.estimate?.stay; as stay) {
                       <p>추천 체류 {{ stay.min }}~{{ stay.max }}분 · {{ stay.reason }}</p>
                     }
+                    <!-- 분류는 아래 배지 하나로만 보여 준다. 검색 분류를 주소 앞에 붙이면 같은 말이 겹친다. -->
                     @if (item.address) {
-                      <p class="truncate">{{ item.note }}{{ item.note ? ' · ' : '' }}{{ item.address }}</p>
+                      <p class="truncate">{{ item.address }}</p>
                     }
                   </div>
                   <!--

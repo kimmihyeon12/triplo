@@ -78,7 +78,7 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   await fillConditions(page, '2026-10-01', '2026-10-02');
   await page.getByTestId('ai-generate').click();
   await expect(page.getByTestId('ai-result')).toBeVisible();
-  await expect(page.getByTestId('ai-start-ai-0')).toContainText('10:00 (1시간 30분) · 액티비티');
+  await expect(page.getByTestId('ai-start-ai-0')).toHaveText('10:00 (1시간 30분)');
   await expect(page.getByTestId('ai-leg-ai-1')).toContainText('도보 약 15분 · AI 추정');
   // 오죽헌 다음 항목은 장소 확인에 실패해 빠졌다. 모델 이동은 맞지 않으므로 직선거리만 보인다.
   await expect(page.getByTestId('ai-leg-ai-3')).toContainText('직선');

@@ -9,13 +9,12 @@ export function formatDuration(minutes: number): string {
 }
 
 /**
- * 코스 카드의 첫 줄. '11:25 (1시간 10분) · 액티비티 · 해운대구'.
- * 시각·체류·지역 중 미정인 값은 빼고 잇는다. 빈칸을 '미정'으로 채우면 줄이 길어져 읽기 어렵다.
+ * 코스 카드의 첫 줄. '11:25 (1시간 10분)'. 분류는 배지가, 지역은 주소 줄이 이미 보여 주므로
+ * 여기에 다시 쓰지 않는다(2026-09-30 사용자 지적: 같은 정보가 세 번 보였다).
  */
-export function courseHeadline(start: string | null, stayMax: number | null, kindLabel: string, area: string): string {
-  const stay = stayMax ? (start ? `(${formatDuration(stayMax)})` : formatDuration(stayMax)) : null;
-  const time = [start, stay].filter(Boolean).join(' ');
-  return [time, kindLabel, area].filter(Boolean).join(' · ');
+export function courseHeadline(start: string | null, stayMax: number | null): string {
+  if (!stayMax) return start ?? '';
+  return start ? `${start} (${formatDuration(stayMax)})` : `체류 ${formatDuration(stayMax)}`;
 }
 
 /** 카드 사이 이동 줄. 모델 추정에는 AI 추정 표시를 붙이고, 직선거리는 사실값이라 그대로 쓴다. */
@@ -25,11 +24,6 @@ export function legText(leg: CourseLeg): string | null {
     leg.km !== null ? `직선 ${leg.km}km` : null,
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
-}
-
-/** 확인된 주소에서 시·군·구를 뽑는다. 첫 토큰은 시·도라 건너뛴다. */
-export function areaOf(address: string): string {
-  return address.split(/\s+/).find((t, i) => i > 0 && /[시군구]$/.test(t)) ?? '';
 }
 
 /** 예산 − 예상 상한을 '여유 n원' 또는 '초과 n원'으로 쓴다. */
