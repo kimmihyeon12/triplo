@@ -8,6 +8,8 @@ export interface AiPlanInput {
   partySize?: number;
   budget?: number | null;
   budgetBasis?: 'person' | 'group';
+  /** 여행 시작일 'YYYY-MM-DD'. 없으면 날짜 미정이다. */
+  startDate?: string | null;
   regions: string[];
   dayCount: number;
   companion: string;
@@ -57,6 +59,11 @@ export const SYSTEM_PROMPT = [
   "- 일정 밀도가 '여유롭게'면 하루를 늦게 시작하고 항목을 줄인다. '알차게'면 일찍 시작하고 늘린다.",
   '- 시각과 이동시간은 추천일 뿐이며 확정 시각처럼 쓰지 않는다.',
   '',
+  '휴무 규칙:',
+  '- 일차별 날짜와 요일을 알려 주면, 그날이 정기휴무일인 곳은 되도록 넣지 않는다.',
+  '- closed에는 정기휴무를 아는 곳만 적는다. note는 "매주 월요일 휴무"처럼 짧게, onDay는 그 일차 날짜가 휴무일이면 true다.',
+  '- 날짜를 모르면 onDay는 false로 두고 정기휴무만 note에 적는다. 휴무를 모르면 closed=null로 둔다. 추측으로 채우지 않는다.',
+  '',
   '선정 규칙:',
   '- 요청한 지역 안에 실제로 있는 장소만 넣는다. 인접 도시의 장소를 넣지 않는다.',
   '- 같은 장소를 두 번 넣지 않는다.',
@@ -98,6 +105,10 @@ export const RESPONSE_SCHEMA = {
           name: { type: 'string' },
           kind: { type: 'string', enum: ['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소'] },
           start: { type: 'string', nullable: true },
+          // 휴무를 모르면 null이다. 모든 장소에 필요하지 않으므로 required에 넣지 않는다.
+          closed: { type: 'object', nullable: true, properties: {
+            onDay: { type: 'boolean' }, note: { type: 'string' },
+          }, required: ['onDay', 'note'] },
           // 그날 마지막 항목은 이동이 없으므로 required에 넣지 않는다.
           moveToNext: { type: 'object', nullable: true, properties: {
             mode: { type: 'string', enum: ['도보', '대중교통', '자가용', '택시'] },
@@ -152,6 +163,7 @@ export function buildUserPrompt(r: AiPlanInput): string {
     `이동수단: ${clip(r.transport)}`,
     `일정 밀도: ${clip(r.pace)}`,
   );
+  if (r.startDate) lines.push(`일차별 날짜: ${dayDates(r.startDate, r.dayCount)}`);
   const people = r.partySize ?? 1;
   lines.push(`여행 인원: ${people}명`);
   lines.push(r.budget == null ? '여행 예산: 미정' : `여행 전체 기간 예산: ${r.budget}원 (${r.budgetBasis === 'person' ? '1인 기준' : '전체 인원 기준'}), 전체 인원 총예산 ${r.budget * (r.budgetBasis === 'person' ? people : 1)}원`);
@@ -169,4 +181,15 @@ export function buildUserPrompt(r: AiPlanInput): string {
     );
 
   return lines.join('\n');
+}
+
+const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+
+/** '1일차 2026-10-01(목), 2일차 2026-10-02(금)'. 모델이 요일별 휴무를 따질 수 있게 한다. */
+function dayDates(startDate: string, dayCount: number): string {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  return Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(start.getTime() + i * 86_400_000);
+    return `${i + 1}일차 ${d.toISOString().slice(0, 10)}(${WEEKDAY[d.getUTCDay()]})`;
+  }).join(', ');
 }

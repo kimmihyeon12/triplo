@@ -251,3 +251,28 @@ describe('AI 코스 프롬프트', () => {
     expect(item.properties.moveToNext.properties.mode.enum).toEqual(['도보', '대중교통', '자가용', '택시']);
   });
 });
+
+describe('AI 코스 휴무 정보', () => {
+  it('시작일이 있으면 일차별 날짜와 요일을 알려 준다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2, startDate: '2026-10-01' }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.user).toContain('1일차 2026-10-01(목)');
+    expect(prompt.user).toContain('2일차 2026-10-02(금)');
+    expect(prompt.system).toContain('휴무');
+  });
+  it('시작일이 없으면 날짜를 쓰지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('1일차 20');
+  });
+  it.each(['2026-13-01', '10/01', 20261001])('잘못된 시작일은 거절한다: %s', async (startDate) => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, startDate }))).status).toBe(400);
+    expect(callModel).not.toHaveBeenCalled();
+  });
+  it('응답 스키마에 휴무 정보가 있다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.closed).toMatchObject({ nullable: true, required: ['onDay', 'note'] });
+  });
+});
