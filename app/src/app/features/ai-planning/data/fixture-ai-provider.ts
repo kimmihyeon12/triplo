@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import type { PlanEstimate } from '../../../shared/model/plan-estimate';
 import type { AiItem } from '../util/ai-response';
 import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-plan-provider';
 
@@ -9,14 +10,26 @@ import type { AiPlanAvailability, AiPlanProvider, AiPlanRequest } from './ai-pla
  */
 
 /**
- * 앞 세 개는 픽스처 장소 검색에 있는 이름이라 '위치 확인됨'이 되고,
- * 마지막 하나는 일부러 없는 이름을 두어 '직접 확인 필요' 경로를 검증한다.
+ * 픽스처 장소 검색에 있는 이름으로 짠 2일 코스. '없는장소테스트'는 일부러 찾지 못하게 두어
+ * 확인 실패로 빠진 자리 앞뒤의 이동이 직선거리만 보이는지 검증한다. 금액·체류시간은 가상 값이다.
  */
+const estimate = (
+  min: number,
+  max: number,
+  basis: 'person' | 'group' | 'room_night',
+  assumption: string,
+  stay: readonly [number, number] | null,
+): PlanEstimate => ({
+  cost: { min, max, basis, quantity: 1, assumption },
+  stay: stay && { min: stay[0], max: stay[1], reason: '테스트용 체류시간 예시' },
+});
+
 const FIXTURE_ITEMS: readonly AiItem[] = [
-  { day: 1, order: 1, start: null, moveToNext: null, name: '안목해변', kind: 'place' },
-  { day: 1, order: 2, start: null, moveToNext: null, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
-  { day: 2, order: 1, start: null, moveToNext: null, name: '속초관광수산시장', kind: 'meal' },
-  { day: 2, order: 2, start: null, moveToNext: null, name: '없는장소테스트', kind: 'place' },
+  { day: 1, order: 1, start: '10:00', moveToNext: { mode: '도보', minutes: 15 }, name: '안목해변', kind: 'activity', estimate: estimate(0, 0, 'group', '테스트용 무료 예시', [60, 90]) },
+  { day: 1, order: 2, start: '12:00', moveToNext: { mode: '자가용', minutes: 20 }, name: '오죽헌', kind: 'place', estimate: { cost: { min: 3000, max: 5000, basis: 'person', quantity: 1, assumption: '테스트용 입장료 예시' }, stay: { min: 60, max: 90, reason: '테스트용 관람시간 예시' } } },
+  { day: 1, order: 3, start: '14:00', moveToNext: null, name: '없는장소테스트', kind: 'place' },
+  { day: 1, order: 4, start: '20:00', moveToNext: null, name: '강릉 테스트 호텔', kind: 'stay', estimate: estimate(90000, 120000, 'room_night', '테스트용 2인 1실 1박 예시', null) },
+  { day: 2, order: 1, start: '11:00', moveToNext: null, name: '속초관광수산시장', kind: 'shopping' },
 ];
 
 /** 테스트에서 실패·지연을 흉내 내기 위한 값. 테스트 앱에서만 설정한다. */

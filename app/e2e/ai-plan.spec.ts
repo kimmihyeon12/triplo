@@ -3,7 +3,8 @@ import { FAIL_FLAG, STORAGE_KEY, resetApp } from './helpers';
 
 /**
  * AI 일정 만들기. 테스트 앱은 외부를 부르지 않는 픽스처 제공자를 쓴다.
- * 픽스처는 안목해변·오죽헌·속초관광수산시장을 찾고 '없는장소테스트'는 찾지 못한다.
+ * 픽스처는 안목해변(액티비티)·오죽헌(관광)·강릉 테스트 호텔(숙소)·속초관광수산시장(쇼핑)을 찾고
+ * '없는장소테스트'는 찾지 못한다. id는 응답 순서대로 ai-0~ai-4다.
  */
 
 const AI_FAIL = 'tc.test.aiFail';
@@ -42,9 +43,10 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(page.getByTestId('ai-summary')).toContainText('4,000원 · 1인 기준');
   await page.getByTestId('ai-generate').click();
   const summary = page.getByTestId('ai-cost-summary');
-  await expect(summary).toContainText('6,000~10,000원');
-  await expect(summary).toContainText('미정 2곳');
-  await expect(summary).toContainText('예산을 초과');
+  // 안목해변 0원 + 오죽헌 1인 3,000~5,000원 × 2명 + 호텔 1박 90,000~120,000원. 시장은 미정.
+  await expect(summary).toContainText('96,000~130,000원');
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('미정 1곳');
+  await expect(page.getByTestId('ai-budget-remaining')).toContainText('초과');
   await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('1인당 3,000~5,000원 × 2명');
   await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('60~90분');
   await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
@@ -55,7 +57,7 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('cost-results.png'), fullPage: true });
   await page.getByTestId('ai-pick-ai-1').uncheck();
-  await expect(summary).toContainText('미정 · 2명 전체');
+  await expect(summary).toContainText('90,000~120,000원');
   await page.getByTestId('ai-pick-ai-1').check();
   await page.getByTestId('ai-commit').click();
   await expect(page.getByTestId('trip-header')).toBeVisible();
@@ -69,6 +71,39 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   expect(stop).toMatchObject({ estimatedCost: 10000, stayMinutes: 90 });
   expect(stop?.memo).toContain('AI 추정');
   expect(stop?.memo).toContain('2명');
+});
+
+test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙박으로 담는다', async ({ page }, testInfo) => {
+  await resetApp(page);
+  await fillConditions(page, '2026-10-01', '2026-10-02');
+  await page.getByTestId('ai-generate').click();
+  await expect(page.getByTestId('ai-result')).toBeVisible();
+  await expect(page.getByTestId('ai-start-ai-0')).toContainText('10:00 (1시간 30분) · 액티비티');
+  await expect(page.getByTestId('ai-leg-ai-1')).toContainText('도보 약 15분 · AI 추정');
+  // 오죽헌 다음 항목은 장소 확인에 실패해 빠졌다. 모델 이동은 맞지 않으므로 직선거리만 보인다.
+  await expect(page.getByTestId('ai-leg-ai-3')).toContainText('직선');
+  await expect(page.getByTestId('ai-leg-ai-3')).not.toContainText('AI 추정');
+  await expect(page.getByTestId('ai-price-ai-1')).toContainText('AI 추정');
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('숙박');
+  await expect(page.getByTestId('ai-budget-groups')).toContainText('관광·액티비티');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('course-results.png'), fullPage: true });
+  await page.getByTestId('ai-commit').click();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('trip-header')).toBeVisible();
+  const saved = await page.evaluate((key) => {
+    const data = JSON.parse(localStorage.getItem(key)!);
+    const trip = Object.values(data.trips)[0] as {
+      stops: { name: string; kind: string; memo: string; fixedTime: string | null }[];
+      stays: { name: string; checkIn: string; checkOut: string; estimatedCost: number }[];
+    };
+    return { stops: trip.stops, stays: trip.stays };
+  }, STORAGE_KEY);
+  expect(saved.stays).toEqual([expect.objectContaining({ name: '강릉 테스트 호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000 })]);
+  expect(saved.stops.map((s) => [s.name, s.kind])).toEqual([['안목해변', 'activity'], ['오죽헌', 'place'], ['속초관광수산시장', 'shopping']]);
+  expect(saved.stops[0]!.memo).toContain('AI 추천 시각 10:00');
+  expect(saved.stops.every((s) => s.fixedTime === null)).toBe(true);
 });
 
 /** 조건 세 단계를 지나 요약 화면까지 간다. */
@@ -101,7 +136,7 @@ test('위치를 확인한 장소만 보이고 좌표와 함께 담긴다', async
   await expect(page.getByTestId('ai-result')).toContainText('안목해변');
   await expect(page.getByTestId('ai-result')).not.toContainText('없는장소테스트');
   await expect(page.getByTestId('ai-pick-ai-0')).toBeChecked();
-  await expect(page.getByTestId('ai-commit')).toContainText('3개 담기');
+  await expect(page.getByTestId('ai-commit')).toContainText('4개 담기');
 
   // 검색에서 온 주소가 보인다. 모델이 쓴 설명이 아니다.
   await expect(page.getByTestId('ai-result')).toContainText('강원 강릉시 창해로14번길');
@@ -215,15 +250,15 @@ test('일차를 바꾸면 목록이 일차 순으로 다시 늘어선다', async
   await page.getByTestId('ai-generate').click();
   await expect(page.getByTestId('ai-result')).toBeVisible();
 
-  // 픽스처는 안목해변(1일)·오죽헌(1일)·속초관광수산시장(2일)을 낸다.
+  // 픽스처는 안목해변·오죽헌·강릉 테스트 호텔(1일)과 속초관광수산시장(2일)을 낸다.
   const days = () => page.locator('select[data-testid^="ai-day-"]').evaluateAll((els) =>
     els.map((e) => Number((e as HTMLSelectElement).value)),
   );
-  expect(await days()).toEqual([1, 1, 2]);
+  expect(await days()).toEqual([1, 1, 1, 2]);
 
   // 첫 항목을 3일차로 보내면 그 줄이 맨 뒤로 가야 한다.
   await page.getByTestId('ai-day-ai-0').selectOption('3');
-  expect(await days()).toEqual([1, 2, 3]);
+  expect(await days()).toEqual([1, 1, 2, 3]);
 
   // 각 줄의 드롭다운 값이 그 줄의 장소를 따라가야 한다.
   const rows = await page.locator('.pickrow').evaluateAll((els) =>

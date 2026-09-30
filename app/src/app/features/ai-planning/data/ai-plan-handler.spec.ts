@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiPlanHandler } from '../../../../../../supabase/functions/ai-plan/handler';
+import { RESPONSE_SCHEMA } from '../../../../../../supabase/functions/ai-plan/prompt';
 import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
@@ -225,5 +226,28 @@ describe('createAiPlanHandler', () => {
     const { handler, refundQuota } = setup({ callModel: async () => '  ' });
     expect((await handler(post(BODY))).status).toBe(500);
     expect(refundQuota).toHaveBeenCalledWith('u1');
+  });
+});
+
+describe('AI 코스 프롬프트', () => {
+  it('코스 형식과 기본 분류 구성을 모델에 요구한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, dayCount: 2 }));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·기타·숙소');
+    expect(prompt.system).toContain('마지막 날에는 숙소를 넣지 않는다');
+    expect(prompt.user).toContain('관광 2~3곳');
+    expect(prompt.user).not.toContain('카페 2곳씩');
+  });
+  it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('관광 2~3곳');
+  });
+  it('응답 스키마가 코스 필드와 일곱 분류를 가진다', () => {
+    const item = RESPONSE_SCHEMA.properties.items.items;
+    expect(item.properties.kind.enum).toEqual(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소']);
+    expect(item.required).toEqual(expect.arrayContaining(['day', 'order', 'name', 'kind', 'start', 'estimate']));
+    expect(item.properties.moveToNext.properties.mode.enum).toEqual(['도보', '대중교통', '자가용', '택시']);
   });
 });
