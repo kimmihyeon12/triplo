@@ -1,3 +1,4 @@
+import { ChatCardState } from '../../data/chat-card-state';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -45,10 +46,8 @@ export class ChatPage implements OnInit {
   private readonly editor = inject(TripEditorStore);
   private readonly destroyRef = inject(DestroyRef);
 
-  /** 이미 반영한 말풍선. 그 카드에는 되돌리기만 남긴다. */
-  readonly appliedMessageId = signal<string | null>(null);
-  /** 사용자가 그대로 두기를 고른 초안. 카드를 접는다. */
-  readonly dismissedIds = signal<readonly string[]>([]);
+  /** 이미 반영한 카드(되돌리기만 남김)와 그대로 두기를 고른 카드(접음). */
+  readonly cards = new ChatCardState();
   readonly resetting = signal(false);
 
   constructor() {
@@ -83,8 +82,7 @@ export class ChatPage implements OnInit {
     this.resetting.set(true);
     try {
       await this.store.reset();
-      this.appliedMessageId.set(null);
-      this.dismissedIds.set([]);
+      this.cards.reset();
       this.thread()?.clearComposer();
     } finally {
       this.resetting.set(false);
@@ -108,7 +106,7 @@ export class ChatPage implements OnInit {
     const next = await this.store.applyDraft(event.draft);
     if (!next) return;
     if (!(await this.editor.commit(next)) || this.destroyRef.destroyed) return;
-    this.appliedMessageId.set(event.messageId);
+    this.cards.markApplied(event.messageId);
     this.store.notifyTripSaved(next.id);
   }
 
@@ -116,11 +114,11 @@ export class ChatPage implements OnInit {
     const previous = await this.store.undo();
     if (!previous) return;
     await this.editor.commit(previous);
-    this.appliedMessageId.set(null);
+    this.cards.clearApplied();
   }
 
   dismissDraft(messageId: string): void {
-    this.dismissedIds.set([...this.dismissedIds(), messageId]);
+    this.cards.dismiss(messageId);
   }
 
   /**
