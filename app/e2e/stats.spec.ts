@@ -142,3 +142,11 @@ test('여행 목록에서 통계로 간다', async ({ page }) => {
   await page.getByTestId('go-stats').click();
   await expect(page).toHaveURL(/\/stats$/);
 });
+
+test('지도 위에서도 한 손가락으로 화면을 아래로 내릴 수 있다', async ({ page }) => {
+  await page.goto('/stats');
+  const canvas = page.locator('canvas').first();
+  await expect(canvas).toBeVisible();
+  // 지도 조작기가 만들어지며 거는 touch-action: none을 덮어써야 세로 스크롤이 산다.
+  await expect(canvas).toHaveCSS('touch-action', 'pan-y');
+});
