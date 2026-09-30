@@ -29,7 +29,7 @@ interface StayLike {
  * 식사·카페는 식비, 관광·액티비티는 관광·액티비티, 숙소는 숙박이다. 여유시간처럼 종류로
  * 지출을 알 수 없으면 기타로 둔다.
  */
-export const KIND_EXPENSE_CATEGORY: Record<PlanKind | 'buffer', ExpenseCategory> = {
+export const KIND_EXPENSE_CATEGORY: Record<PlanKind, ExpenseCategory> = {
   place: 'activity',
   activity: 'activity',
   meal: 'food',
@@ -40,7 +40,7 @@ export const KIND_EXPENSE_CATEGORY: Record<PlanKind | 'buffer', ExpenseCategory>
   stay: 'stay',
 };
 
-export function expenseCategoryOf(kind: PlanKind | StopKind): ExpenseCategory {
+export function expenseCategoryOf(kind: PlanKind): ExpenseCategory {
   return KIND_EXPENSE_CATEGORY[kind];
 }
 

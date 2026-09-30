@@ -67,8 +67,8 @@ describe('EdgeAiProvider', () => {
       })),
     });
     expect(await provider.generate(REQUEST, new AbortController().signal)).toEqual([
-      { day: 1, name: '불국사', kind: 'place' },
-      { day: 1, name: '함양집', kind: 'meal' },
+      { day: 1, order: 1, start: null, moveToNext: null, name: '불국사', kind: 'place' },
+      { day: 1, order: 2, start: null, moveToNext: null, name: '함양집', kind: 'meal' },
     ]);
   });
 

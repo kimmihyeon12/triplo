@@ -33,7 +33,8 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
       createStop({
         id: `${selection.requestId}:${item.id}`,
         name: item.name,
-        kind: item.kind,
+        // 숙소는 Task 8에서 stays로 담는다. 그 전까지는 관광으로 둔다.
+        kind: item.kind === 'stay' ? 'place' : item.kind,
         address: item.address,
         // 지역은 검색으로 얻은 주소에서 찾는다. 사용자가 고를 필요가 없다.
         regionId: regionIdForAddress(item.address, trip.regions),

@@ -8,8 +8,11 @@ export type IsoDate = string;
 export type HHmm = string;
 
 export type StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer';
-/** AI 코스와 화면이 쓰는 분류. 숙소는 일반 장소가 아니라 stays로 담는다. */
-export type PlanKind = Exclude<StopKind, 'buffer'> | 'stay';
+/**
+ * AI 코스·챗봇 제안과 화면이 쓰는 분류. 일정 분류에 숙소를 더한 것이다.
+ * 숙소는 일반 장소가 아니라 stays로 담는다. AI 일정은 여유시간을 만들지 않지만 챗봇은 제안한다.
+ */
+export type PlanKind = StopKind | 'stay';
 
 /** 장소 추가·수정 화면과 선택 목록의 순서. */
 export const STOP_KINDS: readonly StopKind[] = ['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer'];
@@ -133,6 +136,7 @@ export const PLAN_KIND_LABEL: Record<PlanKind, string> = {
   break: STOP_KIND_LABEL.break,
   shopping: STOP_KIND_LABEL.shopping,
   other: STOP_KIND_LABEL.other,
+  buffer: STOP_KIND_LABEL.buffer,
   stay: '숙소',
 };
 

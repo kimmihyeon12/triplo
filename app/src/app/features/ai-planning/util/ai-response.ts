@@ -1,5 +1,8 @@
 import { parsePlanEstimate, type PlanEstimate } from '../../../shared/util/plan-estimate';
 import type { PlanKind } from '../../trips/model/trip';
+import type { AiMove, MoveMode } from '../model/ai-plan';
+
+export type { AiMove, MoveMode };
 
 /**
  * 모델이 돌려준 응답을 우리 형식으로 바꾼다. 모델은 형식을 지키지 않을 수 있고
@@ -24,14 +27,7 @@ const KIND_BY_LABEL: Readonly<Record<string, PlanKind>> = {
   숙소: 'stay',
 };
 
-export type MoveMode = '도보' | '대중교통' | '자가용' | '택시';
 const MOVE_MODES: readonly MoveMode[] = ['도보', '대중교통', '자가용', '택시'];
-
-/** 다음 장소까지의 이동. 모델 추정이며 화면에만 보이고 저장하지 않는다. */
-export interface AiMove {
-  readonly mode: MoveMode;
-  readonly minutes: number;
-}
 
 export interface AiItem {
   readonly estimate?: PlanEstimate;

@@ -34,7 +34,7 @@ describe('kindTone', () => {
 describe('일정 분류', () => {
   it('앱 전체가 쓰는 일곱 분류 라벨을 한 곳에서 정한다', () => {
     expect(PLAN_KIND_LABEL).toEqual({
-      place: '관광', activity: '액티비티', meal: '식사', break: '카페', shopping: '쇼핑', other: '기타', stay: '숙소',
+      place: '관광', activity: '액티비티', meal: '식사', break: '카페', shopping: '쇼핑', other: '기타', buffer: '여유시간', stay: '숙소',
     });
     expect(STOP_KIND_LABEL.buffer).toBe('여유시간');
     expect(STOP_KINDS).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer']);

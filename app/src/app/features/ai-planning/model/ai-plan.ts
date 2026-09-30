@@ -1,6 +1,14 @@
 import type { PlanEstimate } from '../../../shared/model/plan-estimate';
 import type { GeoPoint, PlaceRef } from '../../places/model/place';
-import type { StopKind } from '../../trips/model/trip';
+import type { PlanKind } from '../../trips/model/trip';
+
+export type MoveMode = '도보' | '대중교통' | '자가용' | '택시';
+
+/** 다음 장소까지의 이동. 모델 추정이며 화면에만 보이고 저장하지 않는다. */
+export interface AiMove {
+  readonly mode: MoveMode;
+  readonly minutes: number;
+}
 
 /** 3단계 입력 → 조건 요약 → 생성 중 → 결과 선택. */
 export type Phase = 'step1' | 'step2' | 'step3' | 'summary' | 'generating' | 'result';
@@ -14,7 +22,13 @@ export interface VerifiedItem {
   readonly id: string;
   readonly day: number;
   readonly name: string;
-  readonly kind: StopKind;
+  readonly kind: PlanKind;
+  /** 그날 안의 방문 순서(1부터). 모델이 짠 순서다. */
+  readonly order: number;
+  /** 추천 도착 시각. AI 추정이며 일정의 고정 시각으로 저장하지 않는다. */
+  readonly start: string | null;
+  /** 다음 항목까지의 이동. AI 추정이며 화면에만 보이고 저장하지 않는다. */
+  readonly moveToNext: AiMove | null;
   /** 검색으로 실재를 확인했는지. 확인한 항목만 기본 선택 대상이다. */
   readonly verified: boolean;
   /** 검색 결과의 분류. 모델이 지어낸 설명을 쓰지 않는다. */
