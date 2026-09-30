@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** AI 일정 짜기 결과를 일차별 시간순 코스로 보여 주고, 분류를 관광·액티비티·식사·카페·쇼핑·숙소로 넓혀 앱 전체에서 통일하며, 장소별 요금·요금 기준(AI 추정)과 분류별 예산 합계를 보여 준다.
+**Goal:** AI 일정 짜기 결과를 일차별 시간순 코스로 보여 주고, 분류를 관광·액티비티·식사·카페·쇼핑·기타·숙소로 넓혀 앱 전체(정산 라벨 포함)에서 통일하며, 장소별 요금·요금 기준(AI 추정)과 가계부 분류 기준의 예산 합계를 보여 준다.
 
 **Architecture:** 서버 `ai-plan` 함수는 검색 없이 한 번 호출하고 응답 스키마에 순서·추천 시각·다음 장소 이동을 더한다. 앱은 응답을 검증(`ai-response`) → 장소 실존 확인(`verify-places`) → 순수 함수로 코스 계산(`course.ts`)·분류별 합계(`plan-estimate.ts`) → 화면 표시 → 담기(`ai-selection.ts`, 숙소는 `stays`) 순서로 처리한다. 분류 정의는 `trips/model/trip.ts`(라벨)와 `trips/util/kind-tone.ts`(색)에만 둔다.
 
@@ -14,8 +14,9 @@
 
 - 일정에 **저장하는** 좌표·주소·분류·경로시간은 검증된 출처에서만 가져온다. 추천 시각·이동시간은 화면 표시 전용이며 `fixedTime`·경로시간으로 저장하지 않는다.
 - 모든 요금은 "AI 추정"으로 표시한다. "공식·확인됨·최신·확정" 표현과 출처 URL을 화면·프롬프트 출력에 만들지 않는다.
-- 저장값 `place`는 유지하고 라벨만 "관광"으로 바꾼다. 신규 저장값은 `activity`·`shopping`뿐이다. 숙소는 `stays`로 담는다.
-- 분류 라벨 표는 `STOP_KIND_LABEL`·`PLAN_KIND_LABEL`(trip.ts) 외에 두지 않는다. 서버 프롬프트 라벨 문자열은 `관광`·`액티비티`·`식사`·`카페`·`쇼핑`·`숙소`.
+- 저장값 `place`는 유지하고 라벨만 "관광"으로 바꾼다. 신규 저장값은 `activity`·`shopping`·`other`뿐이다. 숙소는 `stays`로 담는다.
+- 분류 라벨 표는 `STOP_KIND_LABEL`·`PLAN_KIND_LABEL`(trip.ts) 외에 두지 않는다. 서버 프롬프트 라벨 문자열은 `관광`·`액티비티`·`식사`·`카페`·`쇼핑`·`기타`·`숙소`.
+- 정산(가계부) 라벨 `activity`는 "관광·액티비티"로 바꾸고 저장 키는 유지한다. 일정 분류 → 가계부 분류 대응은 `expenses/util/expense-link.ts`의 `KIND_EXPENSE_CATEGORY` 하나뿐이며, AI 예산 묶음도 이 표와 `EXPENSE_CATEGORIES` 라벨을 쓴다.
 - 기존 `ai-plan` API의 인증·한도·오류 코드와 `{ content, remaining }` 봉투를 바꾸지 않는다.
 - 이전 응답(`order`·`start`·`moveToNext` 없음, `kind` "장소")도 받아서 표시한다.
 - 파일 줄바꿈: `.gitattributes`가 `eol=crlf`로 지정한 ai-planning 파일은 CRLF를 유지하고, 그 밖의 파일은 기존 줄바꿈을 따른다. 편집 후 `git diff --check`로 확인한다.
@@ -42,11 +43,11 @@
 - Modify: `app/src/app/shared/ui/badge/badge.ts`, `app/src/app/shared/ui/badge/badge.styles.ts`
 - Modify: `app/src/styles/theme.css` (토큰 추가)
 - Modify: `docs/design/DESIGN.md:36,90`
-- Create: `supabase/migrations/20260930000000_stop_kind_activity_shopping.sql`
+- Create: `supabase/migrations/20260930000000_stop_kind_course_kinds.sql`
 - Test: `app/src/app/features/trips/util/kind-tone.spec.ts` (없으면 생성)
 
 **Interfaces:**
-- Produces: `StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'buffer'`; `PlanKind = Exclude<StopKind, 'buffer'> | 'stay'`; `STOP_KIND_LABEL: Record<StopKind,string>`; `PLAN_KIND_LABEL: Record<PlanKind,string>`; `STOP_KINDS: readonly StopKind[]`(화면 순서); `toStopKind(value: unknown): StopKind`(모르는 값 → `'place'`); `kindTone(kind: PlanKind | StopKind): BadgeTone`.
+- Produces: `StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer'`; `PlanKind = Exclude<StopKind, 'buffer'> | 'stay'`; `STOP_KIND_LABEL: Record<StopKind,string>`; `PLAN_KIND_LABEL: Record<PlanKind,string>`; `STOP_KINDS: readonly StopKind[]`(화면 순서); `toStopKind(value: unknown): StopKind`(모르는 값 → `'place'`); `kindTone(kind: PlanKind | StopKind): BadgeTone`.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
@@ -57,16 +58,16 @@ import { kindTone } from './kind-tone';
 import { PLAN_KIND_LABEL, STOP_KIND_LABEL, STOP_KINDS, toStopKind } from '../model/trip';
 
 describe('일정 분류', () => {
-  it('앱 전체가 쓰는 여섯 분류 라벨을 한 곳에서 정한다', () => {
+  it('앱 전체가 쓰는 일곱 분류 라벨을 한 곳에서 정한다', () => {
     expect(PLAN_KIND_LABEL).toEqual({
-      place: '관광', activity: '액티비티', meal: '식사', break: '카페', shopping: '쇼핑', stay: '숙소',
+      place: '관광', activity: '액티비티', meal: '식사', break: '카페', shopping: '쇼핑', other: '기타', stay: '숙소',
     });
     expect(STOP_KIND_LABEL.buffer).toBe('여유시간');
-    expect(STOP_KINDS).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'buffer']);
+    expect(STOP_KINDS).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer']);
   });
   it('분류마다 서로 다른 전용 색을 쓴다', () => {
-    const tones = (['place', 'activity', 'meal', 'break', 'shopping', 'stay'] as const).map(kindTone);
-    expect(new Set(tones).size).toBe(6);
+    const tones = (['place', 'activity', 'meal', 'break', 'shopping', 'other', 'stay'] as const).map(kindTone);
+    expect(new Set(tones).size).toBe(7);
     expect(kindTone('stay')).toBe('stay');
     expect(kindTone('buffer')).toBe('neutral');
   });
@@ -84,12 +85,12 @@ describe('일정 분류', () => {
 
 `trip.ts`:
 ```ts
-export type StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'buffer';
+export type StopKind = 'place' | 'activity' | 'meal' | 'break' | 'shopping' | 'other' | 'buffer';
 /** AI 코스와 화면이 쓰는 분류. 숙소는 일반 장소가 아니라 stays로 담는다. */
 export type PlanKind = Exclude<StopKind, 'buffer'> | 'stay';
 
 /** 장소 추가·수정 화면과 선택 목록의 순서. */
-export const STOP_KINDS: readonly StopKind[] = ['place', 'activity', 'meal', 'break', 'shopping', 'buffer'];
+export const STOP_KINDS: readonly StopKind[] = ['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer'];
 
 /**
  * 분류 라벨의 유일한 원본. 다른 기능은 자체 표를 두지 않고 이것을 쓴다(2026-09-30 분류 통일).
@@ -101,6 +102,7 @@ export const STOP_KIND_LABEL: Record<StopKind, string> = {
   meal: '식사',
   break: '카페',
   shopping: '쇼핑',
+  other: '기타',
   buffer: '여유시간',
 };
 
@@ -110,6 +112,7 @@ export const PLAN_KIND_LABEL: Record<PlanKind, string> = {
   meal: STOP_KIND_LABEL.meal,
   break: STOP_KIND_LABEL.break,
   shopping: STOP_KIND_LABEL.shopping,
+  other: STOP_KIND_LABEL.other,
   stay: '숙소',
 };
 
@@ -118,7 +121,7 @@ export function toStopKind(value: unknown): StopKind {
   return (STOP_KINDS as readonly unknown[]).includes(value) ? (value as StopKind) : 'place';
 }
 ```
-`STOP_KIND_DEFAULT_NAME`에 `activity: ''`, `shopping: ''`을 추가한다.
+`STOP_KIND_DEFAULT_NAME`에 `activity: ''`, `shopping: ''`, `other: ''`을 추가한다.
 
 `kind-tone.ts`:
 ```ts
@@ -129,20 +132,23 @@ export function kindTone(kind: PlanKind | StopKind): BadgeTone {
     case 'meal': return 'meal';
     case 'break': return 'cafe';
     case 'shopping': return 'shopping';
+    case 'other': return 'other';
     case 'stay': return 'stay';
     default: return 'neutral';
   }
 }
 ```
 
-`badge-tone.ts`의 `BadgeTone`에 `'activity' | 'shopping'`을 추가하고 문서 주석의 "place·meal·cafe: 일정 분류 전용" 줄에 activity·shopping을 더한다. `badge.ts`에 `'[class.cell--activity]': "tone() === 'activity'"`, `'[class.cell--shopping]': "tone() === 'shopping'"`, `badge.styles.ts`에 `[&.cell--activity]:bg-activity-tint [&.cell--activity]:text-activity-ink [&.cell--shopping]:bg-shopping-tint [&.cell--shopping]:text-shopping-ink`를 추가한다.
+`badge-tone.ts`의 `BadgeTone`에 `'activity' | 'shopping' | 'other'`를 추가하고 문서 주석의 "place·meal·cafe: 일정 분류 전용" 줄에 activity·shopping·other를 더한다. `badge.ts`에 `'[class.cell--activity]': "tone() === 'activity'"`, `'[class.cell--shopping]': "tone() === 'shopping'"`, `'[class.cell--other]': "tone() === 'other'"`, `badge.styles.ts`에 `[&.cell--activity]:bg-activity-tint [&.cell--activity]:text-activity-ink [&.cell--shopping]:bg-shopping-tint [&.cell--shopping]:text-shopping-ink [&.cell--other]:bg-other-tint [&.cell--other]:text-other-ink`를 추가한다.
 
-`theme.css`의 meal/cafe 토큰 옆에 추가한다. 쇼핑은 가계부 쇼핑 분류와 같은 색을 써서 통일한다. 액티비티는 카페(청록)와 겹치지 않도록 주황 계열을 쓴다.
+`theme.css`의 meal/cafe 토큰 옆에 추가한다. 쇼핑·기타는 가계부 쇼핑·기타 분류와 같은 색을 써서 통일한다. 액티비티는 카페(청록)와 겹치지 않도록 주황 계열을 쓴다.
 ```css
   --color-activity-ink: #a5480c;
   --color-activity-tint: #fff0e5;
   --color-shopping-ink: var(--color-exp-shopping-ink);
   --color-shopping-tint: var(--color-exp-shopping-tint);
+  --color-other-ink: var(--color-exp-other-ink);
+  --color-other-tint: var(--color-exp-other-tint);
 ```
 `scripts/check-contrast.mjs`가 새 ink/tint 쌍을 검사 목록에서 읽는지 확인하고, 목록이 하드코딩이면 두 쌍을 추가한다.
 
@@ -154,6 +160,7 @@ export function kindTone(kind: PlanKind | StopKind): BadgeTone {
 -- 'place'는 그대로 두고 화면 라벨만 '관광'으로 바꾼다.
 alter type public.stop_kind add value if not exists 'activity';
 alter type public.stop_kind add value if not exists 'shopping';
+alter type public.stop_kind add value if not exists 'other';
 ```
 
 - [ ] **Step 4: 컴파일 오류로 누락 찾기** — `npx ng build` 실행. `Record<StopKind, …>`에서 나는 오류를 이 Task의 파일에서만 고친다. 다른 기능 파일의 오류는 Task 2에서 고치므로 목록만 기록한다.
@@ -162,8 +169,8 @@ alter type public.stop_kind add value if not exists 'shopping';
 
 - [ ] **Step 6: 커밋**
 ```bash
-git add app/src/app/features/trips/model/trip.ts app/src/app/features/trips/util/kind-tone.ts app/src/app/features/trips/util/kind-tone.spec.ts app/src/app/shared/util/badge-tone.ts app/src/app/shared/ui/badge app/src/styles/theme.css docs/design/DESIGN.md supabase/migrations/20260930000000_stop_kind_activity_shopping.sql
-git commit -m "feat(app): 일정 분류에 액티비티·쇼핑을 더하고 장소 라벨을 관광으로 바꾼다"
+git add app/src/app/features/trips/model/trip.ts app/src/app/features/trips/util/kind-tone.ts app/src/app/features/trips/util/kind-tone.spec.ts app/src/app/shared/util/badge-tone.ts app/src/app/shared/ui/badge app/src/styles/theme.css docs/design/DESIGN.md supabase/migrations/20260930000000_stop_kind_course_kinds.sql
+git commit -m "feat(app): 일정 분류에 액티비티·쇼핑·기타를 더하고 장소 라벨을 관광으로 바꾼다"
 ```
 
 ### Task 2: 앱 전체 분류 통일
@@ -172,7 +179,8 @@ git commit -m "feat(app): 일정 분류에 액티비티·쇼핑을 더하고 장
 - Modify: `app/src/app/features/trips/feature/stop-form/stop-form.ts:69` (+ 템플릿이 `kinds`를 도는지 확인)
 - Modify: `app/src/app/features/trips/feature/trip-detail/trip-detail.ts:151-154`
 - Modify: `app/src/app/features/collaboration/util/preview-trip.ts:5,22`
-- Modify: `app/src/app/features/expenses/util/expense-link.ts:17` 및 분류 매핑 함수
+- Modify: `app/src/app/features/expenses/util/expense-link.ts:17,33-38` (대응표를 export 공통 표로)
+- Modify: `app/src/app/features/expenses/model/ledger.ts` (`EXPENSE_CATEGORIES.activity` 라벨)
 - Modify: `app/src/app/features/stats/util/saved-markers.ts:9`, `app/src/app/features/stats/util/visit-tally.ts:116`
 - Modify: `app/src/app/features/travel-chat/util/local-command-targets.ts:38-40`
 - Modify: `supabase/functions/ai-chat/contract.ts:6,21`, `supabase/functions/ai-chat/prompt.ts:5,17`
@@ -181,7 +189,10 @@ git commit -m "feat(app): 일정 분류에 액티비티·쇼핑을 더하고 장
 
 **Interfaces:**
 - Consumes: Task 1의 `StopKind`, `STOP_KINDS`, `STOP_KIND_LABEL`, `toStopKind`.
-- Produces: `isSightseeing(kind: StopKind): boolean` (`trips/model/trip.ts`, place·activity·shopping → true) — 통계 'travel' 필터가 사용.
+- Produces:
+  - `isSightseeing(kind: StopKind): boolean` (`trips/model/trip.ts`, place·activity·shopping·other → true) — 통계 'travel' 필터가 사용.
+  - `export const KIND_EXPENSE_CATEGORY: Record<PlanKind | 'buffer', ExpenseCategory>` 와 `export function expenseCategoryOf(kind: PlanKind | StopKind): ExpenseCategory` (`expenses/util/expense-link.ts`) — Task 6의 AI 예산 묶음이 사용.
+  - `export type ExpenseCategory = keyof typeof EXPENSE_CATEGORIES` (`expenses/model/ledger.ts`로 옮겨 export).
 
 - [ ] **Step 1: 실패하는 테스트 작성** (각 spec 파일 끝에 추가)
 
@@ -192,9 +203,15 @@ it('새 분류는 그대로, 모르는 분류는 관광으로 읽는다', () => 
   expect(trip.stops.map(s => s.kind)).toEqual(['activity', 'place']);
 });
 // expense-link.spec.ts
-it('액티비티는 관광·활동, 쇼핑은 쇼핑 지출로 옮긴다', () => {
-  const links = expenseLinks({ stops: [stop('a', 'activity'), stop('s', 'shopping')], stays: [] });
-  expect(links.map(l => l.category)).toEqual(['activity', 'shopping']);
+it('일정 분류를 한 표로 가계부 분류에 옮긴다', () => {
+  expect((['place', 'activity', 'meal', 'break', 'shopping', 'other', 'buffer', 'stay'] as const).map(expenseCategoryOf))
+    .toEqual(['activity', 'activity', 'food', 'food', 'shopping', 'other', 'other', 'stay']);
+  const links = expenseLinks([stop('a', 'activity'), stop('s', 'shopping'), stop('o', 'other')], []);
+  expect(links.map(l => l.category)).toEqual(['activity', 'shopping', 'other']);
+});
+// ledger.spec.ts (없으면 expense-link.spec.ts에)
+it('정산 라벨이 일정 분류 라벨과 맞는다', () => {
+  expect(EXPENSE_CATEGORIES).toEqual({ food: '식비', stay: '숙박', transport: '교통', activity: '관광·액티비티', shopping: '쇼핑', other: '기타' });
 });
 // visit-tally.spec.ts
 it('여행지 필터는 관광·액티비티·쇼핑을 함께 센다', () => {
@@ -215,16 +232,29 @@ it.each([['관광 전부 빼줘', 'place'], ['액티비티 전부 빼줘', 'acti
   - `stop-form.ts:69`: `readonly kinds = STOP_KINDS;`. 191행의 포함 검사는 `STOP_KINDS.includes(k as StopKind)`로 바꾼다. 115행의 필수 이름 검사는 `STOP_KIND_DEFAULT_NAME[this.kind()] === ''`(관광·액티비티·쇼핑)일 때 적용하고 문구를 `'이름을 입력하세요.'`로 바꾼다.
   - `trip-detail.ts:151-154`: 라벨을 `STOP_KIND_LABEL`에서 가져온다. `stop(null, STOP_KIND_LABEL.place, 'place', 'add-stop')`, `stop('meal', STOP_KIND_LABEL.meal, …)`, `stop('break', STOP_KIND_LABEL.break, …)`("휴식" → "카페"로 통일), 여유시간은 그대로. 액티비티·쇼핑은 장소 추가 화면의 분류 선택에서 고른다(빠른 추가 버튼은 늘리지 않는다).
   - `preview-trip.ts`: `KINDS`를 지우고 `kind: toStopKind(s.kind)`.
-  - `expense-link.ts`: `kind: StopKind`(import)로 바꾸고 매핑에 `activity → 'activity'`, `shopping → 'shopping'`을 추가한다. `place`는 기존 매핑을 유지한다.
-  - `trip.ts`에 `export function isSightseeing(kind: StopKind): boolean { return kind === 'place' || kind === 'activity' || kind === 'shopping'; }`를 추가하고, `saved-markers.ts:9`와 `visit-tally.ts:116`의 `filter === 'travel' ? 'place' : filter` 비교를 `filter === 'travel' ? isSightseeing(stop.kind) : stop.kind === filter`로 바꾼다.
+  - `ledger.ts`: `activity: '관광·액티비티'`로 바꾸고 `export type ExpenseCategory = keyof typeof EXPENSE_CATEGORIES;`를 둔다. 가계부 화면·영수증 인식(`add-receipt-scan`)·챗봇 가계부 명령에서 "관광·활동" 문자열을 하드코딩한 곳을 `rg "관광·활동" app/src supabase/functions`로 찾아 `EXPENSE_CATEGORIES.activity`로 바꾼다. 서버 프롬프트(receipt-scan 등)에 문자열로 들어 있으면 "관광·액티비티"로 바꾼다.
+  - `expense-link.ts`: `StopLike.kind`를 `StopKind`(import)로 바꾸고 내부 `STOP_CATEGORY`를 export 공통 표로 바꾼다.
+    ```ts
+    /** 일정 분류 → 가계부 분류의 유일한 대응표. AI 예산 묶음도 이 표를 쓴다(2026-09-30 정산 라벨 통일). */
+    export const KIND_EXPENSE_CATEGORY: Record<PlanKind | 'buffer', ExpenseCategory> = {
+      place: 'activity', activity: 'activity', meal: 'food', break: 'food',
+      shopping: 'shopping', other: 'other', buffer: 'other', stay: 'stay',
+    };
+    export function expenseCategoryOf(kind: PlanKind | StopKind): ExpenseCategory {
+      return KIND_EXPENSE_CATEGORY[kind];
+    }
+    ```
+    `expenseLinks`의 숙소 `'stay' as const`도 `expenseCategoryOf('stay')`로 바꾼다.
+  - `trip.ts`에 `export function isSightseeing(kind: StopKind): boolean { return kind === 'place' || kind === 'activity' || kind === 'shopping' || kind === 'other'; }`를 추가하고, `saved-markers.ts:9`와 `visit-tally.ts:116`의 `filter === 'travel' ? 'place' : filter` 비교를 `filter === 'travel' ? isSightseeing(stop.kind) : stop.kind === filter`로 바꾼다.
   - `local-command-targets.ts:38`: 기존 분기 앞에 추가한다.
     ```ts
     if (/액티비티|체험/.test(scope)) targets = targets.filter(s => s.kind === 'activity');
     else if (/쇼핑/.test(scope)) targets = targets.filter(s => s.kind === 'shopping');
+    else if (/기타/.test(scope)) targets = targets.filter(s => s.kind === 'other');
     else if (/관광/.test(scope)) targets = targets.filter(s => s.kind === 'place');
     else if (/카페/.test(scope)) …(기존 그대로)
     ```
-  - `ai-chat/contract.ts`: 허용 목록 `['place','activity','meal','break','shopping','buffer']`, 타입도 같게. `ai-chat/prompt.ts:5`: `places.kind는 place(관광),activity(액티비티),meal(식사),break(카페),shopping(쇼핑),buffer(여유)만 사용한다.`, `:17` enum 동일.
+  - `ai-chat/contract.ts`: 허용 목록 `['place','activity','meal','break','shopping','other','buffer']`, 타입도 같게. `ai-chat/prompt.ts:5`: `places.kind는 place(관광),activity(액티비티),meal(식사),break(카페),shopping(쇼핑),other(기타),buffer(여유)만 사용한다.`, `:17` enum 동일.
   - `trip-rows.ts`: DB 행의 `kind`를 모델로 옮기는 곳에 `toStopKind(row.kind)`.
   - `rg "'장소'|휴식" app/src/app --glob '!*.spec.ts'`로 분류 뜻으로 남은 하드코딩 라벨을 찾아 `STOP_KIND_LABEL`로 바꾼다(장소라는 일반 명사로 쓴 문구는 두지 않고 그대로 둔다).
 
@@ -233,9 +263,9 @@ it.each([['관광 전부 빼줘', 'place'], ['액티비티 전부 빼줘', 'acti
 - [ ] **Step 5: 커밋**
 ```bash
 git add -A app/src/app supabase/functions/ai-chat
-git commit -m "refactor(app): 일정 분류 라벨과 판정을 공통 정의로 통일한다"
+git commit -m "refactor(app): 일정·정산 분류 라벨과 대응표를 공통 정의로 통일한다"
 ```
-(서버 `ai-chat` 변경이 함께 들어가므로 커밋 본문에 "ai-chat 허용 분류에 activity·shopping 추가"를 적는다.)
+(서버 `ai-chat` 변경이 함께 들어가므로 커밋 본문에 "ai-chat 허용 분류에 activity·shopping·other 추가, 가계부 라벨 관광·액티비티"를 적는다.)
 
 ### Task 3: AI 응답 해석 — 코스 필드
 
@@ -265,9 +295,9 @@ export function parseAiItems(content: string, dayCount: number): AiItem[];
 
 ```ts
 const json = (items: unknown[]) => JSON.stringify({ items });
-it('여섯 분류와 이전 라벨 장소를 읽는다', () => {
-  const out = parseAiItems(json(['관광', '액티비티', '식사', '카페', '쇼핑', '숙소', '장소', '???'].map((kind, i) => ({ day: 1, name: `곳${i}`, kind }))), 1);
-  expect(out.map(i => i.kind)).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'stay', 'place', 'place']);
+it('일곱 분류와 이전 라벨 장소를 읽는다', () => {
+  const out = parseAiItems(json(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소', '장소', '???'].map((kind, i) => ({ day: 1, name: `곳${i}`, kind }))), 1);
+  expect(out.map(i => i.kind)).toEqual(['place', 'activity', 'meal', 'break', 'shopping', 'other', 'stay', 'place', 'place']);
 });
 it('순서·시각·이동을 읽고 잘못된 값만 미정으로 둔다', () => {
   const out = parseAiItems(json([
@@ -304,7 +334,7 @@ it('이전 응답도 시각 없이 읽는다', () => {
 
 ```ts
 const KIND_BY_LABEL: Readonly<Record<string, PlanKind>> = {
-  관광: 'place', 장소: 'place', 액티비티: 'activity', 식사: 'meal', 카페: 'break', 쇼핑: 'shopping', 숙소: 'stay',
+  관광: 'place', 장소: 'place', 액티비티: 'activity', 식사: 'meal', 카페: 'break', 쇼핑: 'shopping', 기타: 'other', 숙소: 'stay',
 };
 const MOVE_MODES: readonly MoveMode[] = ['도보', '대중교통', '자가용', '택시'];
 
@@ -352,7 +382,7 @@ git commit -m "feat(app): AI 응답에서 코스 순서·추천 시각·이동�
 describe('kindFromCategory', () => {
   it.each([
     ['음식점 > 한식', 'place', 'meal'], ['카페', 'meal', 'break'], ['숙박 > 호텔', 'place', 'stay'],
-    ['관광명소', 'activity', 'activity'], ['시장', 'shopping', 'shopping'], ['관광명소', 'stay', 'place'],
+    ['관광명소', 'activity', 'activity'], ['시장', 'shopping', 'shopping'], ['관광명소', 'stay', 'place'], ['기차역', 'other', 'other'],
     ['문화유적', 'meal', 'place'], ['', 'shopping', 'shopping'],
   ] as const)('%s + 모델 %s → %s', (category, model, expected) => {
     expect(kindFromCategory(category, model)).toBe(expected);
@@ -544,10 +574,11 @@ git commit -m "feat(app): AI 결과를 일차별 시간순 코스로 계산하�
 - Test: `app/src/app/shared/util/plan-estimate.spec.ts`(없으면 `ai-planning/util/plan-estimates.spec.ts`에 추가), `app/src/app/features/ai-planning/data/ai-plan-store.spec.ts`
 
 **Interfaces:**
-- Consumes: Task 5 `buildCourses`, `DayCourse`; 기존 `costRange`, `summarizeEstimates`.
+- Consumes: Task 5 `buildCourses`, `DayCourse`; Task 2 `expenseCategoryOf`, `ExpenseCategory`, `EXPENSE_CATEGORIES`; 기존 `costRange`, `summarizeEstimates`.
 - Produces:
-  - `export type BudgetGroup = 'stay' | 'food' | 'sight' | 'shopping';`
-  - `export function budgetGroupOf(kind: PlanKind): BudgetGroup` (`ai-planning/util/course.ts`에 추가: stay→stay, meal·break→food, place·activity→sight, shopping→shopping)
+  - `export type BudgetGroup = Exclude<ExpenseCategory, 'transport'>;` (`ai-planning/util/course.ts`) — 가계부 분류에서 계산하지 않는 교통만 뺀다
+  - `export const BUDGET_GROUPS: readonly BudgetGroup[] = ['food', 'stay', 'activity', 'shopping', 'other'];`
+  - 묶음 판정은 `expenseCategoryOf(kind)`를 그대로 쓴다(자체 대응표를 두지 않는다). 라벨은 `EXPENSE_CATEGORIES[group]`.
   - `export function summarizeGroups<K extends string>(items: readonly { group: K; estimate?: PlanEstimate }[], partySize: number, groups: readonly K[]): Record<K, { min: number; max: number; known: number; unknown: number }>` (plan-estimate.ts)
   - 스토어: `readonly courses: Signal<DayCourse[]>`, `readonly groupSummary: Signal<Record<BudgetGroup, …>>`, `readonly budgetRemaining: Signal<number | null>`(예산 − 총액 상한, 음수면 초과), `readonly staysNeedDates: Signal<boolean>`(날짜 미정이고 선택된 숙소가 있으면 true). 기존 `dayGroups`는 제거하고 `costSummary`·`budgetExceeded`는 유지한다.
 
@@ -560,10 +591,11 @@ it('분류 묶음별로 합계와 미정 개수를 센다', () => {
   const out = summarizeGroups([
     { group: 'food', estimate: cost(10000, 12000) }, { group: 'food' },
     { group: 'stay', estimate: cost(90000, 120000) },
-  ], 2, ['stay', 'food', 'sight', 'shopping'] as const);
+  ], 2, ['food', 'stay', 'activity', 'shopping', 'other'] as const);
   expect(out.food).toEqual({ min: 10000, max: 12000, known: 1, unknown: 1 });
   expect(out.stay.max).toBe(120000);
-  expect(out.sight).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+  expect(out.activity).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+  expect(out.other).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
 });
 // ai-plan-store spec (기존 threeDayTrip·fakeAi 도우미 사용)
 it('코스와 분류별 합계를 계산하고 해제·일차 이동을 반영한다', async () => {
@@ -596,13 +628,13 @@ it('날짜 미정이면 선택된 숙소가 있을 때 안내 신호를 켠다',
 
 - [ ] **Step 3: 구현**
   - `plan-estimate.ts`에 `summarizeGroups`를 추가한다. 내부에서 `costRange(item.estimate, partySize)`를 쓰고, 결과 객체는 `groups`마다 0으로 초기화한다.
-  - `course.ts`에 `BudgetGroup`, `budgetGroupOf`, `BUDGET_GROUPS: readonly BudgetGroup[] = ['stay','food','sight','shopping']`, `BUDGET_GROUP_LABEL: Record<BudgetGroup,string> = { stay: '숙박', food: '식비', sight: '관광·체험', shopping: '쇼핑(선택 지출)' }`를 추가한다.
+  - `course.ts`에 `BudgetGroup`, `BUDGET_GROUPS`를 추가한다. 묶음 판정 함수는 새로 만들지 않고 `expenseCategoryOf`를 import한다(`BudgetGroup`으로 좁힐 때 `transport`는 나올 수 없으므로 `as BudgetGroup`).
   - 스토어:
     ```ts
     readonly courses = computed(() => buildCourses(this.results(), this.selected(), this.dayOverrides(), this.dayChoices()));
     private readonly selectedItems = computed(() => this.courses().flatMap(c => c.entries).filter(e => e.selected).map(e => e.item));
     readonly costSummary = computed(() => summarizeEstimates(this.selectedItems(), this.partySize()));
-    readonly groupSummary = computed(() => summarizeGroups(this.selectedItems().map(i => ({ group: budgetGroupOf(i.kind), estimate: i.estimate })), this.partySize(), BUDGET_GROUPS));
+    readonly groupSummary = computed(() => summarizeGroups(this.selectedItems().map(i => ({ group: expenseCategoryOf(i.kind) as BudgetGroup, estimate: i.estimate })), this.partySize(), BUDGET_GROUPS));
     readonly budgetRemaining = computed(() => this.totalBudget() === null ? null : this.totalBudget()! - this.costSummary().max);
     readonly staysNeedDates = computed(() => !this.startDate() && this.selectedItems().some(i => i.kind === 'stay'));
     ```
@@ -625,7 +657,7 @@ git commit -m "feat(app): AI 코스를 스토어에 연결하고 분류별 예�
 - Test: e2e는 Task 9, 여기서는 컴포넌트 도우미 단위 테스트 `app/src/app/features/ai-planning/util/course-format.spec.ts`
 
 **Interfaces:**
-- Consumes: 스토어 `courses`, `groupSummary`, `budgetRemaining`, `staysNeedDates`, `costSummary`, `totalBudget`; `PLAN_KIND_LABEL`, `kindTone`, `costRange`, `costBasis`, `wonRange`, `BUDGET_GROUPS`, `BUDGET_GROUP_LABEL`.
+- Consumes: 스토어 `courses`, `groupSummary`, `budgetRemaining`, `staysNeedDates`, `costSummary`, `totalBudget`; `PLAN_KIND_LABEL`, `kindTone`, `costRange`, `costBasis`, `wonRange`, `BUDGET_GROUPS`, `EXPENSE_CATEGORIES`(묶음 라벨).
 - Produces (`app/src/app/features/ai-planning/util/course-format.ts`):
   - `export function formatDuration(minutes: number): string` — 70 → `1시간 10분`, 45 → `45분`, 120 → `2시간`
   - `export function courseHeadline(start: string | null, stayMax: number | null, kindLabel: string, area: string): string` — `11:25 (1시간 10분) · 액티비티 · 해운대구`, 시각·체류·지역이 없으면 그 부분을 뺀다
@@ -703,7 +735,7 @@ export function areaOf(address: string): string {
   <dl class="mt-3 grid grid-cols-[1fr_auto] gap-y-1.5 text-14" data-testid="ai-budget-groups">
     @for (g of budgetGroups; track g) {
       @let s = draft.groupSummary()[g];
-      <dt>{{ budgetGroupLabel[g] }}</dt>
+      <dt>{{ expenseLabels[g] }}@if (g === 'shopping') { <span class="text-12 text-ink-3">(선택 지출)</span> }</dt>
       <dd class="text-right tabular-nums">{{ wonRange(s.known ? s : null) }}@if (s.unknown) { <span class="text-12 text-ink-3"> · 미정 {{ s.unknown }}곳</span> }</dd>
     }
   </dl>
@@ -744,7 +776,7 @@ export function areaOf(address: string): string {
   }
 </section>
 ```
-`ai-plan-flow.ts`에 `readonly kindLabels = PLAN_KIND_LABEL; readonly budgetGroups = BUDGET_GROUPS; readonly budgetGroupLabel = BUDGET_GROUP_LABEL; readonly courseHeadline = courseHeadline; readonly legText = legText; readonly areaOf = areaOf;`를 둔다. `kindLabels = STOP_KIND_LABEL`는 교체한다. 템플릿에 쓴 텍스트 크기 유틸(`text-22`, `text-11` 등)이 테마에 없으면 DESIGN.md에 있는 가장 가까운 크기로 바꾼다.
+`ai-plan-flow.ts`에 `readonly kindLabels = PLAN_KIND_LABEL; readonly budgetGroups = BUDGET_GROUPS; readonly expenseLabels = EXPENSE_CATEGORIES; readonly courseHeadline = courseHeadline; readonly legText = legText; readonly areaOf = areaOf;`를 둔다. `kindLabels = STOP_KIND_LABEL`는 교체한다. 템플릿에 쓴 텍스트 크기 유틸(`text-22`, `text-11` 등)이 테마에 없으면 DESIGN.md에 있는 가장 가까운 크기로 바꾼다.
 `allSelected`·`toggleAll`·`selected().size/planItems().length`는 코스 평탄화 목록(`draft.courses().flatMap(c => c.entries)`) 기준으로 바꾼다.
 
 - [ ] **Step 5: 확인** — 도우미 spec PASS, `npx ng build`, `npm run lint`(페이지 폭·대비) PASS. 개발 서버에서 픽스처가 아닌 화면은 Task 11에서 확인한다. 이 단계에서 `impeccable` 스킬로 결과 화면을 한 번 점검(critique)하고 지적 사항 중 DESIGN.md 위반만 고친다.
@@ -835,7 +867,7 @@ it('코스 형식과 기본 분류 구성을 모델에 요구한다', async () =
   const { handler, callModel } = setup();
   await handler(post({ ...BODY, dayCount: 2 }));
   const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
-  expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·숙소');
+  expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·기타·숙소');
   expect(prompt.system).toContain('마지막 날에는 숙소를 넣지 않는다');
   expect(prompt.user).toContain('관광 2~3곳');
   expect(prompt.user).not.toContain('카페 2곳씩');
@@ -849,9 +881,9 @@ it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', asy
 그리고 `RESPONSE_SCHEMA` 모양을 직접 검사한다.
 ```ts
 import { RESPONSE_SCHEMA } from '../../../../../../supabase/functions/ai-plan/prompt';
-it('응답 스키마가 코스 필드와 여섯 분류를 가진다', () => {
+it('응답 스키마가 코스 필드와 일곱 분류를 가진다', () => {
   const item = RESPONSE_SCHEMA.properties.items.items;
-  expect(item.properties.kind.enum).toEqual(['관광', '액티비티', '식사', '카페', '쇼핑', '숙소']);
+  expect(item.properties.kind.enum).toEqual(['관광', '액티비티', '식사', '카페', '쇼핑', '기타', '숙소']);
   expect(item.required).toEqual(expect.arrayContaining(['day', 'order', 'name', 'kind', 'start', 'estimate']));
   expect(item.properties.moveToNext.properties.mode.enum).toEqual(['도보', '대중교통', '자가용', '택시']);
 });
@@ -862,13 +894,14 @@ it('응답 스키마가 코스 필드와 여섯 분류를 가진다', () => {
 - [ ] **Step 3: 구현** (`prompt.ts`)
   - 분류 규칙 블록을 교체한다:
     ```
-    분류 규칙(관광·액티비티·식사·카페·쇼핑·숙소 중 하나):
+    분류 규칙(관광·액티비티·식사·카페·쇼핑·기타·숙소 중 하나):
     - '관광': 보고 둘러보는 곳(명소·박물관·전망대·공원·해변·유적).
     - '액티비티': 직접 타거나 해 보는 곳(체험·레저·케이블카·열차·공방).
     - '식사': 밥을 먹는 식당만. 시장이나 거리 전체를 식사로 적지 않는다.
     - '카페': 커피·디저트를 파는 실제 가게만.
     - '쇼핑': 물건을 사는 곳(시장·상점가 안의 개별 매장·백화점·아울렛·기념품점).
     - '숙소': 실제 숙박업소 이름. 하루의 마지막 항목으로 두고, 마지막 날에는 숙소를 넣지 않는다.
+    - '기타': 위 어디에도 맞지 않는 곳(역·터미널 같은 경유지)에만 쓴다. 기본 구성에는 넣지 않는다.
     ```
   - 코스 규칙 블록을 추가한다:
     ```
@@ -880,7 +913,7 @@ it('응답 스키마가 코스 필드와 여섯 분류를 가진다', () => {
     - 일정 밀도가 '여유롭게'면 하루를 늦게 시작하고 항목을 줄인다. '알차게'면 일찍 시작하고 늘린다.
     - 이동시간·시각은 추천일 뿐이며 확정 시각처럼 쓰지 않는다.
     ```
-  - `RESPONSE_SCHEMA` 항목에 `order: { type: 'integer' }`, `start: { type: 'string', nullable: true }`, `moveToNext: { type: 'object', nullable: true, properties: { mode: { type: 'string', enum: ['도보','대중교통','자가용','택시'] }, minutes: { type: 'integer' } }, required: ['mode','minutes'] }`, `kind` enum 여섯 가지, `required: ['day','order','name','kind','start','estimate']`. `moveToNext`는 required에 넣지 않는다(마지막 항목 생략 허용).
+  - `RESPONSE_SCHEMA` 항목에 `order: { type: 'integer' }`, `start: { type: 'string', nullable: true }`, `moveToNext: { type: 'object', nullable: true, properties: { mode: { type: 'string', enum: ['도보','대중교통','자가용','택시'] }, minutes: { type: 'integer' } }, required: ['mode','minutes'] }`, `kind` enum 일곱 가지, `required: ['day','order','name','kind','start','estimate']`. `moveToNext`는 required에 넣지 않는다(마지막 항목 생략 허용).
   - `PER_DAY`와 `buildUserPrompt` 기본 구성 문장:
     ```ts
     `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광 2~3곳, 액티비티 또는 쇼핑 1곳, 식사 2곳(점심·저녁), 카페 1곳을 코스로 짜고` +
@@ -919,7 +952,7 @@ it('응답 스키마가 코스 필드와 여섯 분류를 가진다', () => {
 - [ ] **Step 5: 커밋**
 ```bash
 git add supabase/functions/ai-plan/prompt.ts app/src/app/features/ai-planning/data app/e2e/ai-plan.spec.ts
-git commit -m "feat: AI 일정 서버 프롬프트를 시간순 코스와 여섯 분류로 바꾸고 픽스처·e2e를 맞춘다"
+git commit -m "feat: AI 일정 서버 프롬프트를 시간순 코스와 일곱 분류로 바꾸고 픽스처·e2e를 맞춘다"
 ```
 
 ### Task 10: 문서와 OpenSpec
@@ -942,7 +975,7 @@ git commit -m "docs: AI 일정 시간순 코스·분류 통일 기획과 OpenSpe
 ### Task 11: 전체 검증과 배포 (사용자 확인 필요)
 
 - [ ] **Step 1: 로컬 전체 검증** — `npx vitest run`, `npx ng build`, `npm run lint`, `npx playwright test --reporter=line`(전체), `git diff --check`. 결과 숫자를 기록한다.
-- [ ] **Step 2: 사용자 확인 후 DB 마이그레이션 적용** — `npx supabase db push`로 `20260930000000_stop_kind_activity_shopping.sql`만 적용되는지 `--dry-run`으로 먼저 확인한다. 적용 뒤 `select unnest(enum_range(null::public.stop_kind));`로 여섯 값 확인.
+- [ ] **Step 2: 사용자 확인 후 DB 마이그레이션 적용** — `npx supabase db push`로 `20260930000000_stop_kind_course_kinds.sql`만 적용되는지 `--dry-run`으로 먼저 확인한다. 적용 뒤 `select unnest(enum_range(null::public.stop_kind));`로 일곱 값(place·meal·break·buffer·activity·shopping·other) 확인.
 - [ ] **Step 3: 사용자 확인 후 함수 배포** — `npx supabase functions deploy ai-plan` 그리고 `npx supabase functions deploy ai-chat`. 배포 직후 사용자 토큰으로 실제 생성 1회(scratchpad의 `call-plan.mjs` 방식): 200 응답, 분류 분포, `start` 순서, `estimate.cost` 채움 비율, 응답 시간 기록. Gemini가 스키마를 거부(400·500)하면 즉시 이전 커밋의 함수로 다시 배포하고 사용자에게 알린다.
 - [ ] **Step 4: 로컬 앱에서 실제 생성 화면 확인** — 코스 카드·이동·예산 묶음·담기·여행 상세 숙소 표시를 Playwright로 확인하고 캡처한다.
 - [ ] **Step 5: 사용자 확인 후 프론트엔드 배포** — 저장소의 배포 절차(`docs/DEVELOPMENT.md`·README의 배포 항목)를 따른다.
