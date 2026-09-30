@@ -50,9 +50,23 @@ export class SupabaseSupportRepository implements SupportRepository {
       p_app_version: this.appVersion,
       p_user_agent: this.userAgent(),
     })) as string;
-    const sent = (await this.inquiries()).find((i) => i.id === id);
-    if (!sent) throw new Error('보낸 문의를 다시 읽지 못했어요.');
-    return sent;
+    // 보내기는 이미 성공했다. 다시 읽기가 실패해도 오류를 내면 사용자가 같은 문의를 또 보낸다.
+    const fallback: Inquiry = {
+      id,
+      kind,
+      body: body.trim(),
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      appVersion: this.appVersion,
+      userAgent: this.userAgent(),
+      replies: [],
+      readAt: null,
+    };
+    try {
+      return (await this.inquiries()).find((i) => i.id === id) ?? fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   async markInquiryRead(id: string): Promise<void> {

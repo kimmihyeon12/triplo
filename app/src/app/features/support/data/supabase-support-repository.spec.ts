@@ -66,4 +66,9 @@ describe('SupabaseSupportRepository', () => {
     expect(list.map((i) => i.id)).toEqual(['new', 'old']);
     expect(list[0]!.replies.map((r) => r.body)).toEqual(['하나', '둘']);
   });
+  it('보내기에 성공했으면 다시 읽기가 실패해도 오류를 내지 않는다(같은 문의를 두 번 보내지 않게)', async () => {
+    const client = fake({ myInquiries: async () => { throw new Error('offline'); } });
+    const sent = await repo(client).sendInquiry('idea', '제안');
+    expect(sent).toMatchObject({ id: 'new-id', kind: 'idea', body: '제안', status: 'open', replies: [] });
+  });
 });
