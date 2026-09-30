@@ -43,7 +43,7 @@
 - Modify: `app/src/app/shared/ui/badge/badge.ts`, `app/src/app/shared/ui/badge/badge.styles.ts`
 - Modify: `app/src/styles/theme.css` (토큰 추가)
 - Modify: `docs/design/DESIGN.md:36,90`
-- Create: `supabase/migrations/20260930000000_stop_kind_course_kinds.sql`
+- Create: `supabase/migrations/20260930000001_stop_kind_course_kinds.sql`
 - Test: `app/src/app/features/trips/util/kind-tone.spec.ts` (없으면 생성)
 
 **Interfaces:**
@@ -169,7 +169,7 @@ alter type public.stop_kind add value if not exists 'other';
 
 - [ ] **Step 6: 커밋**
 ```bash
-git add app/src/app/features/trips/model/trip.ts app/src/app/features/trips/util/kind-tone.ts app/src/app/features/trips/util/kind-tone.spec.ts app/src/app/shared/util/badge-tone.ts app/src/app/shared/ui/badge app/src/styles/theme.css docs/design/DESIGN.md supabase/migrations/20260930000000_stop_kind_course_kinds.sql
+git add app/src/app/features/trips/model/trip.ts app/src/app/features/trips/util/kind-tone.ts app/src/app/features/trips/util/kind-tone.spec.ts app/src/app/shared/util/badge-tone.ts app/src/app/shared/ui/badge app/src/styles/theme.css docs/design/DESIGN.md supabase/migrations/20260930000001_stop_kind_course_kinds.sql
 git commit -m "feat(app): 일정 분류에 액티비티·쇼핑·기타를 더하고 장소 라벨을 관광으로 바꾼다"
 ```
 
@@ -975,7 +975,7 @@ git commit -m "docs: AI 일정 시간순 코스·분류 통일 기획과 OpenSpe
 ### Task 11: 전체 검증과 배포 (사용자 확인 필요)
 
 - [ ] **Step 1: 로컬 전체 검증** — `npx vitest run`, `npx ng build`, `npm run lint`, `npx playwright test --reporter=line`(전체), `git diff --check`. 결과 숫자를 기록한다.
-- [ ] **Step 2: 사용자 확인 후 DB 마이그레이션 적용** — `npx supabase db push`로 `20260930000000_stop_kind_course_kinds.sql`만 적용되는지 `--dry-run`으로 먼저 확인한다. 적용 뒤 `select unnest(enum_range(null::public.stop_kind));`로 일곱 값(place·meal·break·buffer·activity·shopping·other) 확인.
+- [ ] **Step 2: 사용자 확인 후 DB 마이그레이션 적용** — `npx supabase db push`로 `20260930000001_stop_kind_course_kinds.sql`만 적용되는지 `--dry-run`으로 먼저 확인한다. 적용 뒤 `select unnest(enum_range(null::public.stop_kind));`로 일곱 값(place·meal·break·buffer·activity·shopping·other) 확인.
 - [ ] **Step 3: 사용자 확인 후 함수 배포** — `npx supabase functions deploy ai-plan` 그리고 `npx supabase functions deploy ai-chat`. 배포 직후 사용자 토큰으로 실제 생성 1회(scratchpad의 `call-plan.mjs` 방식): 200 응답, 분류 분포, `start` 순서, `estimate.cost` 채움 비율, 응답 시간 기록. Gemini가 스키마를 거부(400·500)하면 즉시 이전 커밋의 함수로 다시 배포하고 사용자에게 알린다.
 - [ ] **Step 4: 로컬 앱에서 실제 생성 화면 확인** — 코스 카드·이동·예산 묶음·담기·여행 상세 숙소 표시를 Playwright로 확인하고 캡처한다.
 - [ ] **Step 5: 사용자 확인 후 프론트엔드 배포** — 저장소의 배포 절차(`docs/DEVELOPMENT.md`·README의 배포 항목)를 따른다.
