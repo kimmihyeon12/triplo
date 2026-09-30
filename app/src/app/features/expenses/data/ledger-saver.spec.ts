@@ -3,6 +3,7 @@ import type { Expense, Ledger } from '../model/ledger';
 import { applyOp, type LedgerOp } from '../util/ledger-ops';
 import type { LedgerRepository } from './ledger-repository';
 import { LedgerSaver } from './ledger-saver';
+import { TripConflictError } from '../../trips/data/trip-data-client';
 
 function expense(id: string): Expense {
   return {
@@ -53,5 +54,19 @@ describe('LedgerSaver', () => {
     const result = await saver.save('t1', empty, { ...empty, expenses: [expense('a'), expense('b')] });
     expect(result).toMatchObject({ status: 'failed', error: '연결 끊김' });
     expect(result.status === 'failed' && result.ledger?.expenses.map((e) => e.id)).toEqual(['a']);
+    expect(result.status === 'failed' && result.conflict).toBe(false);
+  });
+
+  // 감리 P1-03: 충돌을 연결 실패와 구분하지 않아 화면이 열린 폼을 그대로 두었고,
+  // 같은 저장 버튼을 다시 누르면 동료가 고친 메모를 옛 값으로 덮어썼다.
+  it('다른 사람이 먼저 고친 충돌은 연결 실패와 구분해 알린다', async () => {
+    const repo: LedgerRepository = {
+      read: async () => ({ ...empty, expenses: [{ ...expense('a'), memo: '동료 메모' }] }),
+      apply: async () => {
+        throw new TripConflictError();
+      },
+    };
+    const result = await new LedgerSaver(repo).save('t1', empty, { ...empty, expenses: [expense('a')] });
+    expect(result).toMatchObject({ status: 'failed', conflict: true });
   });
 });

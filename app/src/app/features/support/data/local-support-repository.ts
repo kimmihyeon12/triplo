@@ -24,13 +24,19 @@ const EMPTY: SupportFile = { version: 1, inquiries: [], noticesReadAt: null };
  * 알린다.
  */
 export class LocalSupportRepository implements SupportRepository {
+  readonly delivers = false;
+  /** 열쇠는 계정마다 다르다. 함수로 받아 지금 계정의 열쇠를 쓴다(감리 P1-01, LocalChatHistory 참고). */
   constructor(
     private readonly storage: KeyValueStorage,
-    private readonly key: string,
+    private readonly key: string | (() => string),
   ) {}
 
+  private get storageKey(): string {
+    return typeof this.key === 'function' ? this.key() : this.key;
+  }
+
   private read(): SupportFile {
-    const raw = this.storage.getItem(this.key);
+    const raw = this.storage.getItem(this.storageKey);
     if (!raw) return { ...EMPTY, inquiries: [] };
     try {
       const parsed = JSON.parse(raw) as SupportFile;
@@ -45,7 +51,7 @@ export class LocalSupportRepository implements SupportRepository {
   }
 
   private write(next: SupportFile): void {
-    this.storage.setItem(this.key, JSON.stringify(next));
+    this.storage.setItem(this.storageKey, JSON.stringify(next));
   }
 
   async notices(): Promise<Notice[]> {

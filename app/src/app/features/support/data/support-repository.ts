@@ -6,6 +6,11 @@ import type { Inquiry, InquiryKind, Notice } from '../model/support';
  * Supabase 연결 단계에서 같은 인터페이스의 서버 구현으로 교체한다.
  */
 export interface SupportRepository {
+  /**
+   * 문의가 운영자에게 실제로 전달되는지. 기기 저장 구현은 false다. 화면은 이 값으로
+   * '접수됨'·'답변 준비 중' 대신 기기에만 남는다고 알린다(2026-09-30 감리 P2-01).
+   */
+  readonly delivers: boolean;
   /** 발행된 공지만 최신순으로 돌려준다. */
   notices(): Promise<Notice[]>;
   /** 아직 읽지 않은 공지 수. 내 정보 화면의 빨간 점에 쓴다. */

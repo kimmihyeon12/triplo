@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { APP_VERSION } from '../../../../core/version';
@@ -42,6 +43,8 @@ import { avatarTone } from '../../../../shared/util/avatar-tone';
   templateUrl: './account.html',
 })
 export class AccountPage {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly auth = inject(AuthStore);
   readonly tone = avatarTone;
   private readonly router = inject(Router);
@@ -93,8 +96,6 @@ export class AccountPage {
   readonly unreadNotices = signal(0);
   readonly unreadReplies = signal(0);
 
-  /** 알림 설정. 서버에 보내기 전까지는 기기에만 둔다. */
-  readonly notificationsOn = signal(true);
 
   /** 회원탈퇴 확인 영역이 열려 있는지. */
   readonly leaving = signal(false);
@@ -141,10 +142,6 @@ export class AccountPage {
     const saved = await this.auth.saveNickname(this.draftNickname());
     // 실패하면 입력을 남긴다. 다시 치게 하지 않는다.
     if (saved) this.editing.set(false);
-  }
-
-  toggleNotifications(): void {
-    this.notificationsOn.update((on) => !on);
   }
 
   toggleLeaving(): void {

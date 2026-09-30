@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -66,6 +67,8 @@ import { AuthStore } from '../../../auth/data/auth-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Expenses {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly id = input.required<string>();
   /** 일정·숙소 더보기의 '정산하기'가 넘겨주는 항목 id. 지출 기록을 열고 값을 채운다. */
   readonly add = input<string | undefined>();
@@ -168,6 +171,19 @@ export class Expenses {
     }
     this.error.set(result.error);
     if (result.ledger) this.ledger.set(result.ledger);
+    // 다른 사람이 먼저 고쳤으면 열린 폼을 서버본으로 다시 채운다. 옛 값을 그대로 두면
+    // 같은 저장을 다시 눌렀을 때 동료의 변경을 덮는다(2026-09-30 감리 P1-03).
+    const open = this.editing();
+    if (result.conflict && open && result.ledger) {
+      const latest = result.ledger.expenses.find((e) => e.id === open.id) ?? null;
+      this.editing.set(latest);
+      if (!latest) this.formOpen.set(false);
+      this.error.set(
+        latest
+          ? '다른 사람이 먼저 이 지출을 고쳤어요. 최신 내용으로 다시 열었으니 확인하고 다시 저장해 주세요.'
+          : '다른 사람이 이 지출을 지웠어요.',
+      );
+    }
     return false;
   }
 

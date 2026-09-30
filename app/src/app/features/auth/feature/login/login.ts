@@ -1,3 +1,4 @@
+import { SAVES_TO_SERVER } from '../../../../core/storage-mode';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { APP_VERSION } from '../../../../core/version';
@@ -9,7 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
@@ -29,11 +30,14 @@ import { takeReturn } from '../../util/return-to';
     UiBarcode,
     UiPostmark,
     UiTicketTilt,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
 })
 export class LoginPage {
+  /** 저장 위치 안내를 운영(서버)과 테스트·미리보기(기기)로 나눈다. */
+  readonly savesToServer = SAVES_TO_SERVER;
   readonly auth = inject(AuthStore);
   readonly router = inject(Router);
 

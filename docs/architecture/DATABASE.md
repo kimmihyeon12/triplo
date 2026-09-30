@@ -186,7 +186,7 @@ trip_regions       trip_stops      accommodation_stays
 | `remove_ledger_person(trip, person_id)` | 사람을 지운다. '나'는 거절(`P0422`), 기록이 가리키는 사람은 외래 키가 막는다(`23503`). `20260929000003` |
 | `save_expense(trip, expense, base_version) → integer` | 지출과 분담을 한 트랜잭션으로 저장하고 새 버전을 돌려준다 |
 | `delete_expense(trip, id, base_version)` | 지출을 지운다 |
-| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다 |
+| `add_receipt` / `cancel_receipt` | 수령을 기록하거나 사유와 함께 취소한다. 기록은 여행별로 직렬화하고 남은 잔액 안에서만 받는다. `20260930000000` |
 | `set_budget(trip, budget)` | 예산을 바꾸거나 비운다 |
 
 - 모든 함수는 `ledger_guard`로 로그인(`28000`)과 여행 소유(`P0404`)를 먼저 확인한다. `security invoker`라 RLS도 그대로 걸린다.
@@ -194,8 +194,9 @@ trip_regions       trip_stops      accommodation_stays
 - 분담 합계가 지출 금액과 다르면 `P0422`로 거절하고 아무것도 바꾸지 않는다.
 - 읽기는 네 표를 동시에 select해 앱 모델로 합친다(`ledger-rows.ts`). 사람 '나'(`self`)가 없으면 처음 읽을 때 한 번 만든다.
 - 기기에 있던 가계부는 옮기지 않고 한 번 지운다(2026-09-29 사용자 결정).
+- 수령 기록(`add_receipt`)은 여행 가계부 단위 트랜잭션 잠금(`pg_advisory_xact_lock`)을 잡고, 앱의 `balances()`와 같은 식(공동 지출의 결제액 − 분담액, 취소되지 않은 수령의 보낸 금액 + · 받은 금액 −)으로 최신 잔액을 계산한다. 보내는 사람의 남은 빚이나 받는 사람의 남은 받을 돈을 넘으면 `P0409`로 거절하고, 같은 id의 재요청은 새로 기록하지 않는다. 두 브라우저가 같은 미수금을 동시에 수령 처리해 두 번 기록되던 문제를 막는다(2026-09-30 감리 P1-04). 잔액 계산 함수 `ledger_balance`는 로그인한 사람이 직접 부르지 못한다.
 
-로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다.
+로컬 확인: `supabase/tests/ledger.local.sql`이 새 저장·중복 거절·분담 불일치 거절·충돌 삭제 거절·다른 계정 차단·비로그인 거절을 검사한다. `supabase/tests/receipt.local.sql`은 잔액 초과·반대 방향 거절, 부분 수령, 같은 id 재요청 무시, 취소 뒤 재기록을 검사하고, 파일 끝의 상태에서 두 세션이 같은 미수금을 동시에 수령하면 하나만 기록되는지 확인한다.
 
 ## 계정 삭제
 

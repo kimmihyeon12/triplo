@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiModal } from '../../../../shared/ui/modal/modal';
 import { ChatThread } from '../../ui/chat-thread/chat-thread';
 import { TravelChatStore } from '../../data/travel-chat-store';
 import type { ChatDraft } from '../../model/chat';
@@ -28,7 +29,7 @@ import { AiQuota } from '../../../../core/ai-quota';
 @Component({
   selector: 'app-chat-sheet',
   templateUrl: './chat-sheet.html',
-  imports: [CompanionFace, ChatThread, UiButton, IconComponent],
+  imports: [CompanionFace, ChatThread, UiButton, IconComponent, UiModal],
   providers: [TravelChatStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

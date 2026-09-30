@@ -2,12 +2,17 @@ import { signal } from '@angular/core';
 import type { Ledger } from '../model/ledger';
 import { ledgerOps } from '../util/ledger-ops';
 import type { LedgerRepository } from './ledger-repository';
+import { TripConflictError } from '../../trips/data/trip-data-client';
 
 export type LedgerSaveResult =
   | { status: 'saved'; ledger: Ledger }
   | { status: 'busy' }
-  /** ledger는 실패 뒤 다시 읽은 서버본이다. 다시 읽지도 못했으면 null. */
-  | { status: 'failed'; error: string; ledger: Ledger | null };
+  /**
+   * ledger는 실패 뒤 다시 읽은 서버본이다. 다시 읽지도 못했으면 null.
+   * conflict는 다른 사람이 먼저 고친 경우다. 화면은 열린 폼을 서버본으로 다시 채워야
+   * 한다. 그대로 두면 같은 저장을 다시 눌렀을 때 옛 값이 동료의 변경을 덮는다(감리 P1-03).
+   */
+  | { status: 'failed'; error: string; ledger: Ledger | null; conflict: boolean };
 
 /**
  * 지출 화면의 가계부 저장을 맡는다. 동작을 한 건씩 보내므로 두 가지를 지킨다.
@@ -29,7 +34,7 @@ export class LedgerSaver {
     } catch (e) {
       const error = e instanceof Error ? e.message : '저장하지 못했어요.';
       const ledger = await this.repository.read(tripId).catch(() => null);
-      return { status: 'failed', error, ledger };
+      return { status: 'failed', error, ledger, conflict: e instanceof TripConflictError };
     } finally {
       this.saving.set(false);
     }
