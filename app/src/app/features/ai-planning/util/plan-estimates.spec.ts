@@ -167,6 +167,26 @@ describe('무료 표시', () => {
   });
   it('요금 기준과 메모도 무료로 쓴다', () => {
     expect(costBasis(free, 2)).toBe('무료 · 입장 무료');
-    expect(estimateMemo(free, 2)).toContain('예상 비용 무료');
+    expect(estimateMemo(free, 2)).toContain('- 요금 무료 (입장 무료)');
+  });
+});
+
+describe('담을 때 남기는 메모', () => {
+  const est = {
+    cost: { min: 3000, max: 5000, basis: 'person' as const, quantity: 1, assumption: '성인 입장권 1장' },
+    stay: { min: 60, max: 90, reason: '전시를 천천히 둘러보기 좋은 시간' },
+  };
+  it('꼭 필요한 정보만 - 목록으로 짧게 쓴다', () => {
+    expect(estimateMemo(est, 2, '10:00')).toBe(
+      ['AI 추정', '- 시각 10:00', '- 요금 6,000~10,000원 (2명 · 성인 입장권 1장)', '- 체류 60~90분'].join('\n'),
+    );
+  });
+  it('일행 기준 요금은 인원을 적지 않는다', () => {
+    const group = { cost: { ...est.cost, basis: 'group' as const, assumption: '보트 1대' }, stay: null };
+    expect(estimateMemo(group, 3)).toBe(['AI 추정', '- 요금 3,000~5,000원 (보트 1대)'].join('\n'));
+  });
+  it('시각만 있으면 시각만 남기고, 아무 정보도 없으면 비운다', () => {
+    expect(estimateMemo(undefined, 2, '11:00')).toBe(['AI 추정', '- 시각 11:00'].join('\n'));
+    expect(estimateMemo(undefined, 2)).toBe('');
   });
 });

@@ -57,7 +57,7 @@ describe('selectionToTrip', () => {
     expect(trip.stops[0]?.estimatedCost).toBe(40000);
     expect(trip.stops[0]?.stayMinutes).toBe(60);
     expect(trip.stops[0]?.memo).toContain('AI 추정');
-    expect(trip.stops[0]?.memo).toContain('1인당');
+    expect(trip.stops[0]?.memo).toContain('- 요금');
     expect(trip.stops[0]?.memo).toContain('2명');
   });
   it('확인된 장소의 좌표와 주소를 저장한다', () => {
@@ -163,15 +163,15 @@ describe('selectionToTrip 코스 담기', () => {
   it('코스 순서대로 담고 새 분류와 추천 시각 메모를 남긴다', () => {
     const trip = selectionToTrip(selection({ items: [item({ id: 'a', name: 'A', kind: 'activity', start: '10:00' }), item({ id: 'b', name: 'B', kind: 'shopping' })] }));
     expect(trip.stops.map((s) => [s.name, s.kind, s.order])).toEqual([['A', 'activity', 0], ['B', 'shopping', 1]]);
-    expect(trip.stops[0]!.memo).toContain('AI 추천 시각 10:00');
+    expect(trip.stops[0]!.memo).toContain('- 시각 10:00');
     expect(trip.stops[0]!.fixedTime).toBeNull();
-    expect(trip.stops[1]!.memo).not.toContain('AI 추천 시각');
+    expect(trip.stops[1]!.memo).not.toContain('- 시각');
   });
 });
 
 describe('selectionToTrip 휴무 메모', () => {
   it('AI 추정 휴무 정보를 메모에 남긴다', () => {
     const trip = selectionToTrip(selection({ items: [{ ...item({ id: 'a', name: 'A' }), closed: { onDay: true, note: '매주 월요일 휴무' } }] }));
-    expect(trip.stops[0]!.memo).toContain('AI 추정 휴무: 매주 월요일 휴무');
+    expect(trip.stops[0]!.memo).toBe(['AI 추정', '- 매주 월요일 휴무'].join('\n'));
   });
 });

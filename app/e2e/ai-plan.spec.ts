@@ -48,7 +48,7 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(page.getByTestId('ai-budget-groups')).toContainText('미정 1곳');
   await expect(page.getByTestId('ai-budget-remaining')).toContainText('초과');
   await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('1인당 3,000~5,000원 × 2명');
-  await expect(page.getByTestId('ai-estimate-ai-1')).toContainText('60~90분');
+  await expect(page.getByTestId('ai-start-ai-1')).toContainText('1시간 30분');
   await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
   await expect(page.getByTestId('ai-day-group-2')).toContainText('속초관광수산시장');
   await page.getByTestId('ai-day-ai-1').selectOption('2');
@@ -88,7 +88,7 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   await expect(page.getByTestId('ai-estimate-ai-0')).toContainText('요금 기준: 무료');
   // 휴무는 AI 추정으로 밝히고 확인을 권한다. 선택은 그대로 둔다.
   await expect(page.getByTestId('ai-closed-badge-ai-1')).toHaveText('휴무일 · AI 추정');
-  await expect(page.getByTestId('ai-closed-ai-1')).toContainText('지도에서 확인');
+  await expect(page.getByTestId('ai-closed-ai-1')).toContainText('AI 추정');
   await expect(page.getByTestId('ai-pick-ai-1')).toBeChecked();
   await expect(page.getByTestId('ai-budget-groups')).toContainText('숙박');
   await expect(page.getByTestId('ai-budget-groups')).toContainText('관광·액티비티');
@@ -98,6 +98,9 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   await expect(page.getByTestId('trip-header')).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('trip-header')).toBeVisible();
+  // 메모는 줄바꿈을 그대로 보여 준다. 템플릿의 들여쓰기가 앞 공백으로 새면 안 된다.
+  const memo = await page.locator('.item__memo').first().evaluate((el) => el.textContent ?? '');
+  expect(memo.startsWith('AI 추정')).toBe(true);
   const saved = await page.evaluate((key) => {
     const data = JSON.parse(localStorage.getItem(key)!);
     const trip = Object.values(data.trips)[0] as {
@@ -108,8 +111,8 @@ test('시간순 코스와 이동·예산 묶음을 보여 주고 숙소를 숙�
   }, STORAGE_KEY);
   expect(saved.stays).toEqual([expect.objectContaining({ name: '강릉 테스트 호텔', checkIn: '2026-10-01', checkOut: '2026-10-02', estimatedCost: 120000 })]);
   expect(saved.stops.map((s) => [s.name, s.kind])).toEqual([['안목해변', 'activity'], ['오죽헌', 'place'], ['속초관광수산시장', 'shopping']]);
-  expect(saved.stops[0]!.memo).toContain('AI 추천 시각 10:00');
-  expect(saved.stops[1]!.memo).toContain('AI 추정 휴무');
+  expect(saved.stops[0]!.memo).toContain('- 시각 10:00');
+  expect(saved.stops[1]!.memo).toContain('- 테스트용 매주 목요일 휴무 예시');
   expect(saved.stops.every((s) => s.fixedTime === null)).toBe(true);
 });
 

@@ -1,4 +1,4 @@
-import { costRange, estimateMemo } from '../../../shared/util/plan-estimate';
+import { costRange, estimateMemo, memoLines } from '../../../shared/util/plan-estimate';
 import type { AiPlanSelection, PlanItem } from '../../ai-planning/model/ai-plan';
 import { addDays, diffDays } from '../../../shared/util/dates';
 import { createRegion, createStay, createStop, createTrip } from './factories';
@@ -81,5 +81,6 @@ export function selectionToTrip(selection: AiPlanSelection): Trip {
 
 /** 휴무는 영업정보라 일정 필드에 넣지 않고 AI 추정임을 밝혀 메모에만 남긴다. */
 function withClosed(memo: string, closed: PlanItem['closed']): string {
-  return closed ? [memo, `AI 추정 휴무: ${closed.note}`].filter(Boolean).join('\n') : memo;
+  if (!closed) return memo;
+  return memo ? `${memo}\n- ${closed.note}` : memoLines([`- ${closed.note}`]);
 }

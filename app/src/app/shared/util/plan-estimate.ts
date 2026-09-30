@@ -87,22 +87,26 @@ export function costBasis(estimate: PlanEstimate | undefined, partySize: number)
 }
 
 /**
- * 담을 때 메모에 남기는 AI 추정 근거. 추천 시각은 고정 시각으로 저장하지 않고 여기에만 남긴다.
- * 이동시간은 경로시간 저장 규칙에 걸리고 순서가 바뀌면 틀린 값이 되므로 남기지 않는다.
+ * 담을 때 메모에 남기는 AI 추정 근거. 첫 줄 'AI 추정' 아래에 꼭 필요한 값만 '-' 목록으로 쓴다
+ * (2026-09-30 사용자 요청: 긴 안내 문장을 빼고 짧게). 추천 시각은 고정 시각으로 저장하지 않고
+ * 여기에만 남긴다. 이동시간은 경로시간 저장 규칙에 걸리고 순서가 바뀌면 틀린 값이 되므로 남기지 않는다.
  */
 export function estimateMemo(estimate: PlanEstimate | undefined, partySize: number, start?: string | null): string {
-  if (!estimate?.cost && !estimate?.stay)
-    return start ? ['AI 추천 계획 · 방문 전 확인하세요', `AI 추천 시각 ${start}`].join('\n') : '';
-  const lines = ['AI 추정 계획 · 공식 요금 및 실제 지출과 다름'];
-  if (start) lines.push(`AI 추천 시각 ${start}`);
-  if (estimate.cost)
-    lines.push(
-      `예상 비용 ${priceLabel(costRange(estimate, partySize))} (${costBasis(estimate, partySize)})`,
-    );
-  if (estimate.stay)
-    lines.push(`추천 체류 ${estimate.stay.min}~${estimate.stay.max}분 · ${estimate.stay.reason}`);
-  lines.push('계획 금액·체류시간은 추천 범위의 상한으로 설정했습니다. 방문 전 확인하세요.');
-  return lines.join('\n');
+  const lines: string[] = [];
+  if (start) lines.push(`- 시각 ${start}`);
+  const cost = estimate?.cost;
+  if (cost) {
+    // 1인 기준이면 몇 명 몫인지 밝힌다. 일행 기준은 인원과 무관하다.
+    const who = cost.basis === 'person' && cost.max > 0 ? `${partySize}명 · ` : '';
+    lines.push(`- 요금 ${priceLabel(costRange(estimate, partySize))} (${who}${cost.assumption})`);
+  }
+  if (estimate?.stay) lines.push(`- 체류 ${estimate.stay.min}~${estimate.stay.max}분`);
+  return memoLines(lines);
+}
+
+/** 'AI 추정' 머리줄 아래에 목록을 붙인다. 목록이 없으면 비운다. */
+export function memoLines(lines: readonly string[]): string {
+  return lines.length ? ['AI 추정', ...lines].join('\n') : '';
 }
 
 export function summarizeEstimates(
