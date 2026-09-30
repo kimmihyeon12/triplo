@@ -34,6 +34,8 @@ export class InquiriesPage {
 
   readonly list = signal<Inquiry[]>([]);
   readonly loading = signal(true);
+  /** 불러오지 못한 이유. 서버 저장이라 네트워크가 끊기면 실패한다. */
+  readonly error = signal<string | null>(null);
 
   constructor() {
     inject(PageBar).set({ title: '문의하기', back: ['/account'], action: null });
@@ -41,14 +43,21 @@ export class InquiriesPage {
   }
 
   private async load(): Promise<void> {
-    this.list.set(await this.support.inquiries());
-    this.loading.set(false);
+    try {
+      this.list.set(await this.support.inquiries());
+      this.error.set(null);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : '문의를 불러오지 못했어요.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   /** 답변을 열면 읽은 것으로 본다. 내 정보의 개수 표시가 줄어든다. */
   async open(inquiry: Inquiry): Promise<void> {
     if (inquiry.replies.length === 0 || inquiry.readAt) return;
-    await this.support.markInquiryRead(inquiry.id);
+    // 읽음 표시에 실패해도 답변은 이미 보인다. 개수는 다음에 다시 센다.
+    await this.support.markInquiryRead(inquiry.id).catch(() => undefined);
     await this.load();
   }
 

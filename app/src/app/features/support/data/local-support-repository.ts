@@ -29,7 +29,14 @@ export class LocalSupportRepository implements SupportRepository {
   constructor(
     private readonly storage: KeyValueStorage,
     private readonly key: string | (() => string),
+    /** 테스트 앱 전용. 이 열쇠에 '1'이 있으면 읽기를 실패시켜 서버 오류 화면을 확인한다. */
+    private readonly failKey: string | null = null,
   ) {}
+
+  private failIfAsked(): void {
+    if (this.failKey && this.storage.getItem(this.failKey) === '1')
+      throw new Error('서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
 
   private get storageKey(): string {
     return typeof this.key === 'function' ? this.key() : this.key;
@@ -55,10 +62,12 @@ export class LocalSupportRepository implements SupportRepository {
   }
 
   async notices(): Promise<Notice[]> {
+    this.failIfAsked();
     return SAMPLE_NOTICES;
   }
 
   async unreadNoticeCount(): Promise<number> {
+    this.failIfAsked();
     const readAt = this.read().noticesReadAt;
     if (!readAt) return SAMPLE_NOTICES.length;
     // 읽은 시각보다 나중에 올라온 것만 센다. 같은 시각이면 읽은 것으로 본다.
@@ -78,10 +87,12 @@ export class LocalSupportRepository implements SupportRepository {
   }
 
   async inquiries(): Promise<Inquiry[]> {
+    this.failIfAsked();
     return [...this.read().inquiries].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   async unansweredReadCount(): Promise<number> {
+    this.failIfAsked();
     return this.read().inquiries.filter((i) => i.replies.length > 0 && !i.readAt).length;
   }
 

@@ -122,12 +122,16 @@ export class AccountPage {
   }
 
   private async loadCounts(): Promise<void> {
-    const [notices, replies] = await Promise.all([
-      this.support.unreadNoticeCount(),
-      this.support.unansweredReadCount(),
-    ]);
-    this.unreadNotices.set(notices);
-    this.unreadReplies.set(replies);
+    try {
+      const [notices, replies] = await Promise.all([
+        this.support.unreadNoticeCount(),
+        this.support.unansweredReadCount(),
+      ]);
+      this.unreadNotices.set(notices);
+      this.unreadReplies.set(replies);
+    } catch {
+      // 개수는 보조 표시다. 세지 못하면 표시하지 않고 화면은 그대로 연다.
+    }
   }
 
   startEdit(): void {

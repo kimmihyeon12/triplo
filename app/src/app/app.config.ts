@@ -172,7 +172,11 @@ export const appConfig: ApplicationConfig = {
       provide: SUPPORT_REPOSITORY,
       useFactory: () => {
         if (environment.isTest || environment.designPreview)
-          return new LocalSupportRepository(new SafeLocalStorage(), accountKey('support'));
+          return new LocalSupportRepository(
+            new SafeLocalStorage(),
+            accountKey('support'),
+            environment.isTest ? `${environment.storageKey}.supportFail` : null,
+          );
         try {
           // 운영자에게 간 적 없는 기기 문의는 옮기지 않고 지운다(2026-10-01 사용자 결정).
           clearLocalSupport(localStorage, environment.storageKey);
