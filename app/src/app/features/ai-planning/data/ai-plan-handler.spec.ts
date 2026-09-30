@@ -276,3 +276,21 @@ describe('AI 코스 휴무 정보', () => {
     expect(item.properties.closed).toMatchObject({ nullable: true, required: ['onDay', 'note'] });
   });
 });
+
+describe('AI 코스 프롬프트 품질(2026-09-30 실제 생성 확인)', () => {
+  it('무료인 곳은 0원으로 적게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('입장료가 없는 곳은 cost를 min=0, max=0');
+  });
+  it('휴무일이 없는 곳에는 closed를 쓰지 않게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('상시 영업이거나 휴무일이 없으면 closed=null');
+  });
+  it('예산이 있으면 예산 수준에 맞는 곳을 고르게 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, budget: 500000 }));
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].system).toContain('숙소·식당은 예산 수준에 맞는 곳을 고른다');
+  });
+});
