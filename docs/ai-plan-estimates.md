@@ -88,3 +88,6 @@ DB 변경 없이 기존 `estimated_cost`, `stay_minutes`, `memo`를 사용한다
 - `moveToNext`: 다음 항목까지 `{mode: 도보|대중교통|자가용|택시, minutes: 1~600}`. 마지막 항목은 null.
 - 숙소는 그날 마지막 항목이며 `room_night` 1박 요금을 쓴다. 담을 때 숙박으로 만든다.
 - 필드가 없는 이전 응답도 받아서 순서대로 시각 없이 표시한다.
+- 요청의 `startDate`(선택, `YYYY-MM-DD`, 실제 날짜만 허용)가 있으면 프롬프트에 일차별 날짜·요일을 넣는다. 잘못된 값은 400 `invalid_request`.
+- 응답 항목의 `closed`(선택): `{onDay: boolean, note: string}` 또는 null. 모르는 휴무는 null이며 추측으로 채우지 않도록 지시한다. 화면에는 AI 추정으로 보이고 저장은 메모에만 한다.
+- 0원 요금은 "무료"로 표시한다. 합계 칸은 금액 계산이라 0원을 그대로 쓴다.
