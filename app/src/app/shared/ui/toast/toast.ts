@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { UiButton } from '../button/button';
 import { IconComponent, type IconName } from '../icon/icon';
-import type { ToastKind } from '../../../core/toast-service';
+import type { ToastAction, ToastKind } from '../../../core/toast-service';
 
 /** 종류마다 바탕·테두리·아이콘 색을 나눈다. 글자는 모두 본문색이라 읽기 쉽다. */
 const TONE: Record<ToastKind, { card: string; icon: string; close: string; glyph: IconName; label: string }> = {
@@ -36,15 +37,22 @@ const DISMISS_PX = 40;
       'fixed [z-index:10008] [inset-inline:16px] [top:calc(env(safe-area-inset-top,_0px)_+_64px)] [width:min(440px,_calc(100%_-_32px))] [margin-inline:auto]',
   },
   selector: 'app-toast',
-  imports: [IconComponent],
+  imports: [UiButton, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './toast.html',
 })
 export class UiToast {
   readonly kind = input<ToastKind>('error');
   readonly message = input.required<string>();
+  readonly action = input<ToastAction | undefined>(undefined);
   readonly dismissed = output<void>();
   readonly tone = computed(() => TONE[this.kind()]);
+
+  /** 할 일을 누르면 알림을 먼저 닫는다. 실행 결과가 새 알림을 띄울 수 있기 때문이다. */
+  act(action: ToastAction): void {
+    this.dismissed.emit();
+    action.run();
+  }
 
   /** 위로 끈 거리(px, 0 이하). 휴대폰에서 X까지 손을 옮기지 않고 밀어서 닫게 한다. */
   readonly offset = signal(0);

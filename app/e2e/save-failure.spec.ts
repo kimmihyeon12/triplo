@@ -66,7 +66,11 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'error');
 
     await page.evaluate((flag) => localStorage.removeItem(flag), FAIL_FLAG);
-    await page.getByTestId('retry-save').click();
+    // 목록 아래에서 편집하면 헤더의 다시 저장은 화면 밖이고 알림이 그 자리를 덮는다.
+    // 그래서 알림 안의 다시 저장으로 바로 복구한다.
+    const toast = page.getByTestId('error-toast');
+    await toast.getByTestId('toast-action').click();
+    await expect(toast).toHaveCount(0);
     // 저장에 성공하면 표시가 사라진다. 실패·충돌만 보인다.
     await expect(page.getByTestId('save-status')).toHaveCount(0);
     await page.reload();
