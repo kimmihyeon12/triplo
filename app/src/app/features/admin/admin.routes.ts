@@ -43,4 +43,16 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./feature/admin-notice-form/admin-notice-form').then((m) => m.AdminNoticeForm),
     title: '공지 수정',
   },
+  {
+    path: 'inquiries',
+    canActivate: [requireAdmin],
+    loadComponent: () => import('./feature/admin-inquiries/admin-inquiries').then((m) => m.AdminInquiries),
+    title: '문의 관리',
+  },
+  {
+    path: 'inquiries/:id',
+    canActivate: [requireAdmin],
+    loadComponent: () => import('./feature/admin-inquiry/admin-inquiry').then((m) => m.AdminInquiryPage),
+    title: '문의 상세',
+  },
 ];
