@@ -57,5 +57,10 @@ export const routes: Routes = [
     canActivate: [signedIn],
     loadChildren: () => import('./features/stats/stats.routes').then((m) => m.STATS_ROUTES),
   },
+  {
+    // 로그인 확인은 관리자 가드 안에서 먼저 한다.
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+  },
   { path: '**', redirectTo: 'trips' },
 ];

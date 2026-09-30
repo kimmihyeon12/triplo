@@ -122,6 +122,20 @@ trip_regions       trip_stops      accommodation_stays
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
 
+### 관리자 판별
+
+`profiles(id, role)`은 역할 전용 표다. 행이 없으면 일반 사용자다. 본인 행 조회만 허용하고 쓰기 권한과 정책은 두지 않아 사용자가 스스로 관리자가 될 수 없다. 계정을 지우면 함께 지운다.
+
+후속 공지·문의 표의 RLS는 `is_admin()`을 호출한다. `security definer`라 RLS와 무관하게 역할을 읽고, `search_path`를 비워 둔다. 실행 권한은 `authenticated`만 가진다. Supabase의 기본 권한 설정이 새 표·함수에 `anon`·`authenticated` 권한을 직접 줄 수 있어 마이그레이션에서 명시적으로 거둔다.
+
+관리자 부여는 화면이 아니라 SQL로 직접 한다. 대상 계정이 한 번 이상 로그인해 있어야 한다. 이메일은 저장소에 적지 않는다.
+
+```sql
+insert into public.profiles (id, role)
+select id, 'admin' from auth.users where email = '<관리자 이메일>'
+on conflict (id) do update set role = excluded.role;
+```
+
 ## 멤버와 초대 (2026-09-29)
 
 | 표 | 담는 것 |
@@ -221,4 +235,5 @@ trip_regions       trip_stops      accommodation_stays
 - 2026-09-29 AI 사용 횟수(`20260929000004`) 원격 적용. `ai_usage`(사용자·한국 날짜·기능별 횟수)와 `ai_quota_overrides`(사용자별 예외 한도)는 RLS를 켜고 사용자 권한을 주지 않는다. `consume_ai_quota`·`refund_ai_quota`는 `security definer`이며 `service_role`만 실행한다. 한도 초과는 `P0429`(detail에 적용 한도). 비로그인 요청은 `42501`로 거절됨을 확인했다. 자세한 규칙은 [AI-PLANNING.md](../AI-PLANNING.md).
 - 2026-09-29 친구 초대·함께 편집(`20260929000005`) 원격 적용, v0.9.0 배포. 비로그인 요청은 `trips`·`trip_members`·`trip_invites`·`expenses` 표와 `save_trip`·`join_trip`·`delete_trip`이 모두 `42501`, 초대 미리보기만 열려 잘못된 코드에 `invite_invalid`를 돌려줌을 확인했다. 실제 두 계정의 초대·합류·함께 편집은 사용자 확인 대상이다.
 - 2026-09-29 v0.9.0 배포 직후 가계부를 불러오지 못했다. 분담 → 지출 외래 키가 둘이 되어 PostgREST가 지출·분담을 함께 읽을 관계를 고르지 못했기 때문이다(PGRST201). 옛 `expense_splits_expense_id_fkey`를 지우는 `20260929000006`을 원격 적용하고, 같은 요청이 관계 오류 없이 권한 확인까지 가는 것을 확인했다. 표에 외래 키를 더할 때는 PostgREST가 같은 두 표 사이의 관계를 하나로 고를 수 있는지 함께 본다.
+- 2026-09-29 관리자 판별 마이그레이션 작성, 로컬 PostgreSQL 임시 DB 검증. 2026-09-30 번호를 `20260930000002_profiles_role.sql`로 바꿔 원격 적용하고 관리자 1명을 부여했다. 비로그인 요청은 `is_admin`·`profiles` 모두 `42501`로 거절됨을 확인했다.
 - 아직 확인할 것: 실제 계정 두 개로 서로의 여행이 안 보이는지, 같은 계정 다른 기기 조회, 두 탭 충돌 알림, 계정 삭제 시 여행·가계부 연쇄 삭제, 실제 계정으로 지출 저장·수정·삭제와 챗봇 지출 적용.

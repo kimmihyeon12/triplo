@@ -6,6 +6,7 @@ import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../data/auth-store';
 import { normalizeNickname } from '../../util/nickname';
 import { SUPPORT_REPOSITORY } from '../../../support/data/support-repository';
+import { AdminAccess } from '../../../admin/data/admin-access';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiInput } from '../../../../shared/ui/input/input';
@@ -49,6 +50,7 @@ export class AccountPage {
   readonly tone = avatarTone;
   private readonly router = inject(Router);
   private readonly support = inject(SUPPORT_REPOSITORY);
+  readonly admin = inject(AdminAccess);
 
   /** 배포된 화면이 어느 것인지 알리는 버전. 빌드가 만든다. */
   readonly version = APP_VERSION;
@@ -116,6 +118,7 @@ export class AccountPage {
 
     void this.auth.initialize();
     void this.loadCounts();
+    void this.admin.check();
   }
 
   private async loadCounts(): Promise<void> {
