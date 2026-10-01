@@ -12,7 +12,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import type { DayMapModel } from '../../model/map';
+import type { DayMapModel, MapBounds, PlacePin } from '../../model/map';
 import {
   KOREA_CENTER,
   MAP_PROVIDER,
@@ -37,18 +37,40 @@ export class TripMapComponent implements OnDestroy {
   readonly model = input.required<DayMapModel>();
   readonly selectedId = input<string | null>(null);
   readonly markerSelect = output<string>();
+  /** 큰 지도의 주변 장소 핀(2026-10-01). 작은 지도는 비워 둔다. */
+  readonly places = input<readonly PlacePin[]>([]);
+  readonly selectedPlaceId = input<string | null>(null);
+  readonly placeSelect = output<string>();
+  /** 지도 이동·확대가 끝났을 때 보이는 범위 */
+  readonly boundsChange = output<MapBounds>();
+  /**
+   * 일정이 바뀔 때마다 마커에 맞춰 지도를 옮길지. 큰 지도는 처음에만 맞춘다.
+   * 지도에서 담을 때마다 화면이 튀면 사용자가 보던 자리를 잃는다.
+   */
+  readonly fitOnChange = input(true);
+  /** 범례 없이 지도만 그린다(큰 지도) */
+  readonly bare = input(false);
+  private fitted = false;
 
   private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
   readonly state = signal<MapState>('checking');
   readonly availability = signal<MapProviderAvailability | null>(null);
   readonly errorMessage = signal('');
   private instance: MapInstance | null = null;
+  private resize: ResizeObserver | null = null;
 
   constructor() {
     afterNextRender(() => void this.init());
     effect(() => {
       const m = this.model();
-      if (this.instance && this.state() === 'ready') this.instance.render(m);
+      if (!this.instance || this.state() !== 'ready') return;
+      this.instance.render(m, this.fitOnChange() || !this.fitted);
+      if (m.markers.length) this.fitted = true;
+    });
+    effect(() => {
+      const pins = this.places();
+      const selected = this.selectedPlaceId();
+      if (this.instance && this.state() === 'ready') this.instance.renderPlaces(pins, selected);
     });
     effect(() => {
       const id = this.selectedId();
@@ -67,14 +89,28 @@ export class TripMapComponent implements OnDestroy {
     try {
       const m = this.model();
       const center = m.markers[0]?.position ?? KOREA_CENTER;
-      this.instance = await this.provider.mount(this.container().nativeElement, { center }, (id) =>
-        this.markerSelect.emit(id),
+      const el = this.container().nativeElement;
+      this.instance = await this.provider.mount(
+        el,
+        {
+          center,
+          onPlaceClick: (id) => this.placeSelect.emit(id),
+          onIdle: (bounds) => this.boundsChange.emit(bounds),
+        },
+        (id) => this.markerSelect.emit(id),
       );
+      // 화면을 돌리거나 크기가 바뀌면 지도를 다시 맞춘다(큰 지도).
+      if (typeof ResizeObserver !== 'undefined') {
+        this.resize = new ResizeObserver(() => this.instance?.relayout());
+        this.resize.observe(el);
+      }
       this.state.set('ready');
       // 컨테이너가 보이게 된 뒤 크기를 다시 계산하고 그린다.
       requestAnimationFrame(() => {
         this.instance?.relayout();
         this.instance?.render(this.model());
+        if (this.model().markers.length) this.fitted = true;
+        this.instance?.renderPlaces(this.places(), this.selectedPlaceId());
         this.instance?.highlight(this.selectedId());
       });
     } catch (e) {
@@ -84,6 +120,7 @@ export class TripMapComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.resize?.disconnect();
     this.instance?.destroy();
     this.instance = null;
   }

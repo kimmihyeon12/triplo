@@ -1,4 +1,4 @@
-import type { GeoPoint } from './place';
+import type { GeoPoint, PlaceCandidate } from './place';
 
 export interface MapMarker {
   id: string;
@@ -8,6 +8,24 @@ export interface MapMarker {
   position: GeoPoint;
   title: string;
   subtitle: string;
+}
+
+/** 큰 지도에서 고르는 주변 장소의 분류(2026-10-01). 카카오 분류 FD6·CE7·AT4·AD5에 맞춘다. */
+export type NearbyCategory = 'meal' | 'cafe' | 'sight' | 'stay';
+
+/** 주변 장소 찾기 결과. 어느 분류 버튼으로 찾았는지 함께 남긴다. */
+export interface NearbyPlace extends PlaceCandidate {
+  nearby: NearbyCategory;
+}
+
+/** 큰 지도의 주변 장소 핀. 일정 마커와 다른 층에 그린다. */
+export interface PlacePin {
+  id: string;
+  category: NearbyCategory;
+  position: GeoPoint;
+  title: string;
+  /** 이미 이 여행에 담은 곳이면 true(표시만 다르다) */
+  added: boolean;
 }
 
 export interface MapBounds {

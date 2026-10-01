@@ -5,7 +5,8 @@ import {
 } from '../../util/map-marker-styles';
 import { Injectable } from '@angular/core';
 import { overlappingStayIds } from '../../util/map-markers';
-import { type DayMapModel } from '../../model/map';
+import { type DayMapModel, type MapBounds, type PlacePin } from '../../model/map';
+import { placePinElement } from '../place-pin';
 import type {
   MapInstance,
   MapMountOptions,
@@ -25,7 +26,7 @@ export class FixtureMapProvider implements MapProvider {
 
   async mount(
     container: HTMLElement,
-    _options: MapMountOptions,
+    options: MapMountOptions,
     onMarkerClick: (id: string) => void,
   ): Promise<MapInstance> {
     // 테스트 전용 플래그: 지도 오류·느린 로딩 상태를 재현한다.
@@ -39,9 +40,43 @@ export class FixtureMapProvider implements MapProvider {
     layer.className = FIXTURE_LAYER_CLASSES;
     container.appendChild(layer);
     let els: HTMLElement[] = [];
+    const pinLayer = document.createElement('div');
+    pinLayer.className = FIXTURE_LAYER_CLASSES;
+    pinLayer.dataset['testid'] = 'map-places';
+    container.appendChild(pinLayer);
+    // 지금 '보이는' 범위. 실제 타일이 없어 마커 범위(또는 초기 중심 주변)로 정한다.
+    const around = (lat: number, lng: number): MapBounds => ({ south: lat - 0.03, north: lat + 0.03, west: lng - 0.04, east: lng + 0.04 });
+    let view: MapBounds = around(options.center.lat, options.center.lng);
+    let lastPins: readonly PlacePin[] = [];
+    let lastSelected: string | null = null;
+    const drawPins = () => {
+      pinLayer.replaceChildren();
+      for (const pin of lastPins) {
+        const { lat, lng } = pin.position;
+        if (lat < view.south || lat > view.north || lng < view.west || lng > view.east) continue;
+        const btn = placePinElement(pin, pin.id === lastSelected, (id) => options.onPlaceClick?.(id));
+        btn.dataset['testid'] = 'map-place-' + pin.id;
+        btn.style.left = `${((lng - view.west) / (view.east - view.west)) * 100}%`;
+        btn.style.top = `${((view.north - lat) / (view.north - view.south)) * 100}%`;
+        pinLayer.appendChild(btn);
+      }
+    };
+    // 테스트가 지도를 '옮긴' 것처럼 범위를 바꾼다. 실제 지도의 idle 알림과 같은 흐름을 탄다.
+    container.addEventListener('tc-fixture-move', (event) => {
+      view = (event as CustomEvent<MapBounds>).detail;
+      drawPins();
+      options.onIdle?.(view);
+    });
 
     return {
-      render(model: DayMapModel) {
+      render(model: DayMapModel, fit = true) {
+        if (fit && model.bounds) {
+          const b = model.bounds;
+          const padLat = Math.max((b.north - b.south) / 8, 0.01);
+          const padLng = Math.max((b.east - b.west) / 8, 0.01);
+          view = { south: b.south - padLat, north: b.north + padLat, west: b.west - padLng, east: b.east + padLng };
+          options.onIdle?.(view);
+        }
         layer.replaceChildren();
         els = [];
         const b = model.bounds;
@@ -106,9 +141,16 @@ export class FixtureMapProvider implements MapProvider {
         // 실제 지도가 없어 이동 자체는 없다. 어디로 옮겼는지만 남겨 테스트가 확인하게 한다.
         layer.dataset['centeredOn'] = id ?? '';
       },
+      renderPlaces(pins: readonly PlacePin[], selectedId: string | null) {
+        lastPins = pins;
+        lastSelected = selectedId;
+        drawPins();
+      },
+      bounds: () => view,
       relayout() {},
       destroy() {
         layer.remove();
+        pinLayer.remove();
       },
     };
   }
