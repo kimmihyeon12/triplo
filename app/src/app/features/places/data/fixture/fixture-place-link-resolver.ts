@@ -1,0 +1,41 @@
+import { Injectable } from '@angular/core';
+import type { PlaceCandidate } from '../../model/place';
+import { linkErrorMessage, linkedToCandidate, type PlaceLinkResolver } from '../place-link-resolver';
+
+/**
+ * Playwright 테스트 앱 전용 고정 응답. 외부를 부르지 않는다.
+ * - test-in-kakao: 고정 검색 목록에 있는 장소(안목해변) → 카카오 쪽 후보로 담긴다
+ * - test-not-in-kakao: 검색 목록에 없는 장소 → 링크의 값(네이버)으로 담긴다(2026-10-01 실제 사례)
+ * - test-broken: 장소를 읽지 못한 경우
+ */
+@Injectable({ providedIn: 'root' })
+export class FixturePlaceLinkResolver implements PlaceLinkResolver {
+  async resolve(url: string): Promise<PlaceCandidate> {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    if (url.endsWith('/test-in-kakao'))
+      return linkedToCandidate({
+        provider: 'naver',
+        id: '1000001',
+        name: '안목해변',
+        roadAddress: '강원 강릉시 창해로14번길 20-1',
+        address: '강원 강릉시 견소동',
+        lat: 37.7731,
+        lng: 128.9476,
+        category: '해수욕장',
+        url: 'https://m.place.naver.com/place/1000001/home',
+      });
+    if (url.endsWith('/test-not-in-kakao'))
+      return linkedToCandidate({
+        provider: 'naver',
+        id: '2058177895',
+        name: '신가회전훠궈 수원역점',
+        roadAddress: '경기 수원시 팔달구 향교로 25-1 2층',
+        address: '경기 수원시 팔달구 매산로2가 28-2',
+        lat: 37.268625,
+        lng: 127.0037697,
+        category: '중식당',
+        url: 'https://m.place.naver.com/place/2058177895/home',
+      });
+    throw new Error(linkErrorMessage('place_not_found'));
+  }
+}

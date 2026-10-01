@@ -5,7 +5,8 @@ export interface GeoPoint {
 
 /** 외부 장소 제공자 참조. 좌표와 함께 보존해 이후 상세 조회·경로 계산에 쓴다. */
 export interface PlaceRef {
-  provider: 'kakao' | 'fixture';
+  /** naver는 지도 링크로 담았고 카카오에서 같은 곳을 찾지 못한 장소다(2026-10-01). */
+  provider: 'kakao' | 'naver' | 'fixture';
   id: string;
   url: string | null;
 }

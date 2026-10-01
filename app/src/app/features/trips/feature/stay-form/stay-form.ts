@@ -98,9 +98,11 @@ export class StayFormPage {
   readonly providerLabel = computed(() =>
     this.placeRef()?.provider === 'kakao'
       ? '카카오'
-      : this.placeRef()?.provider === 'fixture'
-        ? '테스트 픽스처'
-        : '',
+      : this.placeRef()?.provider === 'naver'
+        ? '네이버'
+        : this.placeRef()?.provider === 'fixture'
+          ? '테스트 픽스처'
+          : '',
   );
   /** 두 날짜를 모두 입력했거나 필드를 떠난 뒤에만 날짜 오류를 보여준다. */
   readonly showDateError = computed(

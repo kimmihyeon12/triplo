@@ -8,6 +8,8 @@ import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
 import { RECEIPT_SCANNER } from './features/expenses/data/receipt-scanner';
 import { EdgeReceiptScanner } from './features/expenses/data/edge-receipt-scanner';
 import { CHAT_PROVIDER, EdgeChatProvider } from './features/travel-chat/travel-chat';
+import { PLACE_LINK_RESOLVER } from './features/places/data/place-link-resolver';
+import { EdgePlaceLinkResolver } from './features/places/data/edge-place-link-resolver';
 
 /**
  * 외부 서비스에 닿는 어댑터. 테스트 빌드는 angular.json의 fileReplacements로 이 파일을
@@ -20,6 +22,8 @@ export const ADAPTER_PROVIDERS: Provider[] = [
   // 지도 표시와 장소 검색은 별개 어댑터다.
   { provide: MAP_PROVIDER, useExisting: KakaoMapProvider },
   { provide: PLACE_SEARCH, useExisting: KakaoPlaceSearch },
+  // 지도 링크로 담기는 서버 함수(resolve-place)가 링크를 따라가 읽는다.
+  { provide: PLACE_LINK_RESOLVER, useExisting: EdgePlaceLinkResolver },
   // AI 일정·대화·사진 인식은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.
   { provide: AI_PLAN_PROVIDER, useExisting: EdgeAiProvider },
   { provide: CHAT_PROVIDER, useExisting: EdgeChatProvider },

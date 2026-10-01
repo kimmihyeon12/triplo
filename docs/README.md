@@ -61,6 +61,10 @@
 - 각 기능 작업에는 필요한 문서를 골라 읽는다. 분석 기록·도구 설치 이력 전체를 매번 필수 입력으로 넣지 않는다.
 - MD 파일 간 동기화는 자동이 아니다. 작업하는 에이전트가 직접 관련 원본을 수정하고 링크·명세를 검증한다.
 
+## 장소 담기
+
+- [지도 링크로 장소 담기](../openspec/changes/add-place-link-import/proposal.md): 네이버·카카오 링크를 붙여 넣어 장소를 담는 흐름과 서버 함수 `resolve-place`의 요청 제한. [설계](superpowers/specs/2026-10-01-place-link-import-design.md).
+
 ## 가계부
 
 - [사진으로 지출 입력·정산 복사](../openspec/changes/add-receipt-scan/proposal.md): 영수증 인식 흐름, 형광펜 범위 지정, 확인 후 저장 규칙.
