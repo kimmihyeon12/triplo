@@ -241,6 +241,8 @@ on conflict (id) do update set role = excluded.role;
 
 `delete-account` 함수는 `auth.users` 행을 실제로 지운다(soft delete가 아니다). `trips.owner_id`에 `on delete cascade`를 걸어 두었으므로 그 사람의 여행·지역·장소·숙소가 함께 사라진다.
 
+탈퇴 전 넘기기(2026-10-01 `20261001140000`): `delete-account`는 계정을 지우기 전에 `hand_over_trips(p_user)`(서비스 권한만 실행)를 부른다. 다른 멤버가 있는 내 여행은 가장 먼저 합류한 멤버(`joined_at`, `user_id` 순)가 주인이 되고 내 멤버 행은 지운다. 혼자 쓰던 여행만 연쇄 삭제된다. 넘기기가 실패하면 계정을 지우지 않는다. 확인 화면은 `account_deletion_summary()`(본인 기준 지울 여행·넘길 여행 수)를 읽는다. 로컬 확인: `supabase/tests/account-deletion.local.sql`.
+
 삭제 연쇄는 SQL 기준이며 실제 계정 탈퇴가 모든 관련 데이터에 미치는 영향은 별도 검증한다. 함수 배포·런타임 활성화·사진 Storage 등 향후 저장 대상의 정리 정책은 [HARNESS.md](../HARNESS.md)를 따른다.
 
 가계부 사람(`ledger_people`)을 가리키는 외래 키 네 개(지출의 낸 사람, 분담의 사람, 정산의 보낸·받는 사람)는 트랜잭션 끝에 검사한다(`deferrable initially deferred`, 2026-10-01 `20261001130000`). 여행이나 계정을 지울 때 사람 행이 분담·지출보다 먼저 지워지면 즉시 검사에서 막혀, 함께 쓰는 여행에 지출이 있으면 여행 삭제와 회원탈퇴가 실패했다. 지출에 쓰인 사람을 따로 지우는 것은 지금처럼 막힌다. 로컬 확인: `supabase/tests/delete-cascade.local.sql`.
