@@ -59,6 +59,8 @@ function fakeSearch(): PlaceSearchProvider {
     availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
     search: async (query: string) => {
       if (query.includes('없는곳')) return { candidates: [], total: 0 };
+      // 하루 최소 구성을 채우는 검색은 여기서 다루지 않는다(fill-day-minimums.spec).
+      if (/맛집|카페|관광명소/.test(query)) return { candidates: [], total: 0 };
       const name = query.split(' ').pop() ?? query;
       return { candidates: [candidate(name)], total: 1 };
     },
@@ -356,5 +358,40 @@ describe('AiPlanStore 꼭 갈 장소', () => {
     const must = store.results().find((i) => i.name === '신가회전훠궈');
     expect(must).toMatchObject({ day: 1, verified: true });
     expect(store.selected().has(must!.id)).toBe(true);
+  });
+});
+
+describe('AiPlanStore 하루 최소 구성', () => {
+  it('확인에서 식당이 빠져도 근처 실제 식당으로 점심·저녁을 채우고, 못 찾은 자리는 알린다', async () => {
+    const search: PlaceSearchProvider = {
+      availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
+      search: async (query: string) => {
+        if (query.includes('없는식당')) return { candidates: [], total: 0 };
+        if (query.includes('맛집'))
+          return { candidates: [{ ...candidate('초당순두부'), id: 'm1', category: '음식점' }, { ...candidate('물회'), id: 'm2', category: '음식점' }], total: 2 };
+        if (/카페|관광명소/.test(query)) return { candidates: [], total: 0 };
+        const name = query.split(' ').pop() ?? query;
+        return { candidates: [candidate(name)], total: 1 };
+      },
+    };
+    const injector = Injector.create({
+      providers: [
+        { provide: AI_PLAN_PROVIDER, useValue: fakeAi({ generate: async () => [
+          { day: 1, name: '안목해변', kind: 'place', start: '10:00' },
+          { day: 1, name: '없는식당', kind: 'meal', start: '12:00' },
+          { day: 1, name: '경포대', kind: 'place', start: '14:00' },
+        ] }) },
+        { provide: PLACE_SEARCH, useValue: search },
+        AiPlanStore,
+      ],
+    });
+    const store = runInInjectionContext(injector, () => injector.get(AiPlanStore));
+    store.set('regions', ['강릉']);
+    store.set('startDate', '2026-10-01');
+    store.set('endDate', '2026-10-01');
+    await store.generate();
+    const meals = store.results().filter((i) => i.kind === 'meal');
+    expect(meals.map((m) => [m.name, m.start])).toEqual([['초당순두부', '12:00'], ['물회', '18:00']]);
+    expect(store.missingText()).toBe('1일차 카페');
   });
 });

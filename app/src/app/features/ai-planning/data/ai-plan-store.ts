@@ -7,6 +7,7 @@ import { enumerateDays, validateTripDates } from '../../../shared/util/dates';
 import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regions';
 import { PLACE_SEARCH } from '../../places/data/place-search';
 import { mustGoPlaces, verifyPlaces } from './verify-places';
+import { fillDayMinimums, type FillResult } from './fill-day-minimums';
 import {
   type Phase,
   type AiPlanSelection,
@@ -44,6 +45,8 @@ export class AiPlanStore {
     /** 사용자가 고친 일차. 추천 그대로 두는 항목은 여기에 없다. */
     dayOverrides: {} as Readonly<Record<string, number>>,
     error: null as GenerateError | null,
+    /** 하루 최소 구성을 채우려 했지만 근처에서 찾지 못한 자리. 결과 화면에 알린다. */
+    missingSlots: [] as FillResult['missing'],
   });
   private readonly requestId = crypto.randomUUID();
   /** 생성 중인 요청을 취소하는 손잡이. */
@@ -93,6 +96,10 @@ export class AiPlanStore {
   readonly results = this.state.results;
   readonly selected = this.state.selected;
   readonly dayOverrides = this.state.dayOverrides;
+  /** 예: '1일차 저녁 · 2일차 카페'. 없으면 빈 글자. */
+  readonly missingText = computed(() =>
+    this.state.missingSlots().map((m) => `${m.day}일차 ${m.slot}`).join(' · '),
+  );
   readonly error = this.state.error;
 
   readonly stepNumber = computed(() =>
@@ -247,7 +254,11 @@ export class AiPlanStore {
         (i) => i.verified,
       );
       // 사용자가 적은 꼭 갈 장소는 모델이 빼먹어도 직접 찾아 넣는다.
-      const found = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
+      const picked = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
+      // 확인에서 빠진 뒤에도 하루 식사 2곳·카페 1곳·관광(속도별)이 남게 근처 실제 장소로 채운다.
+      const { items: found, missing } = picked.length
+        ? await fillDayMinimums(picked, this.dayCount(), this.pace(), this.regions(), this.placeSearch)
+        : { items: picked, missing: [] };
       if (controller.signal.aborted) return;
       if (!found.length) {
         patchState(this.state, {
@@ -264,6 +275,7 @@ export class AiPlanStore {
         results: found,
         selected: new Set(found.map((i) => i.id)),
         dayOverrides: {},
+        missingSlots: missing,
       });
     } catch (error) {
       if (controller.signal.aborted) return;

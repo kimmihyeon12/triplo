@@ -236,13 +236,23 @@ describe('AI 코스 프롬프트', () => {
     const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(prompt.system).toContain('관광·액티비티·식사·카페·쇼핑·기타·숙소');
     expect(prompt.system).toContain('마지막 날에는 숙소를 넣지 않는다');
-    expect(prompt.user).toContain('관광 2~3곳');
+    expect(prompt.user).toContain('관광·액티비티·쇼핑을 합쳐 2~3곳');
+    expect(prompt.user).toContain('카페 1곳');
     expect(prompt.user).not.toContain('카페 2곳씩');
+  });
+  it('일정 밀도에 따라 하루 관광 수를 달리 요구한다(식사 2·카페 1은 같다)', async () => {
+    for (const [pace, range] of [['여유롭게', '1~2곳'], ['보통', '2~3곳'], ['알차게', '3~4곳']] as const) {
+      const { handler, callModel } = setup();
+      await handler(post({ ...BODY, pace }));
+      const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user as string;
+      expect(user).toContain(`관광·액티비티·쇼핑을 합쳐 ${range}`);
+      expect(user).toContain('식사 2곳');
+    }
   });
   it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
     const { handler, callModel } = setup();
     await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));
-    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('관광 2~3곳');
+    expect((callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user).not.toContain('관광·액티비티·쇼핑을 합쳐');
   });
   it('응답 스키마가 코스 필드와 일곱 분류를 가진다', () => {
     const item = RESPONSE_SCHEMA.properties.items.items;

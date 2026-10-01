@@ -52,6 +52,8 @@ export class KakaoPlaceSearch implements PlaceSearchProvider {
     const opts: Record<string, unknown> = { size: options.size ?? 15 };
     if (options.near) {
       opts['location'] = new maps.LatLng(options.near.lat, options.near.lng);
+      // 기준 좌표만 주면 범위가 없어 멀리 있는 유명한 곳이 앞에 온다.
+      if (options.radius) opts['radius'] = Math.min(20000, options.radius);
     }
     return new Promise<PlaceSearchResult>((resolve, reject) => {
       places.keywordSearch(

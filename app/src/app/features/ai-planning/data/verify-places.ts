@@ -44,7 +44,7 @@ const ANNEX = ['주차장', '주차', '매표소', '정류장', '승강장', '�
  * 물은 이름이 결과를 품는 경우(예: '롯데월드 어드벤처'를 물었는데 '롯데월드'가
  * 나온 경우)도 부분 일치로 둔다. 더 넓은 범위를 가리키지만 같은 자리다.
  */
-function nameMatch(asked: string, found: string): 'exact' | 'partial' | null {
+export function nameMatch(asked: string, found: string): 'exact' | 'partial' | null {
   const a = normalize(asked);
   const b = normalize(found);
   if (a === '' || b === '') return null;

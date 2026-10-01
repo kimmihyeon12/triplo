@@ -395,6 +395,10 @@
         <app-icon name="alert" />
         <div class="notice__body flex-1 min-w-0">
           위치를 확인한 곳만 보여요. 영업시간은 지도에서 확인하세요.
+          <!-- 하루 최소 구성(식사 2·카페 1·관광)을 근처에서 채우지 못한 자리. 지어내지 않고 알린다. -->
+          @if (draft.missingText(); as missing) {
+            <p class="mt-1" data-testid="ai-missing-slots">근처에서 못 찾았어요: {{ missing }}</p>
+          }
         </div>
       </div>
 
