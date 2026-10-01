@@ -143,6 +143,7 @@ trip_regions       trip_stops      accommodation_stays
 | `admin_delete_notice(id)` | 관리자 | 공지를 지운다 |
 | `admin_reply_inquiry(id, body)` → id | 관리자 | 답변을 더하고 답변 완료로 바꾼다 |
 | `admin_set_inquiry_status(id, status)` | 관리자 | 확인 중·접수됨으로 바꾼다 |
+| `release_notice_draft(tag, title, body)` → id 또는 null | 배포 담당(CLI, DB 소유자) | 배포 공지 초안을 만든다(`generated`=true). 같은 태그의 자동 초안이 있으면 만들지 않고 null. 앱 사용자·관리자 화면은 부를 수 없다(2026-10-01 `20261001110000`) |
 
 오류 코드: 길이·값 `P0400`, 없는 대상 `P0404`, 권한 없음 `42501`. 로컬 확인: `supabase/tests/support.local.sql`.
 
