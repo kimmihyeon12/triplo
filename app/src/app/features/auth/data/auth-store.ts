@@ -37,6 +37,8 @@ export class AuthStore {
   readonly googleEnabled = this.state.googleEnabled;
   readonly kakaoEnabled = this.state.kakaoEnabled;
   readonly nickname = computed(() => nicknameFrom(this.state.user()?.user_metadata));
+  /** 구름이가 안내하는 사용법을 본 적이 있는지. 계정 정보에 남겨 기기를 바꿔도 다시 뜨지 않는다. */
+  readonly guideSeen = computed(() => this.state.user()?.user_metadata?.['travel_guide_seen'] === true);
   readonly user = this.state.user;
   readonly error = this.state.error;
   readonly deletionEnabled = this.state.deletionEnabled;
@@ -319,6 +321,19 @@ export class AuthStore {
       return false;
     } finally {
       patchState(this.state, { busy: false, activity: null });
+    }
+  }
+
+  /**
+   * 사용법을 봤다고 남긴다. 실패해도 안내를 다시 강요하지 않는다(내 정보에서 언제든 다시 본다).
+   */
+  async markGuideSeen(): Promise<void> {
+    if (!this.client || !this.state.user() || this.guideSeen()) return;
+    try {
+      const { data, error } = await this.client.auth.updateUser({ data: { travel_guide_seen: true } });
+      if (!error && data.user) patchState(this.state, { user: data.user });
+    } catch {
+      // 남기지 못해도 화면은 넘어간다.
     }
   }
 

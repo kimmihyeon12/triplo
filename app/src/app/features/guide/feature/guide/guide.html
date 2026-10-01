@@ -1,0 +1,117 @@
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col items-center gap-4 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)]"
+  data-testid="guide"
+  tabindex="-1"
+>
+  <div class="flex w-full items-center justify-between">
+    <!-- 화면 읽기 프로그램에 몇 장 중 몇 장인지 알린다 -->
+    <p class="m-0 text-12 font-semibold text-ink-3 [font-variant-numeric:tabular-nums]" aria-live="polite" data-testid="guide-step">
+      {{ index() + 1 }} / {{ slides.length }}
+    </p>
+    <button appButton type="button" variant="ghost" class="btn btn--sm" (click)="finish()" data-testid="guide-skip">건너뛰기</button>
+  </div>
+
+  <!-- 휴대폰에서는 캡처 아래에 설명, 넓은 화면에서는 나란히 둔다. -->
+  <div class="flex w-full flex-col items-center gap-4 [@media(min-width:_720px)]:flex-row [@media(min-width:_720px)]:items-start [@media(min-width:_720px)]:justify-center [@media(min-width:_720px)]:gap-8">
+  <!-- 실제 앱 캡처를 휴대폰 틀 안에 보인다. 좌우로 밀어 넘긴다. 설명 번호는 캡처 위에 코드로 그린다. -->
+  <div
+    class="relative w-full max-w-[220px] flex-none [@media(min-width:_720px)]:max-w-[240px] touch-pan-y select-none overflow-hidden rounded-[28px] border-[6px] border-ink bg-ground shadow-panel"
+    (pointerdown)="onPointerDown($event)"
+    (pointerup)="onPointerUp($event)"
+    data-testid="guide-frame"
+  >
+    <img
+      class="block aspect-[390/844] w-full object-cover object-top"
+      [src]="image()"
+      [alt]="slide().alt"
+      width="390"
+      height="844"
+      draggable="false"
+      data-testid="guide-image"
+    />
+    @for (m of marks(); track m.n) {
+      <!-- 고른 번호는 주변을 어둡게 하고 그 자리만 밝게 둔다(바깥 그림자). -->
+      <button
+        type="button"
+        class="absolute rounded-[8px] border-2 p-0 [transition:box-shadow_var(--dur)_var(--ease-out),opacity_var(--dur)_var(--ease-out)]"
+        [style.left.%]="m.x"
+        [style.top.%]="m.y"
+        [style.width.%]="m.w"
+        [style.height.%]="m.h"
+        [style.border-color]="'var(--color-accent-deep)'"
+        [style.background]="focus() === m.n ? 'transparent' : 'color-mix(in srgb, var(--color-accent) 14%, transparent)'"
+        [style.box-shadow]="focus() === m.n ? '0 0 0 999px rgba(15, 18, 30, 0.5)' : 'none'"
+        [style.opacity]="focus() === null || focus() === m.n ? 1 : 0.25"
+        [style.z-index]="focus() === m.n ? 2 : 1"
+        [attr.aria-label]="m.n + '번 ' + m.label"
+        (click)="pick(m.n)"
+        [attr.data-testid]="'guide-mark-' + m.n"
+      >
+        <span
+          class="absolute -left-2.5 -top-2.5 flex size-5 items-center justify-center rounded-full text-11 font-bold text-white shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+          [style.background]="'var(--color-accent-deep)'"
+          aria-hidden="true"
+          >{{ m.n }}</span
+        >
+      </button>
+    }
+  </div>
+
+  <!-- 구름이 말풍선과 번호별 설명. 구름이는 장식이라 화면 읽기에서 뺀다. -->
+  <div class="flex w-full max-w-[420px] items-start gap-2.5 [@media(min-width:_720px)]:mt-6 [@media(min-width:_720px)]:max-w-[380px]">
+    <img class="size-14 flex-none object-contain" src="/brand/companion-cloud-sorry-v1.png" alt="" aria-hidden="true" />
+    <div class="relative min-w-0 flex-1 rounded-[18px] bg-panel px-4 py-3 shadow-panel">
+      <h2 class="m-0 text-15 font-bold" data-testid="guide-title">{{ slide().title }}</h2>
+      <p class="mt-1 text-13 leading-relaxed text-ink-2" data-testid="guide-speech">{{ slide().speech }}</p>
+      @if (marks().length) {
+        <ol class="m-0 mt-2.5 flex list-none flex-col gap-1 border-t border-border p-0 pt-2.5" data-testid="guide-legend">
+          @for (m of marks(); track m.n) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-start gap-2 rounded-control border-0 bg-transparent px-1 py-1 text-left text-12 leading-snug text-ink-2 hover:bg-ground-2"
+                [class.bg-accent-tint]="focus() === m.n"
+                [attr.aria-pressed]="focus() === m.n"
+                (click)="pick(m.n)"
+              >
+                <span
+                  class="mt-px flex size-4.5 flex-none items-center justify-center rounded-full text-11 font-bold text-white"
+                  [style.background]="'var(--color-accent-deep)'"
+                  aria-hidden="true"
+                  >{{ m.n }}</span
+                >
+                <span>{{ m.label }}</span>
+              </button>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  </div>
+
+  </div>
+
+  <div class="flex gap-1.5" role="tablist" aria-label="안내 장">
+    @for (s of slides; track s.key; let i = $index) {
+      <button
+        type="button"
+        role="tab"
+        class="size-2 rounded-full border-0 p-0 [transition:background-color_var(--dur)_var(--ease-out),width_var(--dur)_var(--ease-out)]"
+        [class.w-5]="i === index()"
+        [style.background]="i === index() ? 'var(--color-accent-deep)' : 'var(--color-border-strong)'"
+        [attr.aria-selected]="i === index()"
+        [attr.aria-label]="(i + 1) + '장 ' + s.title"
+        (click)="go(i)"
+      ></button>
+    }
+  </div>
+
+  <div appActionBar class="action-bar">
+    <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
+      <button appButton type="button" class="btn" [disabled]="index() === 0" (click)="go(index() - 1)" data-testid="guide-prev">이전</button>
+      <button appButton type="button" variant="primary" class="btn" (click)="next()" data-testid="guide-next">
+        {{ last() ? '시작하기' : '다음' }}
+      </button>
+    </div>
+  </div>
+</div>

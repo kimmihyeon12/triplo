@@ -3,6 +3,7 @@ import { Router, type Routes, type UrlTree } from '@angular/router';
 import { AuthStore } from './data/auth-store';
 import { SUPPORT_ROUTES } from '../support/support.routes';
 import { NOTIFICATION_ROUTES } from '../notifications/notifications.routes';
+import { GUIDE_ROUTES } from '../guide/guide.routes';
 import { environment } from '../../../environments/environment';
 
 export async function checkAuthentication(): Promise<boolean | UrlTree> {
@@ -47,4 +48,5 @@ export const ACCOUNT_ROUTES: Routes = [
     route.data?.['kind'] ? route : { ...route, canActivate: [checkAuthentication] },
   ),
   ...NOTIFICATION_ROUTES.map((route) => ({ ...route, canActivate: [checkAuthentication] })),
+  ...GUIDE_ROUTES.map((route) => ({ ...route, canActivate: [checkAuthentication] })),
 ];
