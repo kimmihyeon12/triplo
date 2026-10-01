@@ -213,6 +213,9 @@ export class StayFormPage {
           this.checkIn.set(trip.startDate);
           this.checkOut.set(trip.endDate);
         }
+        // 큰 지도에서 '숙소로 담기'로 왔으면 고른 장소를 채운다(2026-10-01). 날짜만 정하면 된다.
+        const handed = (globalThis.history?.state as { place?: PlaceCandidate } | null)?.place;
+        if (!stay && handed && Number.isFinite(handed.lat) && Number.isFinite(handed.lng)) this.onPicked(handed);
       });
     });
   }

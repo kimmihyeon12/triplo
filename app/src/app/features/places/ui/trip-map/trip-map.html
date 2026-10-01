@@ -83,6 +83,8 @@
     }
   }
 
+  <!-- 큰 지도는 범례를 두지 않는다. 지도가 화면을 다 쓴다(2026-10-01). -->
+  @if (!bare()) {
   <div
     class="legend text-12 leading-normal flex flex-wrap items-center text-ink-2 gap-[6px_14px]"
     data-testid="map-legend"
@@ -114,4 +116,5 @@
       >
     }
   </div>
+  }
 </div>

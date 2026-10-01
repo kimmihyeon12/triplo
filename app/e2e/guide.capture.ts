@@ -161,7 +161,29 @@ test('사용법 캡처', async ({ page, context }) => {
   await mark('trip', 2, page.getByTestId('sort-nearest'));
   await mark('trip', 3, page.getByTestId('add-open'));
   await mark('trip', 4, page.getByTestId('go-expenses'));
+  await mark('trip', 5, page.getByTestId('open-map-explore'));
   await shot(page, 'trip');
+
+  // 지도에서 담기(큰 지도). 테스트 지도에는 타일이 없어 여행 상세처럼 땅과 바다를 그려 넣는다.
+  await page.goto(`/trips/${id}/map`);
+  await expect(page.getByTestId('map-explore')).toBeVisible();
+  await page.getByTestId('trip-map').locator('.canvas').first().evaluate((el) => {
+    (el as HTMLElement).style.background = [
+      'radial-gradient(120% 90% at 108% 0%, var(--color-map-water-light) 0 40%, transparent 40.5%)',
+      'linear-gradient(160deg, transparent 0 46%, rgba(255,255,255,.95) 46% 47.4%, transparent 47.4%)',
+      'linear-gradient(70deg, transparent 0 58%, rgba(255,255,255,.95) 58% 59.2%, transparent 59.2%)',
+      'var(--color-map-land)',
+    ].join(',');
+  });
+  await page.getByTestId('map-category-meal').click();
+  const pin = page.locator('[data-testid^=map-place-]').first();
+  await pin.click();
+  await expect(page.getByTestId('map-explore-sheet')).toBeVisible();
+  await mark('map-explore', 0, page.getByTestId('map-category-meal').locator('xpath=..'));
+  await mark('map-explore', 1, pin);
+  await mark('map-explore', 2, page.getByTestId('map-explore-day'));
+  await mark('map-explore', 3, page.getByTestId('map-explore-add'));
+  await shot(page, 'map-explore');
 
   // 지도 링크로 담기(장소 추가 화면). 찾기는 누르지 않고 링크를 붙여 넣은 상태로 찍는다.
   await page.goto(`/trips/${id}/stops/new`);

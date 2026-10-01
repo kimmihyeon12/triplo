@@ -1,6 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import type { PlaceCandidate } from '../model/place';
 import type { GeoPoint } from '../model/place';
+import type { MapBounds, NearbyCategory } from '../model/map';
 
 export interface PlaceSearchOptions {
   /** 이 좌표 주변을 우선 검색(제공자가 지원할 때) */
@@ -33,3 +34,16 @@ export interface PlaceSearchProvider {
 }
 
 export const PLACE_SEARCH = new InjectionToken<PlaceSearchProvider>('PLACE_SEARCH');
+
+export type { NearbyPlace } from '../model/map';
+import type { NearbyPlace } from '../model/map';
+
+/**
+ * 지도 범위 안의 분류별 장소(2026-10-01, 큰 지도). 이름 검색과 따로 둔다.
+ * 사용자가 분류를 누르거나 '이 지역에서 다시 찾기'를 누를 때만 부른다(무료 한도).
+ */
+export interface NearbyPlaceSearch {
+  nearby(category: NearbyCategory, bounds: MapBounds): Promise<NearbyPlace[]>;
+}
+
+export const NEARBY_PLACE_SEARCH = new InjectionToken<NearbyPlaceSearch>('NEARBY_PLACE_SEARCH');

@@ -1,7 +1,8 @@
 import { MAP_MARKER_CLASSES } from '../../util/map-marker-styles';
 import { inject, Injectable } from '@angular/core';
 import { overlappingStayIds } from '../../util/map-markers';
-import { type DayMapModel, type MapMarker } from '../../model/map';
+import { type DayMapModel, type MapBounds, type MapMarker, type PlacePin } from '../../model/map';
+import { placePinElement } from '../place-pin';
 import type {
   MapInstance,
   MapMountOptions,
@@ -52,6 +53,22 @@ export class KakaoMapProvider implements MapProvider {
       position: { lat: number; lng: number };
     }[] = [];
     let line: any = null;
+    let pins: any[] = [];
+    const boundsOf = (): MapBounds | null => {
+      const b = map.getBounds();
+      if (!b) return null;
+      const sw = b.getSouthWest();
+      const ne = b.getNorthEast();
+      return { south: sw.getLat(), west: sw.getLng(), north: ne.getLat(), east: ne.getLng() };
+    };
+    // 큰 지도는 이동·확대가 끝날 때마다 범위를 알린다('이 지역에서 다시 찾기').
+    if (options.onIdle) {
+      const onIdle = options.onIdle;
+      maps.event.addListener(map, 'idle', () => {
+        const b = boundsOf();
+        if (b) onIdle(b);
+      });
+    }
 
     const clear = () => {
       for (const o of overlays) o.overlay.setMap(null);
@@ -63,7 +80,7 @@ export class KakaoMapProvider implements MapProvider {
     };
 
     return {
-      render(model: DayMapModel) {
+      render(model: DayMapModel, fit = true) {
         clear();
         const offset = overlappingStayIds(model.markers);
         for (const m of model.markers) {
@@ -87,6 +104,7 @@ export class KakaoMapProvider implements MapProvider {
           });
           line.setMap(map);
         }
+        if (!fit) return;
         if (model.markers.length === 1) {
           const p = model.markers[0].position;
           map.setLevel(5);
@@ -110,11 +128,27 @@ export class KakaoMapProvider implements MapProvider {
         const target = overlays.find((o) => o.id === id);
         if (target) map.panTo(new maps.LatLng(target.position.lat, target.position.lng));
       },
+      renderPlaces(next: readonly PlacePin[], selectedId: string | null) {
+        for (const p of pins) p.setMap(null);
+        pins = next.map((pin) => {
+          const overlay = new maps.CustomOverlay({
+            position: new maps.LatLng(pin.position.lat, pin.position.lng),
+            content: placePinElement(pin, pin.id === selectedId, (id) => options.onPlaceClick?.(id)),
+            yAnchor: 0.5,
+            zIndex: pin.id === selectedId ? 4 : 0,
+          });
+          overlay.setMap(map);
+          return overlay;
+        });
+      },
+      bounds: boundsOf,
       relayout() {
         map.relayout();
       },
       destroy() {
         clear();
+        for (const p of pins) p.setMap(null);
+        pins = [];
       },
     };
   }

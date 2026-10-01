@@ -2,7 +2,7 @@ import type { Provider } from '@angular/core';
 import { KakaoMapProvider } from './features/places/data/kakao/kakao-map-provider';
 import { KakaoPlaceSearch } from './features/places/data/kakao/kakao-place-search';
 import { MAP_PROVIDER } from './features/places/data/map-provider';
-import { PLACE_SEARCH } from './features/places/data/place-search';
+import { NEARBY_PLACE_SEARCH, PLACE_SEARCH } from './features/places/data/place-search';
 import { AI_PLAN_PROVIDER } from './features/ai-planning/data/ai-plan-provider';
 import { EdgeAiProvider } from './features/ai-planning/data/edge-ai-provider';
 import { RECEIPT_SCANNER } from './features/expenses/data/receipt-scanner';
@@ -22,6 +22,7 @@ export const ADAPTER_PROVIDERS: Provider[] = [
   // 지도 표시와 장소 검색은 별개 어댑터다.
   { provide: MAP_PROVIDER, useExisting: KakaoMapProvider },
   { provide: PLACE_SEARCH, useExisting: KakaoPlaceSearch },
+  { provide: NEARBY_PLACE_SEARCH, useExisting: KakaoPlaceSearch },
   // 지도 링크로 담기는 서버 함수(resolve-place)가 링크를 따라가 읽는다.
   { provide: PLACE_LINK_RESOLVER, useExisting: EdgePlaceLinkResolver },
   // AI 일정·대화·사진 인식은 Supabase Edge Function을 거친다. 모델 키는 서버에만 있다.

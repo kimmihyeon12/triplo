@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import type { PlaceCandidate } from '../../model/place';
+import type { MapBounds, NearbyCategory } from '../../model/map';
 import type {
+  NearbyPlace,
+  NearbyPlaceSearch,
   PlaceSearchAvailability,
   PlaceSearchOptions,
   PlaceSearchProvider,
@@ -69,6 +72,31 @@ export const FIXTURE_PLACES: PlaceCandidate[] = [
   },
 ];
 
+/**
+ * 큰 지도의 주변 장소(분류 검색) 고정 목록. 이름 검색 목록과 따로 둬 AI 일정·챗봇 테스트 결과가 바뀌지 않게 한다.
+ * 좌표는 테스트용 근사값이다.
+ */
+const NEARBY: readonly NearbyPlace[] = [
+  near('n-tofu', '테스트 순두부', 'meal', '음식점', 37.7905, 128.9135, '강원 강릉시 초당순두부길 77'),
+  near('n-grill', '테스트 회센터', 'meal', '음식점', 37.7718, 128.9468, '강원 강릉시 창해로14번길 30'),
+  near('n-cafe', '테스트 바다 카페', 'cafe', '카페', 37.7724, 128.9481, '강원 강릉시 창해로14번길 24'),
+  near('n-anmok', '안목해변', 'sight', '관광명소', 37.773, 128.9475, '강원 강릉시 창해로14번길 20-1'),
+  near('n-ojuk', '오죽헌', 'sight', '관광명소', 37.7793, 128.878, '강원 강릉시 율곡로3139번길 24'),
+  near('n-hotel', '강릉 테스트 호텔', 'stay', '숙박', 37.7919, 128.9152, '강원 강릉시 창해로 307'),
+];
+
+function near(
+  id: string,
+  name: string,
+  nearby: NearbyCategory,
+  category: string,
+  lat: number,
+  lng: number,
+  roadAddress: string,
+): NearbyPlace {
+  return { provider: 'fixture', id, name, address: roadAddress, roadAddress, lat, lng, category, url: null, nearby };
+}
+
 /** 분류 낱말 → 픽스처 장소의 분류. 실제 카카오 검색이 그 낱말로 돌려주는 종류에 맞춘다. */
 const CATEGORY_WORDS: Readonly<Record<string, readonly string[]>> = {
   관광명소: ['관광명소', '문화유적'],
@@ -83,12 +111,20 @@ const CATEGORY_WORDS: Readonly<Record<string, readonly string[]>> = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class FixturePlaceSearch implements PlaceSearchProvider {
+export class FixturePlaceSearch implements PlaceSearchProvider, NearbyPlaceSearch {
   /** 테스트에서 오류 상태를 재현할 때 true */
   failNext = false;
 
   async availability(): Promise<PlaceSearchAvailability> {
     return { available: true, reason: null, providerLabel: '테스트 픽스처' };
+  }
+
+  async nearby(category: NearbyCategory, bounds: MapBounds): Promise<NearbyPlace[]> {
+    if (globalThis.localStorage?.getItem('tc.test.nearbyFail')) throw new Error('테스트용 검색 실패');
+    return NEARBY.filter(
+      (p) =>
+        p.nearby === category && p.lat >= bounds.south && p.lat <= bounds.north && p.lng >= bounds.west && p.lng <= bounds.east,
+    );
   }
 
   async search(query: string, _options: PlaceSearchOptions = {}): Promise<PlaceSearchResult> {
