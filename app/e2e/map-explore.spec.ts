@@ -51,6 +51,16 @@ test('여행 상세에서 크게 보고, 주변 맛집을 골라 다른 날에 �
   // 후보로 담은 곳은 여행 상세처럼 회색 눈으로 보인다.
   await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /후보로 담음/);
   await expect(page.getByTestId('map-place-n-grill')).toHaveClass(/tc-pin--candidate/);
+  // 분류 색(녹색) 대신 연회색 바탕이다(2026-10-01 사용자 지적).
+  const ground = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'bg-ground-2';
+    document.body.appendChild(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+  await expect(page.getByTestId('map-place-n-grill')).toHaveCSS('background-color', ground);
 
   await page.goto(`/trips/${id}?day=2026-05-02`);
   await expect(page.locator('[data-testid^=stop-]').getByText('테스트 회센터').first()).toBeVisible();
