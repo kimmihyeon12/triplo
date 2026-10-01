@@ -37,12 +37,16 @@
       </a>
     </nav>
     <!-- 아이폰은 초대 링크가 홈 화면 앱이 아닌 Safari로 열린다. 앱에서 링크를 붙여 넣어 연다(2026-10-01). -->
+    <!-- 여행 상세의 '정산'과 같은 작은 흰 버튼(2026-10-02 사용자 제안). -->
     <a
-      class="self-end text-13 font-medium text-accent-deep no-underline hover:underline"
+      appButton
+      class="btn btn--sm flex shrink-0 items-center gap-1.5 self-end leading-none"
       routerLink="/join"
       data-testid="open-join-paste"
-      >초대 링크로 참여</a
     >
+      <app-icon name="mail" [size]="14" />
+      초대 링크로 참여
+    </a>
 
     <!--
       다녀온 곳이 쌓이는 자리. 날짜가 지난 여행의 장소를 지역별로 모아 본다.
@@ -134,12 +138,18 @@
             </a>
           </div>
           <!-- 초대받은 사람은 대개 여행이 없다. 첫 화면에도 링크 붙여넣기를 둔다(2026-10-01). -->
-          <a
-            class="mt-3 block text-center text-13 font-medium text-accent-deep no-underline hover:underline"
-            routerLink="/join"
-            data-testid="empty-join-paste"
-            >친구에게 초대받았나요? 초대 링크로 참여</a
-          >
+          <div class="mt-3 flex items-center justify-center gap-2 text-13 text-ink-3">
+            친구에게 초대받았나요?
+            <a
+              appButton
+              class="btn btn--sm flex items-center gap-1.5 leading-none"
+              routerLink="/join"
+              data-testid="empty-join-paste"
+            >
+              <app-icon name="mail" [size]="14" />
+              초대 링크로 참여
+            </a>
+          </div>
         </section>
       } @else {
         <ul class="trips flex flex-col" data-testid="trip-list">

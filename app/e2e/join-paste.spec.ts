@@ -36,6 +36,7 @@ test.describe('아이폰 Safari로 열린 초대', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/join/ABCD-EFGH');
     await expect(page.getByTestId('join-open-in-app')).toBeVisible();
+    await expect(page.getByTestId('join-install')).toHaveAttribute('href', '/install?next=%2Fjoin%2FABCD-EFGH');
     await page.getByTestId('join-copy-link').click();
     await expect(page.getByTestId('success-toast')).toContainText('링크를 복사했어요');
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('/join/ABCD-EFGH');
@@ -46,4 +47,32 @@ test('아이폰이 아니면 앱 안내를 보이지 않는다', async ({ page }
   await page.goto('/join/ABCD-EFGH');
   await expect(page.getByTestId('join-page')).toBeVisible();
   await expect(page.getByTestId('join-open-in-app')).toHaveCount(0);
+});
+
+test.describe('안드로이드 크롬에서 앱을 설치하지 않은 경우', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (Linux; Android 14; SM-S921N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36',
+  });
+
+  test('초대 링크를 열면 설치 안내로 가고, 웹에서 계속하면 초대로 돌아와 다시 끌려가지 않는다', async ({ page }) => {
+    await page.addInitScript(() => {
+      (navigator as Navigator & { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps = async () => [];
+    });
+    await page.goto('/join/ABCD-EFGH');
+    await expect(page).toHaveURL(/\/install\?next=%2Fjoin%2FABCD-EFGH$/);
+    await page.getByTestId('install-continue-web').click();
+    await expect(page).toHaveURL(/\/join\/ABCD-EFGH$/);
+    await page.waitForTimeout(500);
+    await expect(page).toHaveURL(/\/join\/ABCD-EFGH$/);
+  });
+
+  test('앱이 설치되어 있으면 설치 안내로 보내지 않는다', async ({ page }) => {
+    await page.addInitScript(() => {
+      (navigator as Navigator & { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps = async () => [{ platform: 'webapp' }];
+    });
+    await page.goto('/join/ABCD-EFGH');
+    await page.waitForTimeout(500);
+    await expect(page).toHaveURL(/\/join\/ABCD-EFGH$/);
+  });
 });
