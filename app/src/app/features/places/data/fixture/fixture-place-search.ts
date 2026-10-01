@@ -103,8 +103,12 @@ export class FixturePlaceSearch implements PlaceSearchProvider {
     const words = q.split(/\s+/).filter(Boolean);
     // '강릉 관광명소'처럼 지역 + 분류 낱말이면 실제 검색처럼 그 지역의 그 분류를 돌려준다.
     // AI 일정·챗봇이 후보를 모으는 검색이다(2026-10-01).
+    // 이름이 맞는 곳이 있으면 그것이 먼저다('테스트 호텔').
+    const byName = FIXTURE_PLACES.filter(
+      (p) => p.name.includes(q) || p.address.includes(q) || p.roadAddress.includes(q),
+    );
     const categories = CATEGORY_WORDS[words[words.length - 1] ?? ''];
-    if (categories) {
+    if (!byName.length && categories) {
       const region = words.length > 1 ? words[0]! : '';
       const hit = FIXTURE_PLACES.filter(
         (p) => categories.includes(p.category) && (!region || p.address.includes(region) || p.roadAddress.includes(region)),
