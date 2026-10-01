@@ -122,14 +122,17 @@ export class ChatPage implements OnInit {
   }
 
   /**
-   * 담을 장소의 주소가 가리키는 시·군·구로 빈 여행을 세운다. 날짜는 아직 정하지 않는다.
+   * 담을 장소의 주소가 가리키는 시·군·구로 빈 여행을 세운다. 날짜는 대화에서 말한 기간이 있을 때만 넣는다.
    * 모델이 쓴 지역 이름('서울')으로 만들지 않는다(draftTripRegions).
    */
   private blankTrip(draft: ChatDraft): Trip {
     const regions = draft.action === 'append' ? draftTripRegions(draft) : [];
+    // 대화에서 말한 기간('내일부터 2박3일')이 있으면 날짜를 넣는다. 일차가 그 날짜에 놓인다.
+    const period = draft.action === 'append' ? draft.period : undefined;
     return createTrip({
       title: regions.length ? `${regions.map((r) => r.name).join('·')} 여행` : '새 여행',
       regions,
+      ...(period ? { startDate: period.start, endDate: period.end } : {}),
     });
   }
 }

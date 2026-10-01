@@ -309,3 +309,41 @@ test('적용한 뒤에도 확인 카드는 적용할 때의 전후를 그대로 
   await expect(page.getByTestId('confirm-apply')).toBeVisible();
   expect(await text('confirm-after')).toBe(after);
 });
+
+// 2026-10-01 사용자 지적: '내일부터 2박3일'이라고 했는데 새 여행에 날짜가 없었고,
+// 챗봇 추천은 일정 짜기처럼 메모가 남지 않았다.
+test('대화에서 말한 기간으로 새 여행 날짜를 정하고 추천 이유를 메모로 남긴다', async ({ page }) => {
+  await resetApp(page);
+  await openChat(page);
+  await say(page, '강릉으로 내일부터 2박3일 일정 짜줘');
+  await expect(page.getByTestId('confirm-card')).toBeVisible();
+  await page.getByTestId('confirm-apply').click();
+  await expect(page.getByTestId('chat-assistant-message').filter({ hasText: '여행에 담았어요' })).toBeVisible();
+  const [trip] = (await savedTrips(page)) as unknown as { startDate: string; endDate: string; stops: { name: string; memo: string; date: string | null }[] }[];
+  const tomorrow = await page.evaluate(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  expect(trip!.startDate).toBe(tomorrow);
+  expect(trip!.stops.length).toBeGreaterThan(0);
+  expect(trip!.stops.every((s) => s.date !== null)).toBe(true);
+  expect(trip!.stops.find((s) => s.name === '안목해변')!.memo).toContain('AI 추천');
+});
+
+test('저장된 장소를 여러 날에 나눠 담는다', async ({ page }) => {
+  await resetApp(page);
+  const tripId = await createTrip(page, { title: '강릉 여행', start: '2026-05-01', end: '2026-05-02', regions: ['강릉시'] });
+  await addStop(page, tripId, { name: '안목해변' });
+  await addStop(page, tripId, { name: '오죽헌' });
+  await page.goto(`/trips/${tripId}`);
+  await page.getByTestId('open-chat').click();
+  await say(page, '일차에 해당여행 모두담아');
+  const card = page.getByTestId('confirm-card');
+  await expect(card).toContainText('2일에 나눠 담습니다');
+  await expect(card.getByTestId('confirm-after')).toContainText('1일차');
+  await page.getByTestId('confirm-apply').click();
+  await expect(page.getByTestId('confirm-undo')).toBeVisible();
+  const trips = (await savedTrips(page)) as unknown as { id: string; stops: { date: string | null }[] }[];
+  expect(trips.find((t) => t.id === tripId)!.stops.every((s) => s.date !== null)).toBe(true);
+});
