@@ -10,7 +10,7 @@ test('내 정보에서 사용법을 열면 화면 위에 설명 글이 보이고
   await page.goto('/account');
   await page.getByTestId('go-guide').click();
   await expect(page).toHaveURL(/\/account\/guide$/);
-  await expect(page.getByTestId('guide-step')).toHaveText('1 / 13');
+  await expect(page.getByTestId('guide-step')).toHaveText('1 / 14');
   await expect(page.getByTestId('guide-title')).toHaveText('여행 목록');
   const first = page.getByTestId('guide-slide').first().getByTestId('guide-callout');
   await expect(first).toHaveCount(5);
@@ -24,14 +24,14 @@ test('내 정보에서 사용법을 열면 화면 위에 설명 글이 보이고
   await page.mouse.down();
   await page.mouse.move(stage!.x + 20, y, { steps: 8 });
   await page.mouse.up();
-  await expect(page.getByTestId('guide-step')).toHaveText('2 / 13');
+  await expect(page.getByTestId('guide-step')).toHaveText('2 / 14');
   await expect(page.getByTestId('guide-title')).toHaveText('일정 짜기 ①');
 });
 
 test('끝까지 넘기면 시작하기로 바뀌고 내 정보로 돌아간다', async ({ page }) => {
   await page.goto('/account/guide');
-  for (let i = 1; i < 13; i++) await page.getByTestId('guide-next').click();
-  await expect(page.getByTestId('guide-step')).toHaveText('13 / 13');
+  for (let i = 1; i < 14; i++) await page.getByTestId('guide-next').click();
+  await expect(page.getByTestId('guide-step')).toHaveText('14 / 14');
   await expect(page.getByTestId('guide-next')).toHaveText('시작하기');
   await page.getByTestId('guide-next').click();
   await expect(page).toHaveURL(/\/account$/);
@@ -41,9 +41,9 @@ test('키보드 화살표로 넘기고 이전으로 돌아간다', async ({ page
   await page.goto('/account/guide');
   await page.getByTestId('guide').focus();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByTestId('guide-step')).toHaveText('2 / 13');
+  await expect(page.getByTestId('guide-step')).toHaveText('2 / 14');
   await page.getByTestId('guide-prev').click();
-  await expect(page.getByTestId('guide-step')).toHaveText('1 / 13');
+  await expect(page.getByTestId('guide-step')).toHaveText('1 / 14');
   await expect(page.getByTestId('guide-prev')).toBeDisabled();
 });
 
