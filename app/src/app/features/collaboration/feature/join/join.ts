@@ -15,6 +15,7 @@ import { AuthStore } from '../../../auth/data/auth-store';
 import { rememberReturn } from '../../../auth/util/return-to';
 import { itinerarySections, itineraryTicket } from '../../../trips/util/itinerary-image';
 import { ItinerarySnapshot } from '../../../trips/ui/itinerary-snapshot/itinerary-snapshot';
+import { mobilePlatform } from '../../../../shared/util/map-app-link';
 import { formatCode } from '../../data/invite-code';
 import { TRIP_MEMBERS, type InvitePreview } from '../../data/trip-members-repository';
 import { tripFromPreview } from '../../util/preview-trip';
@@ -45,6 +46,25 @@ export class Join {
   readonly nickname = computed(() => this.auth.nickname() ?? '');
   /** 이미 이 여행의 멤버면 [함께하기] 대신 여행으로 보낸다. 주인이 자기 링크로 합류하지 않게. */
   readonly myRole = computed(() => this.preview()?.myRole ?? null);
+  /**
+   * 아이폰 Safari에서 열렸는지(홈 화면 앱이 아님). 아이폰은 홈 화면 앱으로 링크를 넘기지 않아 초대 링크가 Safari로 열리고,
+   * 로그인도 따로 해야 한다. 앱을 쓰는 사람은 링크를 복사해 앱의 '초대 링크로 참여'에 붙여 넣게 안내한다(2026-10-01).
+   */
+  readonly inIosBrowser =
+    typeof navigator !== 'undefined' &&
+    mobilePlatform(navigator.userAgent, navigator.maxTouchPoints ?? 0) === 'ios' &&
+    !(navigator as Navigator & { standalone?: boolean }).standalone &&
+    !globalThis.matchMedia?.('(display-mode: standalone)').matches;
+
+  async copyLink(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      this.toast.success('링크를 복사했어요. 트립플로 앱에서 붙여 넣어 주세요');
+    } catch {
+      this.toast.error('복사하지 못했어요. 주소창의 링크를 길게 눌러 복사해 주세요.');
+    }
+  }
+
   /** 세션을 불러오는 동안에는 버튼을 보이지 않는다. 로그인 버튼이 잠깐 스치면 헷갈린다. */
   readonly authReady = computed(() => !this.auth.loading());
 

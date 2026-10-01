@@ -1,0 +1,31 @@
+<form class="mx-auto mt-4 flex max-w-(--content-narrow) flex-col gap-3 rounded-panel bg-panel p-4 shadow-panel" (submit)="open($event)" data-testid="join-paste" novalidate>
+  <p class="m-0 text-14 leading-relaxed text-ink-2">
+    친구에게 받은 초대 링크를 붙여 넣으면 이 앱에서 여행에 함께할 수 있어요. 링크가 Safari로 열렸다면 Safari 주소창의 링크를 복사해 오세요.
+  </p>
+  <app-field inputId="join-link" label="초대 링크 또는 코드">
+    <input
+      #linkInput
+      appInput
+      id="join-link"
+      name="joinLink"
+      type="text"
+      autocomplete="off"
+      autocapitalize="off"
+      placeholder="https://triplo.pages.dev/join/ABCD-EFGH"
+      [ngModel]="text()"
+      (ngModelChange)="text.set($event); error.set(null)"
+      [attr.aria-invalid]="error() ? 'true' : null"
+      [attr.aria-describedby]="error() ? 'join-link-error' : null"
+      data-testid="join-paste-input"
+    />
+    @if (error(); as message) {
+      <p id="join-link-error" class="field__error mt-2 text-12 font-medium text-danger-ink" role="alert" data-testid="join-paste-error">{{ message }}</p>
+    }
+  </app-field>
+  <div class="flex gap-2">
+    <button appButton type="button" class="btn flex-1" (click)="paste()" data-testid="join-paste-clipboard">붙여넣기</button>
+    <button appButton type="submit" class="btn flex-1" variant="primary" [disabled]="!text().trim()" data-testid="join-paste-open">
+      초대 열기
+    </button>
+  </div>
+</form>
