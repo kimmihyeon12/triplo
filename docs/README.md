@@ -63,6 +63,7 @@
 
 ## 장소 담기
 
+- [큰 지도에서 주변 장소 골라 담기](../openspec/changes/add-map-explore/proposal.md): 분류 핀·다시 찾기·정보판에서 담기. [설계](superpowers/specs/2026-10-01-map-explore-design.md).
 - [지도 링크로 장소 담기](../openspec/changes/add-place-link-import/proposal.md): 네이버·카카오 링크를 붙여 넣어 장소를 담는 흐름과 서버 함수 `resolve-place`의 요청 제한. [설계](superpowers/specs/2026-10-01-place-link-import-design.md).
 
 ## 가계부
