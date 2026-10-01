@@ -8,6 +8,7 @@ import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regi
 import { PLACE_SEARCH } from '../../places/data/place-search';
 import { mustGoPlaces, verifyPlaces } from './verify-places';
 import { fillDayMinimums, type FillResult } from './fill-day-minimums';
+import { noteSetsScope, noteSetsTime } from '../../../../../../supabase/functions/ai-plan/prompt';
 import {
   type Phase,
   type AiPlanSelection,
@@ -256,7 +257,10 @@ export class AiPlanStore {
       // 사용자가 적은 꼭 갈 장소는 모델이 빼먹어도 직접 찾아 넣는다.
       const picked = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
       // 확인에서 빠진 뒤에도 하루 식사 2곳·카페 1곳·관광(속도별)이 남게 근처 실제 장소로 채운다.
-      const { items: found, missing } = picked.length
+      // 사용자가 종류·개수나 시간대를 정했으면 그 범위를 따른다. 하루 구성을 채우면 요청과 어긋난다.
+      const note = this.extraNote();
+      const scoped = note.trim() !== '' && (noteSetsScope(note) || noteSetsTime(note));
+      const { items: found, missing } = picked.length && !scoped
         ? await fillDayMinimums(
             picked, this.dayCount(), this.pace(), this.regions(), this.placeSearch,
             `${this.mustGo()}

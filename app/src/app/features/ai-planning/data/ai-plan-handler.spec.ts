@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiPlanHandler } from '../../../../../../supabase/functions/ai-plan/handler';
-import { RESPONSE_SCHEMA } from '../../../../../../supabase/functions/ai-plan/prompt';
+import { RESPONSE_SCHEMA, noteSetsTime } from '../../../../../../supabase/functions/ai-plan/prompt';
 import { UserLimitError } from '../../../../../../supabase/functions/_shared/quota';
 
 /**
@@ -256,6 +256,16 @@ describe('AI 코스 프롬프트', () => {
     expect(user).toContain('사용자가 이름을 적은 식당은 점심이나 저녁 한 자리를 대신한다');
     expect(user).toContain('아침을 요청했으면 아침(8~9시) 식사도 넣는다');
   });
+  it('시간대를 정한 요청이면 그 시간대만 짜고 하루 식사 2곳을 강요하지 않는다', async () => {
+    for (const note of ['저녁 이후 계획', '오후 3시부터 놀거리', '밤에만 돌아다닐래']) {
+      const { handler, callModel } = setup();
+      await handler(post({ ...BODY, extraNote: note }));
+      const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user as string;
+      expect(user).toContain('이 요청이 시간대를 정했다');
+      expect(user).not.toContain('관광·액티비티·쇼핑을 합쳐');
+      expect(user).not.toContain('추가 요청과 관계없이 반드시');
+    }
+  });
   it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
     const { handler, callModel } = setup();
     await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));
@@ -352,5 +362,12 @@ describe('AI 코스 식사 규칙(2026-09-30 카페 요청에 식사가 빠진 �
     const prompt = await user({});
     expect(prompt.system).toContain('점심은 12:00~14:00, 저녁은 18:00~20:00');
     expect(prompt.user).toContain('하루 식사 2곳(점심 12시쯤, 저녁 18시쯤)');
+  });
+});
+
+describe('시간대 요청 판별', () => {
+  it('시간대를 정한 말만 알아본다', () => {
+    for (const note of ['저녁 이후 계획', '저녁부터', '오후부터 일정', '오전만', '밤에만', '야간 코스', '3시 이후', '15시부터']) expect(noteSetsTime(note)).toBe(true);
+    for (const note of ['예쁜 카페 추천', '저녁은 해산물', '아침도 먹고 싶어', '사진 찍기 좋은 곳', '밤바다 보고 싶어']) expect(noteSetsTime(note)).toBe(false);
   });
 });

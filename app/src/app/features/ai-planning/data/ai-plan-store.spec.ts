@@ -394,4 +394,31 @@ describe('AiPlanStore 하루 최소 구성', () => {
     expect(meals.map((m) => [m.name, m.start])).toEqual([['초당순두부', '12:00'], ['물회', '18:00']]);
     expect(store.missingText()).toBe('1일차 카페');
   });
+
+  it('범위나 시간대를 정한 요청이면 하루 최소 구성을 채우지 않는다', async () => {
+    const searched: string[] = [];
+    const search: PlaceSearchProvider = {
+      availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
+      search: async (query: string) => {
+        searched.push(query);
+        const name = query.split(' ').pop() ?? query;
+        return { candidates: [candidate(name)], total: 1 };
+      },
+    };
+    const injector = Injector.create({
+      providers: [
+        { provide: AI_PLAN_PROVIDER, useValue: fakeAi({ generate: async () => [{ day: 1, name: '야시장', kind: 'place', start: '19:00' }] }) },
+        { provide: PLACE_SEARCH, useValue: search },
+        AiPlanStore,
+      ],
+    });
+    const store = runInInjectionContext(injector, () => injector.get(AiPlanStore));
+    store.set('regions', ['강릉']);
+    store.set('startDate', '2026-10-01');
+    store.set('endDate', '2026-10-01');
+    store.set('extraNote', '저녁 이후 계획');
+    await store.generate();
+    expect(store.results().map((i) => i.name)).toEqual(['야시장']);
+    expect(searched.some((q) => /맛집|카페|관광명소/.test(q))).toBe(false);
+  });
 });
