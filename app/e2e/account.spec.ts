@@ -85,8 +85,10 @@ test('공지사항을 열면 목록이 보이고 첫 글이 펼쳐진다', async
   await expect(page).toHaveURL(/\/account\/notices$/);
   const items = page.getByTestId('notice-list').locator('li');
   await expect(items).toHaveCount(3);
-  // 첫 글은 펼쳐져 본문이 보인다.
-  await expect(items.first()).toContainText('버전인지 볼 수 있어요');
+  // 모두 접혀 있고, 누르면 본문이 펼쳐진다.
+  await expect(items.first().getByText('버전인지 볼 수 있어요')).toBeHidden();
+  await items.first().locator('summary').click();
+  await expect(items.first().getByText('버전인지 볼 수 있어요')).toBeVisible();
 
   // 목록을 열었으면 읽은 것으로 본다.
   await page.goto('/account');
@@ -117,6 +119,9 @@ test('문의 목록이 먼저 보이고 보내기는 따로 연다', async ({ pa
   // 서버에 연결되기 전에는 접수된 것처럼 보이지 않는다(감리 P2-01).
   await expect(list.first()).toContainText('기기에만 저장');
   await expect(list.first()).not.toContainText('접수됨');
+  // 펼쳐도 문의 내용은 한 번만 보인다.
+  await list.first().locator('summary').click();
+  await expect(list.first().getByText('가계부에 카테고리를 더 넣어주세요')).toHaveCount(1);
 });
 
 test('보낸 문의는 새로 열어도 남아 있다', async ({ page }) => {

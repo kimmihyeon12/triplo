@@ -9,6 +9,7 @@ import {
   type InquiryKind,
 } from '../../model/support';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiField } from '../../../../shared/ui/field/field';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -24,7 +25,7 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
  */
 @Component({
   selector: 'app-inquiry-form',
-  imports: [UiButton, UiInput, UiActionBar, UiNotice],
+  imports: [UiButton, UiField, UiInput, UiActionBar, UiNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './inquiry-form.html',
 })

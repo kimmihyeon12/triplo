@@ -16,39 +16,39 @@
       />
     </section>
   } @else {
-    <ul class="flex list-none flex-col gap-2 p-0" data-testid="inquiry-list">
+    <!-- 내 정보 목록과 같은 한 장의 카드. 본문은 한 번만 보인다: 접으면 한 줄, 펼치면 전체 -->
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="inquiry-list">
       @for (inquiry of list(); track inquiry.id) {
-        <li class="rounded-panel bg-panel shadow-panel">
+        <li class="border-b border-border last:border-b-0">
           <details class="fold px-4 [[open]]:pb-4" (toggle)="open(inquiry)">
             <summary
-              class="flex min-h-14 cursor-pointer list-none items-center gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
+              class="flex min-h-14 cursor-pointer list-none items-start gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
             >
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-13">{{ inquiry.body }}</span>
-                <span class="mt-0.5 block text-12 text-ink-3"
-                  >{{ kindLabel[inquiry.kind] }} · {{ day(inquiry.createdAt) }}</span
+                <span class="block text-14 font-bold">{{ kindLabel[inquiry.kind] }}</span>
+                <span class="mt-0.5 block text-12 text-ink-3">{{ day(inquiry.createdAt) }}</span>
+                <span
+                  class="mt-1.5 block truncate text-13 text-ink-2 in-[details[open]]:overflow-visible in-[details[open]]:whitespace-pre-line in-[details[open]]:leading-relaxed"
+                  data-testid="inquiry-body-text"
+                  >{{ inquiry.body }}</span
                 >
               </span>
               @if (inquiry.replies.length > 0 && !inquiry.readAt) {
-                <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
+                <span class="mt-2 size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
               }
               <span appBadge [tone]="delivers ? tone(inquiry) : 'neutral'" class="flex-none">{{
                 delivers ? statusLabel[inquiry.status] : '기기에만 저장'
               }}</span>
               <span
-                class="flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
+                class="mt-0.5 flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
                 aria-hidden="true"
               >
                 <app-icon name="chevron-right" [size]="16" />
               </span>
             </summary>
 
-            <p class="mb-3 whitespace-pre-line text-13 leading-relaxed text-ink-2">
-              {{ inquiry.body }}
-            </p>
-
             @for (reply of inquiry.replies; track reply.id) {
-              <div class="mt-2 rounded-control bg-ground-2 px-3.5 py-3">
+              <div class="mt-2 rounded-control bg-ground-2 px-3.5 py-3 first:mt-0">
                 <p class="mb-1 text-12 font-bold text-ink-3">답변 · {{ day(reply.createdAt) }}</p>
                 <p class="whitespace-pre-line text-13 leading-relaxed text-ink-2">
                   {{ reply.body }}

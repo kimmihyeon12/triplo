@@ -13,24 +13,21 @@
       <app-empty-state title="아직 공지사항이 없어요" />
     </section>
   } @else {
-    <ul class="flex list-none flex-col gap-2 p-0" data-testid="notice-list">
+    <!-- 내 정보 목록과 같은 한 장의 카드. 모두 접어 두고 안 읽은 공지는 제목 옆 점으로 알린다. -->
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="notice-list">
       @for (notice of notices(); track notice.id) {
-        <li class="rounded-panel bg-panel shadow-panel">
-          <!--
-            첫 공지는 펼쳐 둔다. 목록에 들어온 사람은 대개 가장 새 소식을
-            보러 온 것이라, 한 번 더 누르게 할 이유가 없다.
-          -->
-          <details class="fold px-4 [[open]]:pb-4" [open]="$first">
+        <li class="border-b border-border last:border-b-0">
+          <details class="fold px-4 [[open]]:pb-4">
             <summary
               class="flex min-h-14 cursor-pointer list-none items-start gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
             >
-              <span
-                class="mt-2 size-1.5 flex-none rounded-full"
-                [class.bg-danger-ink]="unreadIds().has(notice.id)"
-                aria-hidden="true"
-              ></span>
               <span class="min-w-0 flex-1">
-                <span class="block text-14 font-bold leading-snug">{{ notice.title }}</span>
+                <span class="flex items-center gap-1.5 text-14 font-bold leading-snug">
+                  <span class="min-w-0">{{ notice.title }}</span>
+                  @if (unreadIds().has(notice.id)) {
+                    <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-label="새 공지" data-testid="notice-unread"></span>
+                  }
+                </span>
                 <span class="mt-0.5 block text-12 text-ink-3">{{ day(notice.createdAt) }}</span>
               </span>
               <span
@@ -40,7 +37,7 @@
                 <app-icon name="chevron-right" [size]="16" />
               </span>
             </summary>
-            <p class="whitespace-pre-line pl-4 text-13 leading-relaxed text-ink-2">
+            <p class="whitespace-pre-line text-13 leading-relaxed text-ink-2">
               {{ notice.body }}
             </p>
           </details>
