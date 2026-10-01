@@ -74,7 +74,7 @@ Supabase DB 선택과 초기 사용 대상(본인과 친구들)은 기획안에 
 
 ## Supabase 소셜 로그인 연결
 
-2026-09-30 소스 기준으로 ai-plan·ai-chat·receipt-scan·delete-account 함수가 있다. 아래 배포·인증 기록은 당시 확인 결과이며 이번 갱신에서는 원격 상태를 조회하지 않았다.
+2026-09-30 소스 기준으로 ai-plan·ai-chat·receipt-scan·delete-account 함수가 있다. 2026-10-01 알림 발송 `push-dispatch`와 지도 링크 읽기 `resolve-place`(로그인 필요, 네이버·카카오 지도 호스트만 요청)를 더했다. 아래 배포·인증 기록은 당시 확인 결과이며 이번 갱신에서는 원격 상태를 조회하지 않았다.
 프로젝트 ref: `wslqgfetdwcmqeztixvs`. 사용자가 프로젝트 생성·공개 키 제공·Google 제공자 설정을 진행했다. 이전 ‘프로젝트 없음’ 기록은 당시 상태다. Google Client Secret은 Supabase 제공자 설정에만 입력한다.
 런타임 설정: app/public/supabase-config.example.json을 참고한 supabase-config.json(Git 제외). 지도 키 파일은 유지한다. Supabase URL Configuration의 Site URL은 http://localhost:4200, Redirect URL은 http://localhost:4200/auth/callback. Google 리디렉션 URI는 https://wslqgfetdwcmqeztixvs.supabase.co/auth/v1/callback 이다.
 실제 별도 브라우저에서 4200 /login → Supabase → accounts.google.com의 ‘로그인 - Google 계정’ 화면 도착을 확인했다. 사용자의 실제 Google 계정 인증 완료·DB 저장은 이 검증에 포함하지 않는다.
