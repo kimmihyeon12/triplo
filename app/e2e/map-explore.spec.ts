@@ -73,6 +73,22 @@ test('지도를 옮기면 이 지역에서 다시 찾고, 숙소는 날짜를 �
   await expect(page.getByTestId('stay-name')).toHaveValue('강릉 테스트 호텔');
 });
 
+test('위 날짜를 바꾸면 그날 일정이 지도에 보이고, 담을 날도 그날로 정해진다', async ({ page }) => {
+  const id = await tripWithAnmok(page);
+  await page.goto(`/trips/${id}/map`);
+  await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(1);
+  await page.getByTestId('map-day-2026-05-02').click();
+  await expect(page.getByTestId('map-day-2026-05-02')).toHaveAttribute('aria-selected', 'true');
+  // 2일차에는 담은 곳이 없다.
+  await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(0);
+  await page.getByTestId('map-day-2026-05-01').click();
+  await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(1);
+  await page.getByTestId('map-day-2026-05-02').click();
+  await page.getByTestId('map-category-cafe').click();
+  await page.getByTestId('map-place-n-cafe').click();
+  await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-02');
+});
+
 test('범위에 장소가 없거나 불러오지 못하면 알린다', async ({ page }) => {
   const id = await tripWithAnmok(page);
   await page.goto(`/trips/${id}/map`);

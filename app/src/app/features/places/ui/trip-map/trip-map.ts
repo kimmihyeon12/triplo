@@ -48,6 +48,9 @@ export class TripMapComponent implements OnDestroy {
    * 지도에서 담을 때마다 화면이 튀면 사용자가 보던 자리를 잃는다.
    */
   readonly fitOnChange = input(true);
+  /** 이 값이 바뀌면(큰 지도의 날짜 바꾸기) fitOnChange와 상관없이 다시 맞춘다 */
+  readonly fitKey = input<string | null>(null);
+  private lastFitKey: string | null | undefined = undefined;
   /** 범례 없이 지도만 그린다(큰 지도) */
   readonly bare = input(false);
   private fitted = false;
@@ -64,7 +67,10 @@ export class TripMapComponent implements OnDestroy {
     effect(() => {
       const m = this.model();
       if (!this.instance || this.state() !== 'ready') return;
-      this.instance.render(m, this.fitOnChange() || !this.fitted);
+      const key = this.fitKey();
+      const keyChanged = this.lastFitKey !== undefined && key !== this.lastFitKey;
+      this.lastFitKey = key;
+      this.instance.render(m, this.fitOnChange() || !this.fitted || keyChanged);
       if (m.markers.length) this.fitted = true;
     });
     effect(() => {
