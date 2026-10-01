@@ -46,12 +46,18 @@ test('여행 상세에서 크게 보고, 주변 맛집을 골라 다른 날에 �
   await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-01');
   await page.getByTestId('map-explore-day').selectOption('2026-05-02');
   await page.getByTestId('map-explore-add').click();
-  await expect(page.getByTestId('success-toast')).toContainText('2일차에 담았어요');
+  await expect(page.getByTestId('success-toast')).toContainText('2일차 맨 아래 후보로 담았어요');
   await expect(page.getByTestId('map-explore-add')).toHaveText('담았어요');
-  await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /담음/);
+  // 후보로 담은 곳은 여행 상세처럼 회색 눈으로 보인다.
+  await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /후보로 담음/);
+  await expect(page.getByTestId('map-place-n-grill')).toHaveClass(/tc-pin--candidate/);
 
   await page.goto(`/trips/${id}?day=2026-05-02`);
   await expect(page.locator('[data-testid^=stop-]').getByText('테스트 회센터').first()).toBeVisible();
+  // 후보(제외)는 흐리게 보이지만 지도 앱 아이콘은 그대로다(2026-10-01 사용자 요청).
+  const item = page.locator('.item--excluded').filter({ hasText: '테스트 회센터' }).first();
+  await expect(item.locator('.item__name')).toHaveCSS('opacity', '0.5');
+  await expect(item.locator('[data-maps]')).toHaveCSS('opacity', '1');
 });
 
 test('지도를 옮기면 이 지역에서 다시 찾고, 숙소는 날짜를 정하는 숙소 화면으로 넘긴다', async ({ page }) => {
@@ -87,6 +93,24 @@ test('위 날짜를 바꾸면 그날 일정이 지도에 보이고, 담을 날�
   await page.getByTestId('map-category-cafe').click();
   await page.getByTestId('map-place-n-cafe').click();
   await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-02');
+});
+
+test('평점 필터를 켜면 보이는 핀의 평점을 읽어 기준 미만은 숨긴다', async ({ page }) => {
+  const id = await tripWithAnmok(page);
+  await page.goto(`/trips/${id}/map`);
+  // 회센터(4.4)와 순두부(3.8)가 함께 보이게 범위를 넓힌다.
+  await moveMap(page, { south: 37.76, north: 37.8, west: 128.9, east: 128.96 });
+  await page.getByTestId('map-category-meal').click();
+  await expect(page.getByTestId('map-place-n-grill')).toBeVisible();
+  await expect(page.getByTestId('map-place-n-tofu')).toBeVisible();
+  await page.getByTestId('map-rating-4').click();
+  await expect(page.getByTestId('map-place-n-tofu')).toHaveCount(0);
+  await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /평점 4.4/);
+  await page.getByTestId('map-rating-4.5').click();
+  await expect(page.getByTestId('map-rating-empty')).toHaveText('4.5점 이상인 곳이 없어요.');
+  // 같은 기준을 다시 누르면 끈다.
+  await page.getByTestId('map-rating-4.5').click();
+  await expect(page.getByTestId('map-place-n-tofu')).toBeVisible();
 });
 
 test('범위에 장소가 없거나 불러오지 못하면 알린다', async ({ page }) => {

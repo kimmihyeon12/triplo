@@ -32,6 +32,23 @@ export interface ResolvePlaceDeps {
 
 /** 짧은 링크를 따라가는 최대 횟수. */
 export const MAX_HOPS = 4;
+/** 평점을 한 번에 읽는 최대 장소 수(큰 지도 한 번 찾기의 최대치)와 동시에 보내는 요청 수. */
+export const MAX_BATCH = 30;
+const BATCH_CONCURRENCY = 5;
+
+/** 순서를 지키며 동시에 limit개까지만 돌린다. 제공자에 한꺼번에 몰리지 않게 한다. */
+async function mapLimited<T, R>(items: readonly T[], limit: number, run: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await run(items[i]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 
 export function createResolvePlaceHandler(deps: ResolvePlaceDeps) {
   const headers = {
@@ -53,7 +70,22 @@ export function createResolvePlaceHandler(deps: ResolvePlaceDeps) {
     const user = await deps.getUser(token);
     if (!user) return reply(401, { error: 'authentication_required' });
 
-    const body = (await request.json().catch(() => null)) as { url?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as { url?: unknown; ratings?: unknown } | null;
+    // 큰 지도 평점 필터(2026-10-01): 보이는 핀들의 평점을 한 번에 읽는다. 장소 번호가 든 주소만 받고 따라가지 않는다.
+    if (Array.isArray(body?.ratings)) {
+      const urls = body.ratings.filter((u): u is string => typeof u === 'string').slice(0, MAX_BATCH);
+      if (urls.length !== body.ratings.length || urls.some((u) => !linkProvider(u) || !placeIdFrom(u)))
+        return reply(400, { error: 'unsupported_url' });
+      const ratings = await mapLimited(urls, BATCH_CONCURRENCY, async (u) => {
+        try {
+          const place = await read(deps, linkProvider(u)!, placeIdFrom(u)!);
+          return place && place.rating !== null ? { rating: place.rating, reviewCount: place.reviewCount } : null;
+        } catch {
+          return null;
+        }
+      });
+      return reply(200, { ratings });
+    }
     const url = typeof body?.url === 'string' ? body.url.trim() : '';
     if (!url || !linkProvider(url)) return reply(400, { error: 'unsupported_url' });
 

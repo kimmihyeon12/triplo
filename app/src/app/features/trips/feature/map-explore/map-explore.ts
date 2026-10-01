@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { ToastService } from '../../../../core/toast-service';
@@ -35,6 +35,10 @@ const EMPTY_MAP: DayMapModel = {
   unverifiedStayCount: 0,
   excludedCount: 0,
 };
+
+/** 평점 필터(2026-10-01 사용자 요청). 켜면 보이는 핀들의 평점을 한 번에 읽어 기준 미만·후기 없는 곳을 숨긴다. */
+const RATING_FILTERS = [3.5, 4, 4.5] as const;
+type RatingFilter = (typeof RATING_FILTERS)[number] | 0;
 
 /** 지도를 이만큼(범위 폭의 비율) 옮기면 '이 지역에서 다시 찾기'를 보인다. */
 const MOVED_RATIO = 0.2;
@@ -97,10 +101,27 @@ export class MapExplorePage {
     const zoom = Math.abs(now.east - now.west - (was.east - was.west));
     return dx > (was.east - was.west) * MOVED_RATIO || dy > (was.north - was.south) * MOVED_RATIO || zoom > (was.east - was.west) * 0.4;
   });
+  readonly ratingFilters = RATING_FILTERS;
+  readonly minRating = signal<RatingFilter>(0);
+  private readonly scoreOf = (id: string): number | null => {
+    const r = this.ratings()[id];
+    return r && r !== 'loading' ? r.score : null;
+  };
+  /** 평점 필터를 켰는데 아직 읽는 중인 곳이 있는지 */
+  readonly ratingsLoading = computed(
+    () => this.minRating() > 0 && this.results().some((p) => this.ratings()[p.id] === 'loading'),
+  );
   readonly pins = computed(() => {
     const t = this.trip();
-    return t ? toPins(t, this.results()) : [];
+    if (!t) return [];
+    const min = this.minRating();
+    const shown = min > 0 ? this.results().filter((p) => (this.scoreOf(p.id) ?? 0) >= min) : this.results();
+    return toPins(t, shown, this.scoreOf);
   });
+  /** 평점 필터로 남은 곳이 없을 때 */
+  readonly filteredEmpty = computed(
+    () => this.minRating() > 0 && !this.ratingsLoading() && this.results().length > 0 && this.pins().length === 0,
+  );
   readonly selectedId = signal<string | null>(null);
   readonly selected = computed(() => this.results().find((p) => p.id === this.selectedId()) ?? null);
   readonly selectedAdded = computed(() => {
@@ -136,6 +157,12 @@ export class MapExplorePage {
     });
     effect(() => {
       void this.store.open(this.id());
+    });
+    // 평점 필터를 켠 동안에는 새로 찾은 곳의 평점도 읽는다.
+    effect(() => {
+      if (this.minRating() === 0) return;
+      const missing = this.results().filter((p) => !(p.id in untracked(this.ratings)));
+      if (missing.length) void this.loadRatings(missing.map((p) => p.id));
     });
   }
 
@@ -194,6 +221,38 @@ export class MapExplorePage {
     void this.loadRating(id);
   }
 
+  pickRating(value: RatingFilter): void {
+    this.minRating.set(this.minRating() === value ? 0 : value);
+  }
+
+  /** 여러 곳의 평점을 한 번에 읽는다(서버가 최대 30곳을 묶어 읽는다). 읽지 못한 곳은 후기 없음으로 본다. */
+  private async loadRatings(ids: readonly string[]): Promise<void> {
+    const targets = ids
+      .map((id) => ({ id, url: this.results().find((p) => p.id === id)?.url?.replace(/^http:\/\//, 'https://') }))
+      .filter((t): t is { id: string; url: string } => !!t.url);
+    const none = ids.filter((id) => !targets.some((t) => t.id === id));
+    this.ratings.update((r) => ({
+      ...r,
+      ...Object.fromEntries(targets.map((t) => [t.id, 'loading' as const])),
+      ...Object.fromEntries(none.map((id) => [id, null])),
+    }));
+    let found: ({ rating: number; reviewCount: number } | null)[] = [];
+    try {
+      found = await this.links.ratings(targets.map((t) => t.url));
+    } catch {
+      found = [];
+    }
+    this.ratings.update((r) => ({
+      ...r,
+      ...Object.fromEntries(
+        targets.map((t, i) => {
+          const v = found[i];
+          return [t.id, v ? { score: v.rating, count: v.reviewCount } : null];
+        }),
+      ),
+    }));
+  }
+
   private async loadRating(id: string): Promise<void> {
     const place = this.results().find((p) => p.id === id);
     // 카카오 검색 결과의 장소 주소는 http로 온다. 서버 함수는 https만 받는다.
@@ -227,7 +286,10 @@ export class MapExplorePage {
     try {
       const date = this.targetDay() || null;
       const ok = await this.store.commit(addNearbyStop(trip, place, date));
-      if (ok) this.toast.success(date ? `${this.dayLabel(date).split(' · ')[0]}에 담았어요` : '날짜 미정으로 담았어요');
+      if (ok)
+        this.toast.success(
+          date ? `${this.dayLabel(date).split(' · ')[0]} 맨 아래 후보로 담았어요` : '날짜 미정 후보로 담았어요',
+        );
     } finally {
       this.saving.set(false);
     }

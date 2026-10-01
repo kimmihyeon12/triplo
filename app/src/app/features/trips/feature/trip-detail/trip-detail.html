@@ -499,9 +499,13 @@
                           }
                         </button>
                         <div
-                          class="item__main relative pr-16 in-[.item--excluded]:opacity-[0.5] flex flex-col gap-1 min-w-0"
+                          class="item__main relative pr-16 in-[.item--excluded]:[&>*:not([data-title])]:opacity-[0.5] flex flex-col gap-1 min-w-0"
                         >
-                          <div class="item__title flex items-center gap-1.5 text-15">
+                          <!-- 제외(후보)여도 지도 앱 아이콘은 흐리게 하지 않는다(2026-10-01 사용자 요청). -->
+                          <div
+                            class="item__title flex items-center gap-1.5 text-15 in-[.item--excluded]:[&>*:not([data-maps])]:opacity-[0.5]"
+                            data-title
+                          >
                             <strong
                               class="item__name in-[.notice]:font-bold min-w-0 truncate"
                               [title]="seg.stop.name"
@@ -526,7 +530,7 @@
                               끝까지 써서 오른쪽 끝이 어긋났다. 흐름에서 빼 오른쪽 위에 두고,
                               본문 묶음 전체에 같은 오른쪽 여백(pr-16)을 준다.
                             -->
-                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1">
+                            <span class="item__maps absolute right-0 -top-0.5 inline-flex gap-1" data-maps>
                               <app-map-links
                                 [name]="seg.stop.name"
                                 [naverHref]="naverUrl(seg.stop)"

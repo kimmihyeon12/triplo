@@ -182,6 +182,29 @@ describe('resolve-place 함수', () => {
     expect((await handler(request(`https://m.place.naver.com/place/${NAVER_ID}/home`))).status).toBe(404);
   });
 
+  it('평점은 여러 곳을 한 번에 읽고, 읽지 못한 곳은 null이다', async () => {
+    const other = '99999';
+    const { handler } = setup({
+      [`https://place-api.map.kakao.com/places/panel3/${KAKAO_ID}`]: page(JSON.stringify(KAKAO_JSON)),
+      [`https://place-api.map.kakao.com/places/panel3/${other}`]: { status: 500, location: null, body: '' },
+    });
+    const req = new Request('https://edge/resolve-place', {
+      method: 'POST',
+      headers: { authorization: 'Bearer good' },
+      body: JSON.stringify({ ratings: [`https://place.map.kakao.com/${KAKAO_ID}`, `https://place.map.kakao.com/${other}`] }),
+    });
+    expect(await (await handler(req)).json()).toEqual({ ratings: [{ rating: 4.4, reviewCount: 9 }, null] });
+  });
+
+  it('평점 묶음에 번호 없는 주소나 지도 밖 주소가 있으면 거절한다', async () => {
+    const { handler, fetchOnce } = setup({});
+    const req = (ratings: unknown[]) =>
+      new Request('https://edge/resolve-place', { method: 'POST', headers: { authorization: 'Bearer good' }, body: JSON.stringify({ ratings }) });
+    expect((await handler(req(['https://kko.to/abc']))).status).toBe(400);
+    expect((await handler(req(['https://example.com/1']))).status).toBe(400);
+    expect(fetchOnce).not.toHaveBeenCalled();
+  });
+
   it('지도 링크가 아니면 400, 로그인하지 않으면 401, 제공자 오류는 502', async () => {
     const { handler } = setup({});
     expect((await handler(request('https://example.com/x'))).status).toBe(400);

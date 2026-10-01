@@ -133,7 +133,8 @@ export class KakaoMapProvider implements MapProvider {
         pins = next.map((pin) => {
           const overlay = new maps.CustomOverlay({
             position: new maps.LatLng(pin.position.lat, pin.position.lng),
-            content: placePinElement(pin, pin.id === selectedId, (id) => options.onPlaceClick?.(id)),
+            content: placePinElement(pin, pin.id === selectedId, (id) => options.onPlaceClick?.(id)).root,
+            xAnchor: 0,
             yAnchor: 0.5,
             zIndex: pin.id === selectedId ? 4 : 0,
           });
