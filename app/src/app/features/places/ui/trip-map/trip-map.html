@@ -1,4 +1,4 @@
-<div class="wrap relative flex flex-col gap-2" data-testid="trip-map" [attr.data-state]="state()">
+<div class="wrap relative isolate flex flex-col gap-2" data-testid="trip-map" [attr.data-state]="state()">
   <div
     #container
     class="canvas w-full rounded-panel overflow-hidden bg-ground-2 shadow-panel h-(--map-height,180px) [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 [&.canvas--hidden]:invisible"

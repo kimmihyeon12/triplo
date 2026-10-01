@@ -14,7 +14,7 @@
     (boundsChange)="onBounds($event)"
   />
 
-  <div class="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 p-3">
+  <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
     @if (days().length > 1) {
       <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="날짜">
         @for (d of days(); track d; let i = $index) {
@@ -76,7 +76,7 @@
 
   @if (selected(); as p) {
     <section
-      class="absolute inset-x-0 bottom-0 mx-auto flex max-w-(--content-narrow) flex-col gap-3 rounded-t-panel border-t border-border bg-panel p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgb(22_24_29/0.12)]"
+      class="absolute inset-x-0 bottom-0 z-10 mx-auto flex max-w-(--content-narrow) flex-col gap-3 rounded-t-panel border-t border-border bg-panel p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgb(22_24_29/0.12)]"
       aria-label="고른 장소"
       data-testid="map-explore-sheet"
     >
