@@ -5,8 +5,11 @@ import {
   computed,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { safeNext } from '../../../../core/install-target';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -28,6 +31,7 @@ type Platform = 'android' | 'ios' | 'desktop';
   selector: 'app-install',
   templateUrl: './install.html',
   imports: [
+    RouterLink,
     UiButton,
     UiNotice,
     UiActionBar,
@@ -39,6 +43,9 @@ type Platform = 'android' | 'ios' | 'desktop';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Install {
+  /** 설치하지 않고 웹에서 계속할 때 돌아갈 곳(?next=, 초대 링크에서 왔을 때). 앱 안 주소만 받는다(2026-10-02). */
+  readonly next = input<string | undefined>();
+  readonly continueTo = computed(() => safeNext(this.next()));
   /** 브라우저가 설치 신호를 줬을 때만 담긴다. 없으면 수동 안내로 넘어간다. */
   private readonly promptEvent = signal<InstallPromptEvent | null>(null);
   readonly canPrompt = computed(() => this.promptEvent() !== null);

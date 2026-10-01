@@ -11,6 +11,9 @@
   "background_color": "#fbfbfa",
   "theme_color": "#ffffff",
   "categories": ["travel", "productivity"],
+  "related_applications": [
+    { "platform": "webapp", "url": "https://triplo.pages.dev/manifest.webmanifest" }
+  ],
   "icons": [
     {
       "src": "brand/triplo-app-icon.svg",

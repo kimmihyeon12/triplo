@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { ToastService } from '../../../../core/toast-service';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -17,6 +17,8 @@ import { itinerarySections, itineraryTicket } from '../../../trips/util/itinerar
 import { ItinerarySnapshot } from '../../../trips/ui/itinerary-snapshot/itinerary-snapshot';
 import { mobilePlatform } from '../../../../shared/util/map-app-link';
 import { formatCode } from '../../data/invite-code';
+import { kakaoExternalUrl } from '../../util/open-external';
+import { INSTALL_PATH, installUrl } from '../../../../core/install-target';
 import { TRIP_MEMBERS, type InvitePreview } from '../../data/trip-members-repository';
 import { tripFromPreview } from '../../util/preview-trip';
 
@@ -28,7 +30,7 @@ import { tripFromPreview } from '../../util/preview-trip';
 @Component({
   selector: 'app-join',
   templateUrl: './join.html',
-  imports: [UiButton, ItinerarySnapshot],
+  imports: [UiButton, ItinerarySnapshot, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Join {
@@ -56,6 +58,37 @@ export class Join {
     !(navigator as Navigator & { standalone?: boolean }).standalone &&
     !globalThis.matchMedia?.('(display-mode: standalone)').matches;
 
+  /**
+   * 카카오톡 안의 브라우저면 바깥으로 넘긴다(2026-10-02 사용자 요청). 안드로이드는 설치한 앱이 받아 초대장이 앱에서 열린다.
+   * 안드로이드 크롬에서 앱이 설치되지 않았으면 설치 안내로 보낸다. 한 번만 보내 웹으로 돌아와도 다시 끌려가지 않는다.
+   */
+  private leaveInAppBrowser(): void {
+    if (typeof window === 'undefined') return;
+    const key = 'tc.join.handoff';
+    let handed = false;
+    try {
+      handed = sessionStorage.getItem(key) === '1';
+      sessionStorage.setItem(key, '1');
+    } catch {
+      handed = false;
+    }
+    if (handed) return;
+    const external = kakaoExternalUrl(navigator.userAgent, location.href);
+    if (external) {
+      location.replace(external);
+      return;
+    }
+    const related = (navigator as Navigator & { getInstalledRelatedApps?: () => Promise<unknown[]> }).getInstalledRelatedApps;
+    const standalone = globalThis.matchMedia?.('(display-mode: standalone)').matches;
+    if (!related || standalone || mobilePlatform(navigator.userAgent, navigator.maxTouchPoints ?? 0) !== 'android') return;
+    void related
+      .call(navigator)
+      .then((apps) => {
+        if (!apps.length) void this.router.navigateByUrl(this.installLink());
+      })
+      .catch(() => undefined);
+  }
+
   async copyLink(): Promise<void> {
     try {
       await navigator.clipboard.writeText(location.href);
@@ -81,7 +114,13 @@ export class Join {
     return t ? itinerarySections(t) : [];
   });
 
+  /** 아이폰 Safari 안내의 '앱이 없어요' 갈래. 설치 안내로 가고, 설치하지 않으면 이 초대로 돌아온다. */
+  readonly installLink = computed(() => installUrl(this.path()));
+  readonly installPath = INSTALL_PATH;
+  readonly installQuery = computed(() => ({ next: this.path() }));
+
   constructor() {
+    this.leaveInAppBrowser();
     // 이 화면에는 로그인 가드가 없어 세션을 스스로 불러온다. 부르지 않으면
     // 로그인한 사람도 로그인 전으로 보여 [함께하기] 대신 로그인 버튼이 뜬다.
     void this.auth.initialize();

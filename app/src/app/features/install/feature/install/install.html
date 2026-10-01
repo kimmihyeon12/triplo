@@ -2,6 +2,15 @@
   class="mx-auto flex max-w-(--content-max) flex-col gap-5 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   data-testid="install-page"
 >
+  @if (continueTo(); as to) {
+    <!-- 초대 링크에서 설치 안내로 왔을 때. 설치하지 않아도 웹에서 그대로 함께할 수 있다(2026-10-02). -->
+    <a
+      class="self-center text-13 font-medium text-accent-deep underline-offset-2 hover:underline"
+      [routerLink]="to"
+      data-testid="install-continue-web"
+      >설치하지 않고 웹에서 계속하기</a
+    >
+  }
   <header class="flex flex-col gap-2 pt-4 text-center">
     <p class="text-13 font-semibold text-accent-deep">주머니 속 여행 비서</p>
     <h1 class="text-22 font-bold tracking-tight">{{ heading() }}</h1>
