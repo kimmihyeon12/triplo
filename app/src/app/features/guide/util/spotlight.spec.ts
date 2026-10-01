@@ -14,7 +14,7 @@ describe('사용법 설명 배치', () => {
 
   it('밝게 뚫는 자리는 요소보다 조금 넓다', () => {
     const { holes } = layoutSpots([spot(50, 100, 80, 30)], 360, 700);
-    expect(holes[0]).toEqual({ x: 50 - SPOT_PAD, y: 100 - SPOT_PAD, w: 80 + SPOT_PAD * 2, h: 30 + SPOT_PAD * 2 });
+    expect(holes[0]).toEqual({ x: 50 - SPOT_PAD, y: 100 - SPOT_PAD, w: 80 + SPOT_PAD * 2, h: 30 + SPOT_PAD * 2, r: 8 + SPOT_PAD });
   });
 
   it('나란한 두 요소의 설명은 서로 겹치지 않는다', () => {
@@ -46,13 +46,26 @@ describe('밝은 자리 사이 여백', () => {
   it('붙어 있는 두 버튼의 밝은 자리는 사이를 띄운다', () => {
     const { holes } = layoutSpots([spot(16, 60, 160, 44, '왼쪽'), spot(184, 60, 160, 44, '오른쪽')], 360, 700);
     const [a, b] = holes;
-    expect(b!.x - (a!.x + a!.w)).toBeGreaterThanOrEqual(6);
+    expect(b!.x - (a!.x + a!.w)).toBeGreaterThanOrEqual(4);
   });
 
   it('위아래로 붙은 두 요소도 사이를 띄운다', () => {
     const { holes } = layoutSpots([spot(16, 60, 328, 40, '위'), spot(16, 104, 328, 40, '아래')], 360, 700);
     const [a, b] = holes;
-    expect(b!.y - (a!.y + a!.h)).toBeGreaterThanOrEqual(6);
+    expect(b!.y - (a!.y + a!.h)).toBeGreaterThanOrEqual(4);
+  });
+
+  it('가까운 이웃이 있어도 네 방향 여백이 같아 요소가 정확히 가운데 온다', () => {
+    const left = spot(16, 60, 160, 44, '왼쪽');
+    const { holes } = layoutSpots([left, spot(184, 60, 160, 44, '오른쪽')], 360, 700);
+    const h = holes[0]!;
+    const pads = [left.x - h.x, left.y - h.y, h.x + h.w - (left.x + left.w), h.y + h.h - (left.y + left.h)];
+    expect(new Set(pads).size).toBe(1);
+  });
+
+  it('테두리 모서리는 요소의 둥글기에 여백을 더한다', () => {
+    const { holes } = layoutSpots([{ ...spot(50, 100, 80, 30), r: 12 }], 360, 700);
+    expect(holes[0]!.r).toBe(12 + SPOT_PAD);
   });
 });
 
