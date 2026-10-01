@@ -107,7 +107,16 @@ function guessSubject(text: string): string {
 /** 일정 초안. 장소 이름과 일차만 낸다. 좌표는 store가 장소 검색으로 채운다. */
 function draftReply(request: ChatRequest): ChatReply {
   const dayCount = request.trip?.dayCount ?? 2;
-  const places = DRAFT_PLACES.filter((p) => p.day <= Math.max(1, dayCount));
+  const named = DRAFT_PLACES.filter((p) => p.day <= Math.max(1, dayCount));
+  // 실제 모델처럼 후보를 받으면 같은 이름의 후보 번호와 이유로 답한다. 후보에 없는 이름은
+  // 번호 없이 남겨 앱이 버리는지 확인하게 한다.
+  const candidates = request.candidates ?? [];
+  const places = candidates.length
+    ? named.map((p) => {
+        const hit = candidates.find((c) => c.name === p.name);
+        return hit ? { ...p, ref: hit.id, why: `테스트용 추천 이유: ${hit.area || '근처'}에서 들르기 좋아요` } : p;
+      })
+    : named;
   return base({
     kind: 'draft',
     text:

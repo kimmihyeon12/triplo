@@ -1,3 +1,4 @@
+import type { WireCandidate } from '../../ai-planning/data/place-candidates';
 import { InjectionToken } from '@angular/core';
 import type { ChatReply, ChatScope } from '../model/chat';
 
@@ -29,6 +30,8 @@ export interface ChatRequest {
    * 좌표는 넘기지 않는다. 모델이 거리를 계산할 일이 없기 때문이다.
    */
   readonly trip: ChatTripContext | null;
+  /** 카카오 검색으로 모은 실제 장소 후보. 있으면 모델은 이 안에서 번호로만 고른다(2026-10-01). */
+  readonly candidates?: readonly WireCandidate[];
 }
 
 /** 모델에게 넘기는 여행 요약. 저장된 값 그대로이며 모델이 고치지 않는다. */

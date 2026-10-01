@@ -19,10 +19,12 @@ export class EdgeChatProvider implements ChatProvider {
     try {
       const {content,remaining} = await this.auth.callFunction<{content:string;remaining?:number}>('ai-chat',{
         input:request.input,scope:request.scope,history:request.history,trip:request.trip,
+        ...(request.candidates?.length ? {candidates:request.candidates} : {}),
       }, signal);
       signal.throwIfAborted();
       this.quota.record('chat',remaining);
-      return normalizeChatResponse(content);
+      // 앱도 같은 계약으로 다시 검사한다. 보낸 후보에 없는 번호는 여기서도 버린다.
+      return normalizeChatResponse(content, request.candidates ?? []);
     } catch (error) {
       if (signal.aborted) throw error;
       const limit = aiLimitMessage('chat',error);

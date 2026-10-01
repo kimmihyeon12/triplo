@@ -4,6 +4,15 @@ import { enumerateDays } from '../../../shared/util/dates';
 import { findRegionByName } from '../../../shared/util/korea-regions';
 import { PLACE_SEARCH } from '../../places/data/place-search';
 import { verifyPlaces } from '../../ai-planning/data/verify-places';
+import {
+  EMPTY_POOL,
+  chatQueries,
+  gatherCandidates,
+  type CandidatePool,
+  type CandidateQuery,
+} from '../../ai-planning/data/place-candidates';
+import { chatRegions } from '../util/chat-regions';
+import type { GeoPoint } from '../../places/model/place';
 import { newId } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
 import { LEDGER_REPOSITORY } from '../../expenses/data/ledger-repository';
@@ -165,8 +174,16 @@ export class TravelChatStore {
     this.running = controller;
     patchState(this.state, { pending: true });
     try {
+      // 실제 장소 후보를 먼저 모은다. 모델은 이 안에서 번호로만 고른다(2026-10-01).
+      // 찾을 지역이 없으면 기다리지 않고 바로 보낸다.
+      const search = this.candidateSearch(text);
+      const pool = search.queries.length
+        ? await gatherCandidates(this.placeSearch, search.queries, { exclude: search.exclude, max: 40 }).catch(() => EMPTY_POOL)
+        : EMPTY_POOL;
+      if (controller.signal.aborted) return;
       const reply = await this.provider.reply(
         {
+          ...(pool.wire.length ? { candidates: pool.wire } : {}),
           input: text,
           scope: this.scope(),
           history: this.recentTurns(),
@@ -176,7 +193,7 @@ export class TravelChatStore {
       );
       if (controller.signal.aborted) return;
       patchState(this.state, { turnsUsed: this.turnsUsed() + 1 });
-      await this.receive(reply);
+      await this.receive(reply, pool);
     } catch (error) {
       if (controller.signal.aborted) return;
       // 실패해도 주고받은 말은 지우지 않는다. 다시 물을 때 문맥이 남아야 한다.
@@ -280,8 +297,8 @@ export class TravelChatStore {
    * 확인 카드를 만든다. 모델이 낸 이름을 그대로 담으면 좌표 없는 항목이
    * 일정에 들어간다.
    */
-  private async receive(reply: ChatReply): Promise<void> {
-    const draft = await this.toDraft(reply);
+  private async receive(reply: ChatReply, pool: CandidatePool = EMPTY_POOL): Promise<void> {
+    const draft = await this.toDraft(reply, pool);
     if (reply.kind === 'draft' && !draft) {
       // 초안을 내겠다고 했는데 담을 수 있는 장소가 없는 경우다.
       patchState(this.state, {
@@ -309,13 +326,33 @@ export class TravelChatStore {
    * 새 장소는 카카오 장소 검색으로 대조해 좌표·주소·분류를 채운다. 일정 편집은
    * 저장된 값만 쓰므로 대조할 것이 없다.
    */
-  private async toDraft(reply: ChatReply): Promise<ChatDraft | null> {
+  private async toDraft(reply: ChatReply, pool: CandidatePool = EMPTY_POOL): Promise<ChatDraft | null> {
     if (reply.edit) return this.editToDraft(reply.edit);
     if (reply.places.length === 0) return null;
 
     const regions = reply.regions.length
       ? reply.regions
       : (this.trip()?.regions ?? []).map((r) => r.name);
+    // 후보 번호로 고른 답이면 후보(검색 결과)의 좌표·주소를 그대로 붙인다. 다시 찾지 않는다.
+    if (pool.wire.length) {
+      const places = reply.places.flatMap((p, i): ChatPlace[] => {
+        const hit = p.ref ? pool.byId.get(p.ref) : undefined;
+        if (!hit) return [];
+        const kind =
+          hit.kind === 'stay' ? 'place'
+          : hit.kind === 'place' && (p.kind === 'activity' || p.kind === 'shopping') ? p.kind
+          : hit.kind;
+        return [{
+          id: `ai-${i}`, day: p.day, order: i + 1, start: null, moveToNext: null,
+          name: hit.name, kind, verified: true, note: hit.category,
+          address: hit.roadAddress || hit.address,
+          location: { lat: hit.lat, lng: hit.lng },
+          placeRef: { provider: hit.provider, id: hit.id, url: hit.url },
+          ...(p.why ? { why: p.why } : {}),
+        }];
+      });
+      return places.length ? { action: 'append', regions, places } : null;
+    }
     // 챗봇은 숙소를 숙박으로 담지 않는다. 검색 분류가 숙박이면 예전처럼 관광으로 담는다.
     const verified = (await verifyPlaces(reply.places, regions, this.placeSearch)).map(
       (p): ChatPlace => ({ ...p, kind: p.kind === 'stay' ? 'place' : p.kind }),
@@ -383,6 +420,28 @@ export class TravelChatStore {
       .filter((m): m is ChatMessage & { role: 'user' | 'assistant' } => m.role !== 'system')
       .slice(-HISTORY_WINDOW)
       .map((m) => ({ role: m.role, text: m.text }));
+  }
+
+  /**
+   * 이번 질문으로 장소 후보를 모은다. 여행 상세면 그 여행의 지역, 전체 채팅이면 질문(없으면
+   * 최근 대화)에서 읽은 지역으로 찾는다. 질문이 'N일차'를 가리키면 그날 장소 근처에서 찾는다.
+   * 지역을 모르면 후보 없이 보낸다. 모델이 지역을 묻는다.
+   */
+  private candidateSearch(text: string): { queries: CandidateQuery[]; exclude: string[] } {
+    const trip = this.trip();
+    const regions = trip
+      ? trip.regions.map((r) => r.name)
+      : chatRegions(text).length
+        ? chatRegions(text)
+        : chatRegions(this.recentTurns().filter((t) => t.role === 'user').map((t) => t.text).join(' '));
+    let near: GeoPoint | null = null;
+    const dayMatch = /(\d+)\s*일차/.exec(text);
+    if (trip && dayMatch && trip.startDate && trip.endDate) {
+      const date = enumerateDays(trip.startDate, trip.endDate)[Number(dayMatch[1]) - 1];
+      near = trip.stops.find((s) => s.date === date && !s.excluded && s.location)?.location ?? null;
+    }
+    const exclude = trip ? trip.stops.map((s) => s.name) : [];
+    return { queries: chatQueries(regions, text, near), exclude };
   }
 
   /** 모델에게 넘길 여행 요약. 좌표는 넘기지 않는다. */

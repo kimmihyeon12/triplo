@@ -66,6 +66,8 @@ test('대화로 찾아 담으면 새 여행이 만들어진다', async ({ page }
   // 확인 카드는 담길 장소를 보여주고, 검색이 찾지 못한 이름은 들이지 않는다.
   await expect(page.getByTestId('confirm-after')).toContainText('안목해변');
   await expect(page.getByTestId('confirm-after')).not.toContainText('없는장소테스트');
+  // 후보로 고른 장소에는 추천 이유가 회색 한 줄로 붙는다.
+  await expect(page.getByTestId('confirm-why').first()).toContainText('테스트용 추천 이유');
 
   await page.getByTestId('confirm-apply').click();
   await expect(page.getByTestId('chat-assistant-message').filter({hasText: '여행에 담았어요'})).toBeVisible();

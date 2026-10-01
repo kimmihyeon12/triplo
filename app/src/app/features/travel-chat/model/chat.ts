@@ -48,7 +48,11 @@ export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule' | 'assign-
  * 일정에 담을 후보 장소. 모델은 이름과 일차만 내고, 나머지는 장소 검색으로
  * 대조한 결과다. `verified`가 거짓이면 좌표가 없어 담을 수 없다.
  */
-export type ChatPlace = Omit<VerifiedItem, 'kind'> & { readonly kind: StopKind };
+export type ChatPlace = Omit<VerifiedItem, 'kind'> & {
+  readonly kind: StopKind;
+  /** 모델이 붙인 추천 이유 한 줄. 확인 카드에 회색으로 보인다. AI 설명이며 사실 확인이 아니다. */
+  readonly why?: string;
+};
 
 /** 새 여행 또는 기존 여행에 장소를 더하는 초안. */
 export interface AppendDraft {
@@ -138,6 +142,10 @@ export interface ChatPlaceSuggestion {
   readonly day: number;
   readonly name: string;
   readonly kind: StopKind;
+  /** 앱이 보낸 장소 후보의 번호. 후보로 고른 답에만 있다. */
+  readonly ref?: string;
+  /** 추천 이유 한 줄. */
+  readonly why?: string;
 }
 
 /**
