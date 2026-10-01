@@ -85,13 +85,13 @@ test('공지사항을 열면 목록이 보이고 첫 글이 펼쳐진다', async
   await expect(page).toHaveURL(/\/account\/notices$/);
   const items = page.getByTestId('notice-list').locator('li');
   await expect(items).toHaveCount(3);
-  // 목록은 본문 앞부분만 미리 보이고, 누르면 상세에서 전부 읽는다.
-  await expect(items.first().getByTestId('notice-preview')).toContainText('버전인지 볼 수 있어요');
-  await items.first().locator('a').click();
-  await expect(page).toHaveURL(/\/account\/notices\/[^/]+$/);
-  await expect(page.getByTestId('notice-detail-body')).toContainText('버전인지 볼 수 있어요');
-  await page.locator('.topbar__back').click();
+  // 목록은 본문을 두 줄까지 미리 보이고, 누르면 화면을 옮기지 않고 그 자리에서 전부 펼친다.
+  const preview = items.first().getByTestId('notice-preview');
+  const closed = await preview.evaluate((el) => el.getBoundingClientRect().height);
+  await items.first().locator('summary').click();
   await expect(page).toHaveURL(/\/account\/notices$/);
+  await expect(items.first().locator('details')).toHaveAttribute('open', '');
+  await expect.poll(() => preview.evaluate((el) => el.getBoundingClientRect().height)).toBeGreaterThan(closed);
 
   // 목록을 열었으면 읽은 것으로 본다.
   await page.goto('/account');
@@ -154,10 +154,4 @@ test('개인정보 처리방침과 이용약관은 서로 다른 글을 보여�
 test('내 정보 화면 아래에 배포 버전이 보인다', async ({ page }) => {
   await page.goto('/account');
   await expect(page.getByTestId('app-version')).toContainText('버전');
-});
-
-test('없는 공지를 열면 알리고 공지사항 목록으로 돌아간다', async ({ page }) => {
-  await page.goto('/account/notices/missing');
-  await expect(page).toHaveURL(/\/account\/notices$/);
-  await expect(page.getByTestId('error-toast')).toContainText('이미 지워진 공지예요');
 });
