@@ -27,6 +27,9 @@ export interface LinkedPlace {
   category: string;
   /** 사용자가 다시 열어 볼 원본 주소 */
   url: string;
+  /** 그 제공자의 방문자 평점(5점 만점)과 후기 수. 없으면 null. 저장하지 않고 화면에만 보인다(2026-10-01) */
+  rating: number | null;
+  reviewCount: number | null;
 }
 
 /** 허용한 지도 링크면 제공자를 돌려준다. 호스트가 목록과 정확히 같아야 하고 https만 받는다. */
@@ -87,6 +90,10 @@ export function readNaverPlace(html: string, id: string): LinkedPlace | null {
     return raw === undefined ? '' : (JSON.parse(`"${raw}"`) as string).trim();
   };
   const coordinate = /"coordinate":\{[^}]*?"x":"(-?[\d.]+)","y":"(-?[\d.]+)"/.exec(chunk);
+  const num = (key: string) => {
+    const raw = new RegExp(`"${key}":(-?[\\d.]+)`).exec(chunk)?.[1];
+    return raw === undefined ? null : Number(raw);
+  };
   const name = text('name');
   const lng = Number(coordinate?.[1]);
   const lat = Number(coordinate?.[2]);
@@ -101,12 +108,15 @@ export function readNaverPlace(html: string, id: string): LinkedPlace | null {
     lng,
     category: text('category'),
     url: originalUrl('naver', id),
+    ...rated(num('visitorReviewsScore'), num('visitorReviewsTotal')),
   };
 }
 
 /** 카카오 장소 정보(JSON)의 summary에서 장소를 읽는다. 구조가 바뀌어 읽지 못하면 null이다. */
 export function readKakaoPlace(json: unknown, id: string): LinkedPlace | null {
   const summary = (json as { summary?: KakaoSummary } | null)?.summary;
+  const review = (json as { kakaomap_review?: { score_set?: { average_score?: number; review_count?: number } } } | null)
+    ?.kakaomap_review?.score_set;
   const name = typeof summary?.name === 'string' ? summary.name.trim() : '';
   const lat = Number(summary?.point?.lat);
   const lng = Number(summary?.point?.lon);
@@ -125,7 +135,17 @@ export function readKakaoPlace(json: unknown, id: string): LinkedPlace | null {
     lng,
     category: summary?.category?.name2 ?? summary?.category?.name ?? '',
     url: originalUrl('kakao', id),
+    ...rated(review?.average_score, review?.review_count),
   };
+}
+
+/** 후기가 없거나 값이 이상하면 평점을 보이지 않는다. */
+function rated(score: unknown, count: unknown): { rating: number | null; reviewCount: number | null } {
+  const rating = Number(score);
+  const reviewCount = Number(count);
+  if (!Number.isFinite(rating) || !Number.isFinite(reviewCount) || reviewCount <= 0 || rating <= 0 || rating > 5)
+    return { rating: null, reviewCount: null };
+  return { rating: Math.round(rating * 10) / 10, reviewCount: Math.round(reviewCount) };
 }
 
 interface KakaoSummary {
