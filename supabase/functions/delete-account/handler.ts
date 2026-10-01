@@ -1,6 +1,8 @@
 export interface AccountAdmin {
   getUser(token: string): Promise<{ id: string } | null>;
   deleteUser(id: string): Promise<void>;
+  /** 함께 쓰는 여행을 가장 먼저 합류한 멤버에게 넘긴다(2026-10-01). 계정을 지우기 전에 부른다. */
+  handOverTrips(id: string): Promise<void>;
 }
 
 /** Never take the deletion target from the request: verify the bearer with Auth. */
@@ -30,6 +32,8 @@ export function createDeleteAccountHandler(admin: AccountAdmin) {
       const body = await request.json().catch(() => null);
       if (body?.confirmation !== "DELETE")
         return reply(400, { error: "confirmation_required" });
+      // 넘기기에 실패하면 지우지 않는다. 지우면 친구의 일정·지출까지 함께 사라진다.
+      await admin.handOverTrips(user.id);
       await admin.deleteUser(user.id);
       return reply(200, { deleted: true });
     } catch {

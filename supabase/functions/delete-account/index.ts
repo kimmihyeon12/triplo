@@ -15,6 +15,10 @@ Deno.serve(
       const { data, error } = await admin.auth.getUser(token);
       return error ? null : data.user;
     },
+    async handOverTrips(id) {
+      const { error } = await admin.rpc("hand_over_trips", { p_user: id });
+      if (error) throw error;
+    },
     async deleteUser(id) {
       const { error } = await admin.auth.admin.deleteUser(id, false);
       if (error) throw error;
