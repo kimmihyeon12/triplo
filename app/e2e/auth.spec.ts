@@ -17,7 +17,7 @@ const user = {
   role: 'authenticated',
   email: 'tester@example.com',
   app_metadata: { provider: 'google' },
-  user_metadata: { travel_nickname: '여행테스터' },
+  user_metadata: { travel_nickname: '여행테스터', travel_guide_seen: true },
   created_at: '2026-09-14T00:00:00Z',
 };
 
@@ -135,6 +135,32 @@ for (const provider of ['google', 'kakao'])
     // 처음 가입한 사람은 구름이가 안내하는 사용법을 먼저 본다(2026-10-01).
     await expect(page).toHaveURL('http://localhost:4300/account/guide?first=1');
   });
+
+test('닉네임은 있지만 사용법을 본 적 없는 계정은 여행 목록 전에 사용법을 한 번 본다', async ({ page }) => {
+  // 기존 계정이나 다른 기기에서 닉네임을 정한 계정은 닉네임 화면을 거치지 않는다(2026-10-01 사용자 지적).
+  const unseen = { ...user, user_metadata: { travel_nickname: '여행테스터' } };
+  let savedSeen = false;
+  await page.route(`${authUrl}/auth/v1/**`, async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/authorize')) {
+      await route.fulfill({ status: 302, headers: { location: url.searchParams.get('redirect_to')! + '?code=old-code' } });
+    } else if (url.pathname.endsWith('/token')) {
+      await route.fulfill({ json: { ...sessionFor(unseen), expires_in: 3600 } });
+    } else if (url.pathname.endsWith('/user') && route.request().method() === 'PUT') {
+      expect(route.request().postDataJSON().data).toEqual({ travel_guide_seen: true });
+      savedSeen = true;
+      await route.fulfill({ json: { ...unseen, user_metadata: { ...unseen.user_metadata, travel_guide_seen: true } } });
+    } else if (url.pathname.endsWith('/user')) {
+      await route.fulfill({ json: unseen });
+    } else throw new Error(`Unexpected auth request: ${url.pathname}`);
+  });
+  await page.goto('/login');
+  await page.getByTestId('login-google').click();
+  await expect(page).toHaveURL('http://localhost:4300/account/guide?first=1');
+  await page.getByTestId('guide-skip').click();
+  await expect(page).toHaveURL('http://localhost:4300/trips');
+  expect(savedSeen).toBe(true);
+});
 
 test('인증 취소를 설명하고 URL의 오류 정보를 제거한 뒤 재시도 가능', async ({ page }) => {
   await page.goto('/auth/callback?error=access_denied&error_description=private-detail');

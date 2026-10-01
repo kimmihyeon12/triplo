@@ -16,6 +16,25 @@ export async function checkAuthentication(): Promise<boolean | UrlTree> {
   return auth.nickname() ? true : router.createUrlTree(['/onboarding']);
 }
 
+/** 같은 접속에서 사용법을 이미 띄웠는지. 본 표시 저장에 실패해도 다시 띄우지 않는다. */
+let guideOffered = false;
+
+/**
+ * 사용법을 아직 보지 않은 사람은 여행 목록 전에 한 번 본다(2026-10-01 사용자 지적).
+ * 닉네임을 이미 정한 계정(기존 계정, 다른 기기에서 가입)은 닉네임 화면을 거치지 않아 사용법을 못 봤다.
+ * 여행 목록(/trips)으로 들어올 때만 보낸다. 초대 링크·공유한 여행 주소로 바로 들어온 경우는 막지 않는다.
+ */
+export async function offerGuide(url: string): Promise<boolean | UrlTree> {
+  if (environment.designPreview || url !== '/trips') return true;
+  if (sessionStorage.getItem('tc.preview.v1') === '1') return true;
+  const auth = inject(AuthStore);
+  const router = inject(Router);
+  await auth.initialize();
+  if (!auth.user() || !auth.nickname() || auth.guideSeen() || guideOffered) return true;
+  guideOffered = true;
+  return router.createUrlTree(['/account/guide'], { queryParams: { first: 1 } });
+}
+
 async function needsNickname(): Promise<boolean | UrlTree> {
   if (environment.designPreview) return true;
   const auth = inject(AuthStore);

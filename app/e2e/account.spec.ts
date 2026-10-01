@@ -28,7 +28,7 @@ test('내 정보에서 닉네임을 그 자리에서 고친다', async ({ page }
       aud: 'authenticated',
       role: 'authenticated',
       app_metadata: { provider: 'google' },
-      user_metadata: { travel_nickname: '바다여행' },
+      user_metadata: { travel_nickname: '바다여행', travel_guide_seen: true },
     };
     await route.fulfill({ json: user });
   });
