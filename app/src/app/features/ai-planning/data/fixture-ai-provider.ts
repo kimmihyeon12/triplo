@@ -47,7 +47,15 @@ export class FixtureAiProvider implements AiPlanProvider {
     if (delay > 0) await waitOrAbort(delay, signal);
     if (localStorage.getItem(FAIL_FLAG) === '1')
       throw new Error('AI 서버에 연결하지 못했습니다.');
-    return FIXTURE_ITEMS.filter((item) => item.day <= request.dayCount);
+    const items = FIXTURE_ITEMS.filter((item) => item.day <= request.dayCount);
+    // 실제 모델처럼 후보를 받으면 같은 이름의 후보 번호로 답한다. 후보에 없는 이름은 번호 없이
+    // 남겨 앱이 버리는지 확인하게 한다('없는장소테스트').
+    const candidates = request.candidates ?? [];
+    if (!candidates.length) return items;
+    return items.map((item) => {
+      const hit = candidates.find((c) => c.name === item.name);
+      return hit ? { ...item, ref: hit.id } : item;
+    });
   }
 }
 

@@ -61,3 +61,44 @@ describe('ai-chat handler', () => {
     expect(callModel).not.toHaveBeenCalled();
   });
 });
+
+describe('ai-chat 실제 장소 후보', () => {
+  const candidates = [
+    { id: 'c1', name: '테라로사 커피공장', kind: 'break', category: '카페', area: '강릉시 구정면' },
+    { id: 'c2', name: '초당순두부마을', kind: 'meal', category: '음식점', area: '강릉시 초당동' },
+  ];
+  it('후보를 받으면 후보 전용 지시문으로 부르고, 답의 번호를 후보 이름으로 바꾼다', async () => {
+    const callModel = vi.fn(async () => JSON.stringify({ kind: 'draft', text: '카페 코스예요', regions: ['강릉'], places: [
+      { day: 1, ref: 'c1', name: '테라로사', kind: 'break', why: ' 바다 가는 길에 들르기 좋은 대형 로스터리 ' },
+      { day: 1, ref: 'c9', name: '없는곳', kind: 'break', why: '' },
+      { day: 1, name: '지어낸카페', kind: 'break', why: '' },
+    ] }));
+    const handler = createAiChatHandler({ getUser: async () => ({ id: 'u' }), callModel, ...quota() });
+    const result = await handler(post({ ...body, candidates }));
+    expect(result.status).toBe(200);
+    const reply = JSON.parse((await result.json()).content);
+    expect(reply.places).toEqual([{ day: 1, ref: 'c1', name: '테라로사 커피공장', kind: 'break', why: '바다 가는 길에 들르기 좋은 대형 로스터리' }]);
+    const prompt = callModel.mock.calls[0]![0];
+    expect(prompt.system).toContain('장소는 [후보]에서만 ref로 고른다');
+    expect(prompt.user).toContain('테라로사 커피공장');
+  });
+  it('후보에서 하나도 못 고른 초안은 추천 답으로 낮춘다', async () => {
+    const callModel = vi.fn(async () => JSON.stringify({ kind: 'draft', text: '여기 어때요', regions: [], places: [{ day: 1, name: '지어낸곳', kind: 'place' }] }));
+    const handler = createAiChatHandler({ getUser: async () => ({ id: 'u' }), callModel, ...quota() });
+    const reply = JSON.parse((await (await handler(post({ ...body, candidates }))).json()).content);
+    expect(reply.kind).toBe('explore');
+    expect(reply.places).toEqual([]);
+  });
+  it('후보가 없으면 예전처럼 이름을 받는다', async () => {
+    const callModel = vi.fn(async () => JSON.stringify({ kind: 'draft', text: '코스', regions: ['강릉'], places: [{ day: 1, name: '안목해변', kind: 'place' }] }));
+    const handler = createAiChatHandler({ getUser: async () => ({ id: 'u' }), callModel, ...quota() });
+    const reply = JSON.parse((await (await handler(post(body))).json()).content);
+    expect(reply.places).toEqual([{ day: 1, name: '안목해변', kind: 'place' }]);
+    expect(callModel.mock.calls[0]![0].system).not.toContain('장소는 [후보]에서만 ref로 고른다');
+  });
+  it('후보 모양이 틀리거나 40곳을 넘으면 거절한다', async () => {
+    const handler = createAiChatHandler({ getUser: async () => ({ id: 'u' }), callModel: vi.fn(async () => '{}'), ...quota() });
+    expect((await handler(post({ ...body, candidates: [{ ...candidates[0], id: 'zz' }] }))).status).toBe(400);
+    expect((await handler(post({ ...body, candidates: Array.from({ length: 41 }, (_, i) => ({ ...candidates[0], id: `c${i + 1}` })) }))).status).toBe(400);
+  });
+});

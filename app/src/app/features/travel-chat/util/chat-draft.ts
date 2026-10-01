@@ -27,6 +27,8 @@ export interface DraftRow {
   readonly added: boolean;
   /** 이번 변경으로 빠지는 줄. '전' 쪽에만 붙는다. */
   readonly removed: boolean;
+  /** 더하는 장소의 추천 이유 한 줄(AI 설명). */
+  readonly why?: string;
 }
 
 export interface DraftPreview {
@@ -221,7 +223,7 @@ function previewMove(
 
 function previewAppend(
   trip: Trip,
-  places: readonly { id: string; name: string; verified: boolean; day: number }[],
+  places: readonly { id: string; name: string; verified: boolean; day: number; why?: string }[],
 ): DraftPreview {
   // 확인되지 않은 이름은 좌표가 없어 지도에 올릴 수 없으므로 담지 않는다.
   const usable = places.filter((p) => p.verified);
@@ -232,7 +234,7 @@ function previewAppend(
     before: before.map((s) => row(s)),
     after: [
       ...before.map((s) => row(s)),
-      ...usable.map((p) => ({ id: p.id, name: p.name, added: true, removed: false })),
+      ...usable.map((p) => ({ id: p.id, name: p.name, added: true, removed: false, ...(p.why ? { why: p.why } : {}) })),
     ],
     // 더하는 일은 기존 순서를 건드리지 않으므로 거리 비교가 뜻을 갖지 않는다.
     distanceDeltaKm: null,

@@ -542,3 +542,47 @@ describe('TravelChatStore 호출 상한', () => {
     expect(store.messages()).toHaveLength(0);
   });
 });
+
+describe('실제 장소 후보로 답하기', () => {
+  it('질문의 지역·테마로 후보를 모아 보내고, 번호로 고른 곳만 이유와 함께 확인 카드에 올린다', async () => {
+    const searched: string[] = [];
+    const search: PlaceSearchProvider = {
+      availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
+      search: async (query: string) => {
+        searched.push(query);
+        if (query === '강릉시 카페')
+          return { candidates: [{ ...candidate('테라로사'), id: 'k1', category: '카페' }, { ...candidate('보헤미안'), id: 'k2', category: '카페' }], total: 2 };
+        return { candidates: [], total: 0 };
+      },
+    };
+    let sent: readonly { id: string; name: string }[] = [];
+    const chat = fakeChat({
+      reply: async (request) => {
+        sent = request.candidates ?? [];
+        return reply({ kind: 'draft', text: '카페 코스예요', places: [
+          { day: 1, name: '테라로사', kind: 'break', ref: sent.find((c) => c.name === '테라로사')!.id, why: '바다 가는 길' },
+          { day: 1, name: '지어낸카페', kind: 'break' },
+        ] });
+      },
+    });
+    const injector = Injector.create({
+      providers: [
+        { provide: CHAT_PROVIDER, useValue: chat },
+        { provide: PLACE_SEARCH, useValue: search },
+        { provide: CHAT_HISTORY, useValue: new LocalChatHistory(memoryStorage(), 'test.chat') },
+        TravelChatStore,
+        { provide: LEDGER_REPOSITORY, useValue: fakeLedger().repo },
+      ],
+    });
+    const store = runInInjectionContext(injector, () => injector.get(TravelChatStore));
+    store.open('list', null);
+    await store.send('강릉 카페 투어 하고 싶어');
+    expect(sent.map((c) => c.name)).toEqual(['테라로사', '보헤미안']);
+    const draft = store.messages().at(-1)!.draft!;
+    expect(draft.action).toBe('append');
+    const places = (draft as { places: { name: string; why?: string; verified: boolean; location: unknown }[] }).places;
+    expect(places.map((p) => [p.name, p.why, p.verified])).toEqual([['테라로사', '바다 가는 길', true]]);
+    // 고른 장소를 이름으로 다시 찾지 않는다.
+    expect(searched).toEqual(['강릉시 카페']);
+  });
+});

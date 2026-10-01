@@ -2,6 +2,8 @@ import type { PlaceCandidate, GeoPoint } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
 import type { PlanKind } from '../../trips/model/trip';
 import type { PACE, VerifiedItem } from '../model/ai-plan';
+import { haversineKm } from '../../trips/util/itinerary';
+import type { HeldCandidate } from './place-candidates';
 import { kindFromCategory, nameMatch, normalize } from './verify-places';
 
 /**
@@ -153,6 +155,8 @@ export async function fillDayMinimums(
   search: PlaceSearchProvider,
   /** 사용자가 적은 꼭 갈 장소와 추가 요청. 고른 식당과 아침 여부를 여기서 읽는다. */
   requestText = '',
+  /** 모델이 고르지 않고 남은 후보. 근처를 새로 검색하기 전에 이것부터 쓴다. */
+  spare: readonly HeldCandidate[] = [],
 ): Promise<FillResult> {
   const asked = normalize(requestText);
   const isPinned = (i: VerifiedItem) =>
@@ -172,12 +176,16 @@ export async function fillDayMinimums(
       const near = anchorFor(day, slot.start);
       const region = regions[Math.floor(((d - 1) * regions.length) / dayCount)] ?? '';
       const query = near ? slot.keyword : `${region} ${slot.keyword}`.trim();
-      let hit: PlaceCandidate | undefined;
-      try {
-        const { candidates } = await search.search(query, near ? { near, radius: NEAR_RADIUS, size: SEARCH_SIZE } : { size: SEARCH_SIZE });
-        hit = candidates.find((c) => fits(c, slot.kind) && !used(c));
-      } catch {
-        // 검색이 실패해도 나머지 자리는 계속 채운다.
+      let hit: PlaceCandidate | undefined = spare.find(
+        (c) => fits(c, slot.kind) && !used(c) && (!near || haversineKm(near, c) <= NEAR_RADIUS / 1000),
+      );
+      if (!hit) {
+        try {
+          const { candidates } = await search.search(query, near ? { near, radius: NEAR_RADIUS, size: SEARCH_SIZE } : { size: SEARCH_SIZE });
+          hit = candidates.find((c) => fits(c, slot.kind) && !used(c));
+        } catch {
+          // 검색이 실패해도 나머지 자리는 계속 채운다.
+        }
       }
       if (!hit) {
         missing.push({ day: d, slot: slot.slot });

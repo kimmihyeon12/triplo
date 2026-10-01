@@ -43,14 +43,20 @@
           @for (row of preview().after; track row.id; let i = $index) {
             <li class="flex items-baseline gap-1.5 text-13 leading-snug">
               <span class="w-3 flex-none text-12 tabular-nums text-ink-3">{{ i + 1 }}</span>
-              <span
-                class="min-w-0 flex-1 [overflow-wrap:anywhere]"
-                [class.truncate]="!preview().detailed"
-                [class.font-semibold]="row.added"
-                [class.text-accent-deep]="row.added"
-                [class.text-ink]="!row.added"
-                >{{ row.name }}</span
-              >
+              <span class="min-w-0 flex-1">
+                <span
+                  class="block [overflow-wrap:anywhere]"
+                  [class.truncate]="!preview().detailed"
+                  [class.font-semibold]="row.added"
+                  [class.text-accent-deep]="row.added"
+                  [class.text-ink]="!row.added"
+                  >{{ row.name }}</span
+                >
+                <!-- 추천 이유는 AI 설명이라 회색 한 줄로 낮춰 보인다 -->
+                @if (row.why) {
+                  <span class="mt-0.5 block text-12 font-normal leading-snug text-ink-3 [overflow-wrap:anywhere]" data-testid="confirm-why">{{ row.why }}</span>
+                }
+              </span>
             </li>
           }
         </ol>
@@ -62,7 +68,12 @@
       @for (row of preview().after; track row.id) {
         <li class="flex items-baseline gap-1.5 text-13 leading-snug">
           <app-icon class="flex-none text-accent" name="plus" [size]="12" />
-          <span class="min-w-0 flex-1 text-ink [overflow-wrap:anywhere]" [class.truncate]="!preview().detailed">{{ row.name }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-ink [overflow-wrap:anywhere]" [class.truncate]="!preview().detailed">{{ row.name }}</span>
+            @if (row.why) {
+              <span class="mt-0.5 block text-12 leading-snug text-ink-3 [overflow-wrap:anywhere]" data-testid="confirm-why">{{ row.why }}</span>
+            }
+          </span>
         </li>
       }
     </ol>

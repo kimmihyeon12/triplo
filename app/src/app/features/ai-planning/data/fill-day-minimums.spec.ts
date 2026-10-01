@@ -180,5 +180,19 @@ describe('하루 최소 구성 채우기', () => {
       expect(missing).toEqual([{ day: 1, slot: '아침' }]);
     });
   });
+
+  describe('남은 후보 먼저', () => {
+    it('근처 5km 안의 쓰지 않은 후보로 먼저 채우고 검색하지 않는다', async () => {
+      const { provider, calls } = fakeSearch({ 맛집: FOOD });
+      const spare = [
+        { ...candidate('far', '먼식당', '음식점'), lat: 38.5, lng: 128.9, kind: 'meal' as const },
+        { ...candidate('near', '가까운식당', '음식점'), lat: 37.701, lng: 128.801, kind: 'meal' as const },
+      ];
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00'), item(1, 'break', '15:00'), item(1, 'place', '16:00')];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '', spare);
+      expect(items.find((i) => i.start === '18:00')?.name).toBe('가까운식당');
+      expect(calls).toEqual([]);
+    });
+  });
 });
 

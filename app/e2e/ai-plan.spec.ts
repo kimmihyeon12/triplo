@@ -28,6 +28,9 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
   await page.getByTestId('ai-region-match-강릉시').click();
+  // 2일차 속초 시장이 요청 지역 안의 후보가 되게 속초도 고른다(후보 밖 장소는 버린다).
+  await page.getByTestId('ai-region-input').fill('속초');
+  await page.getByTestId('ai-region-match-속초시').click();
   await page.getByTestId('ai-start').fill('2026-10-01');
   await page.getByTestId('ai-end').fill('2026-10-02');
   await page.getByTestId('ai-next-1').click();
@@ -124,6 +127,9 @@ async function fillConditions(page: Page, start: string, end: string): Promise<v
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
   await page.getByTestId('ai-region-match-강릉시').click();
+  // 2일차 속초 시장이 요청 지역 안의 후보가 되게 속초도 고른다(후보 밖 장소는 버린다).
+  await page.getByTestId('ai-region-input').fill('속초');
+  await page.getByTestId('ai-region-match-속초시').click();
   await page.getByTestId('ai-start').fill(start);
   await page.getByTestId('ai-end').fill(end);
   await page.getByTestId('ai-next-1').click();
@@ -170,6 +176,9 @@ test('선택을 해제하면 그 장소만 빠지고 조건은 그대로 남는�
   await page.goto('/trips/ai');
   await page.getByTestId('ai-region-input').fill('강릉');
   await page.getByTestId('ai-region-match-강릉시').click();
+  // 2일차 속초 시장이 요청 지역 안의 후보가 되게 속초도 고른다(후보 밖 장소는 버린다).
+  await page.getByTestId('ai-region-input').fill('속초');
+  await page.getByTestId('ai-region-match-속초시').click();
   await page.getByTestId('ai-start').fill('2026-05-01');
   await page.getByTestId('ai-end').fill('2026-05-02');
   await page.getByTestId('ai-next-1').click();

@@ -192,3 +192,14 @@ describe('parseAiItems 휴무 정보', () => {
     ]);
   });
 });
+
+describe('parseAiItems 후보 번호', () => {
+  it('ref를 받고, 같은 후보를 두 번 받지 않는다', () => {
+    const items = parseAiItems(JSON.stringify({ items: [
+      { day: 1, ref: 'c1', name: '경포대', kind: '관광' },
+      { day: 1, ref: 'c1', name: '경포대 정자', kind: '관광' },
+      { day: 1, ref: 'x;1', name: '이상한곳', kind: '관광' },
+    ] }), 2);
+    expect(items.map((i) => i.ref)).toEqual(['c1', undefined]);
+  });
+});

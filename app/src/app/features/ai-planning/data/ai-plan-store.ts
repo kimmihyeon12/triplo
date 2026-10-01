@@ -8,6 +8,8 @@ import { type KoreaRegion, searchRegions } from '../../../shared/util/korea-regi
 import { PLACE_SEARCH } from '../../places/data/place-search';
 import { mustGoPlaces, verifyPlaces } from './verify-places';
 import { fillDayMinimums, type FillResult } from './fill-day-minimums';
+import { EMPTY_POOL, gatherCandidates, planQueries } from './place-candidates';
+import { groundItems } from './ground-items';
 import { noteSetsScope, noteSetsTime } from '../../../../../../supabase/functions/ai-plan/prompt';
 import {
   type Phase,
@@ -218,8 +220,17 @@ export class AiPlanStore {
     this.running = controller;
     patchState(this.state, { phase: 'generating', error: null });
     try {
+      // 실제 장소 후보를 먼저 모은다. 모델은 이 안에서 번호로만 고른다(2026-10-01).
+      // 검색이 모두 실패하면 빈 후보라 예전처럼 이름을 받아 대조한다.
+      const pool = await gatherCandidates(
+        this.placeSearch,
+        planQueries(this.regions(), { dayTrip: this.dayCount() === 1, taste: this.taste() }),
+        { exclude: [], max: 120 },
+      ).catch(() => EMPTY_POOL);
+      if (controller.signal.aborted) return;
       const generated = await this.provider.generate(
         {
+          ...(pool.wire.length ? { candidates: pool.wire } : {}),
           regions: this.regions(),
           dayCount: this.dayCount(),
           companion: this.companion(),
@@ -249,11 +260,11 @@ export class AiPlanStore {
         });
         return;
       }
-      // 장소 검색으로 위치를 확인한 것만 남긴다. 찾지 못한 이름은 좌표가 없어
-      // 지도에 올릴 수 없고, 사용자가 그 이름만 보고 판단하기도 어렵다.
-      const verified = (await verifyPlaces(items, this.regions(), this.placeSearch)).filter(
-        (i) => i.verified,
-      );
+      // 후보로 골랐으면 번호로 실제 장소에 붙인다. 후보가 없으면 이름을 검색으로 대조해
+      // 위치를 확인한 것만 남긴다. 찾지 못한 이름은 좌표가 없어 지도에 올릴 수 없다.
+      const verified = pool.wire.length
+        ? groundItems(items, pool)
+        : (await verifyPlaces(items, this.regions(), this.placeSearch)).filter((i) => i.verified);
       // 사용자가 적은 꼭 갈 장소는 모델이 빼먹어도 직접 찾아 넣는다.
       const picked = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
       // 확인에서 빠진 뒤에도 하루 식사 2곳·카페 1곳·관광(속도별)이 남게 근처 실제 장소로 채운다.
@@ -263,8 +274,9 @@ export class AiPlanStore {
       const { items: found, missing } = picked.length && !scoped
         ? await fillDayMinimums(
             picked, this.dayCount(), this.pace(), this.regions(), this.placeSearch,
-            `${this.mustGo()}
-${this.extraNote()}`,
+            [this.mustGo(), this.extraNote()].join('\n'),
+            // 모델이 고르지 않은 후보. 모자란 자리를 채울 때 검색보다 먼저 쓴다.
+            [...pool.byId.values()],
           )
         : { items: picked, missing: [] };
       if (controller.signal.aborted) return;

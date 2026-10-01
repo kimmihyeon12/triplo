@@ -69,6 +69,19 @@ export const FIXTURE_PLACES: PlaceCandidate[] = [
   },
 ];
 
+/** 분류 낱말 → 픽스처 장소의 분류. 실제 카카오 검색이 그 낱말로 돌려주는 종류에 맞춘다. */
+const CATEGORY_WORDS: Readonly<Record<string, readonly string[]>> = {
+  관광명소: ['관광명소', '문화유적'],
+  가볼만한곳: ['관광명소', '문화유적'],
+  야경: ['관광명소'],
+  시장: ['시장'],
+  호텔: ['숙박'],
+  펜션: ['숙박'],
+  맛집: ['음식점'],
+  카페: ['카페'],
+  체험: [],
+};
+
 @Injectable({ providedIn: 'root' })
 export class FixturePlaceSearch implements PlaceSearchProvider {
   /** 테스트에서 오류 상태를 재현할 때 true */
@@ -88,6 +101,20 @@ export class FixturePlaceSearch implements PlaceSearchProvider {
     // 실제 검색은 '강릉 안목해변'처럼 지역이 앞에 붙어도 찾는다. 검색어 전체로 먼저
     // 맞춰 보고, 없으면 마지막 낱말(장소 이름 자리)로 다시 찾는다.
     const words = q.split(/\s+/).filter(Boolean);
+    // '강릉 관광명소'처럼 지역 + 분류 낱말이면 실제 검색처럼 그 지역의 그 분류를 돌려준다.
+    // AI 일정·챗봇이 후보를 모으는 검색이다(2026-10-01).
+    // 이름이 맞는 곳이 있으면 그것이 먼저다('테스트 호텔').
+    const byName = FIXTURE_PLACES.filter(
+      (p) => p.name.includes(q) || p.address.includes(q) || p.roadAddress.includes(q),
+    );
+    const categories = CATEGORY_WORDS[words[words.length - 1] ?? ''];
+    if (!byName.length && categories) {
+      const region = words.length > 1 ? words[0]! : '';
+      const hit = FIXTURE_PLACES.filter(
+        (p) => categories.includes(p.category) && (!region || p.address.includes(region) || p.roadAddress.includes(region)),
+      );
+      return { candidates: hit, total: hit.length };
+    }
     const match = (needle: string) =>
       FIXTURE_PLACES.filter(
         (p) => p.name.includes(needle) || p.address.includes(needle) || p.roadAddress.includes(needle),

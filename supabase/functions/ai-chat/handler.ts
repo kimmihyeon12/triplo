@@ -1,5 +1,5 @@
-import { normalizeChatResponse } from './contract.ts';
-import { SYSTEM_PROMPT } from './prompt.ts';
+import { normalizeChatResponse, type ChatCandidate } from './contract.ts';
+import { GROUNDED_SYSTEM_PROMPT, SYSTEM_PROMPT } from './prompt.ts';
 import { UserLimitError } from '../_shared/quota.ts';
 
 export interface ChatDeps {
@@ -11,7 +11,10 @@ export interface ChatDeps {
   refundQuota(userId: string): Promise<void>;
 }
 
-function validate(value: unknown): object | null {
+/** 검사를 통과한 요청. 모델에는 이 모양 그대로 JSON으로 보낸다. */
+type ChatInput = Record<string, unknown> & {candidates?: ChatCandidate[]};
+
+function validate(value: unknown): ChatInput | null {
   if (!value || typeof value !== 'object') return null;
   const body = value as Record<string, unknown>;
   const boundedText = (v: unknown, max: number): v is string => typeof v === 'string' && !!v.trim() && v.length <= max;
@@ -32,7 +35,18 @@ function validate(value: unknown): object | null {
     }
     trip = {title:t.title, regions:t.regions, dayCount:t.dayCount, days, unassigned:t.unassigned};
   }
-  return {input:body.input,scope:body.scope,history,trip};
+  // 앱이 모은 장소 후보. 모양이 틀리거나 40곳을 넘으면 요청을 거절한다.
+  const candidates: ChatCandidate[] = [];
+  if (body.candidates !== undefined && body.candidates !== null) {
+    if (!Array.isArray(body.candidates) || body.candidates.length > 40) return null;
+    for (const c of body.candidates) {
+      if (!c || typeof c.id !== 'string' || !/^c\d{1,3}$/.test(c.id) || !boundedText(c.name,120)
+        || !['place','activity','meal','break','shopping','other','stay'].includes(c.kind)
+        || typeof c.category !== 'string' || c.category.length > 120 || typeof c.area !== 'string' || c.area.length > 60) return null;
+      candidates.push({id:c.id,name:c.name.trim(),kind:c.kind,category:c.category,area:c.area});
+    }
+  }
+  return {input:body.input,scope:body.scope,history,trip,...(candidates.length ? {candidates} : {})};
 }
 
 export function createAiChatHandler(deps: ChatDeps) {
@@ -48,14 +62,16 @@ export function createAiChatHandler(deps: ChatDeps) {
       if (!user) return reply(401,{error:'authentication_required'});
       const raw = await request.text();
       if (raw.length > 80000) return reply(400,{error:'invalid_request'});
-      let input: object | null;
+      let input: ChatInput | null;
       try { input = validate(JSON.parse(raw)); } catch { input = null; }
       if (!input) return reply(400,{error:'invalid_request'});
       // 검증을 통과한 질문만 센다. 모델이 실패하거나 쓸 수 없는 답을 주면 되돌린다.
       const remaining = await deps.consumeQuota(user.id);
       let result;
       try {
-        result = normalizeChatResponse(await deps.callModel({system:SYSTEM_PROMPT,user:JSON.stringify(input)}));
+        const candidates = input.candidates ?? [];
+        const system = candidates.length ? GROUNDED_SYSTEM_PROMPT : SYSTEM_PROMPT;
+        result = normalizeChatResponse(await deps.callModel({system,user:JSON.stringify(input)}), candidates);
       } catch (error) {
         await deps.refundQuota(user.id).catch(()=>{});
         throw error;
