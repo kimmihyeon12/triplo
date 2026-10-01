@@ -37,6 +37,8 @@ export class AuthStore {
   readonly googleEnabled = this.state.googleEnabled;
   readonly kakaoEnabled = this.state.kakaoEnabled;
   readonly nickname = computed(() => nicknameFrom(this.state.user()?.user_metadata));
+  /** 구름이가 안내하는 사용법을 본 적이 있는지. 계정 정보에 남겨 기기를 바꿔도 다시 뜨지 않는다. */
+  readonly guideSeen = computed(() => this.state.user()?.user_metadata?.['travel_guide_seen'] === true);
   readonly user = this.state.user;
   readonly error = this.state.error;
   readonly deletionEnabled = this.state.deletionEnabled;
@@ -293,6 +295,15 @@ export class AuthStore {
     return data as T;
   }
 
+  /** 탈퇴 확인 화면의 요약. 지울 여행(혼자 쓰는 것)과 넘길 여행(함께 쓰는 것)의 수. 읽지 못하면 null. */
+  async deletionSummary(): Promise<{ deleteTrips: number; handOverTrips: number } | null> {
+    if (!this.client || !this.state.user()) return null;
+    const { data, error } = await this.client.rpc('account_deletion_summary');
+    if (error || !data) return null;
+    const value = data as { deleteTrips?: unknown; handOverTrips?: unknown };
+    return { deleteTrips: Number(value.deleteTrips ?? 0), handOverTrips: Number(value.handOverTrips ?? 0) };
+  }
+
   async deleteAccount(confirmation: string): Promise<boolean> {
     if (
       !this.available() ||
@@ -309,7 +320,9 @@ export class AuthStore {
       });
       if (error || data?.deleted !== true) throw error ?? new Error('Deletion not confirmed');
       // The user no longer exists; clear this browser's session without touching device trips.
+      const userId = this.state.user()?.id ?? '';
       await this.client.auth.signOut({ scope: 'local' });
+      clearAccountDevice(userId);
       patchState(this.state, { user: null, deleted: true });
       return true;
     } catch {
@@ -319,6 +332,19 @@ export class AuthStore {
       return false;
     } finally {
       patchState(this.state, { busy: false, activity: null });
+    }
+  }
+
+  /**
+   * 사용법을 봤다고 남긴다. 실패해도 안내를 다시 강요하지 않는다(내 정보에서 언제든 다시 본다).
+   */
+  async markGuideSeen(): Promise<void> {
+    if (!this.client || !this.state.user() || this.guideSeen()) return;
+    try {
+      const { data, error } = await this.client.auth.updateUser({ data: { travel_guide_seen: true } });
+      if (!error && data.user) patchState(this.state, { user: data.user });
+    } catch {
+      // 남기지 못해도 화면은 넘어간다.
     }
   }
 
@@ -344,5 +370,19 @@ export class AuthStore {
     } finally {
       patchState(this.state, { busy: false, activity: null });
     }
+  }
+}
+
+/**
+ * 탈퇴한 계정의 기기 저장(대화·문의·알림 설정 등 계정별 열쇠)을 지운다(2026-10-01).
+ * 열쇠에 계정 id가 들어 있는 것만 지우고 다른 계정의 기록은 건드리지 않는다.
+ */
+function clearAccountDevice(userId: string): void {
+  if (!userId) return;
+  try {
+    const store = globalThis.localStorage;
+    for (const key of Object.keys(store)) if (key.includes(userId)) store.removeItem(key);
+  } catch {
+    // 저장소 접근이 막힌 브라우저에서도 탈퇴는 끝난다.
   }
 }

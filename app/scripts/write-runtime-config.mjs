@@ -46,7 +46,8 @@ await write(
     ? {
         url: supabaseUrl,
         publishableKey: supabaseKey,
-        accountDeletionEnabled: process.env['SUPABASE_DELETION_ENABLED'] === 'true',
+        // 2026-10-01 탈퇴 함수 배포 후 기본으로 켠다. 막아야 할 때만 'false'를 넣는다.
+        accountDeletionEnabled: process.env['SUPABASE_DELETION_ENABLED'] !== 'false',
       }
     : null,
 );

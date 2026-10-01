@@ -1,0 +1,70 @@
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  [attr.aria-busy]="busy()"
+>
+  @if (device(); as state) {
+    <div class="rounded-panel bg-panel shadow-panel">
+      <button
+        type="button"
+        class="flex min-h-14 w-full items-center gap-3 bg-transparent px-4 py-3 text-left text-14 disabled:cursor-default"
+        role="switch"
+        [attr.aria-checked]="state === 'on'"
+        [disabled]="busy() || (state !== 'on' && state !== 'off')"
+        (click)="toggleDevice()"
+        data-testid="push-device"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="bell" [size]="18" /></span>
+        <span class="min-w-0 flex-1">
+          <span class="block">이 기기에서 알림 받기</span>
+          <span class="mt-0.5 block text-12 text-ink-3">휴대폰·PC마다 따로 켜요</span>
+        </span>
+        <app-switch [checked]="state === 'on'" [disabled]="state !== 'on' && state !== 'off'" presentational />
+      </button>
+    </div>
+
+    <!-- 켤 수 없는 까닭은 회색 안내로 둔다. 앱이 다시 물을 수 없는 경우라 해결 방법을 함께 적는다. -->
+    @switch (state) {
+      @case ('denied') {
+        <p class="px-1 text-12 leading-relaxed text-ink-3" data-testid="push-denied">
+          브라우저에서 알림을 막아 두었어요. 브라우저 설정에서 이 사이트의 알림을 허용한 뒤 다시 켜 주세요.
+        </p>
+      }
+      @case ('install-required') {
+        <p class="px-1 text-12 leading-relaxed text-ink-3" data-testid="push-install">
+          아이폰·아이패드는 홈 화면에 설치한 앱에서만 알림을 받을 수 있어요.
+          <a class="font-semibold text-accent-deep" routerLink="/install">설치 방법 보기</a>
+        </p>
+      }
+      @case ('unsupported') {
+        <p class="px-1 text-12 leading-relaxed text-ink-3" data-testid="push-unsupported">
+          이 브라우저는 알림을 지원하지 않아요. 크롬이나 엣지에서 열어 주세요.
+        </p>
+      }
+    }
+
+    <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">받을 알림</p>
+    <div class="rounded-panel bg-panel shadow-panel">
+      @for (kind of kinds; track kind.key) {
+        <button
+          type="button"
+          class="flex min-h-14 w-full items-center gap-3 border-b border-border bg-transparent px-4 py-3 text-left text-14 last:border-b-0"
+          role="switch"
+          [attr.aria-checked]="settings()[kind.key]"
+          (click)="toggleKind(kind.key)"
+          [attr.data-testid]="'push-kind-' + kind.key"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="block">{{ kind.label }}</span>
+            <span class="mt-0.5 block text-12 text-ink-3">{{ kind.hint }}</span>
+          </span>
+          <app-switch [checked]="settings()[kind.key]" presentational />
+        </button>
+      }
+    </div>
+    <p class="px-1 text-12 leading-relaxed text-hint">잠금 화면에 보일 수 있어 장소·금액 같은 여행 내용은 알림에 적지 않아요.</p>
+  } @else {
+    <div class="flex justify-center py-16" role="status" aria-label="알림 설정 불러오는 중">
+      <app-spinner />
+    </div>
+  }
+</div>

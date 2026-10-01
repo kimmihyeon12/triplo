@@ -67,13 +67,11 @@ test('닉네임 편집을 취소하면 원래 이름이 남는다', async ({ pag
   await expect(page.getByTestId('login-account')).toContainText('여행테스터');
 });
 
-// 감리 P2-02: 알림 기능이 없는데 스위치가 켜고 꺼지고, 새로고침하면 다시 켜졌다.
-test('알림은 준비 중으로 꺼진 채 누를 수 없다', async ({ page }) => {
+test('알림 줄을 누르면 알림 설정 화면으로 간다', async ({ page }) => {
   await page.goto('/account');
-  const toggle = page.getByTestId('toggle-notifications');
-  await expect(toggle).toBeDisabled();
-  await expect(toggle).toHaveAttribute('aria-checked', 'false');
-  await expect(toggle).toContainText('준비 중');
+  await page.getByTestId('go-notifications').click();
+  await expect(page).toHaveURL(/\/account\/notifications$/);
+  await expect(page.getByTestId('push-device')).toBeVisible();
 });
 
 test('공지사항을 열면 목록이 보이고 첫 글이 펼쳐진다', async ({ page }) => {

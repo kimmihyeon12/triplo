@@ -3,8 +3,14 @@ import { createDeleteAccountHandler } from '../../../../../../supabase/functions
 
 function setup(valid = true) {
   const getUser = vi.fn(async (_token: string) => (valid ? { id: 'current-user' } : null));
-  const deleteUser = vi.fn(async (_id: string) => {});
-  return { getUser, deleteUser, handler: createDeleteAccountHandler({ getUser, deleteUser }) };
+  const order: string[] = [];
+  const deleteUser = vi.fn(async (_id: string) => {
+    order.push('delete');
+  });
+  const handOverTrips = vi.fn(async (_id: string) => {
+    order.push('handover');
+  });
+  return { getUser, deleteUser, handOverTrips, order, handler: createDeleteAccountHandler({ getUser, deleteUser, handOverTrips }) };
 }
 
 const request = (body: unknown = { confirmation: 'DELETE' }, token = 'valid-token') =>
@@ -41,5 +47,17 @@ describe('account deletion authorization', () => {
     const response = await handler(request());
     expect(response.status).toBe(500);
     expect(await response.text()).not.toContain('private database detail');
+  });
+  it('함께 쓰는 여행을 먼저 넘긴 뒤 계정을 지운다', async () => {
+    const { handler, handOverTrips, order } = setup();
+    expect((await handler(request())).status).toBe(200);
+    expect(handOverTrips).toHaveBeenCalledExactlyOnceWith('current-user');
+    expect(order).toEqual(['handover', 'delete']);
+  });
+  it('넘기기에 실패하면 계정을 지우지 않는다(친구의 여행이 함께 사라지지 않게)', async () => {
+    const { handler, handOverTrips, deleteUser } = setup();
+    handOverTrips.mockRejectedValueOnce(new Error('db'));
+    expect((await handler(request())).status).toBe(500);
+    expect(deleteUser).not.toHaveBeenCalled();
   });
 });
