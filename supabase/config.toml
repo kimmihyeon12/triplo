@@ -13,3 +13,7 @@ verify_jwt = true
 # 알림 발송. pg_cron이 비밀 헤더로 부르고, 앱은 공개키만 GET으로 받는다. 로그인 토큰을 쓰지 않는다.
 [functions.push-dispatch]
 verify_jwt = false
+
+# 지도 링크로 장소 담기. 로그인한 사람만 쓴다. 핸들러에서도 토큰을 다시 확인한다.
+[functions.resolve-place]
+verify_jwt = true
