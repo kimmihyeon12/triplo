@@ -25,7 +25,12 @@ export interface AiPlanInput {
  * 하루 코스의 기본 구성. 실제로 다닐 수 있는 양이어야 한다. 사용자는 코스에서 뺄 곳만 해제한다.
  * 관광은 2~3곳이라 문장에서 범위로 쓴다.
  */
-export const PER_DAY = { sight: 3, activityOrShopping: 1, meal: 2, cafe: 1, stay: 1 };
+export const PER_DAY = { meal: 2, cafe: 1, stay: 1 };
+/**
+ * 일정 밀도별 하루 관광 수. 쇼핑·액티비티도 관광으로 센다(2026-10-01 사용자 결정).
+ * 앱은 장소 확인 뒤 최소값(여유롭게 1·보통 2·알차게 3)이 남도록 근처에서 채운다.
+ */
+export const SIGHTS_BY_PACE: Record<string, string> = { 여유롭게: '1~2곳', 보통: '2~3곳', 알차게: '3~4곳' };
 
 /**
  * 모델이 '해변 산책' 같은 행위 설명을 이름 자리에 넣지 않도록 규칙과 예시를 함께 준다.
@@ -181,8 +186,8 @@ export function buildUserPrompt(r: AiPlanInput): string {
   if (!scoped)
     lines.push(
       '',
-      `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광 2~${PER_DAY.sight}곳,` +
-        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
+      `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광·액티비티·쇼핑을 합쳐 ${SIGHTS_BY_PACE[r.pace] ?? SIGHTS_BY_PACE['보통']},` +
+        ` 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
         (dayTrip ? '줘.' : `고 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`),
     );
   // 식사는 추가 요청과 상관없이 늘 넣는다. 카페 위주 요청에 점심·저녁이 사라진 적이 있다(2026-09-30).
