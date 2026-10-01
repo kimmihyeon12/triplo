@@ -8,6 +8,13 @@ const signedIn: CanActivateFn = () => {
   );
 };
 
+const guideFirst: CanActivateFn = (_route, state) => {
+  const injector = inject(EnvironmentInjector);
+  return import('./features/auth/auth.routes').then((m) =>
+    runInInjectionContext(injector, () => m.offerGuide(state.url.split('?')[0]!)),
+  );
+};
+
 export const routes: Routes = [
   {
     // 초대 링크. 로그인 전에도 보기 전용으로 열리므로 가드를 두지 않는다.
@@ -48,7 +55,7 @@ export const routes: Routes = [
   },
   {
     path: 'trips',
-    canActivate: [signedIn],
+    canActivate: [signedIn, guideFirst],
     canActivateChild: [signedIn],
     loadChildren: () => import('./features/trips/trips.routes').then((m) => m.TRIPS_ROUTES),
   },

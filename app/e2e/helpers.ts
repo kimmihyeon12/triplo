@@ -18,7 +18,7 @@ export async function resetApp(page: Page): Promise<void> {
       aud: 'authenticated',
       role: 'authenticated',
       app_metadata: { provider: 'google' },
-      user_metadata: { travel_nickname: '여행테스터' },
+      user_metadata: { travel_nickname: '여행테스터', travel_guide_seen: true },
     };
     const expires_at = Math.floor(Date.now() / 1000) + 3600;
     const access_token = `${btoa('{}')}.${btoa(JSON.stringify({ sub: user.id, exp: expires_at }))}.sig`;
