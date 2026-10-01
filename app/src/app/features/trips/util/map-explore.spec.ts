@@ -31,6 +31,8 @@ describe('큰 지도에서 담기', () => {
       location: { lat: 37.7905, lng: 128.9135 },
       placeRef: { provider: 'kakao', id: 'k1', url: 'https://place.map.kakao.com/k1' },
       locationStatus: 'verified',
+      // 일정 맨 아래 후보로 들어간다(2026-10-01 사용자 결정).
+      excluded: true,
     });
     expect(addNearbyStop(trip(), place({ nearby: 'cafe' }), null).stops.at(-1)!.kind).toBe('break');
     expect(addNearbyStop(trip(), place({ nearby: 'sight' }), null).stops.at(-1)!.kind).toBe('place');

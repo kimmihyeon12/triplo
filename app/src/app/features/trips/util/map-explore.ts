@@ -38,20 +38,29 @@ export function isInTrip(trip: Trip, place: NearbyPlace): boolean {
   );
 }
 
-export function toPins(trip: Trip, places: readonly NearbyPlace[]): PlacePin[] {
+export function toPins(
+  trip: Trip,
+  places: readonly NearbyPlace[],
+  ratingOf: (id: string) => number | null = () => null,
+): PlacePin[] {
   return places.map((p) => ({
     id: p.id,
     category: p.nearby,
     position: { lat: p.lat, lng: p.lng },
     title: p.name,
     added: isInTrip(trip, p),
+    rating: ratingOf(p.id),
   }));
 }
 
-/** 고른 장소를 그날 일정 끝에 더한 여행. 좌표·주소·출처는 검색 제공자의 값 그대로다. */
+/**
+ * 고른 장소를 그날 일정 맨 아래에 후보(일정에서 제외)로 더한 여행(2026-10-01 사용자 결정).
+ * 지도에서 여러 곳을 골라 두고 비교한 뒤 '일정에 되돌리기'로 넣는다. 후보는 방문 순서·지도 순번·예상 비용에 들지 않는다.
+ * 좌표·주소·출처는 검색 제공자의 값 그대로다.
+ */
 export function addNearbyStop(trip: Trip, place: NearbyPlace, date: IsoDate | null): Trip {
   const kind = place.nearby === 'stay' ? 'place' : NEARBY_KIND[place.nearby];
   const base = createStop({ kind, name: place.name, date });
   const stop = applyPlaceCandidate(base, place);
-  return appendStop(trip, { ...stop, regionId: regionIdForAddress(stop.address, trip.regions) });
+  return appendStop(trip, { ...stop, excluded: true, regionId: regionIdForAddress(stop.address, trip.regions) });
 }

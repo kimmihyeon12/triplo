@@ -26,6 +26,8 @@ export interface PlacePin {
   title: string;
   /** 이미 이 여행에 담은 곳이면 true(표시만 다르다) */
   added: boolean;
+  /** 읽어 둔 방문자 평점. 아직 모르거나 후기가 없으면 null */
+  rating: number | null;
 }
 
 export interface MapBounds {

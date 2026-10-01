@@ -54,11 +54,11 @@ export class FixtureMapProvider implements MapProvider {
       for (const pin of lastPins) {
         const { lat, lng } = pin.position;
         if (lat < view.south || lat > view.north || lng < view.west || lng > view.east) continue;
-        const btn = placePinElement(pin, pin.id === lastSelected, (id) => options.onPlaceClick?.(id));
-        btn.dataset['testid'] = 'map-place-' + pin.id;
-        btn.style.left = `${((lng - view.west) / (view.east - view.west)) * 100}%`;
-        btn.style.top = `${((view.north - lat) / (view.north - view.south)) * 100}%`;
-        pinLayer.appendChild(btn);
+        const { root, button } = placePinElement(pin, pin.id === lastSelected, (id) => options.onPlaceClick?.(id));
+        button.dataset['testid'] = 'map-place-' + pin.id;
+        root.style.left = `${((lng - view.west) / (view.east - view.west)) * 100}%`;
+        root.style.top = `${((view.north - lat) / (view.north - view.south)) * 100}%`;
+        pinLayer.appendChild(root);
       }
     };
     // 테스트가 지도를 '옮긴' 것처럼 범위를 바꾼다. 실제 지도의 idle 알림과 같은 흐름을 탄다.

@@ -1,12 +1,26 @@
 import { Injectable } from '@angular/core';
-import { linkErrorMessage, linkedToCandidate, type LinkedCandidate, type PlaceLinkResolver } from '../place-link-resolver';
+import {
+  linkErrorMessage,
+  linkedToCandidate,
+  type LinkedCandidate,
+  type PlaceLinkResolver,
+  type PlaceRating,
+} from '../place-link-resolver';
+
+/** 큰 지도 고정 목록(fixture-place-search의 NEARBY) 장소의 평점. 없는 곳은 후기 없음이다. */
+const NEARBY_RATINGS: Readonly<Record<string, PlaceRating>> = {
+  'n-grill': { rating: 4.4, reviewCount: 9 },
+  'n-tofu': { rating: 3.8, reviewCount: 12 },
+  'n-cafe': { rating: 4.6, reviewCount: 30 },
+  'n-anmok': { rating: 4.5, reviewCount: 120 },
+};
 
 /**
  * Playwright 테스트 앱 전용 고정 응답. 외부를 부르지 않는다.
  * - test-in-kakao: 고정 검색 목록에 있는 장소(안목해변) → 카카오 쪽 후보로 담긴다
  * - test-not-in-kakao: 검색 목록에 없는 장소 → 링크의 값(네이버)으로 담긴다(2026-10-01 실제 사례)
  * - test-broken: 장소를 읽지 못한 경우
- * - place.map.kakao.com/n-…: 큰 지도 핀의 평점(회센터만 있음)
+ * - place.map.kakao.com/n-…: 큰 지도 핀의 평점(NEARBY_RATINGS)
  */
 @Injectable({ providedIn: 'root' })
 export class FixturePlaceLinkResolver implements PlaceLinkResolver {
@@ -52,9 +66,14 @@ export class FixturePlaceLinkResolver implements PlaceLinkResolver {
         lng: 128.94,
         category: '',
         url,
-        rating: url.endsWith('/n-grill') ? 4.4 : null,
-        reviewCount: url.endsWith('/n-grill') ? 9 : null,
+        rating: NEARBY_RATINGS[url.split('/').pop()!]?.rating ?? null,
+        reviewCount: NEARBY_RATINGS[url.split('/').pop()!]?.reviewCount ?? null,
       });
     throw new Error(linkErrorMessage('place_not_found'));
+  }
+
+  async ratings(urls: readonly string[]): Promise<(PlaceRating | null)[]> {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return urls.map((u) => NEARBY_RATINGS[u.split('/').pop() ?? ''] ?? null);
   }
 }

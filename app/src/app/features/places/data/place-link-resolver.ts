@@ -9,8 +9,16 @@ import type { LinkedPlace } from '../model/place-link';
 /** 링크에서 읽은 장소. 평점·후기 수는 화면에만 보이고 저장하지 않는다. */
 export type LinkedCandidate = PlaceCandidate & { rating: number | null; reviewCount: number | null };
 
+/** 장소 한 곳의 방문자 평점(5점 만점)과 후기 수. */
+export interface PlaceRating {
+  rating: number;
+  reviewCount: number;
+}
+
 export interface PlaceLinkResolver {
   resolve(url: string): Promise<LinkedCandidate>;
+  /** 장소 주소(번호가 든 카카오·네이버 장소 주소)들의 평점을 한 번에 읽는다. 순서대로, 없으면 null. 최대 30곳 */
+  ratings(urls: readonly string[]): Promise<(PlaceRating | null)[]>;
 }
 
 export const PLACE_LINK_RESOLVER = new InjectionToken<PlaceLinkResolver>('PLACE_LINK_RESOLVER');
