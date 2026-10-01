@@ -12,7 +12,6 @@ import { UiField } from '../../../../shared/ui/field/field';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
-import { UiSwitch } from '../../../../shared/ui/switch/switch';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { avatarTone } from '../../../../shared/util/avatar-tone';
@@ -35,7 +34,6 @@ import { avatarTone } from '../../../../shared/util/avatar-tone';
     UiInput,
     UiNotice,
     UiSpinner,
-    UiSwitch,
     UiToast,
     IconComponent,
     RouterLink,
