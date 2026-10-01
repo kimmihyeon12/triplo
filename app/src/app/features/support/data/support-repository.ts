@@ -23,7 +23,8 @@ export interface SupportRepository {
   /** 답변이 달렸는데 아직 읽지 않은 문의 수. */
   unansweredReadCount(): Promise<number>;
   sendInquiry(kind: InquiryKind, body: string): Promise<Inquiry>;
-  markInquiryRead(id: string): Promise<void>;
+  /** seenAt: 화면에 보인 마지막 답변 시각. 그 뒤에 달린 답변은 새 답변으로 남는다. */
+  markInquiryRead(id: string, seenAt: string): Promise<void>;
 }
 
 export const SUPPORT_REPOSITORY = new InjectionToken<SupportRepository>('SUPPORT_REPOSITORY');

@@ -46,12 +46,14 @@ export function toNotice(row: NoticeRow): Notice {
   };
 }
 
-const byTime = (a: ReplyRow, b: ReplyRow) => a.created_at.localeCompare(b.created_at);
+/** 서버 시각 문자열은 소수 자릿수·시간대 표기가 달라질 수 있어 글자가 아닌 시각으로 비교한다. */
+const at = (iso: string) => Date.parse(iso);
+const byTime = (a: ReplyRow, b: ReplyRow) => at(a.created_at) - at(b.created_at);
 
 /** 마지막 답변이 사용자가 확인한 시각보다 나중이면 새 답변이다. 관리자가 다시 답하면 다시 새 답변이 된다. */
 export function hasNewAnswer(row: InquiryRow): boolean {
   const last = [...row.inquiry_replies].sort(byTime).at(-1);
-  return !!last && (!row.answer_read_at || last.created_at > row.answer_read_at);
+  return !!last && (!row.answer_read_at || at(last.created_at) > at(row.answer_read_at));
 }
 
 export function toInquiry(row: InquiryRow): Inquiry {

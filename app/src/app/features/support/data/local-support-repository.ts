@@ -113,9 +113,9 @@ export class LocalSupportRepository implements SupportRepository {
     return inquiry;
   }
 
-  async markInquiryRead(id: string): Promise<void> {
+  async markInquiryRead(id: string, seenAt: string): Promise<void> {
     const file = this.read();
-    const now = new Date().toISOString();
+    const now = seenAt;
     this.write({
       ...file,
       inquiries: file.inquiries.map((i) => (i.id === id ? { ...i, readAt: now } : i)),
