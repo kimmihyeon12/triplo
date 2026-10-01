@@ -125,6 +125,19 @@ export class TripMapComponent implements OnDestroy {
     }
   }
 
+  /** 큰 지도의 지도 조작(확대·축소·옮기기·내 위치). 지도가 아직 없으면 아무것도 하지 않는다. */
+  zoom(step: 1 | -1): void {
+    this.instance?.zoom(step);
+  }
+
+  moveTo(point: { lat: number; lng: number }): void {
+    this.instance?.moveTo(point);
+  }
+
+  showMyLocation(point: { lat: number; lng: number } | null): void {
+    this.instance?.showMyLocation(point);
+  }
+
   ngOnDestroy(): void {
     this.resize?.disconnect();
     this.instance?.destroy();

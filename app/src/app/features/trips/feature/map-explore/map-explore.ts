@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { ToastService } from '../../../../core/toast-service';
@@ -8,12 +9,13 @@ import { PLACE_LINK_RESOLVER } from '../../../places/data/place-link-resolver';
 import { IconComponent, type IconName } from '../../../../shared/ui/icon/icon';
 import { enumerateDays, formatKoreanDate } from '../../../../shared/util/dates';
 import type { DayMapModel, MapBounds, NearbyCategory } from '../../../places/model/map';
-import { NEARBY_PLACE_SEARCH, type NearbyPlace } from '../../../places/data/place-search';
+import { NEARBY_PLACE_SEARCH, PLACE_SEARCH, type NearbyPlace } from '../../../places/data/place-search';
+import type { PlaceCandidate } from '../../../places/model/place';
 import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { TripEditorStore } from '../../data/trip-editor-store';
 import type { IsoDate, Trip } from '../../model/trip';
 import { buildDayMap } from '../../util/map-markers';
-import { addNearbyStop, isInTrip, toPins } from '../../util/map-explore';
+import { addNearbyStop, isInTrip, nearbyFromCategory, toPins } from '../../util/map-explore';
 
 const CATEGORIES: readonly { id: NearbyCategory; label: string; icon: IconName }[] = [
   { id: 'meal', label: '맛집', icon: 'meal' },
@@ -50,7 +52,7 @@ const MOVED_RATIO = 0.2;
  */
 @Component({
   selector: 'app-map-explore',
-  imports: [TripMapComponent, UiButton, UiInput, IconComponent],
+  imports: [TripMapComponent, UiButton, UiInput, IconComponent, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map-explore.html',
 })
@@ -61,6 +63,15 @@ export class MapExplorePage {
   private readonly toast = inject(ToastService);
   private readonly pageBar = inject(PageBar);
   private readonly links = inject(PLACE_LINK_RESOLVER);
+  private readonly places = inject(PLACE_SEARCH);
+  private readonly map = viewChild(TripMapComponent);
+
+  /** 장소·동네 이름으로 찾기(2026-10-02 사용자 요청). 고르면 그 자리로 옮기고 정보판을 연다. */
+  readonly query = signal('');
+  readonly searchResults = signal<readonly PlaceCandidate[] | null>(null);
+  readonly searchingPlace = signal(false);
+  /** 내 위치를 찾는 중 */
+  readonly locating = signal(false);
 
   readonly id = input.required<string>();
   /** 여행 상세에서 보던 날(?day=) */
@@ -115,7 +126,8 @@ export class MapExplorePage {
     const t = this.trip();
     if (!t) return [];
     const min = this.minRating();
-    const shown = min > 0 ? this.results().filter((p) => (this.scoreOf(p.id) ?? 0) >= min) : this.results();
+    // 고른 곳(검색으로 고른 곳 포함)은 평점 필터와 상관없이 보인다.
+    const shown = min > 0 ? this.results().filter((p) => (this.scoreOf(p.id) ?? 0) >= min || p.id === this.selectedId()) : this.results();
     return toPins(t, shown, this.scoreOf);
   });
   /** 평점 필터로 남은 곳이 없을 때 */
@@ -213,6 +225,65 @@ export class MapExplorePage {
     } finally {
       this.searching.set(false);
     }
+  }
+
+  zoom(step: 1 | -1): void {
+    this.map()?.zoom(step);
+  }
+
+  /** 내 위치로 옮긴다. 누를 때만 위치 권한을 묻는다. */
+  locate(): void {
+    if (!('geolocation' in navigator) || this.locating()) {
+      if (!('geolocation' in navigator)) this.toast.error('이 기기에서는 현재 위치를 쓸 수 없어요.');
+      return;
+    }
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.locating.set(false);
+        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        this.map()?.showMyLocation(point);
+        this.map()?.moveTo(point);
+      },
+      () => {
+        this.locating.set(false);
+        this.toast.error('현재 위치를 확인하지 못했어요. 위치 권한을 켰는지 확인해 주세요.');
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+    );
+  }
+
+  /** 이름으로 찾는다. 지금 보는 지도 가운데 가까운 곳을 먼저 보인다. */
+  async searchPlace(event?: Event): Promise<void> {
+    event?.preventDefault();
+    const q = this.query().trim();
+    if (!q || this.searchingPlace()) return;
+    const v = this.view();
+    const near = v ? { lat: (v.south + v.north) / 2, lng: (v.west + v.east) / 2 } : null;
+    this.searchingPlace.set(true);
+    try {
+      const found = await this.places.search(q, { near, size: 8 });
+      this.searchResults.set(found.candidates.slice(0, 8));
+    } catch {
+      this.searchResults.set([]);
+      this.toast.error('장소를 찾지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      this.searchingPlace.set(false);
+    }
+  }
+
+  clearSearch(): void {
+    this.query.set('');
+    this.searchResults.set(null);
+  }
+
+  /** 찾은 곳으로 옮기고, 그곳을 핀으로 올려 정보판을 연다. 분류는 카카오 분류 이름으로 정한다. */
+  pickSearch(candidate: PlaceCandidate): void {
+    const place: NearbyPlace = { ...candidate, nearby: nearbyFromCategory(candidate.category) };
+    this.results.update((list) => [place, ...list.filter((p) => p.id !== place.id)]);
+    this.searchResults.set(null);
+    this.map()?.moveTo({ lat: place.lat, lng: place.lng });
+    this.select(place.id);
   }
 
   select(id: string): void {

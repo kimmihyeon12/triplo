@@ -17,6 +17,14 @@ export const NEARBY_KIND: Readonly<Record<Exclude<NearbyCategory, 'stay'>, StopK
   sight: 'place',
 };
 
+/** 이름으로 찾은 장소의 분류 버튼을 카카오 분류 이름으로 정한다(큰 지도 장소 검색). */
+export function nearbyFromCategory(category: string): NearbyCategory {
+  if (/음식점|식당|맛집/.test(category)) return 'meal';
+  if (/카페|디저트/.test(category)) return 'cafe';
+  if (/숙박|호텔|펜션|게스트하우스|모텔|리조트/.test(category)) return 'stay';
+  return 'sight';
+}
+
 /** 같은 장소로 보는 거리(m). 같은 출처 번호가 없을 때만 쓴다. */
 const SAME_METERS = 40;
 
