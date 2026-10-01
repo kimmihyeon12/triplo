@@ -8,6 +8,7 @@
     [model]="dayMap()"
     [bare]="true"
     [fitOnChange]="false"
+    [fitKey]="selectedDay()"
     [places]="pins()"
     [selectedPlaceId]="selectedId()"
     (placeSelect)="select($event)"
@@ -113,14 +114,13 @@
             appInput
             id="map-explore-day"
             class="select min-w-0 flex-1"
-            [value]="targetDay()"
             (change)="targetDay.set($any($event.target).value)"
             data-testid="map-explore-day"
           >
             @for (d of days(); track d) {
-              <option [value]="d">{{ dayLabel(d) }}</option>
+              <option [value]="d" [selected]="d === targetDay()">{{ dayLabel(d) }}</option>
             }
-            <option value="">날짜 미정</option>
+            <option value="" [selected]="targetDay() === ''">날짜 미정</option>
           </select>
           <button
             appButton

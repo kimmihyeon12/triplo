@@ -67,7 +67,8 @@
       </div>
     }
     @case ('ready') {
-      @if (model().markers.length === 0) {
+      <!-- 큰 지도는 일정이 없는 날에도 주변 장소를 골라야 하므로 덮개를 두지 않는다(2026-10-01). -->
+      @if (model().markers.length === 0 && !bare()) {
         <div
           class="overlay overlay--notice [.wrap[data-state='error']_&]:[outline:1px_solid_var(--color-danger-ink)] [.wrap[data-state='error']_&]:-outline-offset-1 absolute flex flex-col items-center justify-center gap-1 text-center rounded-panel inset-[0_0_auto_0] h-(--map-height,180px) p-4 bg-ground-2 bg-panel-2 text-ink"
           data-testid="map-empty"
