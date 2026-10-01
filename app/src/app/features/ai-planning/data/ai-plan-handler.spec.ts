@@ -249,6 +249,13 @@ describe('AI 코스 프롬프트', () => {
       expect(user).toContain('식사 2곳');
     }
   });
+  it('고른 식당은 식사 한 자리를 대신하고, 아침은 요청했을 때만 넣으라고 한다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post({ ...BODY, extraNote: '아침도 먹고 싶어' }));
+    const user = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0].user as string;
+    expect(user).toContain('사용자가 이름을 적은 식당은 점심이나 저녁 한 자리를 대신한다');
+    expect(user).toContain('아침을 요청했으면 아침(8~9시) 식사도 넣는다');
+  });
   it('추가 요청이 범위를 정하면 기본 구성을 넣지 않는다', async () => {
     const { handler, callModel } = setup();
     await handler(post({ ...BODY, extraNote: '맛집만 5곳' }));

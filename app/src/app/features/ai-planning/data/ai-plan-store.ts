@@ -257,7 +257,11 @@ export class AiPlanStore {
       const picked = [...verified, ...(await mustGoPlaces(this.mustGo(), verified, this.placeSearch))];
       // 확인에서 빠진 뒤에도 하루 식사 2곳·카페 1곳·관광(속도별)이 남게 근처 실제 장소로 채운다.
       const { items: found, missing } = picked.length
-        ? await fillDayMinimums(picked, this.dayCount(), this.pace(), this.regions(), this.placeSearch)
+        ? await fillDayMinimums(
+            picked, this.dayCount(), this.pace(), this.regions(), this.placeSearch,
+            `${this.mustGo()}
+${this.extraNote()}`,
+          )
         : { items: picked, missing: [] };
       if (controller.signal.aborted) return;
       if (!found.length) {

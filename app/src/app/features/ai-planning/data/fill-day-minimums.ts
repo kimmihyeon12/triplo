@@ -2,7 +2,7 @@ import type { PlaceCandidate, GeoPoint } from '../../places/model/place';
 import type { PlaceSearchProvider } from '../../places/data/place-search';
 import type { PlanKind } from '../../trips/model/trip';
 import type { PACE, VerifiedItem } from '../model/ai-plan';
-import { kindFromCategory, nameMatch } from './verify-places';
+import { kindFromCategory, nameMatch, normalize } from './verify-places';
 
 /**
  * 장소 확인을 거친 뒤에도 하루에 이만큼은 남게 한다(2026-10-01 사용자 결정).
@@ -17,7 +17,7 @@ export const DAY_MINIMUM: Record<Pace, { sights: number; cafe: number; meals: nu
   알차게: { sights: 3, cafe: 1, meals: 2 },
 };
 
-export type MissingSlot = '점심' | '저녁' | '카페' | '관광';
+export type MissingSlot = '아침' | '점심' | '저녁' | '카페' | '관광';
 
 export interface FillResult {
   readonly items: VerifiedItem[];
@@ -41,25 +41,38 @@ interface Slot {
 /** 'HH:mm'을 분으로. 없으면 null. */
 const minutes = (t: string | null) => (t ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)) : null);
 
-/** 그날 모자란 자리를 시각 순서로 고른다. */
-function slotsFor(day: readonly VerifiedItem[], pace: string): Slot[] {
+type MealSlot = 'breakfast' | 'lunch' | 'dinner';
+
+/** 식사 시각으로 자리를 가른다. 10:30 전은 아침, 15시 전은 점심, 그 뒤는 저녁. 시각이 없으면 점심으로 본다. */
+function mealSlotOf(start: string | null): MealSlot {
+  const at = minutes(start);
+  if (at === null) return 'lunch';
+  if (at < 10 * 60 + 30) return 'breakfast';
+  return at < 15 * 60 ? 'lunch' : 'dinner';
+}
+
+const MEAL_TIME: Record<MealSlot, string> = { breakfast: '08:30', lunch: '12:00', dinner: '18:00' };
+
+/** 추가 요청에 아침을 먹겠다는 말이 있는지. */
+export const wantsBreakfast = (text: string) => /아침|조식|브런치/.test(text);
+
+/** 그날 모자란 자리를 시각 순서로 고른다. 점심·저녁은 늘, 아침은 요청했을 때만 채운다. */
+function slotsFor(day: readonly VerifiedItem[], pace: string, breakfast: boolean): Slot[] {
   // 모르는 값이면 보통으로 본다.
   const need = DAY_MINIMUM[pace as Pace] ?? DAY_MINIMUM['보통'];
   const slots: Slot[] = [];
-  const meals = day.filter((i) => i.kind === 'meal');
-  if (meals.length < need.meals) {
-    // 시각이 없는 식사는 점심으로 본다. 15시 전이면 점심, 그 뒤면 저녁이다.
-    const hasLunch = meals.some((m) => (minutes(m.start) ?? 0) < 15 * 60);
-    const hasDinner = meals.some((m) => (minutes(m.start) ?? 0) >= 16 * 60);
-    if (!hasLunch) slots.push({ slot: '점심', kind: 'meal', start: '12:00', keyword: '맛집' });
-    if (!hasDinner && meals.length + slots.length < need.meals)
-      slots.push({ slot: '저녁', kind: 'meal', start: '18:00', keyword: '맛집' });
-  }
+  const taken = new Set(day.filter((i) => i.kind === 'meal').map((m) => mealSlotOf(m.start)));
+  if (breakfast && !taken.has('breakfast'))
+    slots.push({ slot: '아침', kind: 'meal', start: MEAL_TIME.breakfast, keyword: '아침 맛집' });
+  if (need.meals >= 1 && !taken.has('lunch'))
+    slots.push({ slot: '점심', kind: 'meal', start: MEAL_TIME.lunch, keyword: '맛집' });
+  if (need.meals >= 2 && !taken.has('dinner'))
+    slots.push({ slot: '저녁', kind: 'meal', start: MEAL_TIME.dinner, keyword: '맛집' });
   if (day.filter((i) => i.kind === 'break').length < need.cafe)
     slots.push({ slot: '카페', kind: 'break', start: '15:00', keyword: '카페' });
   const sights = day.filter((i) => SIGHT_KINDS.includes(i.kind)).length;
-  const taken = new Set(day.map((i) => i.start));
-  const times = SIGHT_TIMES.filter((t) => !taken.has(t));
+  const busy = new Set(day.map((i) => i.start));
+  const times = SIGHT_TIMES.filter((t) => !busy.has(t));
   for (let n = sights; n < need.sights; n++)
     slots.push({ slot: '관광', kind: 'place', start: times.shift() ?? '17:30', keyword: '관광명소' });
   return slots.sort((a, b) => minutes(a.start)! - minutes(b.start)!);
@@ -95,21 +108,65 @@ function insertByTime(day: VerifiedItem[], added: VerifiedItem): VerifiedItem[] 
   return sorted.map((i, n) => ({ ...i, order: n + 1 }));
 }
 
+/** 순서대로 다시 매긴다. 뺀 자리 앞 항목의 이동 정보는 더 맞지 않으므로 지운다. */
+function withoutItem(day: VerifiedItem[], id: string): VerifiedItem[] {
+  const sorted = [...day].sort((a, b) => a.order - b.order);
+  const index = sorted.findIndex((i) => i.id === id);
+  if (index < 0) return sorted;
+  if (index > 0) sorted[index - 1] = { ...sorted[index - 1]!, moveToNext: null };
+  sorted.splice(index, 1);
+  return sorted.map((i, n) => ({ ...i, order: n + 1 }));
+}
+
+/**
+ * 사용자가 고른 식당(꼭 갈 장소, 추가 요청에 이름을 쓴 곳)은 식사 한 자리를 대신한다
+ * (2026-10-01 사용자 결정). 시각이 없으면 비어 있는 점심·저녁 자리에, 다 찼으면 점심에
+ * 넣는다. 그 자리에 있던 AI 식당은 뺀다.
+ */
+function pinMeals(day: VerifiedItem[], isPinned: (i: VerifiedItem) => boolean): VerifiedItem[] {
+  let next = [...day];
+  for (const pin of day.filter((i) => i.kind === 'meal' && isPinned(i))) {
+    let placed = next.find((i) => i.id === pin.id)!;
+    if (placed.start === null) {
+      const meals = next.filter((i) => i.kind === 'meal' && i.id !== pin.id && i.start !== null);
+      const pinnedSlots = new Set(meals.filter(isPinned).map((m) => mealSlotOf(m.start)));
+      const usedSlots = new Set(meals.map((m) => mealSlotOf(m.start)));
+      const slot =
+        (['lunch', 'dinner'] as const).find((s) => !usedSlots.has(s)) ??
+        (['lunch', 'dinner'] as const).find((s) => !pinnedSlots.has(s)) ??
+        'lunch';
+      placed = { ...placed, start: MEAL_TIME[slot] };
+      next = insertByTime(withoutItem(next, pin.id), placed);
+    }
+    const slot = mealSlotOf(placed.start);
+    for (const other of next.filter((i) => i.kind === 'meal' && !isPinned(i) && i.start !== null && mealSlotOf(i.start) === slot))
+      next = withoutItem(next, other.id);
+  }
+  return next;
+}
+
 export async function fillDayMinimums(
   items: readonly VerifiedItem[],
   dayCount: number,
   pace: string,
   regions: readonly string[],
   search: PlaceSearchProvider,
+  /** 사용자가 적은 꼭 갈 장소와 추가 요청. 고른 식당과 아침 여부를 여기서 읽는다. */
+  requestText = '',
 ): Promise<FillResult> {
+  const asked = normalize(requestText);
+  const isPinned = (i: VerifiedItem) =>
+    i.id.startsWith('must-') || (normalize(i.name).length >= 2 && asked.includes(normalize(i.name)));
+  const breakfast = wantsBreakfast(requestText);
   const all: VerifiedItem[] = [...items];
   const missing: FillResult['missing'] = [];
   const used = (hit: PlaceCandidate) =>
     all.some((i) => i.placeRef?.id === hit.id || nameMatch(i.name, hit.name) !== null);
 
   for (let d = 1; d <= dayCount; d++) {
-    let day = all.filter((i) => i.day === d);
-    for (const slot of slotsFor(day, pace)) {
+    let day = pinMeals(all.filter((i) => i.day === d), isPinned);
+    all.splice(0, all.length, ...all.filter((i) => i.day !== d), ...day);
+    for (const slot of slotsFor(day, pace, breakfast)) {
       // 그날 장소가 하나도 없으면 그날의 지역 이름으로 찾는다. 지역은 고른 순서대로 날을
       // 나눠 돈다고 본다. 다른 날 좌표를 쓰면 다른 지역 근처를 찾을 수 있다.
       const near = anchorFor(day, slot.start);

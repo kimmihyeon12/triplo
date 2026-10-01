@@ -23,7 +23,7 @@ export type { VerifiedItem };
 const CANDIDATE_SIZE = 5;
 
 /** 이름 비교에 쓰는 형태로 다듬는다. 띄어쓰기·괄호·점 같은 표기 차이를 지운다. */
-function normalize(name: string): string {
+export function normalize(name: string): string {
   return name.replace(/[\s()[\]{}·.,-]/g, '').toLowerCase();
 }
 

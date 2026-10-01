@@ -24,7 +24,9 @@ function fakeSearch(byWord: Record<string, PlaceCandidate[]>) {
 }
 
 let seq = 0;
-function item(day: number, kind: VerifiedItem['kind'], start: string | null, name = `장소${++seq}`): VerifiedItem {
+function item(day: number, kind: VerifiedItem['kind'], start: string | null, name?: string): VerifiedItem {
+  seq++;
+  name ??= `장소${seq}`;
   return {
     id: `ai-${seq}`, day, name, kind, order: seq, start, moveToNext: { minutes: 10, mode: 'walk' } as never,
     verified: true, note: '', address: '주소', location: { lat: 37.7, lng: 128.8 },
@@ -117,4 +119,66 @@ describe('하루 최소 구성 채우기', () => {
     expect(items).toHaveLength(2);
     expect(missing.map((m) => m.slot)).toEqual(['점심', '카페', '저녁']);
   });
+
+  describe('사용자가 고른 식당은 식사 한 자리를 대신한다', () => {
+    it('추가 요청에 이름을 쓴 식당이 점심이면 AI 점심을 뺀다', async () => {
+      const { provider } = fakeSearch({});
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00', 'AI점심'), item(1, 'meal', '12:30', '초당순두부마을'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), item(1, 'meal', '18:00', 'AI저녁')];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '점심은 초당순두부마을에서 먹고 싶어');
+      expect(items.filter((i) => i.kind === 'meal').map((i) => i.name)).toEqual(['초당순두부마을', 'AI저녁']);
+    });
+
+    it('꼭 갈 식당은 시각이 없으면 비어 있는 식사 자리에 들어간다', async () => {
+      const { provider, calls } = fakeSearch({ 맛집: FOOD });
+      const must: VerifiedItem = { ...item(1, 'meal', null, '신가회전훠궈'), id: 'must-0' };
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00', 'AI점심'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), must];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '신가회전훠궈');
+      const one = items.filter((i) => i.day === 1).sort((a, b) => a.order - b.order);
+      expect(one.filter((i) => i.kind === 'meal').map((i) => [i.name, i.start])).toEqual([['AI점심', '12:00'], ['신가회전훠궈', '18:00']]);
+      expect(one.map((i) => i.start)).toEqual(['10:00', '12:00', '15:00', '16:00', '18:00']);
+      // 저녁 자리를 차지했으니 더 찾지 않는다.
+      expect(calls.filter((c) => c.query.includes('맛집'))).toEqual([]);
+    });
+
+    it('식사 자리가 다 찼으면 꼭 갈 식당이 점심을 대신한다', async () => {
+      const { provider } = fakeSearch({});
+      const must: VerifiedItem = { ...item(1, 'meal', null, '신가회전훠궈'), id: 'must-0' };
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00', 'AI점심'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), item(1, 'meal', '18:00', 'AI저녁'), must];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '신가회전훠궈');
+      expect(items.filter((i) => i.kind === 'meal').map((i) => [i.name, i.start])).toEqual([['신가회전훠궈', '12:00'], ['AI저녁', '18:00']]);
+    });
+
+    it('식당이 아닌 꼭 갈 곳은 식사 자리를 건드리지 않는다', async () => {
+      const { provider } = fakeSearch({});
+      const must: VerifiedItem = { ...item(1, 'place', null, '경포대'), id: 'must-0' };
+      const day = [item(1, 'meal', '12:00', 'AI점심'), item(1, 'break', '15:00'), item(1, 'meal', '18:00', 'AI저녁'), item(1, 'place', '10:00'), must];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '경포대');
+      expect(items.filter((i) => i.kind === 'meal').map((i) => i.name)).toEqual(['AI점심', 'AI저녁']);
+    });
+  });
+
+  describe('아침', () => {
+    it('추가 요청에 아침이 있으면 아침 자리도 채운다', async () => {
+      const { provider } = fakeSearch({ 맛집: FOOD });
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), item(1, 'meal', '18:00')];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider, '아침도 먹고 싶어요');
+      const one = items.filter((i) => i.day === 1).sort((a, b) => a.order - b.order);
+      expect(one[0]).toMatchObject({ kind: 'meal', start: '08:30' });
+      expect(one.filter((i) => i.kind === 'meal')).toHaveLength(3);
+    });
+
+    it('요청이 없어도 AI가 넣은 아침은 남기고, 점심으로 세지 않는다', async () => {
+      const { provider } = fakeSearch({ 맛집: FOOD });
+      const day = [item(1, 'meal', '08:00', 'AI아침'), item(1, 'place', '10:00'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), item(1, 'meal', '18:00', 'AI저녁')];
+      const { items } = await fillDayMinimums(day, 1, '보통', ['강릉'], provider);
+      expect(items.filter((i) => i.kind === 'meal').map((i) => i.start).sort()).toEqual(['08:00', '12:00', '18:00']);
+    });
+
+    it('아침 식당을 못 찾으면 아침 자리로 알린다', async () => {
+      const day = [item(1, 'place', '10:00'), item(1, 'meal', '12:00'), item(1, 'break', '15:00'), item(1, 'place', '16:00'), item(1, 'meal', '18:00')];
+      const { missing } = await fillDayMinimums(day, 1, '보통', ['강릉'], fakeSearch({}).provider, '조식 포함');
+      expect(missing).toEqual([{ day: 1, slot: '아침' }]);
+    });
+  });
 });
+
