@@ -102,3 +102,16 @@ describe('ai-chat 실제 장소 후보', () => {
     expect((await handler(post({ ...body, candidates: Array.from({ length: 41 }, (_, i) => ({ ...candidates[0], id: `c${i + 1}` })) }))).status).toBe(400);
   });
 });
+
+describe('ai-chat 지시문 규칙(2026-10-01)', () => {
+  it('두 지시문 모두 기간이 정해지면 날마다 채우고, 배치했다고 말하지 않게 한다', async () => {
+    for (const extra of [{}, { candidates: [{ id: 'c1', name: '경포대', kind: 'place', category: '관광명소', area: '강릉시' }] }]) {
+      const callModel = vi.fn(async () => JSON.stringify({ kind: 'explore', text: '좋아요' }));
+      const handler = createAiChatHandler({ getUser: async () => ({ id: 'u' }), callModel, ...quota() });
+      await handler(post({ ...body, ...extra }));
+      const system = callModel.mock.calls[0]![0].system as string;
+      expect(system).toContain('1일차부터 마지막 날까지 날마다');
+      expect(system).toContain('배치했다·구성했다고 말하지 않는다');
+    }
+  });
+});
