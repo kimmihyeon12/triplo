@@ -1,30 +1,36 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
+import { NavigationHistory } from '../../../../core/navigation-history';
 import { PageBar } from '../../../../core/page-bar';
+import { ToastService } from '../../../../core/toast-service';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
-import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiCheckbox } from '../../../../shared/ui/checkbox/checkbox';
+import { UiField } from '../../../../shared/ui/field/field';
+import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
-import type { NoticeStatus } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied, isAdminMissing } from '../../data/admin-support';
 import { NOTICE_BODY_MAX, NOTICE_TITLE_MAX } from '../../model/admin-support';
 import { adminExit } from '../admin-exit';
-import { noticeFormError } from '../../util/admin-form';
+import { noticeBodyError, noticeFormError, noticeTitleError } from '../../util/admin-form';
 
 /**
- * 공지 작성·수정. 저장하면 초안으로 남고, 발행해야 사용자에게 보인다.
- * 삭제는 한 번 더 확인한다. 권한이 사라지면 내 정보로 보낸다.
+ * 공지 작성·수정. 앱의 다른 편집 폼처럼 저장하면 목록으로 돌아가고, 기록에서
+ * 폼 자리를 지워 뒤로 가도 폼이 다시 나오지 않는다. 발행 여부는 체크박스로 정해
+ * 저장할 때 함께 반영한다(고친 내용이 저장되지 않은 채 발행되는 일이 없다).
+ * 삭제는 맨 아래에서 한 번 더 확인한다.
  */
 @Component({
   selector: 'app-admin-notice-form',
-  imports: [UiActionBar, UiBadge, UiButton, UiInput, UiNotice],
+  imports: [RouterLink, UiActionBar, UiButton, UiCheckbox, UiField, IconComponent, UiInput, UiNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-notice-form.html',
 })
 export class AdminNoticeForm {
   private readonly support = inject(AdminSupport);
-  private readonly router = inject(Router);
+  private readonly history = inject(NavigationHistory);
+  private readonly toast = inject(ToastService);
   private readonly exit = adminExit();
 
   /** 라우트의 :id. 새 공지면 없다. */
@@ -34,17 +40,18 @@ export class AdminNoticeForm {
 
   readonly title = signal('');
   readonly body = signal('');
-  /** 서버에 저장된 제목·본문. 다르면 발행을 잠근다(저장하지 않은 수정이 발행되는 줄 오해하지 않게). */
-  private readonly savedTitle = signal('');
-  private readonly savedBody = signal('');
-  readonly dirty = computed(() => this.title() !== this.savedTitle() || this.body() !== this.savedBody());
-  readonly status = signal<NoticeStatus>('draft');
+  readonly published = signal(false);
+  /** 서버에 있는 발행 상태. 저장할 때 바뀌었으면 발행 함수를 부른다. */
+  private readonly wasPublished = signal(false);
+  readonly titleTouched = signal(false);
+  readonly bodyTouched = signal(false);
   readonly busy = signal(false);
-  readonly saved = signal(false);
   readonly confirmDelete = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly formError = computed(() => noticeFormError(this.title(), this.body()));
+  readonly titleError = computed(() => (this.titleTouched() ? noticeTitleError(this.title()) : null));
+  readonly bodyError = computed(() => (this.bodyTouched() ? noticeBodyError(this.body()) : null));
+  readonly canSave = computed(() => !this.busy() && !noticeFormError(this.title(), this.body()));
   readonly isNew = computed(() => !this.id());
 
   constructor() {
@@ -64,48 +71,38 @@ export class AdminNoticeForm {
       }
       this.title.set(notice.title);
       this.body.set(notice.body);
-      this.savedTitle.set(notice.title);
-      this.savedBody.set(notice.body);
-      this.status.set(notice.status);
+      this.published.set(notice.status === 'published');
+      this.wasPublished.set(notice.status === 'published');
     });
   }
 
   async save(event: Event): Promise<void> {
     event.preventDefault();
-    if (this.formError() || this.busy()) return;
+    this.titleTouched.set(true);
+    this.bodyTouched.set(true);
+    if (!this.canSave()) return;
     await this.run(async () => {
       const id = await this.support.saveNotice(this.id() ?? null, this.title(), this.body());
-      this.savedTitle.set(this.title());
-      this.savedBody.set(this.body());
-      this.saved.set(true);
-      if (this.isNew()) await this.router.navigate(['/admin/notices', id], { replaceUrl: true });
-    });
-  }
-
-  async togglePublished(): Promise<void> {
-    const id = this.id();
-    if (!id || this.busy()) return;
-    await this.run(async () => {
-      const publish = this.status() !== 'published';
-      await this.support.setPublished(id, publish);
-      this.status.set(publish ? 'published' : 'draft');
+      const publish = this.published();
+      if (publish !== this.wasPublished()) await this.support.setPublished(id, publish);
+      this.toast.success(
+        publish === this.wasPublished() ? '저장했어요.' : publish ? '발행했어요.' : '발행을 취소했어요.',
+      );
+      this.history.leave(['/admin/notices']);
     });
   }
 
   async remove(): Promise<void> {
     const id = this.id();
     if (!id || this.busy()) return;
-    if (!this.confirmDelete()) {
-      this.confirmDelete.set(true);
-      return;
-    }
     await this.run(async () => {
       await this.support.deleteNotice(id);
-      await this.router.navigateByUrl('/admin/notices', { replaceUrl: true });
+      this.toast.success('공지를 지웠어요.');
+      this.history.leave(['/admin/notices']);
     });
   }
 
-  /** 호출 하나를 감싼다. 권한이 사라지면 내 정보로, 그 밖의 오류는 화면에 보인다. */
+  /** 호출 하나를 감싼다. 권한이 사라지면 내 정보로, 지워진 공지면 목록으로, 그 밖의 오류는 화면에 보인다. */
   private async run(work: () => Promise<void>): Promise<void> {
     this.busy.set(true);
     this.error.set(null);

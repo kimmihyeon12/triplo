@@ -8,75 +8,72 @@
   }
 
   @if (inquiry(); as q) {
-    <section class="rounded-panel bg-panel p-4 shadow-panel" aria-label="문의 내용">
-      <p class="flex flex-wrap items-center gap-1.5 text-12 text-ink-3">
+    <section class="panel rounded-panel bg-panel p-4 shadow-panel" aria-label="문의 내용">
+      <div class="flex items-center gap-2">
         <span appBadge [tone]="tone(q.status)" data-testid="admin-inquiry-status">{{ statusLabel[q.status] }}</span>
-        <span>{{ kindLabel[q.kind] }}</span>
-        <span aria-hidden="true">·</span>
-        <span>{{ q.senderNickname || '이름 없음' }}</span>
-        <span aria-hidden="true">·</span>
-        <span>{{ time(q.createdAt) }}</span>
-      </p>
-      <p class="mt-3 whitespace-pre-wrap text-14 leading-relaxed wrap-anywhere" data-testid="admin-inquiry-body">{{ q.body }}</p>
-      <p class="mt-3 text-12 leading-relaxed text-ink-3 wrap-anywhere" data-testid="admin-inquiry-device">
-        앱 {{ q.appVersion || '미상' }} · {{ q.userAgent || '기기 정보 없음' }}
-      </p>
-      <div class="mt-3 flex flex-wrap gap-2">
+        <span class="flex-1"></span>
+        <!-- 상태 표시는 보조 동작이라 작은 글자 버튼으로 둔다 -->
         @if (q.status === 'open') {
-          <button appButton type="button" class="btn" [disabled]="busy()" (click)="setStatus('reading')" data-testid="admin-inquiry-reading">
-            확인 중으로 표시
+          <button appButton type="button" variant="ghost" class="btn btn--sm flex-none" [disabled]="busy()" (click)="setStatus('reading')" data-testid="admin-inquiry-reading">
+            확인 중으로
           </button>
-        }
-        @if (q.status === 'reading') {
-          <button appButton type="button" class="btn" [disabled]="busy()" (click)="setStatus('open')" data-testid="admin-inquiry-reopen">
-            접수됨으로 되돌리기
+        } @else if (q.status === 'reading') {
+          <button appButton type="button" variant="ghost" class="btn btn--sm flex-none" [disabled]="busy()" (click)="setStatus('open')" data-testid="admin-inquiry-reopen">
+            접수됨으로
           </button>
         }
       </div>
+      <p class="mt-2 text-12 text-ink-3">{{ kindLabel[q.kind] }} · {{ q.senderNickname || '이름 없음' }} · {{ time(q.createdAt) }}</p>
+      <p class="mt-3 whitespace-pre-wrap text-14 leading-relaxed wrap-anywhere" data-testid="admin-inquiry-body">{{ q.body }}</p>
+      <p class="mt-3 text-12 leading-normal text-hint wrap-anywhere" data-testid="admin-inquiry-device">
+        앱 {{ q.appVersion || '미상' }} · {{ q.userAgent || '기기 정보 없음' }}
+      </p>
     </section>
 
-    <section class="rounded-panel bg-panel p-4 shadow-panel" aria-label="답변 기록" data-testid="admin-inquiry-replies">
-      <h2 class="text-13 font-bold">답변</h2>
-      @if (q.replies.length === 0) {
-        <p class="mt-2 text-13 text-ink-3">아직 답변하지 않았어요.</p>
-      } @else {
-        <ol class="m-0 mt-2 flex list-none flex-col gap-3 p-0">
+    <form class="panel flex flex-col rounded-panel bg-panel p-4 shadow-panel" (submit)="send($event)" novalidate>
+      <!-- 지난 답변은 사용자 문의 화면과 같은 회색 상자로 보인다 -->
+      @if (q.replies.length > 0) {
+        <ol class="m-0 mb-4 flex list-none flex-col gap-2 p-0" aria-label="보낸 답변" data-testid="admin-inquiry-replies">
           @for (r of q.replies; track r.id) {
-            <li class="border-l-2 border-accent pl-3">
-              <p class="whitespace-pre-wrap text-14 leading-relaxed wrap-anywhere">{{ r.body }}</p>
-              <p class="mt-1 text-12 text-ink-3">{{ time(r.createdAt) }}</p>
+            <li class="rounded-control bg-ground-2 px-3.5 py-3">
+              <p class="mb-1 text-12 font-bold text-ink-3">답변 · {{ time(r.createdAt) }}</p>
+              <p class="whitespace-pre-wrap text-13 leading-relaxed text-ink-2 wrap-anywhere">{{ r.body }}</p>
             </li>
           }
         </ol>
       }
-    </section>
 
-    <form class="rounded-panel bg-panel p-4 shadow-panel" (submit)="send($event)" novalidate>
-      <label class="mb-2 block text-13 font-bold" for="admin-reply-body">답변 쓰기</label>
-      <textarea
-        appInput
-        id="admin-reply-body"
-        #replyInput
-        class="min-h-32 w-full resize-y py-3"
-        [value]="reply()"
-        (input)="reply.set(replyInput.value)"
-        [attr.maxlength]="replyMax"
-        [disabled]="busy()"
-        placeholder="사용자에게 보일 답변을 적어 주세요."
-        data-testid="admin-reply-body"
-      ></textarea>
-      <p class="mt-1.5 text-right text-12 text-hint [font-variant-numeric:tabular-nums]">{{ reply().length }} / {{ replyMax }}</p>
-      <button
-        appButton
-        type="submit"
-        variant="primary"
-        class="btn mt-2 w-full"
-        [disabled]="!!replyError() || busy()"
-        [loading]="busy()"
-        data-testid="admin-reply-send"
-      >
-        답변 보내기
-      </button>
+      <app-field [label]="q.replies.length > 0 ? '추가 답변' : '답변'" inputId="admin-reply-body" class="mb-0!">
+        <textarea
+          appInput
+          id="admin-reply-body"
+          #replyInput
+          class="min-h-32 resize-y py-3"
+          [value]="reply()"
+          (input)="reply.set(replyInput.value)"
+          [attr.maxlength]="replyMax"
+          [disabled]="busy()"
+          placeholder="사용자에게 보일 답변을 적어 주세요."
+          data-testid="admin-reply-body"
+        ></textarea>
+        <p class="mt-2 text-right text-12 text-hint [font-variant-numeric:tabular-nums]">{{ reply().length }} / {{ replyMax }}</p>
+      </app-field>
+
+      <div appActionBar class="action-bar">
+        <div class="action-bar__inner mx-auto my-0 flex max-w-(--content-max) gap-2">
+          <button
+            appButton
+            type="submit"
+            variant="primary"
+            class="btn"
+            [disabled]="!!replyError() || busy()"
+            [loading]="busy()"
+            data-testid="admin-reply-send"
+          >
+            답변 보내기
+          </button>
+        </div>
+      </div>
     </form>
   } @else if (!error()) {
     <div class="flex justify-center py-16" role="status" aria-label="문의 불러오는 중">

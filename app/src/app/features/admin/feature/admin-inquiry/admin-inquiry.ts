@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiField } from '../../../../shared/ui/field/field';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
@@ -18,7 +20,7 @@ import { replyFormError } from '../../util/admin-form';
  */
 @Component({
   selector: 'app-admin-inquiry',
-  imports: [UiBadge, UiButton, UiInput, UiNotice, UiSpinner],
+  imports: [UiActionBar, UiBadge, UiButton, UiField, UiInput, UiNotice, UiSpinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-inquiry.html',
 })
