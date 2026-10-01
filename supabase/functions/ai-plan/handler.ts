@@ -1,4 +1,12 @@
-import { buildUserPrompt, SYSTEM_PROMPT, type AiPlanInput } from './prompt.ts';
+import {
+  buildUserPrompt,
+  CANDIDATE_KIND_LABEL,
+  GROUNDED_SYSTEM_PROMPT,
+  SYSTEM_PROMPT,
+  type AiPlanInput,
+  type CandidateKind,
+  type PlanCandidate,
+} from './prompt.ts';
 import { UserLimitError } from '../_shared/quota.ts';
 
 /**
@@ -22,6 +30,8 @@ export interface AiPlanDeps {
 
 /** 한 번에 만들 수 있는 여행 길이. 지나치게 길면 토큰만 쓰고 쓸모도 없다. */
 const MAX_DAYS = 30;
+/** 후보 상한. 지역 3곳 × 종류별 검색. 넘으면 요청을 거절한다. */
+const MAX_CANDIDATES = 120;
 
 export function createAiPlanHandler(deps: AiPlanDeps) {
   const headers = {
@@ -54,7 +64,9 @@ export function createAiPlanHandler(deps: AiPlanDeps) {
       const remaining = await deps.consumeQuota(user.id);
       let content: string;
       try {
-        content = await deps.callModel({ system: SYSTEM_PROMPT, user: buildUserPrompt(input) });
+        // 후보가 있으면 후보 안에서 ref로만 고르게 하는 지시문을 쓴다.
+        const system = input.candidates?.length ? GROUNDED_SYSTEM_PROMPT : SYSTEM_PROMPT;
+        content = await deps.callModel({ system, user: buildUserPrompt(input) });
         // 안전 차단 등으로 빈 답이 오면 쓸 수 없는 결과다. 실패로 보고 되돌린다.
         if (!content.trim()) throw new Error('empty_response');
       } catch (error) {
@@ -96,7 +108,10 @@ function validate(body: Partial<AiPlanInput> | null): AiPlanInput | null {
   const startDate = body.startDate === undefined || body.startDate === null ? null : body.startDate;
   if (startDate !== null && !isIsoDate(startDate)) return null;
   const text = (value: unknown) => (typeof value === 'string' ? value : '');
+  const candidates = validCandidates(body.candidates);
+  if (candidates === null) return null;
   return {
+    candidates,
     regions,
     dayCount,
     partySize, budget, budgetBasis, startDate,
@@ -108,6 +123,24 @@ function validate(body: Partial<AiPlanInput> | null): AiPlanInput | null {
     bookedStay: text(body.bookedStay),
     extraNote: text(body.extraNote),
   };
+}
+
+/** 후보 목록을 검사한다. 없으면 빈 목록, 모양이 틀리면 null(요청 거절). */
+function validCandidates(value: unknown): PlanCandidate[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_CANDIDATES) return null;
+  const bounded = (v: unknown, max: number, required = true): v is string =>
+    typeof v === 'string' && v.length <= max && (!required || v.trim() !== '');
+  const out: PlanCandidate[] = [];
+  for (const c of value) {
+    if (!c || typeof c !== 'object') return null;
+    const { id, name, kind, category, area } = c as Record<string, unknown>;
+    if (typeof id !== 'string' || !/^c\d{1,3}$/.test(id)) return null;
+    if (!bounded(name, 120) || !bounded(category, 120, false) || !bounded(area, 60, false)) return null;
+    if (typeof kind !== 'string' || !(kind in CANDIDATE_KIND_LABEL)) return null;
+    out.push({ id, name: name.trim(), kind: kind as CandidateKind, category, area });
+  }
+  return out;
 }
 
 /** 'YYYY-MM-DD'이고 실제로 있는 날짜인지 본다. 2026-13-01 같은 값은 거절한다. */

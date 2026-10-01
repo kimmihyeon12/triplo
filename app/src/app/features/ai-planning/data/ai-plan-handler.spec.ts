@@ -371,3 +371,37 @@ describe('시간대 요청 판별', () => {
     for (const note of ['예쁜 카페 추천', '저녁은 해산물', '아침도 먹고 싶어', '사진 찍기 좋은 곳', '밤바다 보고 싶어']) expect(noteSetsTime(note)).toBe(false);
   });
 });
+
+describe('실제 장소 후보로 짜기', () => {
+  const candidates = [
+    { id: 'c1', name: '초당순두부마을', kind: 'meal', category: '음식점', area: '강릉시 초당동' },
+    { id: 'c2', name: '경포대', kind: 'place', category: '관광명소', area: '강릉시 저동' },
+  ];
+  it('후보를 받으면 후보 칸과 후보 전용 지시문으로 부른다', async () => {
+    const { handler, callModel } = setup();
+    expect((await handler(post({ ...BODY, candidates }))).status).toBe(200);
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).toContain('[후보]에 있는 실제 장소만 골라');
+    expect(prompt.system).toContain('출력 전 확인');
+    expect(prompt.user).toContain('[후보]');
+    expect(prompt.user).toContain('c1 | 초당순두부마을 | 식사 | 음식점 | 강릉시 초당동');
+  });
+  it('후보가 없으면 지금 지시문 그대로다', async () => {
+    const { handler, callModel } = setup();
+    await handler(post(BODY));
+    const prompt = (callModel as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+    expect(prompt.system).not.toContain('[후보]에 있는 실제 장소만 골라');
+    expect(prompt.user).not.toContain('[후보]');
+  });
+  it('후보 모양이 틀리거나 너무 많으면 거절한다', async () => {
+    const { handler } = setup();
+    expect((await handler(post({ ...BODY, candidates: [{ ...candidates[0], id: 'x; drop' }] }))).status).toBe(400);
+    expect((await handler(post({ ...BODY, candidates: [{ ...candidates[0], kind: 'hotel' }] }))).status).toBe(400);
+    expect((await handler(post({ ...BODY, candidates: [{ ...candidates[0], name: '가'.repeat(121) }] }))).status).toBe(400);
+    const many = Array.from({ length: 121 }, (_, i) => ({ ...candidates[0], id: `c${i + 1}` }));
+    expect((await handler(post({ ...BODY, candidates: many }))).status).toBe(400);
+  });
+  it('응답 스키마에 ref가 있다', () => {
+    expect(RESPONSE_SCHEMA.properties.items.items.properties).toHaveProperty('ref');
+  });
+});
