@@ -7,6 +7,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
+import { startAppUpdates } from './core/app-update';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -199,6 +200,8 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => new LocalChatHistory(new SafeLocalStorage(), accountKey('chat')),
     },
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
+    // 새 버전을 열 때·돌아올 때 확인해 반영한다(core/app-update.ts).
+    provideAppInitializer(() => startAppUpdates()),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && !environment.isTest,
       registrationStrategy: 'registerWhenStable:30000',

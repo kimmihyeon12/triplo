@@ -30,7 +30,7 @@
       appButton
       type="button"
       class="btn btn--sm"
-      variant="danger"
+      [variant]="kind() === 'error' ? 'danger' : 'default'"
       data-testid="toast-action"
       (click)="act(a)"
     >

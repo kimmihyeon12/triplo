@@ -46,6 +46,12 @@ export class ToastService {
     this.show('error', message, action);
   }
 
+  /** 새 버전 안내. 누를 때까지 남긴다(쓰는 중인 사용자가 알아서 새로고침하게). */
+  update(message: string, action: ToastAction): void {
+    clearTimeout(this.timer);
+    this.state.set({ kind: 'info', message, action });
+  }
+
   dismiss(): void {
     clearTimeout(this.timer);
     this.state.set(null);
