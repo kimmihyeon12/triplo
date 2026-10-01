@@ -176,13 +176,16 @@ test('사용법 캡처', async ({ page, context }) => {
     ].join(',');
   });
   await page.getByTestId('map-category-meal').click();
+  await page.getByTestId('map-rating-4').click();
   const pin = page.locator('[data-testid^=map-place-]').first();
   await pin.click();
   await expect(page.getByTestId('map-explore-sheet')).toBeVisible();
+  await expect(page.getByTestId('map-explore-rating')).toBeVisible();
   await mark('map-explore', 0, page.getByTestId('map-category-meal').locator('xpath=..'));
-  await mark('map-explore', 1, pin);
-  await mark('map-explore', 2, page.getByTestId('map-explore-day'));
-  await mark('map-explore', 3, page.getByTestId('map-explore-add'));
+  await mark('map-explore', 1, page.getByTestId('map-rating-4').locator('xpath=..'));
+  await mark('map-explore', 2, pin.locator('xpath=..'));
+  await mark('map-explore', 3, page.getByTestId('map-explore-day'));
+  await mark('map-explore', 4, page.getByTestId('map-explore-add'));
   await shot(page, 'map-explore');
 
   // 지도 링크로 담기(장소 추가 화면). 찾기는 누르지 않고 링크를 붙여 넣은 상태로 찍는다.

@@ -48,10 +48,16 @@ test('여행 상세에서 크게 보고, 주변 맛집을 골라 다른 날에 �
   await page.getByTestId('map-explore-add').click();
   await expect(page.getByTestId('success-toast')).toContainText('2일차 맨 아래 후보로 담았어요');
   await expect(page.getByTestId('map-explore-add')).toHaveText('담았어요');
-  await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /담음/);
+  // 후보로 담은 곳은 여행 상세처럼 회색 눈으로 보인다.
+  await expect(page.getByTestId('map-place-n-grill')).toHaveAttribute('aria-label', /후보로 담음/);
+  await expect(page.getByTestId('map-place-n-grill')).toHaveClass(/tc-pin--candidate/);
 
   await page.goto(`/trips/${id}?day=2026-05-02`);
   await expect(page.locator('[data-testid^=stop-]').getByText('테스트 회센터').first()).toBeVisible();
+  // 후보(제외)는 흐리게 보이지만 지도 앱 아이콘은 그대로다(2026-10-01 사용자 요청).
+  const item = page.locator('.item--excluded').filter({ hasText: '테스트 회센터' }).first();
+  await expect(item.locator('.item__name')).toHaveCSS('opacity', '0.5');
+  await expect(item.locator('[data-maps]')).toHaveCSS('opacity', '1');
 });
 
 test('지도를 옮기면 이 지역에서 다시 찾고, 숙소는 날짜를 정하는 숙소 화면으로 넘긴다', async ({ page }) => {

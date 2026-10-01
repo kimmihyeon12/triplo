@@ -24,8 +24,8 @@ export interface PlacePin {
   category: NearbyCategory;
   position: GeoPoint;
   title: string;
-  /** 이미 이 여행에 담은 곳이면 true(표시만 다르다) */
-  added: boolean;
+  /** 이 여행에 담았는지. candidate는 일정 맨 아래 후보(제외)라 여행 상세처럼 회색 눈으로 보인다 */
+  added: false | 'candidate' | 'scheduled';
   /** 읽어 둔 방문자 평점. 아직 모르거나 후기가 없으면 null */
   rating: number | null;
 }

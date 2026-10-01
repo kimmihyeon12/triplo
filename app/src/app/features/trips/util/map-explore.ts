@@ -30,12 +30,18 @@ function meters(a: { lat: number; lng: number }, b: { lat: number; lng: number }
 
 /** 이 여행에 이미 담은 곳인지. 같은 출처 번호거나, 같은 이름이 아주 가까우면 같은 곳이다. */
 export function isInTrip(trip: Trip, place: NearbyPlace): boolean {
-  const items = [...trip.stops, ...trip.stays];
-  return items.some(
-    (item) =>
-      (item.placeRef?.provider === place.provider && item.placeRef.id === place.id) ||
-      (!!item.location && item.name.trim() === place.name.trim() && meters(item.location, place) <= SAME_METERS),
-  );
+  return addedState(trip, place) !== false;
+}
+
+/** 담은 상태. 일정 맨 아래 후보(제외)면 candidate, 일정에 들었거나 숙소면 scheduled. */
+export function addedState(trip: Trip, place: NearbyPlace): false | 'candidate' | 'scheduled' {
+  const same = (item: { name: string; location?: { lat: number; lng: number } | null; placeRef?: { provider: string; id: string } | null }) =>
+    (item.placeRef?.provider === place.provider && item.placeRef.id === place.id) ||
+    (!!item.location && item.name.trim() === place.name.trim() && meters(item.location, place) <= SAME_METERS);
+  if (trip.stays.some(same)) return 'scheduled';
+  const stops = trip.stops.filter(same);
+  if (!stops.length) return false;
+  return stops.every((s) => s.excluded) ? 'candidate' : 'scheduled';
 }
 
 export function toPins(
@@ -48,7 +54,7 @@ export function toPins(
     category: p.nearby,
     position: { lat: p.lat, lng: p.lng },
     title: p.name,
-    added: isInTrip(trip, p),
+    added: addedState(trip, p),
     rating: ratingOf(p.id),
   }));
 }

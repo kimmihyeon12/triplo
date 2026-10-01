@@ -44,6 +44,9 @@ describe('큰 지도에서 담기', () => {
     const manual = { ...trip(), stops: [{ ...createStop({ name: '테스트 순두부' }), location: { lat: 37.79051, lng: 128.91351 } }] };
     expect(isInTrip(manual, place({ id: 'other' }))).toBe(true);
     expect(isInTrip(manual, place({ id: 'other', lat: 37.8 }))).toBe(false);
-    expect(toPins(added, [place(), place({ id: 'k2', name: '다른 집', lat: 37.7, lng: 128.9 })]).map((p) => p.added)).toEqual([true, false]);
+    expect(toPins(added, [place(), place({ id: 'k2', name: '다른 집', lat: 37.7, lng: 128.9 })]).map((p) => p.added)).toEqual(['candidate', false]);
+    // 일정에 되돌리면(제외 해제) 회색 눈 대신 담음(체크)이다.
+    const active = { ...added, stops: added.stops.map((st) => ({ ...st, excluded: false })) };
+    expect(toPins(active, [place()])[0]!.added).toBe('scheduled');
   });
 });
