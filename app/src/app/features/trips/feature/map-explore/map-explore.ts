@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { ToastService } from '../../../../core/toast-service';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiInput } from '../../../../shared/ui/input/input';
+import { PLACE_LINK_RESOLVER } from '../../../places/data/place-link-resolver';
 import { IconComponent, type IconName } from '../../../../shared/ui/icon/icon';
 import { enumerateDays, formatKoreanDate } from '../../../../shared/util/dates';
 import type { DayMapModel, MapBounds, NearbyCategory } from '../../../places/model/map';
@@ -19,6 +21,11 @@ const CATEGORIES: readonly { id: NearbyCategory; label: string; icon: IconName }
   { id: 'sight', label: '관광', icon: 'place' },
   { id: 'stay', label: '숙소', icon: 'bed' },
 ];
+
+interface Rating {
+  score: number;
+  count: number;
+}
 
 const EMPTY_MAP: DayMapModel = {
   markers: [],
@@ -39,7 +46,7 @@ const MOVED_RATIO = 0.2;
  */
 @Component({
   selector: 'app-map-explore',
-  imports: [TripMapComponent, UiButton, IconComponent],
+  imports: [TripMapComponent, UiButton, UiInput, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map-explore.html',
 })
@@ -49,6 +56,7 @@ export class MapExplorePage {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly pageBar = inject(PageBar);
+  private readonly links = inject(PLACE_LINK_RESOLVER);
 
   readonly id = input.required<string>();
   /** 여행 상세에서 보던 날(?day=) */
@@ -99,6 +107,19 @@ export class MapExplorePage {
     const t = this.trip();
     const p = this.selected();
     return !!t && !!p && isInTrip(t, p);
+  });
+  /**
+   * 고른 장소의 카카오맵 평점(2026-10-01 사용자 요청). 핀을 누를 때 그 장소만 읽고 화면에만 보인다(저장하지 않음).
+   * 검색 결과 전체를 읽으면 한 번에 수십 번 부르게 되어 고른 곳만 읽는다.
+   */
+  private readonly ratings = signal<Readonly<Record<string, Rating | 'loading' | null>>>({});
+  readonly rating = computed(() => {
+    const id = this.selectedId();
+    return id ? this.ratings()[id] : undefined;
+  });
+  readonly ratingValue = computed(() => {
+    const r = this.rating();
+    return r && r !== 'loading' ? r : null;
   });
   /** 담을 날. 처음에는 지금 보는 날이다. */
   readonly targetDay = signal<IsoDate | ''>('');
@@ -170,6 +191,23 @@ export class MapExplorePage {
   select(id: string): void {
     this.selectedId.set(id);
     this.targetDay.set(this.selectedDay() ?? '');
+    void this.loadRating(id);
+  }
+
+  private async loadRating(id: string): Promise<void> {
+    const place = this.results().find((p) => p.id === id);
+    // 카카오 검색 결과의 장소 주소는 http로 온다. 서버 함수는 https만 받는다.
+    const url = place?.url?.replace(/^http:\/\//, 'https://');
+    if (!url || id in this.ratings()) return;
+    this.ratings.update((r) => ({ ...r, [id]: 'loading' }));
+    let value: Rating | null = null;
+    try {
+      const linked = await this.links.resolve(url);
+      if (linked.rating !== null && linked.reviewCount !== null) value = { score: linked.rating, count: linked.reviewCount };
+    } catch {
+      // 평점은 덤이다. 읽지 못하면 보이지 않는다.
+    }
+    this.ratings.update((r) => ({ ...r, [id]: value }));
   }
 
   close(): void {

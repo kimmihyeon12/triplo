@@ -94,7 +94,7 @@ function near(
   lng: number,
   roadAddress: string,
 ): NearbyPlace {
-  return { provider: 'fixture', id, name, address: roadAddress, roadAddress, lat, lng, category, url: null, nearby };
+  return { provider: 'fixture', id, name, address: roadAddress, roadAddress, lat, lng, category, url: `https://place.map.kakao.com/${id}`, nearby };
 }
 
 /** 분류 낱말 → 픽스처 장소의 분류. 실제 카카오 검색이 그 낱말로 돌려주는 종류에 맞춘다. */
