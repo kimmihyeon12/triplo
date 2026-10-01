@@ -26,6 +26,7 @@ async function tidy(page: Page): Promise<void> {
       [/테스트용\s*/g, ''],
       [/\s*예시(?=[)\s]|$)/g, ''],
       [/강릉 테스트 호텔/g, '경포 바다 호텔'],
+      [/테스트 픽스처/g, '카카오'],
       [/http:\/\/localhost:4300/g, 'https://triplo.pages.dev'],
       [/이 기기에 저장 · 친구와 공유되지 않습니다/g, ''],
     ];
@@ -161,6 +162,21 @@ test('사용법 캡처', async ({ page, context }) => {
   await mark('trip', 3, page.getByTestId('add-open'));
   await mark('trip', 4, page.getByTestId('go-expenses'));
   await shot(page, 'trip');
+
+  // 지도 링크로 담기(장소 추가 화면). 찾기는 누르지 않고 링크를 붙여 넣은 상태로 찍는다.
+  await page.goto(`/trips/${id}/stops/new`);
+  await page.getByTestId('place-link-toggle').click();
+  await page.getByTestId('place-link-url').fill('https://naver.me/5Qsr0ejg');
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.getByTestId('place-link-toggle').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(300);
+  await mark('place-link', 0, page.getByTestId('place-link-toggle'));
+  await mark('place-link', 1, page.getByTestId('place-link-url'));
+  await mark('place-link', 2, page.getByTestId('place-link-paste'));
+  await mark('place-link', 3, page.getByTestId('place-link-find'));
+  await shot(page, 'place-link');
+  await page.goto(`/trips/${id}`);
+  await expect(page.getByTestId('trip-header')).toBeVisible();
 
   // 숙소
   await page.getByRole('tab', { name: '숙소' }).click();
