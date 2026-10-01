@@ -42,7 +42,7 @@ export interface ReferenceNote {
 }
 
 /** 확인 카드가 제안하는 변경의 종류. */
-export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule' | 'assign-unassigned' | 'local-change';
+export type DraftAction = 'append' | 'remove' | 'move' | 'reschedule' | 'assign-unassigned' | 'distribute' | 'local-change';
 
 /**
  * 일정에 담을 후보 장소. 모델은 이름과 일차만 내고, 나머지는 장소 검색으로
@@ -59,6 +59,8 @@ export interface AppendDraft {
   readonly action: 'append';
   readonly regions: readonly string[];
   readonly places: readonly ChatPlace[];
+  /** 대화에서 읽은 여행 기간. 여행 목록에서 새 여행을 만들 때 날짜로 넣는다. */
+  readonly period?: { readonly start: string; readonly end: string };
 }
 
 /** 이미 담긴 장소를 빼는 초안. */
@@ -88,6 +90,12 @@ export interface AssignUnassignedDraft {
   readonly date: string;
 }
 
+/** 날짜 없는 장소를 여러 날에 나눠 담는 초안. 앱이 저장된 좌표로 나눈다. */
+export interface DistributeDraft {
+  readonly action: 'distribute';
+  readonly assignments: readonly { readonly stopId: string; readonly date: string }[];
+}
+
 /** Created only by the local interpreter, never by a provider response. */
 export interface LocalChangeDraft {
   readonly action: 'local-change';
@@ -97,7 +105,7 @@ export interface LocalChangeDraft {
   readonly ledger?: { readonly before: Ledger; readonly after: Ledger };
 }
 
-export type ChatDraft = AppendDraft | RemoveDraft | MoveDraft | RescheduleDraft | AssignUnassignedDraft | LocalChangeDraft;
+export type ChatDraft = AppendDraft | RemoveDraft | MoveDraft | RescheduleDraft | AssignUnassignedDraft | DistributeDraft | LocalChangeDraft;
 
 /** 대화 한 줄. 화면은 이 목록을 위에서 아래로 그린다. */
 export interface ChatMessage {
@@ -154,6 +162,7 @@ export interface ChatPlaceSuggestion {
  */
 export type ChatEditIntent =
   | { readonly action: 'assign-unassigned'; readonly date: string }
+  | { readonly action: 'distribute'; readonly assignments: readonly { readonly stopId: string; readonly date: string }[] }
   | { readonly action: 'remove'; readonly names: readonly string[] }
   | { readonly action: 'move'; readonly date: string | null }
   | { readonly action: 'reschedule'; readonly name: string; readonly day: number };

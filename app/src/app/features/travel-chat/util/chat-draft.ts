@@ -129,6 +129,25 @@ export function previewDraft(trip: Trip, draft: ChatDraft): DraftPreview {
           && targets.every(s => !!s && s.date === null && !s.excluded),
       };
     }
+    case 'distribute': {
+      const byId = new Map(trip.stops.map((s) => [s.id, s] as const));
+      const targets = draft.assignments.map((a) => ({ a, stop: byId.get(a.stopId) }));
+      const sorted = [...targets].sort((x, y) => x.a.date.localeCompare(y.a.date));
+      const days = new Set(draft.assignments.map((a) => a.date));
+      return {
+        title: `저장된 장소 ${draft.assignments.length}곳을 ${days.size}일에 나눠 담습니다`,
+        detailed: true,
+        before: targets.filter((t) => t.stop).map((t) => row(t.stop!)),
+        after: sorted
+          .filter((t) => t.stop)
+          .map((t) => ({ id: t.a.stopId, name: `${dayLabel(trip, t.a.date)} · ${t.stop!.name}`, added: true, removed: false })),
+        distanceDeltaKm: null,
+        applicable: !!trip.startDate && !!trip.endDate && draft.assignments.length > 0
+          && new Set(draft.assignments.map((a) => a.stopId)).size === draft.assignments.length
+          && targets.every((t) => !!t.stop && t.stop.date === null && !t.stop.excluded
+            && isIsoDate(t.a.date) && t.a.date >= trip.startDate! && t.a.date <= trip.endDate!),
+      };
+    }
     case 'move':
       return previewMove(trip, draft.date, draft.orderedStopIds);
     case 'append':
@@ -299,6 +318,10 @@ export function applyDraft(trip: Trip, draft: ChatDraft): Trip {
       return previewDraft(trip, draft).applicable
         ? draft.stopIds.reduce((next, id) => placeStopOnDate(next, id, draft.date), trip)
         : trip;
+    case 'distribute':
+      return previewDraft(trip, draft).applicable
+        ? draft.assignments.reduce((next, a) => placeStopOnDate(next, a.stopId, a.date), trip)
+        : trip;
     case 'append':
       return applyAppend(trip, draft.places);
     case 'remove':
@@ -321,6 +344,7 @@ function applyAppend(
     address: string;
     location: TripStop['location'];
     placeRef: TripStop['placeRef'];
+    why?: string;
   }[],
 ): Trip {
   let next = trip;
@@ -337,6 +361,8 @@ function applyAppend(
         date: dayOf(next, place.day),
         location: place.location,
         placeRef: place.placeRef,
+        // 추천 이유는 일정 짜기의 'AI 추정' 메모처럼 머리줄 아래 '-' 목록으로 남긴다.
+        ...(place.why ? { memo: `AI 추천\n- ${place.why}` } : {}),
       }),
     );
   }

@@ -12,6 +12,8 @@ import {
   type CandidateQuery,
 } from '../../ai-planning/data/place-candidates';
 import { chatRegions } from '../util/chat-regions';
+import { chatPeriod } from '../util/chat-period';
+import { todayIso } from '../../../shared/util/dates';
 import type { GeoPoint } from '../../places/model/place';
 import { newId } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
@@ -351,7 +353,7 @@ export class TravelChatStore {
           ...(p.why ? { why: p.why } : {}),
         }];
       });
-      return places.length ? { action: 'append', regions, places } : null;
+      return places.length ? { action: 'append', regions, places, ...this.periodOf() } : null;
     }
     // 챗봇은 숙소를 숙박으로 담지 않는다. 검색 분류가 숙박이면 예전처럼 관광으로 담는다.
     const verified = (await verifyPlaces(reply.places, regions, this.placeSearch)).map(
@@ -359,7 +361,7 @@ export class TravelChatStore {
     );
     // 확인된 것이 하나도 없으면 담을 수 없다. 확인 카드를 띄우지 않는다.
     if (!verified.some((p) => p.verified)) return null;
-    return { action: 'append', regions, places: verified };
+    return { action: 'append', regions, places: verified, ...this.periodOf() };
   }
 
   /** 모델이 해석한 편집 의도를 실제 대상이 있는 초안으로 바꾼다. */
@@ -371,6 +373,12 @@ export class TravelChatStore {
         const stopIds = trip.stops.filter(s => !s.excluded && s.date === null)
           .sort((a, b) => a.order - b.order).map(s => s.id);
         return stopIds.length ? { action: 'assign-unassigned', date: edit.date, stopIds } : null;
+      }
+      case 'distribute': {
+        // 앱이 만든 배치를 그대로 쓰되, 지금도 날짜 없는 장소만 남긴다.
+        const open = new Set(trip.stops.filter((s) => !s.excluded && s.date === null).map((s) => s.id));
+        const assignments = edit.assignments.filter((a) => open.has(a.stopId));
+        return assignments.length ? { action: 'distribute', assignments } : null;
       }
       case 'remove': {
         const names = new Set(edit.names);
@@ -442,6 +450,21 @@ export class TravelChatStore {
     }
     const exclude = trip ? trip.stops.map((s) => s.name) : [];
     return { queries: chatQueries(regions, text, near), exclude };
+  }
+
+  /**
+   * 새 여행을 만들 대화라면 사용자가 말한 기간을 읽는다. 최근 말부터 본다.
+   * 여행 상세에서 연 대화는 이미 날짜가 있는 여행이라 읽지 않는다.
+   */
+  private periodOf(): { period?: { start: string; end: string } } {
+    if (this.trip()) return {};
+    const today = todayIso();
+    for (const turn of [...this.recentTurns()].reverse()) {
+      if (turn.role !== 'user') continue;
+      const period = chatPeriod(turn.text, today);
+      if (period) return { period };
+    }
+    return {};
   }
 
   /** 모델에게 넘길 여행 요약. 좌표는 넘기지 않는다. */

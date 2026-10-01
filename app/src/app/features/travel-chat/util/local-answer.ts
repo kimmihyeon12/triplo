@@ -1,6 +1,7 @@
 import type { IsoDate, Trip, TripStop } from '../../trips/model/trip';
 import { todayIso } from '../../../shared/util/dates';
 import { assignmentAnswer } from './local-assignment';
+import { distributeAnswer } from './local-distribute';
 import { OUT_OF_SCOPE_REPLY, type ChatReply } from '../model/chat';
 import { nearestOrder } from './chat-draft';
 import { classifyQuestion } from './chat-scope';
@@ -63,6 +64,9 @@ export function answerLocally(
       chips,
     });
 
+  // 여러 날에 나눠 담기를 한 날짜 배정보다 먼저 본다. 범위·나누기 말이 없으면 넘어간다.
+  const spread = distributeAnswer(text, trip);
+  if (spread) return spread;
   const assignment = assignmentAnswer(text, trip, today);
   if (assignment) return assignment;
   if (hasWord(text, RANDOM_WORDS)) return randomRegionAnswer(recentRegionCodes);
