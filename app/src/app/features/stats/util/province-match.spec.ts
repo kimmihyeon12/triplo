@@ -1,3 +1,4 @@
+import { KOREA_PROVINCES, KOREA_REGIONS } from '../../../shared/util/korea-regions';
 import { describe, expect, it } from 'vitest';
 import { provinceCodeForAddress, regionCodeForAddress } from './province-match';
 
@@ -79,6 +80,20 @@ describe('regionCodeForAddress', () => {
 
   it('시·도만 있으면 비운다', () => {
     expect(regionCodeForAddress('서울특별시')).toBeNull();
+  });
+
+  it('시·군·구가 하나뿐인 세종은 도로명이 바로 이어져도 세종시로 읽는다(2026-10-02 통계 누락)', () => {
+    expect(regionCodeForAddress('세종특별자치시 한누리대로 2130')).toBe('36_세종시');
+    expect(regionCodeForAddress('세종 조치원읍 대첩로 1')).toBe('36_세종시');
+    expect(regionCodeForAddress('세종특별자치시 세종시 한누리대로 2130')).toBe('36_세종시');
+  });
+
+  it('지도에 있는 230개 시·군·구는 모두 그 지역 주소로 읽힌다', () => {
+    const missing = KOREA_REGIONS.filter((r) => {
+      const province = KOREA_PROVINCES.find((p) => p.code === r.provinceCode)!;
+      return regionCodeForAddress(`${province.name} ${r.name} 어딘가로 1`) !== r.code;
+    });
+    expect(missing.map((r) => r.name)).toEqual([]);
   });
 
   it('읽을 수 없으면 비운다', () => {

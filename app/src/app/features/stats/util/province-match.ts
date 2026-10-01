@@ -117,5 +117,10 @@ export function regionCodeForAddress(address: string): string | null {
     const bare = name.replace(/(특별자치)?[시군구]$/, '');
     if (bare.length >= 2 && split.rest.startsWith(bare)) return code;
   }
+  /*
+    시·군·구가 하나뿐인 시·도(세종)는 주소가 '세종특별자치시 한누리대로…'처럼 바로 도로명으로 이어진다.
+    시·도를 읽었으면 그 하나로 정한다. 이 규칙이 없어 세종 방문이 통계에서 빠졌다(2026-10-02).
+  */
+  if (candidates.length === 1) return candidates[0]![1];
   return null;
 }
