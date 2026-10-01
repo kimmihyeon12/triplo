@@ -123,6 +123,37 @@ test('평점 필터를 켜면 보이는 핀의 평점을 읽어 기준 미만은
   await expect(page.getByTestId('map-place-n-tofu')).toBeVisible();
 });
 
+test('장소 이름으로 찾아 그 자리로 옮기고 바로 담을 수 있다', async ({ page }) => {
+  const id = await tripWithAnmok(page);
+  await page.goto(`/trips/${id}/map`);
+  await page.getByTestId('map-search-input').fill('오죽헌');
+  await page.getByTestId('map-search-go').click();
+  await page.getByTestId('map-search-result-f-ojukheon').click();
+  await expect(page.getByTestId('map-search-results')).toHaveCount(0);
+  await expect(page.getByTestId('map-explore-name')).toHaveText('오죽헌');
+  await expect(page.locator('[data-testid=fixture-map] .tc-fixture-map__layer').first()).toHaveAttribute('data-centered-on', '37.7793,128.878');
+  await expect(page.getByTestId('map-place-f-ojukheon')).toBeVisible();
+  await page.getByTestId('map-search-input').fill('없는곳이름');
+  await page.getByTestId('map-search-go').click();
+  await expect(page.getByTestId('map-search-empty')).toBeVisible();
+});
+
+test('확대·축소와 현재 위치로 옮기기', async ({ page, context }) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 37.7735, longitude: 128.948 });
+  const id = await tripWithAnmok(page);
+  await page.goto(`/trips/${id}/map`);
+  const layer = page.locator('[data-testid=fixture-map] .tc-fixture-map__layer').first();
+  await page.getByTestId('map-zoom-in').click();
+  await expect(layer).toHaveAttribute('data-zoom', '1');
+  await page.getByTestId('map-zoom-out').click();
+  await page.getByTestId('map-zoom-out').click();
+  await expect(layer).toHaveAttribute('data-zoom', '-1');
+  await page.getByTestId('map-locate').click();
+  await expect(page.getByTestId('my-location')).toBeVisible();
+  await expect(layer).toHaveAttribute('data-centered-on', '37.7735,128.948');
+});
+
 test('범위에 장소가 없거나 불러오지 못하면 알린다', async ({ page }) => {
   const id = await tripWithAnmok(page);
   await page.goto(`/trips/${id}/map`);

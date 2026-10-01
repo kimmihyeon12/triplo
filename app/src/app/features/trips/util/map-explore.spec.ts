@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NearbyPlace } from '../../places/model/map';
 import { createStop, createTrip } from './factories';
-import { addNearbyStop, isInTrip, toPins } from './map-explore';
+import { addNearbyStop, isInTrip, nearbyFromCategory, toPins } from './map-explore';
 
 const place = (over: Partial<NearbyPlace> = {}): NearbyPlace => ({
   provider: 'kakao',
@@ -48,5 +48,15 @@ describe('큰 지도에서 담기', () => {
     // 일정에 되돌리면(제외 해제) 회색 눈 대신 담음(체크)이다.
     const active = { ...added, stops: added.stops.map((st) => ({ ...st, excluded: false })) };
     expect(toPins(active, [place()])[0]!.added).toBe('scheduled');
+  });
+});
+
+describe('검색한 장소의 분류', () => {
+  it('카카오 분류 이름으로 맛집·카페·숙소·관광을 정한다', () => {
+    expect(nearbyFromCategory('음식점')).toBe('meal');
+    expect(nearbyFromCategory('카페')).toBe('cafe');
+    expect(nearbyFromCategory('숙박')).toBe('stay');
+    expect(nearbyFromCategory('관광명소')).toBe('sight');
+    expect(nearbyFromCategory('')).toBe('sight');
   });
 });

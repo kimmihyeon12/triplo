@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import type { DayMapModel, MapBounds, PlacePin } from '../model/map';
+import type { GeoPoint } from '../model/place';
 
 export interface MapMountOptions {
   /** 초기 중심(마커가 없을 때만 사용) */
@@ -17,6 +18,12 @@ export interface MapInstance {
   renderPlaces(pins: readonly PlacePin[], selectedId: string | null): void;
   /** 지금 보이는 범위. 지도가 아직 없으면 null */
   bounds(): MapBounds | null;
+  /** 한 단계 확대·축소(큰 지도) */
+  zoom(step: 1 | -1): void;
+  /** 그 좌표로 옮기고 동네가 보이는 배율로 맞춘다(장소 검색·현재 위치) */
+  moveTo(point: GeoPoint): void;
+  /** 내 위치 점을 그린다. null이면 지운다 */
+  showMyLocation(point: GeoPoint | null): void;
   /** 선택 마커 강조(없으면 해제) */
   highlight(id: string | null): void;
   /** 컨테이너 크기 변경 후 다시 그리기 */

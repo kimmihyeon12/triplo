@@ -2,6 +2,7 @@ import {
   MAP_MARKER_CLASSES,
   FIXTURE_MAP_CLASSES,
   FIXTURE_LAYER_CLASSES,
+  MY_LOCATION_CLASSES,
 } from '../../util/map-marker-styles';
 import { Injectable } from '@angular/core';
 import { overlappingStayIds } from '../../util/map-markers';
@@ -147,6 +148,36 @@ export class FixtureMapProvider implements MapProvider {
         drawPins();
       },
       bounds: () => view,
+      // 테스트 지도는 범위를 바꿔 확대·이동을 흉내 내고, 실제 지도처럼 이동이 끝났다고 알린다.
+      zoom(step: 1 | -1) {
+        const lat = (view.south + view.north) / 2;
+        const lng = (view.west + view.east) / 2;
+        const k = step === 1 ? 0.5 : 2;
+        const h = ((view.north - view.south) / 2) * k;
+        const w = ((view.east - view.west) / 2) * k;
+        view = { south: lat - h, north: lat + h, west: lng - w, east: lng + w };
+        layer.dataset['zoom'] = String(Number(layer.dataset['zoom'] ?? 0) + step);
+        drawPins();
+        options.onIdle?.(view);
+      },
+      moveTo(point) {
+        view = around(point.lat, point.lng);
+        layer.dataset['centeredOn'] = `${point.lat},${point.lng}`;
+        drawPins();
+        options.onIdle?.(view);
+      },
+      showMyLocation(point) {
+        // 핀 층은 다시 그릴 때 비우므로 내 위치는 지도 상자에 따로 붙인다(카카오도 별도 층이다).
+        container.querySelector('[data-testid=my-location]')?.remove();
+        if (!point) return;
+        const dot = document.createElement('span');
+        dot.className = MY_LOCATION_CLASSES;
+        dot.dataset['testid'] = 'my-location';
+        dot.style.left = '50%';
+        dot.style.top = '50%';
+        dot.style.position = 'absolute';
+        container.appendChild(dot);
+      },
       relayout() {},
       destroy() {
         layer.remove();

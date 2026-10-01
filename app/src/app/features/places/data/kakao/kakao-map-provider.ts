@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { overlappingStayIds } from '../../util/map-markers';
 import { type DayMapModel, type MapBounds, type MapMarker, type PlacePin } from '../../model/map';
 import { placePinElement } from '../place-pin';
+import { MY_LOCATION_CLASSES } from '../../util/map-marker-styles';
 import type {
   MapInstance,
   MapMountOptions,
@@ -54,6 +55,7 @@ export class KakaoMapProvider implements MapProvider {
     }[] = [];
     let line: any = null;
     let pins: any[] = [];
+    let me: any = null;
     const boundsOf = (): MapBounds | null => {
       const b = map.getBounds();
       if (!b) return null;
@@ -143,6 +145,24 @@ export class KakaoMapProvider implements MapProvider {
         });
       },
       bounds: boundsOf,
+      zoom(step: 1 | -1) {
+        // 카카오는 숫자가 작을수록 가깝다.
+        map.setLevel(Math.min(14, Math.max(1, map.getLevel() - step)), { animate: true });
+      },
+      moveTo(point) {
+        map.setLevel(4);
+        map.panTo(new maps.LatLng(point.lat, point.lng));
+      },
+      showMyLocation(point) {
+        me?.setMap(null);
+        me = null;
+        if (!point) return;
+        const dot = document.createElement('span');
+        dot.className = MY_LOCATION_CLASSES;
+        dot.setAttribute('aria-label', '내 위치');
+        me = new maps.CustomOverlay({ position: new maps.LatLng(point.lat, point.lng), content: dot, xAnchor: 0, yAnchor: 0, zIndex: 5 });
+        me.setMap(map);
+      },
       relayout() {
         map.relayout();
       },
