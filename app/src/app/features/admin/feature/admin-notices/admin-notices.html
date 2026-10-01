@@ -18,20 +18,25 @@
       @for (notice of notices(); track notice.id) {
         <li class="border-b border-border last:border-b-0">
           <a
-            class="flex min-h-14 items-center gap-3 px-4 py-3 text-ink no-underline"
+            class="flex min-h-14 items-start gap-3 px-4 py-3 text-ink no-underline"
             [routerLink]="['/admin/notices', notice.id]"
             [attr.data-testid]="'admin-notice-' + notice.id"
           >
+            <!-- 공지·문의 목록 공통 줄: 제목과 라벨은 왼쪽, 날짜는 오른쪽 끝 -->
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-14 font-bold">{{ notice.title }}</span>
-              <span class="mt-0.5 block text-12 text-ink-3">{{ day(notice) }}</span>
+              <span class="flex items-center gap-1.5">
+                <span class="min-w-0 truncate text-14 font-bold">{{ notice.title }}</span>
+                @if (notice.status === 'published') {
+                  <span appBadge tone="ok" class="flex-none">발행됨</span>
+                } @else {
+                  <span appBadge tone="warn" class="flex-none">초안</span>
+                }
+                <span class="ml-auto flex-none pl-2 text-12 text-ink-3 [font-variant-numeric:tabular-nums]">{{ day(notice) }}</span>
+              </span>
+              <!-- 열지 않고도 무슨 공지인지 알 수 있게 본문 앞부분을 두 줄까지 보인다 -->
+              <span class="mt-1 line-clamp-2 whitespace-pre-line text-13 text-ink-2 wrap-anywhere" data-testid="admin-notice-preview">{{ notice.body }}</span>
             </span>
-            @if (notice.status === 'published') {
-              <span appBadge tone="ok">발행됨</span>
-            } @else {
-              <span appBadge tone="warn">초안</span>
-            }
-            <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+            <span class="mt-0.5 flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
           </a>
         </li>
       }

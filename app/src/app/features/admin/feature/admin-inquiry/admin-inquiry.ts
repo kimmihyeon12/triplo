@@ -1,3 +1,4 @@
+import { supportTime } from '../../../support/util/support-date';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
@@ -81,7 +82,7 @@ export class AdminInquiryPage {
   }
 
   time(iso: string): string {
-    return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return supportTime(iso);
   }
 
   /** 호출 하나를 감싼다. 권한이 사라지면 내 정보로, 그 밖의 오류는 화면에 보인다. 입력은 남긴다. */

@@ -1,3 +1,4 @@
+import { supportDay } from '../../../support/util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -6,7 +7,6 @@ import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
-import { formatKoreanDate } from '../../../../shared/util/dates';
 import type { Notice } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied } from '../../data/admin-support';
 import { adminExit } from '../admin-exit';
@@ -51,7 +51,6 @@ export class AdminNotices {
   }
 
   day(notice: Notice): string {
-    const iso = notice.publishedAt ?? notice.createdAt;
-    return formatKoreanDate(iso.slice(0, 10), { short: true });
+    return supportDay(notice.publishedAt ?? notice.createdAt);
   }
 }

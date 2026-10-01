@@ -1,3 +1,4 @@
+import { supportDay } from '../../util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -68,10 +69,5 @@ export class InquiriesPage {
     return 'neutral';
   }
 
-  day(iso: string): string {
-    const d = new Date(iso);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}.${mm}.${dd}`;
-  }
+  readonly day = supportDay;
 }

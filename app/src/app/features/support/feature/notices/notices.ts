@@ -1,4 +1,6 @@
+import { supportDay } from '../../util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { SUPPORT_REPOSITORY } from '../../data/support-repository';
 import type { Notice } from '../../model/support';
@@ -8,14 +10,12 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 
 /**
- * 공지사항 목록.
- *
- * 화면을 옮기지 않고 그 자리에서 펼쳐 읽는다. 공지는 대개 짧아 별도 화면을
- * 열 만큼이 아니고, 여러 개를 이어 읽을 때 돌아오는 수고가 없다.
+ * 공지사항 목록. 관리자 공지 목록과 같은 줄 모양으로 본문을 두 줄까지 미리 보이고,
+ * 누르면 상세 화면에서 전체를 읽는다(2026-10-01 사용자 결정: 그 자리에서 펼치던 방식 대신).
  */
 @Component({
   selector: 'app-notices',
-  imports: [UiSpinner, IconComponent, UiEmptyState, UiNotice],
+  imports: [RouterLink, UiSpinner, IconComponent, UiEmptyState, UiNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notices.html',
 })
@@ -55,10 +55,5 @@ export class NoticesPage {
   }
 
   /** 'YYYY.MM.DD' 형식. 공지는 시각까지 필요하지 않다. */
-  day(iso: string): string {
-    const d = new Date(iso);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}.${mm}.${dd}`;
-  }
+  readonly day = supportDay;
 }
