@@ -11,6 +11,7 @@ create function auth.uid() returns uuid language sql stable as $$ select nullif(
 do $$ begin
   if not exists (select from pg_roles where rolname = 'anon') then create role anon nologin; end if;
   if not exists (select from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+  if not exists (select from pg_roles where rolname = 'service_role') then create role service_role nologin; end if;
 end $$;
 grant usage on schema public, auth, extensions to anon, authenticated;
 insert into auth.users values
@@ -28,6 +29,7 @@ insert into auth.users values
 \ir ../migrations/20260930000002_profiles_role.sql
 \ir ../migrations/20261001000000_support.sql
 \ir ../migrations/20261001120000_push_notifications.sql
+\ir ../migrations/20261001150000_push_service_role_grants.sql
 insert into public.profiles values ('33333333-3333-3333-3333-333333333333', 'admin');
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
@@ -119,3 +121,11 @@ reset role;
 delete from auth.users where id = :'B';
 select 'after delete B subs (0)' as t, count(*) from push_subscriptions;
 select 'after delete B settings (0)' as t, count(*) from notification_settings;
+
+-- 발송 함수(service_role)는 대기열을 읽고 보낸 표시를 하며, 끝난 구독을 지울 수 있다(2026-10-01 운영 500 오류)
+select 'service_role reads outbox (t)' as t, has_table_privilege('service_role', 'public.notification_outbox', 'select');
+select 'service_role marks sent (t)' as t, has_table_privilege('service_role', 'public.notification_outbox', 'update');
+select 'service_role reads subs (t)' as t, has_table_privilege('service_role', 'public.push_subscriptions', 'select');
+select 'service_role deletes subs (t)' as t, has_table_privilege('service_role', 'public.push_subscriptions', 'delete');
+select 'service_role reads settings (t)' as t, has_table_privilege('service_role', 'public.notification_settings', 'select');
+select 'app user still cannot read outbox (f)' as t, has_table_privilege('authenticated', 'public.notification_outbox', 'select');
