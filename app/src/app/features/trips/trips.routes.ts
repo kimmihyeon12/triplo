@@ -61,6 +61,12 @@ export const TRIPS_ROUTES: Routes = [
         title: '여행 상세',
       },
       {
+        // 큰 지도에서 주변 장소 골라 담기(2026-10-01)
+        path: 'map',
+        loadComponent: () => import('./feature/map-explore/map-explore').then((m) => m.MapExplorePage),
+        title: '지도에서 담기',
+      },
+      {
         path: 'edit',
         loadComponent: () => import('./feature/trip-form/trip-form').then((m) => m.TripFormPage),
         title: '여행 편집',

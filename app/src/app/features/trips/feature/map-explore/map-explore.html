@@ -1,0 +1,131 @@
+<!--
+  큰 지도(2026-10-01). 지도가 화면을 다 쓰고, 위에 날짜·분류 버튼, 아래에 고른 장소 정보판을 띄운다.
+  분류를 누르거나 '이 지역에서 다시 찾기'를 누를 때만 검색한다.
+-->
+<div class="relative h-[calc(100dvh-53px)] overflow-hidden bg-ground-2" data-testid="map-explore">
+  <app-trip-map
+    class="block [--map-height:calc(100dvh-53px)] [&_.canvas]:rounded-none [&_.canvas]:shadow-none"
+    [model]="dayMap()"
+    [bare]="true"
+    [fitOnChange]="false"
+    [places]="pins()"
+    [selectedPlaceId]="selectedId()"
+    (placeSelect)="select($event)"
+    (boundsChange)="onBounds($event)"
+  />
+
+  <div class="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 p-3">
+    @if (days().length > 1) {
+      <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="날짜">
+        @for (d of days(); track d; let i = $index) {
+          <button
+            type="button"
+            role="tab"
+            class="flex-none rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+            [class]="d === selectedDay() ? 'border-ink bg-ink text-white' : 'border-border bg-panel text-ink-2'"
+            [attr.aria-selected]="d === selectedDay()"
+            (click)="pickDay(d)"
+            [attr.data-testid]="'map-day-' + d"
+          >
+            {{ i + 1 }}일차
+          </button>
+        }
+      </div>
+    }
+    <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label="주변 장소 찾기">
+      @for (c of categories; track c.id) {
+        <button
+          type="button"
+          class="inline-flex flex-none items-center gap-1 rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+          [class]="c.id === category() ? 'border-accent-deep bg-accent-deep text-white' : 'border-border bg-panel text-ink'"
+          [attr.aria-pressed]="c.id === category()"
+          (click)="pickCategory(c.id)"
+          [attr.data-testid]="'map-category-' + c.id"
+        >
+          <app-icon [name]="c.icon" [size]="14" />
+          {{ c.label }}
+        </button>
+      }
+    </div>
+    @if (searching()) {
+      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status">
+        찾는 중…
+      </p>
+    } @else if (error(); as message) {
+      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-danger-ink shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="alert" data-testid="map-explore-error">
+        {{ message }}
+      </p>
+    } @else if (empty()) {
+      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status" data-testid="map-explore-empty">
+        이 범위에는 없어요. 지도를 옮겨 다시 찾아 보세요.
+      </p>
+    }
+    @if (moved() && !searching()) {
+      <button
+        appButton
+        type="button"
+        class="btn btn--sm pointer-events-auto self-center shadow-[0_2px_8px_rgb(22_24_29/0.18)]"
+        (click)="find()"
+        data-testid="map-explore-refind"
+      >
+        <app-icon name="refresh" [size]="14" />
+        이 지역에서 다시 찾기
+      </button>
+    }
+  </div>
+
+  @if (selected(); as p) {
+    <section
+      class="absolute inset-x-0 bottom-0 mx-auto flex max-w-(--content-narrow) flex-col gap-3 rounded-t-panel border-t border-border bg-panel p-4 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgb(22_24_29/0.12)]"
+      aria-label="고른 장소"
+      data-testid="map-explore-sheet"
+    >
+      <div class="flex items-start gap-2">
+        <div class="min-w-0 flex-1">
+          <h2 class="m-0 text-16 font-bold leading-snug" data-testid="map-explore-name">{{ p.name }}</h2>
+          <p class="m-0 mt-0.5 text-12 text-ink-3">{{ p.category }}</p>
+          <p class="m-0 mt-1 text-13 text-ink-2">{{ p.roadAddress || p.address }}</p>
+          @if (p.url) {
+            <a class="mt-1 inline-block text-12 font-medium text-accent-deep" [href]="p.url" target="_blank" rel="noopener">카카오맵에서 보기</a>
+          }
+        </div>
+        <button appButton type="button" class="btn" variant="icon" aria-label="닫기" (click)="close()">
+          <app-icon name="x" [size]="18" />
+        </button>
+      </div>
+      @if (p.nearby === 'stay') {
+        <button appButton type="button" class="btn" variant="primary" (click)="add()" data-testid="map-explore-add">
+          숙소로 담기 · 날짜 정하기
+        </button>
+      } @else {
+        <div class="flex gap-2">
+          <label class="sr-only" for="map-explore-day">담을 날</label>
+          <select
+            id="map-explore-day"
+            class="input min-w-0 flex-1"
+            [value]="targetDay()"
+            (change)="targetDay.set($any($event.target).value)"
+            data-testid="map-explore-day"
+          >
+            @for (d of days(); track d) {
+              <option [value]="d">{{ dayLabel(d) }}</option>
+            }
+            <option value="">날짜 미정</option>
+          </select>
+          <button
+            appButton
+            type="button"
+            class="btn"
+            variant="primary"
+            [disabled]="selectedAdded()"
+            [loading]="saving()"
+            (click)="add()"
+            data-testid="map-explore-add"
+          >
+            {{ selectedAdded() ? '담았어요' : '담기' }}
+          </button>
+        </div>
+      }
+    </section>
+  }
+</div>
