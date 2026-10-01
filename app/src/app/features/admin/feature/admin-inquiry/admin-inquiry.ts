@@ -1,7 +1,10 @@
+import { supportTime } from '../../../support/util/support-date';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { UiButton } from '../../../../shared/ui/button/button';
+import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
+import { UiField } from '../../../../shared/ui/field/field';
 import { UiInput } from '../../../../shared/ui/input/input';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
@@ -18,7 +21,7 @@ import { replyFormError } from '../../util/admin-form';
  */
 @Component({
   selector: 'app-admin-inquiry',
-  imports: [UiBadge, UiButton, UiInput, UiNotice, UiSpinner],
+  imports: [UiActionBar, UiBadge, UiButton, UiField, UiInput, UiNotice, UiSpinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-inquiry.html',
 })
@@ -79,7 +82,7 @@ export class AdminInquiryPage {
   }
 
   time(iso: string): string {
-    return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return supportTime(iso);
   }
 
   /** 호출 하나를 감싼다. 권한이 사라지면 내 정보로, 그 밖의 오류는 화면에 보인다. 입력은 남긴다. */

@@ -1,3 +1,4 @@
+import { supportDay } from '../../../support/util/support-date';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -6,7 +7,6 @@ import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
-import { formatKoreanDate } from '../../../../shared/util/dates';
 import { INQUIRY_KIND_LABEL, INQUIRY_STATUS_LABEL, type InquiryStatus } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied } from '../../data/admin-support';
 import { adminExit } from '../admin-exit';
@@ -61,6 +61,6 @@ export class AdminInquiries {
   }
 
   day(iso: string): string {
-    return formatKoreanDate(iso.slice(0, 10), { short: true });
+    return supportDay(iso);
   }
 }

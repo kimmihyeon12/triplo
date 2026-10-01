@@ -1,3 +1,4 @@
+import { supportDay } from '../../util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -57,7 +58,8 @@ export class InquiriesPage {
   async open(inquiry: Inquiry): Promise<void> {
     if (inquiry.replies.length === 0 || inquiry.readAt) return;
     // 읽음 표시에 실패해도 답변은 이미 보인다. 개수는 다음에 다시 센다.
-    await this.support.markInquiryRead(inquiry.id).catch(() => undefined);
+    const seenAt = inquiry.replies.at(-1)!.createdAt;
+    await this.support.markInquiryRead(inquiry.id, seenAt).catch(() => undefined);
     await this.load();
   }
 
@@ -67,10 +69,5 @@ export class InquiriesPage {
     return 'neutral';
   }
 
-  day(iso: string): string {
-    const d = new Date(iso);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}.${mm}.${dd}`;
-  }
+  readonly day = supportDay;
 }

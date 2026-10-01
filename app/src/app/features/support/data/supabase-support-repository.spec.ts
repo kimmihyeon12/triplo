@@ -71,4 +71,16 @@ describe('SupabaseSupportRepository', () => {
     const sent = await repo(client).sendInquiry('idea', '제안');
     expect(sent).toMatchObject({ id: 'new-id', kind: 'idea', body: '제안', status: 'open', replies: [] });
   });
+  it('답변 시각을 형식이 달라도 시각으로 비교한다', async () => {
+    const replied = { id: 'r', body: '답', author_role: 'admin' as const, created_at: '2026-10-01T01:00:00.5+00:00' };
+    const client = fake({ myInquiries: async () => [
+      inquiry('a', { status: 'answered', inquiry_replies: [replied], answer_read_at: '2026-10-01T01:00:00Z' }),
+    ] });
+    expect(await repo(client).unansweredReadCount()).toBe(1);
+  });
+  it('읽음은 화면에 보인 마지막 답변 시각까지로 기록한다(그 뒤 답변은 새 답변으로 남게)', async () => {
+    const client = fake();
+    await repo(client).markInquiryRead('a', '2026-10-01T01:00:00.123456+00:00');
+    expect(client.call).toHaveBeenCalledWith('mark_inquiry_read', { p_id: 'a', p_seen_at: '2026-10-01T01:00:00.123456+00:00' });
+  });
 });

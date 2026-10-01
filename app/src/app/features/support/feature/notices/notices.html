@@ -13,37 +13,30 @@
       <app-empty-state title="아직 공지사항이 없어요" />
     </section>
   } @else {
-    <ul class="flex list-none flex-col gap-2 p-0" data-testid="notice-list">
+    <!-- 관리자 공지 목록과 같은 한 장의 카드. 본문은 두 줄까지 미리 보고, 누르면 상세에서 읽는다. -->
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="notice-list">
       @for (notice of notices(); track notice.id) {
-        <li class="rounded-panel bg-panel shadow-panel">
-          <!--
-            첫 공지는 펼쳐 둔다. 목록에 들어온 사람은 대개 가장 새 소식을
-            보러 온 것이라, 한 번 더 누르게 할 이유가 없다.
-          -->
-          <details class="fold px-4 [[open]]:pb-4" [open]="$first">
-            <summary
-              class="flex min-h-14 cursor-pointer list-none items-start gap-2.5 py-3.5 [&::-webkit-details-marker]:hidden"
-            >
-              <span
-                class="mt-2 size-1.5 flex-none rounded-full"
-                [class.bg-danger-ink]="unreadIds().has(notice.id)"
-                aria-hidden="true"
-              ></span>
-              <span class="min-w-0 flex-1">
-                <span class="block text-14 font-bold leading-snug">{{ notice.title }}</span>
-                <span class="mt-0.5 block text-12 text-ink-3">{{ day(notice.createdAt) }}</span>
+        <li class="border-b border-border last:border-b-0">
+          <a
+            class="flex min-h-14 items-start gap-3 px-4 py-3 text-ink no-underline"
+            [routerLink]="['/account/notices', notice.id]"
+            [attr.data-testid]="'notice-' + notice.id"
+          >
+            <span class="min-w-0 flex-1">
+              <!-- 공지·문의 목록 공통 줄: 제목과 표시는 왼쪽, 날짜는 오른쪽 끝 -->
+              <span class="flex items-center gap-1.5">
+                <span class="min-w-0 truncate text-14 font-bold">{{ notice.title }}</span>
+                @if (unreadIds().has(notice.id)) {
+                  <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-label="새 공지" data-testid="notice-unread"></span>
+                }
+                <span class="ml-auto flex-none pl-2 text-12 text-ink-3 [font-variant-numeric:tabular-nums]">{{ day(notice.publishedAt ?? notice.createdAt) }}</span>
               </span>
-              <span
-                class="mt-1 flex size-4 flex-none items-center justify-center text-ink-3 [transition:transform_var(--dur)_var(--ease-out)] in-[details[open]]:rotate-90"
-                aria-hidden="true"
-              >
-                <app-icon name="chevron-right" [size]="16" />
-              </span>
-            </summary>
-            <p class="whitespace-pre-line pl-4 text-13 leading-relaxed text-ink-2">
-              {{ notice.body }}
-            </p>
-          </details>
+              <span class="mt-1 line-clamp-2 whitespace-pre-line text-13 text-ink-2 wrap-anywhere" data-testid="notice-preview">{{ notice.body }}</span>
+            </span>
+            <span class="mt-0.5 flex size-4 flex-none items-center justify-center text-border-strong" aria-hidden="true">
+              <app-icon name="chevron-right" [size]="16" />
+            </span>
+          </a>
         </li>
       }
     </ul>

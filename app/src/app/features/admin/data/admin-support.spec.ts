@@ -61,6 +61,18 @@ describe('AdminSupport', () => {
       ['admin_set_inquiry_status', { p_id: 'q1', p_status: 'reading' }],
     ]);
   });
+  it('문의 하나는 그 문의만 읽는다', async () => {
+    const inquiries = vi.fn(async () => [q('a', 'open', '2026-10-01T00:00:00Z')]);
+    const inquiry = vi.fn(async (id: string) => q(id, 'open', '2026-10-01T00:00:00Z'));
+    const { support } = setup({ inquiries, inquiry });
+    expect((await support.inquiry('b'))?.id).toBe('b');
+    expect(inquiry).toHaveBeenCalledWith('b');
+    expect(inquiries).not.toHaveBeenCalled();
+  });
+  it('없는 문의는 null이다', async () => {
+    const { support } = setup({ inquiry: async () => null });
+    expect(await support.inquiry('x')).toBeNull();
+  });
   it('권한이 사라진 오류를 가려낸다', () => {
     expect(isAdminDenied(toSupportError({ code: '42501' }))).toBe(true);
     expect(isAdminDenied(toSupportError({ code: 'P0400' }))).toBe(false);

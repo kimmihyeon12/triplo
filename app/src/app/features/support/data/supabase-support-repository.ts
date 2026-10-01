@@ -69,7 +69,7 @@ export class SupabaseSupportRepository implements SupportRepository {
     }
   }
 
-  async markInquiryRead(id: string): Promise<void> {
-    await this.client.call('mark_inquiry_read', { p_id: id });
+  async markInquiryRead(id: string, seenAt: string): Promise<void> {
+    await this.client.call('mark_inquiry_read', { p_id: id, p_seen_at: seenAt });
   }
 }

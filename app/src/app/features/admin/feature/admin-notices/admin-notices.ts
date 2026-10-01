@@ -1,12 +1,12 @@
+import { supportDay } from '../../../support/util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
-import { UiButton } from '../../../../shared/ui/button/button';
+import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
-import { formatKoreanDate } from '../../../../shared/util/dates';
 import type { Notice } from '../../../support/model/support';
 import { AdminSupport, isAdminDenied } from '../../data/admin-support';
 import { adminExit } from '../admin-exit';
@@ -17,7 +17,7 @@ import { adminExit } from '../admin-exit';
  */
 @Component({
   selector: 'app-admin-notices',
-  imports: [RouterLink, UiBadge, UiButton, IconComponent, UiNotice, UiSpinner],
+  imports: [RouterLink, UiBadge, IconComponent, UiEmptyState, UiNotice, UiSpinner],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-notices.html',
 })
@@ -28,7 +28,12 @@ export class AdminNotices {
   readonly error = signal<string | null>(null);
 
   constructor() {
-    inject(PageBar).set({ title: '공지 관리', back: ['/admin'], action: null });
+    // 새 공지는 앱의 다른 목록처럼 상단 바 오른쪽 동작으로 둔다. 본문에 큰 버튼을 두지 않는다.
+    inject(PageBar).set({
+      title: '공지 관리',
+      back: ['/admin'],
+      action: { label: '새 공지', icon: 'plus', link: ['/admin/notices/new'], testId: 'admin-notice-new' },
+    });
     void this.load();
   }
 
@@ -46,7 +51,6 @@ export class AdminNotices {
   }
 
   day(notice: Notice): string {
-    const iso = notice.publishedAt ?? notice.createdAt;
-    return formatKoreanDate(iso.slice(0, 10), { short: true });
+    return supportDay(notice.publishedAt ?? notice.createdAt);
   }
 }

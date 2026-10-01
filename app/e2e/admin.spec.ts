@@ -78,7 +78,7 @@ async function fakeAdminServer(page: Page) {
   return calls;
 }
 
-test('관리자는 공지를 고치고 발행한다', async ({ page }) => {
+test('관리자는 공지를 고쳐 발행하면 목록으로 돌아간다', async ({ page }) => {
   const calls = await fakeAdminServer(page);
   await page.goto('/admin');
   await page.getByTestId('admin-notices').click();
@@ -88,14 +88,58 @@ test('관리자는 공지를 고치고 발행한다', async ({ page }) => {
   await page.getByTestId('admin-notice-title').fill('   ');
   await expect(page.getByTestId('admin-notice-save')).toBeDisabled();
   await page.getByTestId('admin-notice-title').fill('점검 안내(수정)');
+  await page.getByTestId('admin-notice-published').check();
   await page.getByTestId('admin-notice-save').click();
-  await expect(page.getByTestId('admin-notice-saved')).toBeVisible();
-  await page.getByTestId('admin-notice-publish').click();
-  await expect(page.getByTestId('admin-notice-publish')).toContainText('발행 취소');
-  await expect(page.getByTestId('admin-notice-status')).toContainText('발행됨');
+  // 앱의 편집 폼처럼 저장하면 목록으로 돌아간다. 고친 내용을 먼저 저장하고 발행한다.
+  await expect(page).toHaveURL(/\/admin\/notices$/);
+  await expect(page.getByTestId('success-toast')).toContainText('발행했어요');
+  await expect(page.getByTestId('admin-notice-list')).toContainText('발행됨');
   expect(calls.map((c) => c.fn)).toEqual(['admin_save_notice', 'admin_set_notice_published']);
   expect(calls[0]!.body).toMatchObject({ p_id: 'n1', p_title: '점검 안내(수정)' });
+  // 뒤로 가도 방금 저장한 폼이 다시 나오지 않는다.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/admin$/);
   await expectNoHorizontalScroll(page);
+});
+
+test('새 공지를 주소로 바로 열어 저장해도 뒤로 가면 폼이 다시 나오지 않는다', async ({ page }) => {
+  await fakeAdminServer(page);
+  await page.goto('/admin/notices/new');
+  await page.getByTestId('admin-notice-title').fill('새 공지');
+  await page.getByTestId('admin-notice-body').fill('본문');
+  await page.getByTestId('admin-notice-save').click();
+  await expect(page).toHaveURL(/\/admin\/notices$/);
+  await expect(page.getByTestId('success-toast')).toContainText('저장했어요');
+  await page.locator('.topbar__back').click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goBack();
+  await expect(page.getByTestId('admin-notice-form')).toHaveCount(0);
+});
+
+test('새 공지는 상단 바 동작으로 쓰고, 비운 칸은 그 칸 아래에 알린다', async ({ page }) => {
+  await fakeAdminServer(page);
+  await page.goto('/admin/notices');
+  await page.getByTestId('admin-notice-new').click();
+  await expect(page).toHaveURL(/\/admin\/notices\/new$/);
+  // 처음 열었을 때는 오류를 보이지 않는다.
+  await expect(page.locator('#admin-notice-title-error')).toHaveCount(0);
+  await page.getByTestId('admin-notice-title').focus();
+  await page.getByTestId('admin-notice-body').focus();
+  await expect(page.locator('#admin-notice-title-error')).toHaveText('제목을 입력해 주세요.');
+  await expect(page.getByTestId('admin-notice-title')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByTestId('admin-notice-delete')).toHaveCount(0);
+});
+
+test('공지는 한 번 더 확인하고 지운다', async ({ page }) => {
+  const calls = await fakeAdminServer(page);
+  await page.goto('/admin/notices/n1');
+  await page.getByTestId('admin-notice-delete').click();
+  await expect(page.getByTestId('admin-notice-delete-confirm')).toBeVisible();
+  expect(calls).toEqual([]);
+  await page.getByTestId('admin-notice-delete-yes').click();
+  await expect(page).toHaveURL(/\/admin\/notices$/);
+  await expect(page.getByTestId('success-toast')).toContainText('공지를 지웠어요');
+  expect(calls.map((c) => c.fn)).toEqual(['admin_delete_notice']);
 });
 
 test('관리자는 문의를 보고 답한다', async ({ page }) => {
@@ -129,16 +173,6 @@ test('관리자 권한이 사라지면 내 정보로 돌아간다', async ({ pag
   );
   await page.goto('/admin/notices');
   await expect(page).toHaveURL(/\/account$/);
-});
-
-test('저장하지 않은 수정이 있으면 발행을 잠근다', async ({ page }) => {
-  await fakeAdminServer(page);
-  await page.goto('/admin/notices/n1');
-  await expect(page.getByTestId('admin-notice-publish')).toBeEnabled();
-  await page.getByTestId('admin-notice-body').fill('고친 본문');
-  await expect(page.getByTestId('admin-notice-publish')).toBeDisabled();
-  await page.getByTestId('admin-notice-save').click();
-  await expect(page.getByTestId('admin-notice-publish')).toBeEnabled();
 });
 
 test('서버 함수가 관리자 권한을 거절하면 알리고 내 정보로 돌아간다', async ({ page }) => {

@@ -15,6 +15,8 @@ import type { AdminInquiry } from '../model/admin-support';
 export interface AdminSupportClient {
   notices(): Promise<NoticeRow[]>;
   inquiries(): Promise<InquiryRow[]>;
+  /** 문의 하나. 없으면 null. */
+  inquiry(id: string): Promise<InquiryRow | null>;
   call(fn: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
@@ -36,6 +38,15 @@ export function supabaseAdminSupportClient(client: () => Promise<SupabaseClient>
       if (error) throw toSupportError(error);
       return (data ?? []) as InquiryRow[];
     },
+    async inquiry(id) {
+      const { data, error } = await (await client())
+        .from('inquiries')
+        .select(INQUIRY_COLUMNS)
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw toSupportError(error);
+      return (data as InquiryRow | null) ?? null;
+    },
     async call(fn, args) {
       const { data, error } = await (await client()).rpc(fn, args);
       if (error) throw toSupportError(error);
@@ -51,6 +62,10 @@ export const ADMIN_SUPPORT_CLIENT = new InjectionToken<AdminSupportClient>('ADMI
     return supabaseAdminSupportClient(() => auth.dataClient());
   },
 });
+
+function toAdminInquiry(row: InquiryRow): AdminInquiry {
+  return { ...toInquiry(row), senderNickname: row.sender_nickname };
+}
 
 /** 관리자 권한이 사라져 서버가 거절했는지. 화면은 이 경우 내 정보로 보낸다. */
 export function isAdminDenied(error: unknown): boolean {
@@ -95,12 +110,13 @@ export class AdminSupport {
 
   async inquiries(): Promise<AdminInquiry[]> {
     return (await this.client.inquiries())
-      .map((row) => ({ ...toInquiry(row), senderNickname: row.sender_nickname }))
+      .map(toAdminInquiry)
       .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.createdAt.localeCompare(a.createdAt));
   }
 
   async inquiry(id: string): Promise<AdminInquiry | null> {
-    return (await this.inquiries()).find((x) => x.id === id) ?? null;
+    const row = await this.client.inquiry(id);
+    return row ? toAdminInquiry(row) : null;
   }
 
   async reply(id: string, body: string): Promise<void> {

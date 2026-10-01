@@ -51,11 +51,14 @@ export function supabaseSupportDataClient(client: () => Promise<SupabaseClient>)
     async myInquiries() {
       const db = await client();
       const { data: session } = await db.auth.getSession();
+      const userId = session.session?.user.id;
+      // 로그인이 풀렸으면 볼 문의가 없다. 빈 id로 조회하면 서버가 형식 오류를 낸다.
+      if (!userId) return [];
       // 관리자도 사용자 화면에서는 자기 문의만 본다. RLS만 믿으면 관리자에게 전체가 보인다.
       const { data, error } = await db
         .from('inquiries')
         .select(INQUIRY_COLUMNS)
-        .eq('user_id', session.session?.user.id ?? '');
+        .eq('user_id', userId);
       if (error) throw toSupportError(error);
       return (data ?? []) as InquiryRow[];
     },

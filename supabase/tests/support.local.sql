@@ -17,6 +17,7 @@ insert into auth.users values
   ('33333333-3333-3333-3333-333333333333', '{"travel_nickname":"준호"}');
 \ir ../migrations/20260930000002_profiles_role.sql
 \ir ../migrations/20261001000000_support.sql
+\ir ../migrations/20261001100000_inquiry_read_seen_at.sql
 insert into public.profiles values ('11111111-1111-1111-1111-111111111111', 'admin');
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
@@ -74,6 +75,17 @@ set request.jwt.claim.sub = :'A';
 select admin_reply_inquiry(:'qid', '추가 안내');
 set request.jwt.claim.sub = :'B';
 select 'B new reply after read (t)' as t, max(r.created_at) > max(i.answer_read_at) from inquiries i join inquiry_replies r on r.inquiry_id = i.id;
+-- 화면에 첫 답변만 보였는데 그사이 둘째 답변이 달렸다. 본 데까지만 읽음으로 남는다.
+select min(created_at) as first_reply from inquiry_replies \gset
+select mark_inquiry_read(:'qid', :'first_reply');
+select 'B unseen reply stays new (t)' as t, max(r.created_at) > max(i.answer_read_at) from inquiries i join inquiry_replies r on r.inquiry_id = i.id;
+select 'B read never moves back (t)' as t, max(answer_read_at) >= :'first_reply'::timestamptz from inquiries;
+-- 옛 앱(시각 없이 부름)도 그대로 동작한다.
+select mark_inquiry_read(:'qid');
+select 'B old client marks all read (t)' as t, max(r.created_at) <= max(i.answer_read_at) from inquiries i join inquiry_replies r on r.inquiry_id = i.id;
+-- 미래 시각을 보내도 지금보다 뒤로 기록하지 않는다.
+select mark_inquiry_read(:'qid', now() + interval '1 day');
+select 'B future seen clamped (t)' as t, max(answer_read_at) <= now() + interval '1 second' from inquiries;
 set request.jwt.claim.sub = :'C';
 select 'C sees no replies (0)' as t, count(*) from inquiry_replies;
 set request.jwt.claim.sub = :'A';
