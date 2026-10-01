@@ -128,7 +128,7 @@
                 />
                 <!-- 크게 보고 주변 장소를 골라 담는다(2026-10-01). -->
                 <a
-                  class="absolute top-2 right-2 z-1 inline-flex min-h-9 items-center gap-1 rounded-pill border border-border bg-panel px-3 text-12 font-semibold text-ink no-underline shadow-[0_2px_6px_rgb(22_24_29/0.14)] hover:bg-ground-2"
+                  class="absolute top-2 right-2 z-10 inline-flex min-h-9 items-center gap-1 rounded-pill border border-border bg-panel px-3 text-12 font-semibold text-ink no-underline shadow-[0_2px_6px_rgb(22_24_29/0.14)] hover:bg-ground-2"
                   [routerLink]="['/trips', id(), 'map']"
                   [queryParams]="selectedDay() ? { day: selectedDay() } : {}"
                   data-testid="open-map-explore"
