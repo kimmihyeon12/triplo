@@ -17,6 +17,14 @@ const guideFirst: CanActivateFn = (_route, state) => {
 
 export const routes: Routes = [
   {
+    // 초대 링크를 앱에 붙여 넣어 열기(2026-10-01). 아이폰은 링크가 Safari로 열려 앱으로 가져온다.
+    path: 'join',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/collaboration/feature/join-paste/join-paste').then((m) => m.JoinPaste),
+    title: '초대 링크로 참여',
+  },
+  {
     // 초대 링크. 로그인 전에도 보기 전용으로 열리므로 가드를 두지 않는다.
     path: 'join/:code',
     loadComponent: () =>

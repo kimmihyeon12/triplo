@@ -13,7 +13,7 @@ test('내 정보에서 사용법을 열면 화면 위에 설명 글이 보이고
   await expect(page.getByTestId('guide-step')).toHaveText('1 / 14');
   await expect(page.getByTestId('guide-title')).toHaveText('여행 목록');
   const first = page.getByTestId('guide-slide').first().getByTestId('guide-callout');
-  await expect(first).toHaveCount(5);
+  await expect(first).toHaveCount(6);
   await expect(first.first()).toContainText('AI가 코스를 짜 줘요');
   await expect(first.first()).toBeInViewport();
   await expectNoHorizontalScroll(page);

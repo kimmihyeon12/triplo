@@ -1,4 +1,13 @@
 <div class="mx-auto flex max-w-(--content-narrow) flex-col gap-4 px-4 py-6" data-testid="join-page">
+  @if (inIosBrowser) {
+    <section class="flex flex-col gap-2 rounded-panel border border-border bg-panel-2 p-4" data-testid="join-open-in-app">
+      <p class="m-0 text-14 font-semibold">홈 화면에 추가한 트립플로 앱에서 열려면</p>
+      <p class="m-0 text-13 leading-relaxed text-ink-2">
+        아이폰은 링크를 앱으로 바로 열지 못해요. 링크를 복사한 뒤 트립플로 앱의 여행 목록에서 ‘초대 링크로 참여’에 붙여 넣어 주세요. 앱이 없다면 여기서 그대로 함께하면 돼요.
+      </p>
+      <button appButton type="button" class="btn self-start" (click)="copyLink()" data-testid="join-copy-link">링크 복사</button>
+    </section>
+  }
   @switch (state()) {
     @case ('invalid') {
       <div class="rounded-panel bg-panel p-6 text-center shadow-panel" data-testid="join-invalid">

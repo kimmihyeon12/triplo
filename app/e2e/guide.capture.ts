@@ -106,6 +106,7 @@ test('사용법 캡처', async ({ page, context }) => {
   await mark('trips', 2, page.getByTestId('trip-list').locator('a, [role=link], article').first());
   await mark('trips', 3, page.getByTestId('open-chat'));
   await mark('trips', 4, page.getByTestId('go-stats'));
+  await mark('trips', 5, page.getByTestId('open-join-paste'));
   await shot(page, 'trips');
 
   // 일정 짜기 조건
