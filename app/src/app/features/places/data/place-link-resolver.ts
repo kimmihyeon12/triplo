@@ -6,14 +6,17 @@ import type { LinkedPlace } from '../model/place-link';
  * 지도 링크에서 장소를 읽는 어댑터(2026-10-01). 실제는 서버 함수 resolve-place, 테스트 앱은 고정 응답이다.
  * 실패하면 화면에 그대로 보일 문장을 담은 Error를 던진다.
  */
+/** 링크에서 읽은 장소. 평점·후기 수는 화면에만 보이고 저장하지 않는다. */
+export type LinkedCandidate = PlaceCandidate & { rating: number | null; reviewCount: number | null };
+
 export interface PlaceLinkResolver {
-  resolve(url: string): Promise<PlaceCandidate>;
+  resolve(url: string): Promise<LinkedCandidate>;
 }
 
 export const PLACE_LINK_RESOLVER = new InjectionToken<PlaceLinkResolver>('PLACE_LINK_RESOLVER');
 
 /** 링크에서 읽은 장소를 검색 후보와 같은 모양으로 바꾼다. 좌표는 제공자의 값 그대로다. */
-export function linkedToCandidate(place: LinkedPlace): PlaceCandidate {
+export function linkedToCandidate(place: LinkedPlace): LinkedCandidate {
   return {
     provider: place.provider,
     id: place.id,
@@ -24,6 +27,8 @@ export function linkedToCandidate(place: LinkedPlace): PlaceCandidate {
     lng: place.lng,
     category: place.category,
     url: place.url,
+    rating: place.rating ?? null,
+    reviewCount: place.reviewCount ?? null,
   };
 }
 

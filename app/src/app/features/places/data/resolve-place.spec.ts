@@ -18,6 +18,7 @@ const NAVER_PAGE =
   '"PlaceDetailBase:1111111":{"__typename":"PlaceDetailBase","id":"1111111","name":"다른 가게","coordinate":{"x":"126.9","y":"37.5"}},' +
   `"PlaceDetailBase:${NAVER_ID}":{"__typename":"PlaceDetailBase","id":"${NAVER_ID}","name":"신가회전훠궈 수원역점",` +
   '"category":"중식당","roadAddress":"경기 수원시 팔달구 향교로 25-1 2층","address":"경기 수원시 팔달구 매산로2가 28-2",' +
+  '"visitorReviewsTotal":23,"visitorReviewsScore":4.7,' +
   '"coordinate":{"__typename":"Coordinate","x":"127.0037697","y":"37.268625","mapZoomLevel":12}}};</script></body></html>';
 
 /** 2026-10-01 실제 카카오 장소 정보(panel3)의 summary 부분. */
@@ -30,6 +31,7 @@ const KAKAO_JSON = {
     point: { lon: 127.0037565852695, lat: 37.2686159151247 },
     address: { disp: '경기 수원시 팔달구 향교로 25-1 (매산로2가)', jibun: '매산로2가 28-2', road: '경기 수원시 팔달구 향교로 25-1' },
   },
+  kakaomap_review: { score_set: { review_count: 9, total_score: 40, average_score: 4.4 } },
 };
 
 describe('지도 링크 판별', () => {
@@ -78,6 +80,8 @@ describe('제공자 응답에서 장소 읽기', () => {
       lng: 127.0037697,
       category: '중식당',
       url: `https://m.place.naver.com/place/${NAVER_ID}/home`,
+      rating: 4.7,
+      reviewCount: 23,
     });
   });
 
@@ -92,7 +96,17 @@ describe('제공자 응답에서 장소 읽기', () => {
       lng: 127.0037565852695,
       category: '중식',
       url: `https://place.map.kakao.com/${KAKAO_ID}`,
+      rating: 4.4,
+      reviewCount: 9,
     });
+  });
+
+  it('후기가 없으면 평점을 보이지 않는다', () => {
+    expect(readKakaoPlace({ ...KAKAO_JSON, kakaomap_review: { score_set: { review_count: 0, average_score: 0 } } }, KAKAO_ID)).toMatchObject({
+      rating: null,
+      reviewCount: null,
+    });
+    expect(readNaverPlace(NAVER_PAGE.replace('"visitorReviewsTotal":23,"visitorReviewsScore":4.7,', ''), NAVER_ID)).toMatchObject({ rating: null });
   });
 
   it('구조가 바뀌거나 좌표가 없으면 읽지 못한 것으로 본다', () => {

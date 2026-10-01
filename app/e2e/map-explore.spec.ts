@@ -41,6 +41,8 @@ test('여행 상세에서 크게 보고, 주변 맛집을 골라 다른 날에 �
 
   await page.getByTestId('map-place-n-grill').click();
   await expect(page.getByTestId('map-explore-name')).toHaveText('테스트 회센터');
+  // 고른 곳의 카카오맵 평점을 읽어 보인다(저장하지 않는다).
+  await expect(page.getByTestId('map-explore-rating')).toHaveText('· ★ 4.4 · 후기 9 · 카카오맵');
   await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-01');
   await page.getByTestId('map-explore-day').selectOption('2026-05-02');
   await page.getByTestId('map-explore-add').click();

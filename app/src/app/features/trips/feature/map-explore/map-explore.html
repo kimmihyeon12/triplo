@@ -83,7 +83,16 @@
       <div class="flex items-start gap-2">
         <div class="min-w-0 flex-1">
           <h2 class="m-0 text-16 font-bold leading-snug" data-testid="map-explore-name">{{ p.name }}</h2>
-          <p class="m-0 mt-0.5 text-12 text-ink-3">{{ p.category }}</p>
+          <p class="m-0 mt-0.5 flex flex-wrap items-center gap-x-1.5 text-12 text-ink-3">
+            <span>{{ p.category }}</span>
+            @if (rating() === 'loading') {
+              <span aria-live="polite">· 평점 불러오는 중…</span>
+            } @else if (ratingValue(); as r) {
+              <span class="font-semibold text-ink" data-testid="map-explore-rating"
+                >· <span class="text-warn-ink" aria-hidden="true">★</span> {{ r.score }} · 후기 {{ r.count }} · 카카오맵</span
+              >
+            }
+          </p>
           <p class="m-0 mt-1 text-13 text-ink-2">{{ p.roadAddress || p.address }}</p>
           @if (p.url) {
             <a class="mt-1 inline-block text-12 font-medium text-accent-deep" [href]="p.url" target="_blank" rel="noopener">카카오맵에서 보기</a>
@@ -101,8 +110,9 @@
         <div class="flex gap-2">
           <label class="sr-only" for="map-explore-day">담을 날</label>
           <select
+            appInput
             id="map-explore-day"
-            class="input min-w-0 flex-1"
+            class="select min-w-0 flex-1"
             [value]="targetDay()"
             (change)="targetDay.set($any($event.target).value)"
             data-testid="map-explore-day"
