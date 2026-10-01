@@ -62,6 +62,7 @@ export class GuidePage {
           y: shot.y + (m.y / 100) * shot.h,
           w: (m.w / 100) * shot.w,
           h: (m.h / 100) * shot.h,
+          r: m.r * (shot.w / GUIDE_SHOT.width),
           label,
         }];
       });

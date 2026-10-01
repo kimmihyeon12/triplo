@@ -15,7 +15,7 @@ const OUT = 'public/guide';
 const W = 390;
 const H = 844;
 
-interface Mark { spot: number; x: number; y: number; w: number; h: number }
+interface Mark { spot: number; x: number; y: number; w: number; h: number; r: number }
 const marks: Record<string, Mark[]> = {};
 
 /** 사용자에게 보일 안내이므로 테스트 데이터의 표시를 화면 글자에서만 지운다. 앱 코드는 바꾸지 않는다. */
@@ -46,13 +46,16 @@ async function mark(slide: string, spot: number, target: Locator): Promise<void>
   if (!GUIDE_SLIDES.find((s) => s.key === slide)?.spots[spot]) throw new Error(`${slide}의 ${spot}번 설명이 없다`);
   const box = await target.first().boundingBox({ timeout: 3000 }).catch(() => null);
   if (!box) return;
+  // 밝힌 자리의 테두리를 요소와 같은 중심으로 둥글리려고 요소의 모서리 둥글기를 읽는다.
+  const r = await target.first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0);
   const x = Math.max(0, box.x);
   const y = Math.max(0, box.y);
   const w = Math.min(W, box.x + box.width) - x;
   const h = Math.min(H, box.y + box.height) - y;
   if (w < 8 || h < 8) return;
-  const pct = (v: number, total: number) => Math.round((v / total) * 1000) / 10;
-  (marks[slide] ??= []).push({ spot, x: pct(x, W), y: pct(y, H), w: pct(w, W), h: pct(h, H) });
+  // 소수 둘째 자리까지 남겨 보여 줄 때 1px 안쪽으로 맞춘다.
+  const pct = (v: number, total: number) => Math.round((v / total) * 10000) / 100;
+  (marks[slide] ??= []).push({ spot, x: pct(x, W), y: pct(y, H), w: pct(w, W), h: pct(h, H), r: Math.round(Math.min(r, box.height / 2)) });
 }
 
 async function shot(page: Page, slide: string): Promise<void> {
@@ -264,8 +267,8 @@ test('사용법 캡처', async ({ page, context }) => {
   // 밝게 남길 자리를 코드로 남긴다.
   const body =
     `// 자동 생성: e2e/guide.capture.ts. 손으로 고치지 말고 캡처를 다시 돌린다.\n` +
-    `/** 사용법 캡처의 크기(px)와 밝게 남길 자리(화면 비율 %). spot은 GUIDE_SLIDES의 spots 순서다. */\n` +
-    `export interface GuideMark { readonly spot: number; readonly x: number; readonly y: number; readonly w: number; readonly h: number }\n\n` +
+    `/** 사용법 캡처의 크기(px)와 밝게 남길 자리(화면 비율 %)와 모서리 둥글기(px). spot은 GUIDE_SLIDES의 spots 순서다. */\n` +
+    `export interface GuideMark { readonly spot: number; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly r: number }\n\n` +
     `export const GUIDE_SHOT = { width: ${W}, height: ${H} } as const;\n\n` +
     `export const GUIDE_MARKS: Readonly<Record<string, readonly GuideMark[]>> = ${JSON.stringify(marks, null, 2)};\n`;
   await writeFile('src/app/features/guide/model/guide-marks.ts', body, 'utf8');

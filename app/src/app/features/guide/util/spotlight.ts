@@ -10,6 +10,8 @@ export interface SpotBox {
   readonly w: number;
   readonly h: number;
   readonly label: string;
+  /** 요소의 모서리 둥글기(px). 모르면 8px로 본다. */
+  readonly r?: number;
 }
 
 export interface Rect {
@@ -31,8 +33,13 @@ export interface SpotCallout {
   readonly toY: number;
 }
 
+export interface Hole extends Rect {
+  /** 모서리 둥글기(px). */
+  readonly r: number;
+}
+
 export interface SpotLayout {
-  readonly holes: readonly Rect[];
+  readonly holes: readonly Hole[];
   readonly callouts: readonly SpotCallout[];
 }
 
@@ -62,39 +69,27 @@ export function fitShot(shot: { width: number; height: number }, width: number, 
   return { x: Math.round((width - w) / 2), y: 0, w, h: Math.round(shot.height * scale) };
 }
 
-/** 이웃한 두 요소의 밝은 자리가 붙거나 겹치지 않게 사이를 띄운다. */
-const SPLIT = 6;
+/** 이웃한 두 요소의 밝은 자리 사이에 남길 최소 간격. */
+const SPLIT = 4;
 
-function holesFor(spots: readonly SpotBox[], width: number, height: number): Rect[] {
-  const sides = spots.map((s) => ({
-    l: Math.max(2, s.x - SPOT_PAD),
-    t: Math.max(2, s.y - SPOT_PAD),
-    r: Math.min(width - 2, s.x + s.w + SPOT_PAD),
-    b: Math.min(height - 2, s.y + s.h + SPOT_PAD),
-  }));
-  for (let i = 0; i < spots.length; i++) {
-    for (let j = i + 1; j < spots.length; j++) {
-      const a = spots[i]!;
-      const b = spots[j]!;
-      const ha = sides[i]!;
-      const hb = sides[j]!;
-      const meet = ha.l < hb.r + SPLIT && hb.l < ha.r + SPLIT && ha.t < hb.b + SPLIT && hb.t < ha.b + SPLIT;
-      if (!meet) continue;
-      // 요소끼리 떨어진 방향으로 그 사이의 가운데에서 나눈다. 요소 자체가 겹치면 그대로 둔다.
-      if (a.x + a.w <= b.x || b.x + b.w <= a.x) {
-        const [left, right, hl, hr] = a.x < b.x ? [a, b, ha, hb] : [b, a, hb, ha];
-        const mid = (left.x + left.w + right.x) / 2;
-        hl.r = Math.min(hl.r, mid - SPLIT / 2);
-        hr.l = Math.max(hr.l, mid + SPLIT / 2);
-      } else if (a.y + a.h <= b.y || b.y + b.h <= a.y) {
-        const [top, bottom, ht, hb2] = a.y < b.y ? [a, b, ha, hb] : [b, a, hb, ha];
-        const mid = (top.y + top.h + bottom.y) / 2;
-        ht.b = Math.min(ht.b, mid - SPLIT / 2);
-        hb2.t = Math.max(hb2.t, mid + SPLIT / 2);
-      }
-    }
-  }
-  return sides.map((h) => ({ x: h.l, y: h.t, w: h.r - h.l, h: h.b - h.t }));
+/**
+ * 밝게 뚫을 자리. 요소를 네 방향 같은 여백으로 넓혀 요소가 정확히 가운데 오게 한다.
+ * 이웃 요소와 가까우면 맞닿는 쪽만 줄이지 않고 네 방향 여백을 함께 줄인다.
+ * 모서리는 요소의 둥글기에 여백을 더해 요소와 같은 중심으로 둥글린다.
+ */
+function holesFor(spots: readonly SpotBox[]): Hole[] {
+  return spots.map((s, i) => {
+    let pad = SPOT_PAD;
+    spots.forEach((o, j) => {
+      if (j === i) return;
+      const dx = Math.max(o.x - (s.x + s.w), s.x - (o.x + o.w));
+      const dy = Math.max(o.y - (s.y + s.h), s.y - (o.y + o.h));
+      const gap = Math.max(dx, dy);
+      if (gap < 0) return; // 요소끼리 겹치면 그대로 둔다.
+      pad = Math.min(pad, Math.max(0, (gap - SPLIT) / 2));
+    });
+    return { x: s.x - pad, y: s.y - pad, w: s.w + pad * 2, h: s.h + pad * 2, r: (s.r ?? 8) + pad };
+  });
 }
 
 /**
@@ -108,7 +103,7 @@ export function layoutSpots(
   height: number,
   measure: (text: string) => number = (text) => text.length * CHAR,
 ): SpotLayout {
-  const holes = holesFor(spots, width, height);
+  const holes = holesFor(spots);
 
   const order = spots.map((_, i) => i).sort((a, b) => holes[a]!.y - holes[b]!.y);
   const placed: Rect[] = [];
