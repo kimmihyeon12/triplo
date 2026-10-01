@@ -1,0 +1,79 @@
+<div class="flex flex-col gap-2" data-testid="place-link">
+  <button
+    appButton
+    type="button"
+    class="btn btn--sm self-start"
+    variant="ghost"
+    [attr.aria-expanded]="open()"
+    aria-controls="place-link-panel"
+    (click)="toggle()"
+    data-testid="place-link-toggle"
+  >
+    <app-icon name="share" [size]="14" />
+    링크로 담기
+  </button>
+
+  @if (open()) {
+    <div
+      id="place-link-panel"
+      class="flex flex-col gap-2 rounded-control border border-border bg-panel-2 p-3"
+    >
+      <p class="m-0 text-12 leading-normal text-ink-3">
+        네이버·카카오 지도에서 공유 → URL 복사한 링크를 붙여 넣으세요.
+      </p>
+      <div class="flex flex-col gap-2">
+        <label
+          class="visually-hidden absolute! h-px w-px overflow-hidden whitespace-nowrap [clip:rect(0_0_0_0)]"
+          for="place-link-url"
+          >지도 링크</label
+        >
+        <input
+          #linkInput
+          appInput
+          id="place-link-url"
+          class="input w-full"
+          type="url"
+          inputmode="url"
+          name="placeLink"
+          placeholder="https://naver.me/…"
+          autocomplete="off"
+          [ngModel]="url()"
+          (ngModelChange)="url.set($event); error.set(null)"
+          (keydown.enter)="$event.preventDefault(); find()"
+          [disabled]="working()"
+          data-testid="place-link-url"
+        />
+        <div class="flex gap-2">
+          <button
+            appButton
+            type="button"
+            class="btn flex-1"
+            (click)="paste()"
+            [disabled]="working()"
+            data-testid="place-link-paste"
+          >
+            붙여넣기
+          </button>
+          <button
+            appButton
+            type="button"
+            class="btn flex-1"
+            variant="primary"
+            (click)="find()"
+            [disabled]="!url().trim()"
+            [loading]="working()"
+            data-testid="place-link-find"
+          >
+            찾기
+          </button>
+        </div>
+      </div>
+      @if (error(); as message) {
+        <div appNotice tone="warn" role="alert" data-testid="place-link-error">
+          <app-icon name="alert" />
+          <div class="notice__body min-w-0 flex-1 text-13">{{ message }}</div>
+        </div>
+      }
+    </div>
+  }
+</div>

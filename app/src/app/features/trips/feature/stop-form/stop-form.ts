@@ -31,6 +31,7 @@ import {
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { PlaceSearchBoxComponent } from '../../../places/ui/place-search-box/place-search-box';
+import { PlaceLinkBoxComponent } from '../../../places/ui/place-link-box/place-link-box';
 import { SaveStatusComponent } from '../../../../shared/ui/save-status/save-status';
 import { applyPlaceCandidate, clearLocation } from '../../util/location';
 import { regionIdForAddress } from '../../util/region-match';
@@ -50,6 +51,7 @@ import type { GeoPoint, PlaceRef } from '../../../places/model/place';
     IconComponent,
     SaveStatusComponent,
     PlaceSearchBoxComponent,
+    PlaceLinkBoxComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stop-form.html',
@@ -97,9 +99,11 @@ export class StopFormPage {
   readonly providerLabel = computed(() =>
     this.placeRef()?.provider === 'kakao'
       ? '카카오'
-      : this.placeRef()?.provider === 'fixture'
-        ? '테스트 픽스처'
-        : '',
+      : this.placeRef()?.provider === 'naver'
+        ? '네이버'
+        : this.placeRef()?.provider === 'fixture'
+          ? '테스트 픽스처'
+          : '',
   );
 
   readonly days = computed(() => {
