@@ -45,6 +45,7 @@ export class EdgeAiProvider implements AiPlanProvider {
         mustGo: request.mustGo,
         bookedStay: request.bookedStay,
         extraNote: request.extraNote,
+        ...(request.candidates?.length ? { candidates: request.candidates } : {}),
       });
       this.quota.record('plan', remaining);
       if (signal.aborted) return [];

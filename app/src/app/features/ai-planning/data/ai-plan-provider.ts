@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import type { AiItem } from '../util/ai-response';
+import type { WireCandidate } from './place-candidates';
 
 /**
  * 일정 초안을 만들어 주는 제공자. 화면은 이 인터페이스만 사용한다.
@@ -22,6 +23,8 @@ export interface AiPlanRequest {
   readonly mustGo: string;
   readonly bookedStay: string;
   readonly extraNote: string;
+  /** 카카오 검색으로 모은 실제 장소 후보. 있으면 모델은 이 안에서 번호로만 고른다. */
+  readonly candidates?: readonly WireCandidate[];
 }
 
 export interface AiPlanAvailability {

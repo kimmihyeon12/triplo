@@ -53,6 +53,9 @@ function candidate(name: string): PlaceCandidate {
   };
 }
 
+/** 후보 모으기 검색('강릉 맛집')인지. 이름 방식을 검증하는 테스트에서는 후보를 비워 둔다. */
+const isPoolQuery = (query: string) => /^\S+ (관광명소|가볼만한곳|맛집|카페|체험|시장|호텔|펜션|야경)$/.test(query);
+
 /** '없는곳'만 검색에서 빠지는 가짜 제공자. 외부를 부르지 않는다. */
 function fakeSearch(): PlaceSearchProvider {
   return {
@@ -60,7 +63,7 @@ function fakeSearch(): PlaceSearchProvider {
     search: async (query: string) => {
       if (query.includes('없는곳')) return { candidates: [], total: 0 };
       // 하루 최소 구성을 채우는 검색은 여기서 다루지 않는다(fill-day-minimums.spec).
-      if (/맛집|카페|관광명소/.test(query)) return { candidates: [], total: 0 };
+      if (isPoolQuery(query) || /^(맛집|카페|관광명소)$/.test(query)) return { candidates: [], total: 0 };
       const name = query.split(' ').pop() ?? query;
       return { candidates: [candidate(name)], total: 1 };
     },
@@ -366,10 +369,11 @@ describe('AiPlanStore 하루 최소 구성', () => {
     const search: PlaceSearchProvider = {
       availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
       search: async (query: string) => {
+        if (isPoolQuery(query)) return { candidates: [], total: 0 };
         if (query.includes('없는식당')) return { candidates: [], total: 0 };
         if (query.includes('맛집'))
           return { candidates: [{ ...candidate('초당순두부'), id: 'm1', category: '음식점' }, { ...candidate('물회'), id: 'm2', category: '음식점' }], total: 2 };
-        if (/카페|관광명소/.test(query)) return { candidates: [], total: 0 };
+        if (/카페|관광명소|가볼만한곳|체험|시장|호텔|펜션/.test(query)) return { candidates: [], total: 0 };
         const name = query.split(' ').pop() ?? query;
         return { candidates: [candidate(name)], total: 1 };
       },
@@ -401,6 +405,7 @@ describe('AiPlanStore 하루 최소 구성', () => {
       availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
       search: async (query: string) => {
         searched.push(query);
+        if (isPoolQuery(query)) return { candidates: [], total: 0 };
         const name = query.split(' ').pop() ?? query;
         return { candidates: [candidate(name)], total: 1 };
       },
@@ -419,6 +424,52 @@ describe('AiPlanStore 하루 최소 구성', () => {
     store.set('extraNote', '저녁 이후 계획');
     await store.generate();
     expect(store.results().map((i) => i.name)).toEqual(['야시장']);
-    expect(searched.some((q) => /맛집|카페|관광명소/.test(q))).toBe(false);
+    // 후보 모으기 검색은 하지만, 모자란 자리를 채우는 근처 검색('맛집')은 하지 않는다.
+    expect(searched.filter((q) => !isPoolQuery(q) && /맛집|카페|관광명소/.test(q))).toEqual([]);
+  });
+});
+
+describe('AiPlanStore 실제 장소 후보', () => {
+  it('후보를 모아 보내고, 번호로 고른 것만 실제 장소로 담는다(이름으로 다시 찾지 않는다)', async () => {
+    const searched: string[] = [];
+    const byWord: Record<string, PlaceCandidate[]> = {
+      맛집: [{ ...candidate('초당순두부'), id: 'm1', category: '음식점' }, { ...candidate('물회집'), id: 'm2', category: '음식점' }],
+      카페: [{ ...candidate('테라로사'), id: 'b1', category: '카페' }],
+      관광명소: [{ ...candidate('경포대'), id: 's1' }, { ...candidate('오죽헌'), id: 's2' }],
+    };
+    const search: PlaceSearchProvider = {
+      availability: async () => ({ available: true, reason: null, providerLabel: '가짜' }),
+      search: async (query: string) => {
+        searched.push(query);
+        const hit = Object.entries(byWord).find(([w]) => query.endsWith(w))?.[1] ?? [];
+        return { candidates: hit, total: hit.length };
+      },
+    };
+    let sent: readonly { id: string; name: string }[] = [];
+    const ai = fakeAi({ generate: async (request) => {
+      sent = request.candidates ?? [];
+      const ref = (name: string) => sent.find((c) => c.name === name)!.id;
+      return [
+        { day: 1, order: 1, start: '10:00', moveToNext: null, kind: 'place', name: '경포대', ref: ref('경포대') },
+        { day: 1, order: 2, start: '12:00', moveToNext: null, kind: 'meal', name: '초당순두부', ref: ref('초당순두부') },
+        { day: 1, order: 3, start: '13:30', moveToNext: null, kind: 'place', name: '지어낸곳' },
+        { day: 1, order: 4, start: '15:00', moveToNext: null, kind: 'break', name: '테라로사', ref: ref('테라로사') },
+        { day: 1, order: 5, start: '16:30', moveToNext: null, kind: 'place', name: '오죽헌', ref: ref('오죽헌') },
+        { day: 1, order: 6, start: '18:00', moveToNext: null, kind: 'meal', name: '물회집', ref: ref('물회집') },
+      ];
+    } });
+    const injector = Injector.create({
+      providers: [{ provide: AI_PLAN_PROVIDER, useValue: ai }, { provide: PLACE_SEARCH, useValue: search }, AiPlanStore],
+    });
+    const store = runInInjectionContext(injector, () => injector.get(AiPlanStore));
+    store.set('regions', ['강릉']);
+    store.set('startDate', '2026-10-01');
+    store.set('endDate', '2026-10-01');
+    await store.generate();
+    expect(sent.map((c) => c.name)).toEqual(expect.arrayContaining(['초당순두부', '테라로사', '경포대']));
+    expect(store.results().map((i) => i.name)).toEqual(['경포대', '초당순두부', '테라로사', '오죽헌', '물회집']);
+    expect(store.results().every((i) => i.verified && i.location)).toBe(true);
+    // 고른 장소를 이름으로 다시 찾지 않는다.
+    expect(searched.some((q) => q.includes('지어낸곳') || q.endsWith(' 경포대'))).toBe(false);
   });
 });

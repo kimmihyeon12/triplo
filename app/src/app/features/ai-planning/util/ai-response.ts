@@ -41,6 +41,8 @@ export interface AiItem {
   readonly closed?: ClosedInfo | null;
   readonly name: string;
   readonly kind: PlanKind;
+  /** 후보로 고르는 요청에서 고른 후보의 id. 이름 방식 응답에는 없다. */
+  readonly ref?: string;
 }
 
 function parseStart(value: unknown): string | null {
@@ -68,6 +70,7 @@ function parseMove(value: unknown): AiMove | null {
 
 interface Draft {
   day: number;
+  ref?: string;
   name: string;
   kind: PlanKind;
   rawOrder: unknown;
@@ -95,7 +98,7 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
     if (out.length >= MAX_ITEMS) break;
     if (!entry || typeof entry !== 'object') continue;
     const item = entry as {
-      day?: unknown; name?: unknown; kind?: unknown; estimate?: unknown;
+      day?: unknown; name?: unknown; kind?: unknown; estimate?: unknown; ref?: unknown;
       order?: unknown; start?: unknown; moveToNext?: unknown; closed?: unknown;
     };
     if (typeof item.day !== 'number' || !Number.isInteger(item.day)) continue;
@@ -104,11 +107,15 @@ export function parseAiItems(content: string, dayCount: number): AiItem[] {
     const name = item.name.trim().slice(0, MAX_NAME);
     const kind = KIND_BY_LABEL[String(item.kind ?? '')] ?? 'place';
     // 숙소는 여러 밤 같은 곳에 묵으므로 날마다 한 번씩 받는다. 담을 때 이어지는 밤을 합친다.
-    const key = kind === 'stay' ? `stay:${item.day}:${name}` : name;
+    // 후보 id는 c와 숫자뿐이다. 다른 모양은 없는 것으로 본다.
+    const ref = typeof item.ref === 'string' && /^c\d{1,3}$/.test(item.ref) ? item.ref : undefined;
+    const id = ref ?? name;
+    const key = kind === 'stay' ? `stay:${item.day}:${id}` : id;
     if (!name || seen.has(key)) continue;
     seen.add(key);
     out.push({
       day: item.day,
+      ...(ref ? { ref } : {}),
       name,
       kind,
       rawOrder: item.order,
