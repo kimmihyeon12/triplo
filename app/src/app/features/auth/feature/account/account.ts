@@ -99,6 +99,8 @@ export class AccountPage {
 
   /** 회원탈퇴 확인 영역이 열려 있는지. */
   readonly leaving = signal(false);
+  /** 탈퇴하면 지워질 여행과 넘어갈 여행의 수. 확인 영역을 열 때 읽는다. */
+  readonly deletion = signal<{ deleteTrips: number; handOverTrips: number } | null>(null);
   readonly confirmation = signal('');
 
   constructor() {
@@ -150,6 +152,7 @@ export class AccountPage {
   }
 
   toggleLeaving(): void {
+    if (!this.leaving()) void this.auth.deletionSummary().then((summary) => this.deletion.set(summary));
     // 닫을 때 입력을 비운다. 다시 열었을 때 '탈퇴'가 남아 있으면 한 번만
     // 더 눌러도 지워진다.
     this.leaving.update((open) => {

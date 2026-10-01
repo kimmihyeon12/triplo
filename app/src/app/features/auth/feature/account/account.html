@@ -255,10 +255,27 @@
 
     @if (leaving()) {
       <div class="rounded-panel bg-panel p-4 shadow-panel">
-        <p class="mb-3 text-12 leading-normal text-ink-2">
-          탈퇴하면 이 서비스의 계정과 내가 만든 여행·가계부가 삭제되며 되돌릴 수 없습니다.
-          Google·카카오 계정은 삭제되지 않습니다.
-        </p>
+        <!-- 지워지는 것·넘어가는 것·남는 것을 나눠 보인다(2026-10-01, 함께 쓰는 여행은 다른 멤버에게 넘긴다). -->
+        <ul class="m-0 mb-3 flex list-none flex-col gap-1.5 p-0 text-12 leading-normal text-ink-2" data-testid="delete-summary">
+          <li>
+            <strong class="text-danger-ink">지워져요</strong> ·
+            @if (deletion(); as d) {
+              혼자 쓰는 여행 {{ d.deleteTrips }}개와 그 가계부, 보낸 문의, 이 기기의 대화 기록
+            } @else {
+              혼자 쓰는 여행과 그 가계부, 보낸 문의, 이 기기의 대화 기록
+            }
+          </li>
+          <li data-testid="delete-handover">
+            <strong>넘어가요</strong> ·
+            @if (deletion(); as d) {
+              함께 쓰는 여행 {{ d.handOverTrips }}개는 가장 먼저 함께한 사람이 주인이 돼요
+            } @else {
+              함께 쓰는 여행은 가장 먼저 함께한 사람이 주인이 돼요
+            }
+          </li>
+          <li><strong>남아요</strong> · 다른 사람 여행에 남긴 지출, Google·카카오 계정</li>
+        </ul>
+        <p class="mb-3 text-12 leading-normal text-ink-3">탈퇴하면 되돌릴 수 없어요.</p>
         @if (auth.deletionEnabled()) {
           <label class="mb-2 block text-13" for="delete-confirmation"
             >계정을 삭제하려면 ‘탈퇴’를 입력하세요.</label

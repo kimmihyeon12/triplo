@@ -132,7 +132,8 @@ for (const provider of ['google', 'kakao'])
       'aria-busy',
       'true',
     );
-    await expect(page).toHaveURL('http://localhost:4300/trips');
+    // 처음 가입한 사람은 구름이가 안내하는 사용법을 먼저 본다(2026-10-01).
+    await expect(page).toHaveURL('http://localhost:4300/account/guide?first=1');
   });
 
 test('인증 취소를 설명하고 URL의 오류 정보를 제거한 뒤 재시도 가능', async ({ page }) => {
@@ -362,6 +363,10 @@ for (const fails of [false, true])
       { user },
     );
     await page.route(`${authUrl}/auth/v1/**`, (route) => route.fulfill({ status: 204 }));
+    // 탈퇴 확인 화면의 요약: 지울 여행 2개, 넘길 여행 1개
+    await page.route(`${authUrl}/rest/v1/rpc/account_deletion_summary`, (route) =>
+      route.fulfill({ json: { deleteTrips: 2, handOverTrips: 1 } }),
+    );
     let calls = 0;
     await page.route(`${authUrl}/functions/v1/delete-account`, (route) => {
       calls++;
@@ -372,7 +377,14 @@ for (const fails of [false, true])
     });
     await page.goto('/account');
     await expect(page.getByTestId('login-account')).toContainText(user.email);
+    // 이 계정의 기기 기록(대화)과 다른 계정의 기록을 하나씩 둔다.
+    await page.evaluate((id) => {
+      localStorage.setItem(`tc.test.trips.v1.chat.${id}`, '[]');
+      localStorage.setItem('tc.test.trips.v1.chat.someone-else', '[]');
+    }, user.id);
     await page.getByText('회원탈퇴', { exact: true }).click();
+    await expect(page.getByTestId('delete-summary')).toContainText('혼자 쓰는 여행 2개');
+    await expect(page.getByTestId('delete-handover')).toContainText('함께 쓰는 여행 1개는 가장 먼저 함께한 사람이 주인이 돼요');
     await expect(page.getByTestId('delete-account')).toBeDisabled();
     expect(calls).toBe(0);
     await page.getByLabel('계정을 삭제하려면').fill('탈퇴');
@@ -384,6 +396,9 @@ for (const fails of [false, true])
       await expect(page.getByTestId('account-deleted')).toBeVisible();
       await expect(page.getByTestId('login-account')).toHaveCount(0);
       expect(await page.evaluate(() => localStorage.getItem('tc.test.auth.v1'))).toBeNull();
+      // 이 계정의 기기 기록만 지우고 다른 계정의 기록은 남긴다.
+      expect(await page.evaluate((id) => localStorage.getItem(`tc.test.trips.v1.chat.${id}`), user.id)).toBeNull();
+      expect(await page.evaluate(() => localStorage.getItem('tc.test.trips.v1.chat.someone-else'))).toBe('[]');
       await page.reload();
       await expect(page.getByTestId('login-google')).toBeEnabled();
     }
