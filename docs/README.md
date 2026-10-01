@@ -32,6 +32,7 @@
 | [챗봇 설계](superpowers/specs/2026-09-17-travel-chat-design.md) | 대화형 여행 탐색 챗봇의 설계 결정과 근거. 요구사항은 기획안 35절과 OpenSpec에 있다 |
 | [관리자 권한 설계](superpowers/specs/2026-09-29-admin-access-design.md) | 관리자 판별 방식·`/admin` 진입 범위와 근거. 요구사항은 기획안 36절에 있다 |
 | [공지·문의 관리 설계](superpowers/specs/2026-10-01-support-admin-design.md) | 공지·문의 서버 저장과 관리자 공지·문의 관리 화면의 결정과 근거 |
+| [AI 답변 품질 개선 설계](superpowers/specs/2026-10-01-chat-grounded-places-design.md) | 일정 짜기·챗봇이 실제 장소 후보 위에서 정해진 일만 하게 하는 설계와 프롬프트 초안. [OpenSpec](../openspec/changes/ground-ai-places/proposal.md) |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |
 

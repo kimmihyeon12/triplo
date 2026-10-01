@@ -25,7 +25,12 @@ export interface AiPlanInput {
  * 하루 코스의 기본 구성. 실제로 다닐 수 있는 양이어야 한다. 사용자는 코스에서 뺄 곳만 해제한다.
  * 관광은 2~3곳이라 문장에서 범위로 쓴다.
  */
-export const PER_DAY = { sight: 3, activityOrShopping: 1, meal: 2, cafe: 1, stay: 1 };
+export const PER_DAY = { meal: 2, cafe: 1, stay: 1 };
+/**
+ * 일정 밀도별 하루 관광 수. 쇼핑·액티비티도 관광으로 센다(2026-10-01 사용자 결정).
+ * 앱은 장소 확인 뒤 최소값(여유롭게 1·보통 2·알차게 3)이 남도록 근처에서 채운다.
+ */
+export const SIGHTS_BY_PACE: Record<string, string> = { 여유롭게: '1~2곳', 보통: '2~3곳', 알차게: '3~4곳' };
 
 /**
  * 모델이 '해변 산책' 같은 행위 설명을 이름 자리에 넣지 않도록 규칙과 예시를 함께 준다.
@@ -139,6 +144,16 @@ export function noteSetsScope(note: string): boolean {
   return /만\s|만$|말고|빼|제외|없이|위주|중심|\d+\s*(개|곳|끼|군데)/.test(note);
 }
 
+/**
+ * 요청이 하루 중 시간대를 정하는지 본다('저녁 이후', '오후부터', '밤에만', '3시 이후').
+ * 그렇다면 그 시간대만 짜야 한다. 하루 기본 구성과 식사 2곳을 함께 보내면 모델이
+ * 점심·관광까지 채운다(2026-10-01 '저녁 이후 계획'에 하루 전체가 나온 것을 확인).
+ * '저녁은 해산물'처럼 끼니 취향을 적은 말은 시간대 지정이 아니다.
+ */
+export function noteSetsTime(note: string): boolean {
+  return /(아침|오전|점심|오후|저녁|밤)\s*(이후|부터|에만|만)|야간|\d{1,2}\s*시\s*(이후|부터|까지|전)/.test(note);
+}
+
 /** 한 칸에 담는 글자 수 상한. 길게 보내도 결과가 나아지지 않고 토큰만 쓴다. */
 const MAX_FIELD = 200;
 
@@ -148,12 +163,19 @@ function clip(text: string): string {
 
 export function buildUserPrompt(r: AiPlanInput): string {
   const note = clip(r.extraNote);
-  const scoped = note !== '' && noteSetsScope(note);
+  const timed = note !== '' && noteSetsTime(note);
+  const scoped = note !== '' && (noteSetsScope(note) || timed);
   const lines: string[] = [];
 
   // 사용자가 직접 적은 요청을 맨 앞에 둔다. 뒤에 붙이면 기본 구성에 눌린다.
   if (note) {
-    lines.push('가장 중요한 요청이다. 아래 식사 규칙을 지키는 선에서 이것을 먼저 지켜라:', `「${note}」`, '');
+    lines.push(
+      timed ? '가장 중요한 요청이다. 이것을 먼저 지켜라:' : '가장 중요한 요청이다. 아래 식사 규칙을 지키는 선에서 이것을 먼저 지켜라:',
+      `「${note}」`,
+      '',
+    );
+    if (timed)
+      lines.push('이 요청이 시간대를 정했다. 그 시간대 안의 일정만 짠다. 식사도 그 시간대에 드는 것만 넣는다.', '');
     if (scoped)
       lines.push(
         '이 요청이 장소의 종류·개수·범위를 정했다. 요청에 없는 종류의 장소는 넣지 마라.',
@@ -181,12 +203,15 @@ export function buildUserPrompt(r: AiPlanInput): string {
   if (!scoped)
     lines.push(
       '',
-      `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광 2~${PER_DAY.sight}곳,` +
-        ` 액티비티 또는 쇼핑 ${PER_DAY.activityOrShopping}곳, 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
+      `${note ? '위 요청에 어긋나지 않는 선에서, ' : ''}하루에 관광·액티비티·쇼핑을 합쳐 ${SIGHTS_BY_PACE[r.pace] ?? SIGHTS_BY_PACE['보통']},` +
+        ` 식사 ${PER_DAY.meal}곳(점심·저녁), 카페 ${PER_DAY.cafe}곳을 코스로 짜` +
         (dayTrip ? '줘.' : `고 마지막 날을 뺀 날마다 숙소 ${PER_DAY.stay}곳을 그날 마지막에 넣어 줘.`),
     );
   // 식사는 추가 요청과 상관없이 늘 넣는다. 카페 위주 요청에 점심·저녁이 사라진 적이 있다(2026-09-30).
-  lines.push('하루 식사 2곳(점심 12시쯤, 저녁 18시쯤)은 추가 요청과 관계없이 반드시 넣는다. 앞 일정 때문에 1~2시간 늦어지는 것은 괜찮다.');
+  if (!timed)
+    lines.push('하루 식사 2곳(점심 12시쯤, 저녁 18시쯤)은 추가 요청과 관계없이 반드시 넣는다. 앞 일정 때문에 1~2시간 늦어지는 것은 괜찮다.');
+  // 사용자가 고른 식당은 더하지 않고 대신한다. 아침은 요청했을 때만 더한다(2026-10-01 사용자 결정).
+  lines.push('사용자가 이름을 적은 식당은 점심이나 저녁 한 자리를 대신한다. 그날 식사를 3곳으로 늘리지 않는다. 아침을 요청했으면 아침(8~9시) 식사도 넣는다.');
   // 당일치기는 요청 범위와 상관없이 숙소를 넣지 않는다(2026-09-30 당일치기에 숙소가 나온 것을 확인).
   if (dayTrip) lines.push('당일치기라 숙소는 넣지 않는다.');
 

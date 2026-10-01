@@ -280,3 +280,30 @@ test('휴대폰에서 보내기를 한 번 누르면 키보드를 연 채 보내
   await expect(input).toHaveValue('');
   await expect(page.getByText('강릉 바다 보러 가고 싶어')).toBeVisible();
 });
+
+// 2026-10-01 사용자 지적: 변경을 적용하면 카드가 지금 여행을 기준으로 다시 계산해
+// '현재'에 이미 담긴 장소가 나오고 '바꾼 뒤'에는 같은 장소가 두 번 보였다.
+test('적용한 뒤에도 확인 카드는 적용할 때의 전후를 그대로 보인다', async ({ page }) => {
+  await resetApp(page);
+  const tripId = await createTrip(page, { title: '강릉 여행', start: '2026-05-01', end: '2026-05-02', regions: ['강릉시'] });
+  await addStop(page, tripId, { name: '경포해변', date: '2026-05-01' });
+  await page.goto(`/trips/${tripId}`);
+  await page.getByTestId('open-chat').click();
+  await say(page, '강릉으로 일정 짜줘');
+  const card = page.getByTestId('confirm-card');
+  await expect(card).toBeVisible();
+  const text = (id: string) => card.getByTestId(id).evaluate((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+  const before = await text('confirm-before');
+  const after = await text('confirm-after');
+
+  await page.getByTestId('confirm-apply').click();
+  await expect(page.getByTestId('confirm-undo')).toBeVisible();
+  expect(await text('confirm-before')).toBe(before);
+  expect(await text('confirm-after')).toBe(after);
+  await expect(card.getByTestId('confirm-after').getByText('안목해변', { exact: true })).toHaveCount(1);
+
+  // 되돌리면 다시 지금 여행을 기준으로 보인다.
+  await page.getByTestId('confirm-undo').click();
+  await expect(page.getByTestId('confirm-apply')).toBeVisible();
+  expect(await text('confirm-after')).toBe(after);
+});

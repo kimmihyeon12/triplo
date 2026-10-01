@@ -5,6 +5,8 @@ import type { GeoPoint } from '../model/place';
 export interface PlaceSearchOptions {
   /** 이 좌표 주변을 우선 검색(제공자가 지원할 때) */
   near?: GeoPoint | null;
+  /** near 주변 몇 미터 안에서만 찾을지(제공자가 지원할 때). 없으면 범위를 두지 않는다. */
+  radius?: number;
   size?: number;
 }
 

@@ -14,12 +14,6 @@ export const SUPPORT_ROUTES: Routes = [
     title: '공지사항',
   },
   {
-    path: 'notices/:id',
-    loadComponent: () =>
-      import('./feature/notice-detail/notice-detail').then((m) => m.NoticeDetailPage),
-    title: '공지사항',
-  },
-  {
     path: 'inquiries',
     loadComponent: () => import('./feature/inquiries/inquiries').then((m) => m.InquiriesPage),
     title: '문의하기',

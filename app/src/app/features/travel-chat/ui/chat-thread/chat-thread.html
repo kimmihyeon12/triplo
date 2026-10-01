@@ -79,9 +79,9 @@
                 class="w-full"
                 [preview]="view"
                 [applied]="appliedMessageId() === message.id"
-                (confirm)="apply.emit({ messageId: message.id, draft })"
+                (confirm)="onApply(message.id, draft)"
                 (dismiss)="dismissDraft.emit(message.id)"
-                (undo)="undo.emit()"
+                (undo)="onUndo()"
               />
             }
           }

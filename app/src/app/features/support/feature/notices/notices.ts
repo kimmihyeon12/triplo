@@ -1,6 +1,5 @@
 import { supportDay } from '../../util/support-date';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { SUPPORT_REPOSITORY } from '../../data/support-repository';
 import type { Notice } from '../../model/support';
@@ -11,11 +10,11 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 
 /**
  * 공지사항 목록. 관리자 공지 목록과 같은 줄 모양으로 본문을 두 줄까지 미리 보이고,
- * 누르면 상세 화면에서 전체를 읽는다(2026-10-01 사용자 결정: 그 자리에서 펼치던 방식 대신).
+ * 누르면 그 자리에서 전부 펼친다. 상세 화면은 두지 않는다(2026-10-01 사용자 결정).
  */
 @Component({
   selector: 'app-notices',
-  imports: [RouterLink, UiSpinner, IconComponent, UiEmptyState, UiNotice],
+  imports: [UiSpinner, IconComponent, UiEmptyState, UiNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notices.html',
 })

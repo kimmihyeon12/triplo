@@ -90,6 +90,12 @@ export class ChatThread {
   readonly cancel = output<void>();
 
   readonly draftText = signal('');
+  /**
+   * 적용할 때의 전후 비교. 적용한 뒤 지금 여행으로 다시 계산하면 이미 담긴 장소가 '현재'에
+   * 나오고 '바꾼 뒤'에 한 번 더 더해져 같은 장소가 두 번 보인다(2026-10-01 사용자 지적).
+   * 되돌리면 지운다.
+   */
+  private readonly frozen = signal<ReadonlyMap<string, DraftPreview>>(new Map());
   private readonly toast = inject(ToastService);
 
   clearComposer(): void {
@@ -136,7 +142,26 @@ export class ChatThread {
    */
   preview(messageId: string, draft: ChatDraft): DraftPreview | null {
     if (this.dismissedIds().includes(messageId)) return null;
-    return previewDraft(this.trip() ?? EMPTY_TRIP, draft);
+    return this.frozen().get(messageId) ?? previewDraft(this.trip() ?? EMPTY_TRIP, draft);
+  }
+
+  /** 적용하기 직전의 전후를 고정해 두고 적용한다. */
+  onApply(messageId: string, draft: ChatDraft): void {
+    const view = previewDraft(this.trip() ?? EMPTY_TRIP, draft);
+    this.frozen.update((map) => new Map(map).set(messageId, view));
+    this.apply.emit({ messageId, draft });
+  }
+
+  /** 되돌리면 그 카드는 다시 지금 여행을 기준으로 보인다. */
+  onUndo(): void {
+    const id = this.appliedMessageId();
+    if (id)
+      this.frozen.update((map) => {
+        const next = new Map(map);
+        next.delete(id);
+        return next;
+      });
+    this.undo.emit();
   }
 
   submit(): void {
