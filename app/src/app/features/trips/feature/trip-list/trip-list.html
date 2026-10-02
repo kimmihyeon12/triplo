@@ -155,7 +155,7 @@
         </section>
       } @else {
         <ul class="trips flex flex-col" data-testid="trip-list">
-          @for (trip of store.trips(); track trip.id) {
+          @for (trip of orderedTrips(); track trip.id) {
             <li class="trips__item">
               <!--
                 타임라인 구분 행: 얇은 선 사이에 남은 날짜 라벨.
@@ -168,8 +168,10 @@
                   class="rule__line flex-1 h-0 [border-top:1px_solid_var(--color-border)]"
                   aria-hidden="true"
                 ></span>
+                <!-- 회색 바탕 위 12px 글자라 ink-2로 대비 4.5:1을 넘긴다. 여행 중인 여행은 파란 라벨로 구분한다. -->
                 <span
-                  class="rule__label flex-none text-12 font-bold leading-normal rounded-pill text-ink-3 bg-ground-2 tracking-normal py-0.5 px-2.25"
+                  class="rule__label flex-none text-12 font-bold leading-normal rounded-pill tracking-normal py-0.5 px-2.25"
+                  [class]="isLive(trip) ? 'bg-accent-deep text-white' : 'bg-ground-2 text-ink-2'"
                   [attr.data-testid]="'trip-timeline-' + trip.id"
                   >{{ timelineLabel(trip) }}</span
                 >
@@ -197,6 +199,8 @@
                 <a
                   class="panel card bg-panel rounded-panel shadow-panel p-4 block no-underline text-inherit [border:1px_solid_transparent] [transition:border-color_var(--dur)_var(--ease-out),transform_var(--dur)_var(--ease-out)] hover:border-border-strong active:bg-ground-2"
                   [routerLink]="['/trips', trip.id]"
+                  [queryParams]="isLive(trip) ? { day: today() } : null"
+                  [class.border-accent-fill]="isLive(trip)"
                   [attr.data-testid]="'trip-card-' + trip.id"
                 >
                   <h2
