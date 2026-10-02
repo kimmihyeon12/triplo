@@ -189,6 +189,8 @@ export class MapExplorePage {
 
   onBounds(bounds: MapBounds): void {
     this.view.set(bounds);
+    // 지도를 옮기면 장소 찾기 결과 목록만 닫는다(2026-10-02 사용자 요청). 고른 장소 정보판은 그대로 둔다.
+    this.searchResults.set(null);
   }
 
   async pickCategory(id: NearbyCategory): Promise<void> {

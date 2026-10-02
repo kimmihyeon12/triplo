@@ -19,26 +19,31 @@
     <!-- 장소·동네 이름으로 찾기(2026-10-02). 고르면 그 자리로 옮기고 정보판을 연다. -->
     <form class="pointer-events-auto relative" role="search" (submit)="searchPlace($event)" data-testid="map-search">
       <label class="sr-only" for="map-search-input">장소·동네 찾기</label>
-      <div class="flex items-center gap-1.5 rounded-pill border border-border bg-panel pr-1 pl-3 shadow-[0_2px_6px_rgb(22_24_29/0.12)]">
-        <app-icon class="flex-none text-ink-3" name="search" [size]="16" />
+      <!-- 앱 공통 네모 입력칸과 찾기 버튼을 나란히 둔다(2026-10-02 사용자 요청). -->
+      <div class="flex items-center gap-2">
         <input
+          appInput
           id="map-search-input"
-          class="min-h-10 min-w-0 flex-1 border-0 bg-transparent text-15 text-ink outline-none placeholder:text-ink-3"
+          class="input min-w-0 flex-1 shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
           type="search"
           name="mapQuery"
           placeholder="장소·동네 찾기"
           autocomplete="off"
           enterkeyhint="search"
           [ngModel]="query()"
-          (ngModelChange)="query.set($event)"
+          (ngModelChange)="query.set($event); $event ? null : clearSearch()"
           data-testid="map-search-input"
         />
-        @if (query()) {
-          <button type="button" class="flex size-8 flex-none items-center justify-center rounded-full text-ink-3" aria-label="지우기" (click)="clearSearch()">
-            <app-icon name="x" [size]="16" />
-          </button>
-        }
-        <button appButton type="submit" class="btn btn--sm flex-none" [loading]="searchingPlace()" data-testid="map-search-go">찾기</button>
+        <button
+          appButton
+          type="submit"
+          variant="primary"
+          class="btn flex-none shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+          [loading]="searchingPlace()"
+          data-testid="map-search-go"
+        >
+          찾기
+        </button>
       </div>
       @if (searchResults(); as found) {
         <ul class="absolute inset-x-0 top-full z-20 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-panel border border-border bg-panel p-1 shadow-[0_6px_20px_rgb(22_24_29/0.16)]" data-testid="map-search-results">
@@ -140,27 +145,35 @@
     }
   </div>
 
-  <!-- 지도 조작: 확대·축소·현재 위치(2026-10-02). 정보판과 겹치지 않게 오른쪽 가운데에 둔다. -->
-  <div class="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col gap-2" aria-label="지도 조작">
-    <div class="flex flex-col overflow-hidden rounded-control border border-border bg-panel shadow-[0_2px_6px_rgb(22_24_29/0.14)]">
-      <button type="button" class="flex size-10 items-center justify-center text-ink hover:bg-ground-2" aria-label="확대" (click)="zoom(1)" data-testid="map-zoom-in">
-        <app-icon name="plus" [size]="18" />
-      </button>
-      <span class="h-px bg-border" aria-hidden="true"></span>
-      <button type="button" class="flex size-10 items-center justify-center text-ink hover:bg-ground-2" aria-label="축소" (click)="zoom(-1)" data-testid="map-zoom-out">
-        <span class="block h-0.5 w-3.5 rounded-full bg-current" aria-hidden="true"></span>
-      </button>
-    </div>
+  <!--
+    지도 조작: 방문 통계 지도와 같은 흰 정사각형 버튼을 하나씩 떼어 오른쪽 아래에 둔다(2026-10-02 사용자 요청).
+    고른 장소 정보판이 열리면 그 위로 비켜 올라간다.
+  -->
+  <div
+    class="absolute right-3 z-10 grid gap-2 [transition:bottom_var(--dur)_var(--ease-out)]"
+    [class]="selected() ? 'bottom-[calc(200px+env(safe-area-inset-bottom))]' : 'bottom-[calc(16px+env(safe-area-inset-bottom))]'"
+    role="group"
+    aria-label="지도 조작"
+  >
     <button
+      appButton
       type="button"
-      class="flex size-10 items-center justify-center rounded-control border border-border bg-panel text-accent-deep shadow-[0_2px_6px_rgb(22_24_29/0.14)] hover:bg-ground-2 disabled:opacity-60"
+      class="w-11 border-transparent! bg-panel! px-0! text-accent-deep shadow-panel"
       aria-label="현재 위치로"
       [disabled]="locating()"
       (click)="locate()"
       data-testid="map-locate"
     >
-      <app-icon name="pin" [size]="18" />
+      <app-icon name="place" [size]="20" />
     </button>
+    <div class="grid gap-1">
+      <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="확대" (click)="zoom(1)" data-testid="map-zoom-in">
+        <app-icon name="plus" [size]="19" />
+      </button>
+      <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="축소" (click)="zoom(-1)" data-testid="map-zoom-out">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14" /></svg>
+      </button>
+    </div>
   </div>
 
   @if (selected(); as p) {
