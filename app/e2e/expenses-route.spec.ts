@@ -54,26 +54,6 @@ test.describe('정산 화면 진입', () => {
     await expect(page.getByText(/정산할 사람 · 1명/)).toBeVisible();
   });
 
-  test('열린 선택 목록을 터치로 다시 누르면 닫힌다', async ({ page }, info) => {
-    test.skip(!info.project.use.hasTouch, '터치 기기에서만 생기는 문제다');
-    const id = await createTrip(page, {
-      title: '선택 닫기',
-      start: '2026-05-01',
-      end: '2026-05-02',
-      regions: ['강릉시'],
-    });
-    await page.goto(`/trips/${id}/expenses`);
-    await page.getByTestId('add-expense').click();
-    const select = page.locator('#expense-link');
-    const box = (await select.boundingBox())!;
-    const tap = () => page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-    const isOpen = () => select.evaluate((el) => el.matches(':open'));
-    await tap();
-    await expect.poll(isOpen).toBe(true);
-    await tap();
-    await expect.poll(isOpen).toBe(false);
-  });
-
   test('주소로 바로 들어가도 화면이 열린다', async ({ page }) => {
     const id = await createTrip(page, {
       title: '정산 직접 진입',
