@@ -60,14 +60,15 @@
         </ul>
       }
     </form>
+    <!-- 날짜 칩은 여행 상세의 날짜 탭과 같은 색이다(2026-10-02 사용자 요청). 고른 날은 어두운 선택색, 나머지는 옅은 회색이다. -->
     @if (days().length > 1) {
       <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="날짜">
         @for (d of days(); track d; let i = $index) {
           <button
             type="button"
             role="tab"
-            class="flex-none rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
-            [class]="d === selectedDay() ? 'border-ink bg-ink text-white' : 'border-border bg-panel text-ink-2'"
+            class="flex-none rounded-pill border-0 px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+            [class]="d === selectedDay() ? 'text-white [background:var(--selected-fill)]' : 'bg-ground-2 text-ink-2 hover:text-ink'"
             [attr.aria-selected]="d === selectedDay()"
             (click)="pickDay(d)"
             [attr.data-testid]="'map-day-' + d"
