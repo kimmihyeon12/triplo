@@ -216,7 +216,14 @@ export function dayTotals(trip: Trip, date: IsoDate): DayTotals {
 export type DaySegment =
   | { type: 'stop'; stop: TripStop }
   | { type: 'stay'; stay: AccommodationStay }
-  | { type: 'leg'; fromRegion: string | null; toRegion: string | null; regionChange: boolean };
+  | {
+      type: 'leg';
+      fromRegion: string | null;
+      toRegion: string | null;
+      regionChange: boolean;
+      /** 앞뒤 두 곳 모두 확인된 좌표일 때만 계산한 직선 거리(km, 소수 첫째 자리). 이동 시간이 아니다. */
+      km: number | null;
+    };
 
 /**
  * 그날 밤을 보내는 숙소. 체크인하는 날부터 체크아웃 전날까지 모두 들어간다.
@@ -308,20 +315,30 @@ export function daySegments(trip: Trip, date: IsoDate): DaySegment[] {
   let hasPrevActive = false;
   // 지역이 없는 식사·카페 항목이 사이에 있어도 지역 이동을 놓치지 않도록 마지막으로 알려진 지역을 기억한다.
   let lastKnownRegion: string | null = null;
+  // 바로 앞 활성 항목의 확인된 좌표. 경로시간은 검증된 출처가 없어 만들지 않고 직선 거리만 계산한다(2026-10-02 사용자 결정).
+  let prevPoint: GeoPoint | null = null;
   for (const entry of dayEntries(trip, date)) {
     const excluded = !isStay(entry) && entry.excluded;
     if (!excluded && hasPrevActive) {
       const toRegion = regionName(entry.regionId);
       const regionChange = !!lastKnownRegion && !!toRegion && lastKnownRegion !== toRegion;
-      out.push({ type: 'leg', fromRegion: lastKnownRegion, toRegion, regionChange });
+      const point = verifiedPoint(entry);
+      const km = prevPoint && point ? Math.round(haversineKm(prevPoint, point) * 10) / 10 : null;
+      out.push({ type: 'leg', fromRegion: lastKnownRegion, toRegion, regionChange, km });
     }
     out.push(isStay(entry) ? { type: 'stay', stay: entry } : { type: 'stop', stop: entry });
     if (!excluded) {
       hasPrevActive = true;
       lastKnownRegion = regionName(entry.regionId) ?? lastKnownRegion;
+      prevPoint = verifiedPoint(entry);
     }
   }
   return out;
+}
+
+/** 확인된 좌표만 거리 계산에 쓴다. */
+function verifiedPoint(entry: TripStop | AccommodationStay): GeoPoint | null {
+  return entry.locationStatus === 'verified' ? entry.location : null;
 }
 
 /** 그날 사용한 지역 이름을 등장 순서대로 */
