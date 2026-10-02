@@ -21,7 +21,7 @@ export const guideImage = (slide: GuideSlide) => `/guide/${slide.key}.jpg`;
 export const GUIDE_SLIDES: readonly GuideSlide[] = [
   {
     key: 'trips',
-    alt: '여행 목록 화면. 위에 일정 짜기와 직접 만들기 버튼, 아래에 여행 카드, 오른쪽 아래에 AI 챗봇 버튼이 있다',
+    alt: '여행 목록 화면. 위에 일정 짜기와 직접 만들기 버튼, 그 아래 초대 링크로 참여 줄, 아래에 여행 카드, 오른쪽 아래에 AI 챗봇 버튼이 있다',
     title: '여행 목록',
     description: '여행 계획부터 정산까지 이 앱 하나로 해요. 여행 목록에서 시작해요.',
     spots: ['조건만 고르면 AI가 코스를 짜 줘요', '직접 여행을 만들 수도 있어요', '여행 카드를 누르면 상세로 가요', '궁금한 건 AI 챗봇에게 물어봐요', '여행이 끝나면 다녀온 곳이 지도에 쌓여요', '받은 초대 링크를 붙여 넣어 함께해요'],

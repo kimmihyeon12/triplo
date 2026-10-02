@@ -37,15 +37,18 @@
       </a>
     </nav>
     <!-- 아이폰은 초대 링크가 홈 화면 앱이 아닌 Safari로 열린다. 앱에서 링크를 붙여 넣어 연다(2026-10-01). -->
-    <!-- 여행 상세의 '정산'과 같은 작은 흰 버튼(2026-10-02 사용자 제안). -->
+    <!--
+      두 버튼 바로 아래 전체 폭 안내 줄(2026-10-02 사용자 결정, trip-list-refine-options 안 C).
+      하단은 AI 챗봇과 겹치고 중요한 기능이 밑에 있는 느낌이라 위에 둔다. 상황을 말해 처음 쓰는 사람도 알아본다.
+    -->
     <a
-      appButton
-      class="btn btn--sm flex shrink-0 items-center gap-1.5 self-end leading-none"
+      class="flex min-h-11 w-full items-center gap-2.5 rounded-control bg-accent-tint px-3.5 text-13 font-bold text-accent-deep no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
       routerLink="/join"
       data-testid="open-join-paste"
     >
       <app-icon name="mail" [size]="14" />
-      초대 링크로 참여
+      <span class="min-w-0 truncate">초대 링크로 참여 <span class="font-normal text-ink-2">링크를 받았다면</span></span>
+      <app-icon class="ml-auto flex-none" name="chevron-right" [size]="16" />
     </a>
 
     <!--
