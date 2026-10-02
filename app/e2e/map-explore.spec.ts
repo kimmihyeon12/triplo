@@ -136,6 +136,10 @@ test('장소 이름으로 찾아 그 자리로 옮기고 바로 담을 수 있�
   await page.getByTestId('map-search-input').fill('없는곳이름');
   await page.getByTestId('map-search-go').click();
   await expect(page.getByTestId('map-search-empty')).toBeVisible();
+  // 지도를 옮기면 찾기 결과 목록만 닫히고 정보판은 남는다.
+  await moveMap(page, { south: 37.76, north: 37.8, west: 128.86, east: 128.9 });
+  await expect(page.getByTestId('map-search-results')).toHaveCount(0);
+  await expect(page.getByTestId('map-explore-sheet')).toBeVisible();
 });
 
 test('확대·축소와 현재 위치로 옮기기', async ({ page, context }) => {
