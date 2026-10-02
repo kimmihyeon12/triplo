@@ -92,7 +92,7 @@
             @if (p.id !== 'self') {
               <button
                 type="button"
-                class="-my-1 ml-0.5 grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink-3 hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
+                class="relative after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] -my-1 ml-0.5 grid size-8 cursor-pointer place-items-center rounded-control border-0 bg-transparent p-0 text-ink-3 hover:bg-ground-2 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:-outline-offset-2"
                 [attr.aria-label]="p.name + ' 지우기'"
                 [attr.data-testid]="'remove-person-' + p.id"
                 (click)="removePerson(p.id)"
@@ -157,11 +157,11 @@
     @if (tab() === 'expenses') {
       <section class="flex flex-col gap-3" role="tabpanel" data-testid="panel-expenses">
         @if (ledger().expenses.length > 0) {
-          <!-- 목록이 길어지면 찾기 어려우므로 분류로 거르고 정렬을 고른다. -->
+          <!-- 목록이 길어지면 찾기 어려우므로 분류로 거르고 정렬을 고른다. 칩 높이는 32px이고 누르는 영역만 44px로 넓힌다. -->
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-1.5">
               <button
-                class="cell min-h-8 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
+                class="cell relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] min-h-8 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
                 [class]="
                   categoryFilter() === ''
                     ? 'bg-accent-deep text-white'
@@ -175,7 +175,7 @@
               </button>
               @for (c of usedCategories(); track c[0]) {
                 <button
-                  class="cell flex min-h-8 items-center gap-1.5 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
+                  class="cell relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] flex min-h-8 items-center gap-1.5 rounded-cell px-3 text-12 font-medium [transition:background-color_var(--dur)_var(--ease-out)]"
                   [class]="
                     categoryFilter() === c[0]
                       ? 'bg-accent-deep text-white'
@@ -198,7 +198,7 @@
               }
             </div>
             <button
-              class="flex min-h-8 items-center gap-1 rounded-cell px-2.5 text-12 font-medium text-ink-2 [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2"
+              class="relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] flex min-h-8 items-center gap-1 rounded-cell px-2.5 text-12 font-medium text-ink-2 [transition:background-color_var(--dur)_var(--ease-out)] hover:bg-ground-2"
               type="button"
               (click)="sortBy.set(sortBy() === 'date' ? 'amount' : 'date')"
               data-testid="sort-toggle"
