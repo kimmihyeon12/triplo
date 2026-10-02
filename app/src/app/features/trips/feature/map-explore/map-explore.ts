@@ -183,6 +183,10 @@ export class MapExplorePage {
     return `${i + 1}일차 · ${formatKoreanDate(d)}`;
   }
 
+  /** 날짜 목록이 열려 있는지 */
+  readonly dayMenu = signal(false);
+  readonly dayIndex = computed(() => Math.max(0, this.days().indexOf(this.selectedDay() ?? ('' as IsoDate))));
+
   pickDay(d: IsoDate): void {
     this.pickedDay.set(d);
   }
