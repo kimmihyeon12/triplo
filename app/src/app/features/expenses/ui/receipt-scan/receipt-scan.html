@@ -195,17 +195,14 @@
                     [name]="'amount-' + i"
                     [attr.data-testid]="'receipt-amount-' + i"
                   />
-                  <select
-                    appInput
-                    [attr.aria-label]="i + 1 + '번째 항목 분류'"
+                  <app-select
+                    [ariaLabel]="i + 1 + '번째 항목 분류'"
+                    [inputId]="'category-' + i"
+                    [options]="categoryOptions"
                     [ngModel]="d.category"
                     (ngModelChange)="patch(i, { category: $event })"
                     [name]="'category-' + i"
-                  >
-                    @for (c of categories; track c[0]) {
-                      <option [value]="c[0]">{{ c[1] }}</option>
-                    }
-                  </select>
+                  />
                   <input
                     appInput
                     type="date"
@@ -222,17 +219,13 @@
 
           <div class="flex flex-col gap-1 border-t border-border pt-3">
             <app-field label="결제한 사람" inputId="receipt-payer"
-              ><select
-                appInput
-                id="receipt-payer"
+              ><app-select
+                inputId="receipt-payer"
                 name="receipt-payer"
+                [options]="peopleOptions()"
                 [ngModel]="paidBy()"
                 (ngModelChange)="paidBy.set($event)"
-              >
-                @for (p of people(); track p.id) {
-                  <option [value]="p.id">{{ p.name }}</option>
-                }
-              </select></app-field
+              /></app-field
             >
             <app-checkbox
               label="개인 지출 · 함께 정산하지 않아요"

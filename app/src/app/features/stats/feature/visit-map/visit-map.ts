@@ -1,10 +1,10 @@
 ﻿import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { nameTemporary } from '../../util/visible-markers';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
-import { UiInput } from '../../../../shared/ui/input/input';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
@@ -29,7 +29,7 @@ const nameOf = (p: Record<string, unknown>): string => String(p['nm']);
 
 @Component({
   selector: 'app-visit-map',
-  imports: [DecimalPipe, RouterLink, UiButton, UiInput, IconComponent, UiNotice, UiSpinner],
+  imports: [UiSelect, DecimalPipe, RouterLink, UiButton, IconComponent, UiNotice, UiSpinner],
   providers: [LocalVisitStats],
   templateUrl: './visit-map.html',
   host: { class: 'block bg-ground text-ink' },
@@ -99,6 +99,7 @@ export class VisitMapPage {
   readonly months = computed(() => monthlyVisits(this.places(), this.year()));
   readonly monthMax = computed(() => Math.max(1, ...this.months().map(m => m.count)));
   readonly years = computed(() => [...new Set([this.year(), ...this.places().map(p => Number(p.visitedOn.slice(0, 4)))])].sort((a, b) => b - a));
+  readonly yearOptions = computed(() => this.years().map((y) => ({ value: String(y), label: y + '년' })));
   /**
    * 지도에 그릴 마커.
    *

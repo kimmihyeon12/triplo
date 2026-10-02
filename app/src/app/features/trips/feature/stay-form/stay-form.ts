@@ -16,6 +16,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TripEditorStore } from '../../data/trip-editor-store';
@@ -39,7 +40,7 @@ import type { GeoPoint, PlaceRef } from '../../../places/model/place';
 
 @Component({
   selector: 'app-stay-form',
-  imports: [
+  imports: [UiSelect, 
     UiButton,
     UiInput,
     UiBadge,
@@ -67,6 +68,7 @@ export class StayFormPage {
 
   readonly reservationStates: ReservationState[] = ['unknown', 'reserved', 'not_reserved'];
   readonly reservationLabel = RESERVATION_LABEL;
+  readonly reservationOptions = this.reservationStates.map((r) => ({ value: r as string, label: RESERVATION_LABEL[r] }));
 
   readonly trip = signal<Trip | null>(null);
   readonly editing = signal<AccommodationStay | null>(null);

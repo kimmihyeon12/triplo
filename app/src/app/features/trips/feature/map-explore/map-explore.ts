@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PageBar } from '../../../../core/page-bar';
@@ -52,7 +53,7 @@ const MOVED_RATIO = 0.2;
  */
 @Component({
   selector: 'app-map-explore',
-  imports: [TripMapComponent, UiButton, UiInput, IconComponent, FormsModule],
+  imports: [UiSelect, TripMapComponent, UiButton, UiInput, IconComponent, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './map-explore.html',
 })
@@ -183,6 +184,10 @@ export class MapExplorePage {
     return `${i + 1}일차 · ${formatKoreanDate(d)}`;
   }
 
+  readonly targetDayOptions = computed(() => [
+    ...this.days().map((d) => ({ value: d as string, label: this.dayLabel(d) })),
+    { value: '', label: '날짜 미정' },
+  ]);
   /** 날짜 목록이 열려 있는지 */
   readonly dayMenu = signal(false);
   readonly dayIndex = computed(() => Math.max(0, this.days().indexOf(this.selectedDay() ?? ('' as IsoDate))));

@@ -213,9 +213,7 @@
           -->
           <div class="mt-6 flex items-center justify-between gap-2">
             <h4 class="text-14 font-semibold">월별 방문</h4>
-            <select appInput class="w-auto! min-w-28! text-13!" aria-label="방문 연도" [value]="year()" (change)="year.set(+$any($event.target).value)">
-              @for (value of years(); track value) { <option [value]="value">{{ value }}년</option> }
-            </select>
+            <app-select buttonClass="w-auto! min-w-28! text-13!" ariaLabel="방문 연도" [options]="yearOptions()" [value]="'' + year()" (changed)="year.set(+$event)" />
           </div>
           <div class="mt-3 flex h-24 items-end gap-1" aria-label="월별 방문 횟수">
             @for (month of months(); track month.month) {

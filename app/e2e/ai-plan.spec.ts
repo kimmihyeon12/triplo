@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FAIL_FLAG, STORAGE_KEY, resetApp } from './helpers';
+import { FAIL_FLAG, STORAGE_KEY, resetApp, chooseOption } from './helpers';
 
 /**
  * AI 일정 만들기. 테스트 앱은 외부를 부르지 않는 픽스처 제공자를 쓴다.
@@ -39,7 +39,7 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(page.getByTestId('ai-next-2')).toBeDisabled();
   await page.getByTestId('ai-party-size').fill('2');
   await page.getByTestId('ai-budget').fill('4000');
-  await page.getByTestId('ai-budget-basis').selectOption('person');
+  await chooseOption(page, 'ai-budget-basis', 'person');
   await page.screenshot({ path: testInfo.outputPath('budget-input.png'), fullPage: true });
   await page.getByTestId('ai-next-2').click();
   await page.getByTestId('ai-next-3').click();
@@ -55,7 +55,7 @@ test('인원·예산·추정 요금 기준과 체류시간을 확인하고 저�
   await expect(page.getByTestId('ai-memo-ai-1')).toContainText('- 체류 60~90분');
   await expect(page.getByTestId('ai-day-group-1')).toContainText('오죽헌');
   await expect(page.getByTestId('ai-day-group-2')).toContainText('속초관광수산시장');
-  await page.getByTestId('ai-day-ai-1').selectOption('2');
+  await chooseOption(page, 'ai-day-ai-1', '2');
   await expect(page.getByTestId('ai-day-group-1')).not.toContainText('오죽헌');
   await expect(page.getByTestId('ai-day-group-2')).toContainText('오죽헌');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -249,9 +249,9 @@ test('추천 일차를 바꾸면 그 날짜로 담기고 지도 링크가 붙는
 
   // 일차는 드롭다운으로 고른다. 칩으로 늘어놓으면 긴 여행에서 한 줄을 다 차지한다.
   const daySelect = page.getByTestId('ai-day-ai-0');
-  await expect(daySelect).toHaveValue('1');
-  await daySelect.selectOption('3');
-  await expect(daySelect).toHaveValue('3');
+  await expect(daySelect).toHaveAttribute('data-value', '1');
+  await chooseOption(page, 'ai-day-ai-0', '3');
+  await expect(daySelect).toHaveAttribute('data-value', '3');
 
   // 확인된 장소는 주소로 찾아 같은 이름의 다른 곳이 나오지 않게 한다.
   await expect(page.getByTestId('ai-naver-ai-0')).toHaveAttribute(
@@ -273,20 +273,20 @@ test('일차를 바꾸면 목록이 일차 순으로 다시 늘어선다', async
   await expect(page.getByTestId('ai-result')).toBeVisible();
 
   // 픽스처는 안목해변·오죽헌·강릉 테스트 호텔(1일)과 속초관광수산시장(2일)을 낸다.
-  const days = () => page.locator('select[data-testid^="ai-day-"]').evaluateAll((els) =>
-    els.map((e) => Number((e as HTMLSelectElement).value)),
+  const days = () => page.locator('button[data-testid^="ai-day-"]').evaluateAll((els) =>
+    els.map((e) => Number(e.getAttribute('data-value'))),
   );
   expect(await days()).toEqual([1, 1, 1, 2]);
 
   // 첫 항목을 3일차로 보내면 그 줄이 맨 뒤로 가야 한다.
-  await page.getByTestId('ai-day-ai-0').selectOption('3');
+  await chooseOption(page, 'ai-day-ai-0', '3');
   expect(await days()).toEqual([1, 1, 2, 3]);
 
   // 각 줄의 드롭다운 값이 그 줄의 장소를 따라가야 한다.
   const rows = await page.locator('.pickrow').evaluateAll((els) =>
     els.map((e) => ({
       name: e.querySelector('.item__name')?.textContent?.trim() ?? '',
-      day: Number(e.querySelector('select')?.value ?? 0),
+      day: Number(e.querySelector('[role=combobox]')?.getAttribute('data-value') ?? 0),
     })),
   );
   expect(rows.find((r) => r.name.includes('안목해변'))?.day).toBe(3);

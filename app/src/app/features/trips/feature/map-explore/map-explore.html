@@ -81,19 +81,21 @@
       날짜 선택 상자를 분류 줄 맨 앞에 둔다(2026-10-02 사용자 결정: 일자 선택 · 맛집 · 카페 · 관광 · 숙소 한 줄).
       날짜 버튼 줄을 따로 두면 지도 위쪽을 한 줄 더 가렸다.
     -->
+    <!-- 버튼 높이는 그대로 두고 누르는 영역만 44px로 넓힌다. 가로 스크롤 상자가 넓힌 영역을 자르지 않게 위아래 여백을 두고 같은 만큼 당긴다. -->
     <div
-      class="pointer-events-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]"
+      class="pointer-events-auto -my-2 flex items-center gap-1.5 overflow-x-auto py-2 [scrollbar-width:none]"
       aria-label="날짜와 주변 장소 찾기"
     >
       @if (days().length > 1) {
         <!--
           날짜는 앱이 직접 그린 목록으로 고른다(2026-10-02 사용자 요청: 브라우저 기본 목록을 쓰지 않는다).
-          남색 알약에 꺾쇠를 가운데 맞춰 두고, 누르면 바로 아래에 날짜 목록이 열린다.
+          흰 상자에 꺾쇠를 가운데 맞춰 두고, 누르면 바로 아래에 날짜 목록이 열린다.
+          남색 알약은 선택된 분류 칩처럼 보여 흰 상자로 바꿨다(2026-10-02 사용자 결정).
         -->
         <div class="flex-none">
           <button
             type="button"
-            class="flex h-8 items-center gap-1 rounded-pill border-0 pr-2.5 pl-3 text-13 font-semibold leading-none text-white shadow-[0_2px_6px_rgb(22_24_29/0.12)] [background:var(--selected-fill)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+            class="relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] flex h-8 items-center gap-1 rounded-control border border-border bg-panel pr-2.5 pl-3 text-13 font-semibold leading-none text-ink shadow-[0_2px_6px_rgb(22_24_29/0.12)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
             aria-haspopup="listbox"
             [attr.aria-expanded]="dayMenu()"
             (click)="dayMenu.set(!dayMenu())"
@@ -111,7 +113,7 @@
       @for (c of categories; track c.id) {
         <button
           type="button"
-          class="inline-flex flex-none items-center gap-1 rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+          class="relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] inline-flex flex-none items-center gap-1 rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
           [class]="
             c.id === category()
               ? 'border-accent-deep bg-accent-deep text-white'
@@ -155,23 +157,37 @@
     }
     @if (category()) {
       <div
-        class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]"
+        class="pointer-events-auto -my-2.5 flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none]"
         aria-label="평점"
       >
+        <!--
+          평점을 거르지 않는 '전체'를 맨 앞에 둔다(2026-10-02 사용자 요청).
+          고른 평점은 연한 하늘색 바탕과 테두리로 보인다. 검정 채움은 주 동작처럼 보였다(2026-10-02 사용자 결정).
+        -->
+        <button
+          type="button"
+          class="relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] inline-flex flex-none items-center rounded-pill border px-2.5 py-1 text-12 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+          [class]="minRating() === 0 ? 'border-accent-deep bg-accent-tint text-accent-deep' : 'border-border bg-panel text-ink-2'"
+          [attr.aria-pressed]="minRating() === 0"
+          (click)="pickRating(0)"
+          data-testid="map-rating-all"
+        >
+          전체
+        </button>
         @for (r of ratingFilters; track r) {
           <button
             type="button"
-            class="inline-flex flex-none items-center gap-0.5 rounded-pill border px-2.5 py-1 text-12 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+            class="relative after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] inline-flex flex-none items-center gap-0.5 rounded-pill border px-2.5 py-1 text-12 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
             [class]="
               r === minRating()
-                ? 'border-ink bg-ink text-white'
+                ? 'border-accent-deep bg-accent-tint text-accent-deep'
                 : 'border-border bg-panel text-ink-2'
             "
             [attr.aria-pressed]="r === minRating()"
             (click)="pickRating(r)"
             [attr.data-testid]="'map-rating-' + r"
           >
-            <span [class]="r === minRating() ? 'text-white' : 'text-warn-ink'" aria-hidden="true"
+            <span class="text-warn-ink" aria-hidden="true"
               >★</span
             >
             {{ r }}점 이상
@@ -350,18 +366,15 @@
       } @else {
         <div class="flex gap-2">
           <label class="sr-only" for="map-explore-day">담을 날</label>
-          <select
-            appInput
-            id="map-explore-day"
-            class="select min-w-0 flex-1"
-            (change)="targetDay.set($any($event.target).value)"
-            data-testid="map-explore-day"
-          >
-            @for (d of days(); track d) {
-              <option [value]="d" [selected]="d === targetDay()">{{ dayLabel(d) }}</option>
-            }
-            <option value="" [selected]="targetDay() === ''">날짜 미정</option>
-          </select>
+          <app-select
+            class="min-w-0 flex-1"
+            inputId="map-explore-day"
+            testId="map-explore-day"
+            ariaLabel="담을 날"
+            [options]="targetDayOptions()"
+            [value]="targetDay()"
+            (changed)="targetDay.set($any($event))"
+          />
           <button
             appButton
             type="button"

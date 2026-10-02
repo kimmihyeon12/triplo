@@ -4,12 +4,7 @@
   @if (store.current(); as trip) {
     <section class="mb-6 rounded-panel bg-panel p-4 shadow-panel">
       <app-field label="저장할 일정" inputId="export-date"
-        ><select appInput id="export-date" [ngModel]="date()" (ngModelChange)="date.set($event)">
-          <option value="">전체 일정</option>
-          @for (section of allSections(); track section.key) {
-            <option [value]="section.key">{{ section.title }}</option>
-          }
-        </select></app-field
+        ><app-select inputId="export-date" [options]="sectionOptions()" [value]="date()" (changed)="date.set($event)" /></app-field
       >
       <app-checkbox
         label="예상 비용 포함"

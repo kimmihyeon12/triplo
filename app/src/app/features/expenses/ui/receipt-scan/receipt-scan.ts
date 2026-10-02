@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../../shared/ui/button/button';
@@ -41,7 +42,7 @@ type Step = 'pick' | 'mark' | 'scanning' | 'review';
 @Component({
   selector: 'app-receipt-scan',
   templateUrl: './receipt-scan.html',
-  imports: [
+  imports: [UiSelect, 
     DecimalPipe,
     FormsModule,
     UiButton,
@@ -67,6 +68,8 @@ export class ReceiptScan {
   readonly aiHint = inject(AiQuota).hint('receipt');
   readonly unavailable = this.scanner.unavailableReason();
   readonly categories = Object.entries(EXPENSE_CATEGORIES);
+  readonly categoryOptions = this.categories.map(([value, label]) => ({ value, label: String(label) }));
+  readonly peopleOptions = computed(() => this.people().map((p) => ({ value: p.id, label: p.name })));
 
   readonly step = signal<Step>('pick');
   readonly error = signal('');

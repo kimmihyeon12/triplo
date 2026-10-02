@@ -4,18 +4,13 @@
     label="일정에서 가져오기"
     inputId="expense-link"
     hint="예상 비용을 불러온 뒤 실제 결제한 금액으로 수정하세요."
-    ><select
-      appInput
-      id="expense-link"
+    ><app-select
+      inputId="expense-link"
       name="link"
+      [options]="linkOptions()"
       [ngModel]="linkId()"
       (ngModelChange)="chooseLink($event)"
-    >
-      <option value="">직접 입력</option>
-      @for (link of links(); track link.id) {
-        <option [value]="link.id">{{ link.name }}</option>
-      }
-    </select></app-field
+    /></app-field
   >
   <app-field label="지출명" inputId="expense-title"
     ><input
@@ -64,31 +59,23 @@
         [ngModel]="date()"
         (ngModelChange)="date.set($event)" /></app-field
     ><app-field label="분류" inputId="expense-category"
-      ><select
-        appInput
-        id="expense-category"
+      ><app-select
+        inputId="expense-category"
         name="category"
+        [options]="categoryOptions"
         [ngModel]="category()"
         (ngModelChange)="category.set($event)"
-      >
-        @for (item of categories; track item[0]) {
-          <option [value]="item[0]">{{ item[1] }}</option>
-        }
-      </select></app-field
+      /></app-field
     >
   </div>
   <app-field label="결제한 사람" inputId="expense-payer"
-    ><select
-      appInput
-      id="expense-payer"
+    ><app-select
+      inputId="expense-payer"
       name="payer"
+      [options]="peopleOptions()"
       [ngModel]="paidBy()"
       (ngModelChange)="paidBy.set($event)"
-    >
-      @for (p of people(); track p.id) {
-        <option [value]="p.id">{{ p.name }}</option>
-      }
-    </select></app-field
+    /></app-field
   >
   <app-checkbox
     label="개인 지출 · 함께 정산하지 않아요"

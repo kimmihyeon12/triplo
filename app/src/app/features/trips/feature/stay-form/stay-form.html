@@ -220,19 +220,14 @@
             >(사용자 입력, 실시간 확인 아님)</span
           ></label
         >
-        <select
-          appInput
-          id="reservation"
-          class="select"
+        <app-select
+          inputId="reservation"
+          testId="stay-reservation"
+          name="reservation"
+          [options]="reservationOptions"
           [ngModel]="reservation()"
           (ngModelChange)="reservation.set($event)"
-          name="reservation"
-          data-testid="stay-reservation"
-        >
-          @for (r of reservationStates; track r) {
-            <option [value]="r">{{ reservationLabel[r] }}</option>
-          }
-        </select>
+        />
       </div>
 
       <app-field
