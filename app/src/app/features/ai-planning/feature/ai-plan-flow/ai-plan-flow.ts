@@ -1,3 +1,4 @@
+import { UiMemo } from '../../../../shared/ui/memo/memo';
 import { UiSelect } from '../../../../shared/ui/select/select';
 import { wonRange } from '../../../../shared/util/plan-estimate';
 import { aiStopMemo } from '../../../trips/util/ai-selection';
@@ -35,7 +36,8 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 @Component({
   selector: 'app-ai-plan-flow',
-  imports: [UiSelect,
+  imports: [UiSelect, 
+    UiMemo,
     UiMapLinks,
     UiButton,
     UiInput,

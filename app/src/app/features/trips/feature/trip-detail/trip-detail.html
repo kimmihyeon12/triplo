@@ -379,8 +379,8 @@
                             </p>
                           }
                           @if (seg.stay.memo) {
-                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
-                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stay.memo }}</div>
+                            <!-- AI 추정 목록은 라벨 아래에 묶고 사용자가 쓴 글은 그 아래에 둔다. -->
+                            <app-memo [memo]="seg.stay.memo" />
                           }
                           <span
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
@@ -580,8 +580,7 @@
                             </p>
                           }
                           @if (seg.stop.memo) {
-                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
-                            <div class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stop.memo }}</div>
+                            <app-memo class="item__memo" [memo]="seg.stop.memo" />
                           }
                           @if (copyFallback() && copyFallbackId() === seg.stop.id) {
                             <p class="text-12 leading-normal copy-fallback text-warn-ink">

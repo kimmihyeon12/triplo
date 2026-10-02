@@ -526,8 +526,8 @@
                     }
                     @let memo = stopMemo(entry);
                     @if (memo) {
-                      <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
-                      <div class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap" [attr.data-testid]="'ai-memo-' + item.id">{{ memo }}</div>
+                      <!-- 담은 뒤 상세 화면과 같은 모양으로 미리 보인다. -->
+                      <app-memo class="item__memo" [memo]="memo" [attr.data-testid]="'ai-memo-' + item.id" />
                     }
                   </div>
                   <!--
