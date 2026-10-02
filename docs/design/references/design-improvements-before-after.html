@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디자인 개선 전후</title>
+<!--
+  2026-10-02 사용자 요청: "시안으로 변경전과 변경후 보여줘".
+  docs/design/DESIGN-IMPROVEMENTS.md의 P1·P2 항목을 변경 전/후로 나란히 보인다.
+  변경 전은 사용법 캡처(app/public/guide/*.jpg)와 소스를 보고 옮겼고, 색은 app/src/styles/theme.css 값이다.
+  점선 테두리는 실제로 보이지 않는 44px 터치 영역을 표시한 것이다.
+  결정하면 코드와 DESIGN.md에 반영하고 이 파일은 지운다.
+-->
+<style>
+  :root {
+    --ground: #fbfbfa; --ground-2: #f0f0ee; --panel: #ffffff;
+    --ink: #16181d; --ink-2: #4a4f58; --ink-3: #6b7280; --ink-3-new: #5f6571; --hint: #707782;
+    --border: #e8eaef; --border-strong: #d4d8e0;
+    --accent: #3b6fef; --accent-deep: #2f5fdb; --accent-tint: #eaf0fe; --accent-fill: #cfdcfb;
+    --place-ink: #3569cd; --place-tint: #e9f4ff;
+    --meal-ink: #387d16; --meal-tint: #e4fcdc;
+    --cafe-ink: #107c73; --cafe-tint: #dbfcf6;
+    --stay-ink: #7f56c4; --stay-tint: #f5f0ff;
+    --warn-ink: #975f03; --warn-tint: #fff3d5;
+    --ok-ink: #067d5f;
+    --sel: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
+    --shadow: 0 0 0 1px rgba(28,25,23,.025), 0 2px 10px rgba(28,25,23,.07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 20px 72px; background: #e9e9e6; color: var(--ink);
+    font: 15px/1.5 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+  h1 { margin: 0 0 6px; font-size: 22px; }
+  .lede { max-width: 84ch; margin: 0 0 26px; color: var(--ink-2); font-size: 14px; line-height: 1.65; }
+  section.blk { margin: 0 0 46px; }
+  section.blk > h2 { margin: 0 0 4px; font-size: 16px; }
+  section.blk > p { max-width: 96ch; margin: 0 0 14px; font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+  .pr { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; vertical-align: 1px; }
+  .p1 { background: #fde2e1; color: #a12020; } .p2 { background: #fde68a; color: #7a4b00; }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .opt { width: 330px; max-width: 100%; }
+  .cap { margin: 0 0 8px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .cap::before { content: ''; width: 8px; height: 8px; border-radius: 99px; background: #9aa0aa; }
+  .cap.after::before { background: var(--ok-ink); }
+  .cap small { font-weight: 400; font-size: 12px; color: var(--ink-3); }
+  .why { margin: 8px 2px 0; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+  .why b { color: var(--ink); }
+
+  .fr { position: relative; overflow: hidden; border-radius: 18px; background: var(--ground); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08); }
+  .bar { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: #fff; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; }
+  .bar .b { font-size: 18px; font-weight: 400; width: 18px; }
+  .pad { padding: 12px 14px; }
+  .lbl { margin: 10px 0 6px; font-size: 11px; font-weight: 700; color: var(--hint); }
+  .lbl:first-child { margin-top: 0; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 700; }
+  .btn--p { background: var(--accent-deep); color: #fff; }
+  .btn--l { background: #fff; border: 1px solid var(--border-strong); color: var(--ink); }
+  .btn--g { color: var(--ink-2); background: transparent; }
+  .card { border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .c-place { background: var(--place-tint); color: var(--place-ink); }
+  .c-stay { background: var(--stay-tint); color: var(--stay-ink); }
+  .c-warn { background: var(--warn-tint); color: var(--warn-ink); }
+
+  /* 선택 칩 */
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { position: relative; display: inline-flex; align-items: center; padding: 6px 11px; border-radius: 999px; background: #fff; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  .pill.sm { padding: 3px 9px; font-size: 11px; }
+  .pill.on-ink { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .pill.on-blue { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+  .pill.on { background: var(--accent-tint); border-color: var(--accent-deep); color: var(--accent-deep); }
+  .pill.on::before { content: '✓'; margin-right: 4px; font-size: 11px; }
+  .days { display: flex; gap: 8px; }
+  .days div { flex: 1; padding: 8px 4px; border-radius: 10px; background: var(--ground-2); text-align: center; font-size: 11px; color: var(--ink-3); }
+  .days b { display: block; font-size: 13px; color: var(--ink-2); }
+  .days .on-sel { background: var(--sel); color: #cdd3e0; } .days .on-sel b { color: #fff; }
+  .days .on { background: var(--accent-tint); box-shadow: inset 0 0 0 1.5px var(--accent-deep); color: var(--accent-deep); } .days .on b { color: var(--accent-deep); }
+
+  /* 터치 영역 */
+  .hit { position: relative; }
+  .hit::after { content: ''; position: absolute; left: -2px; right: -2px; top: 50%; height: 44px; transform: translateY(-50%); border: 1.5px dashed var(--ok-ink); border-radius: 10px; pointer-events: none; }
+  .miss::after { content: ''; position: absolute; inset: -1px; border: 1.5px dashed #d42a2a; border-radius: inherit; pointer-events: none; }
+  .meas { display: inline-block; margin-left: 4px; font-size: 10px; font-weight: 700; color: #a12020; }
+  .meas.ok { color: var(--ok-ink); }
+
+  /* 일정 항목 */
+  .stop { padding: 12px 14px; }
+  .stop .t { display: flex; align-items: center; gap: 8px; }
+  .stop .t b { flex: 1; font-size: 15px; }
+  .pin { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 99px; background: var(--accent-deep); color: #fff; font-size: 12px; font-weight: 700; flex: none; }
+  .memo { margin: 8px 0 0 32px; font-size: 12px; line-height: 1.6; color: var(--ink-2); white-space: pre-line; }
+  .est { margin: 8px 0 0 32px; border-radius: 10px; background: var(--ground-2); font-size: 12px; color: var(--ink-2); }
+  .est summary { display: flex; align-items: center; gap: 6px; padding: 7px 10px; list-style: none; cursor: pointer; }
+  .est summary::-webkit-details-marker { display: none; }
+  .est summary .ai { padding: 1px 6px; border-radius: 99px; background: var(--accent-tint); color: var(--accent-deep); font-size: 10px; font-weight: 700; }
+  .est summary .v { margin-left: auto; font-weight: 700; color: var(--ink); }
+  .est dl { margin: 0; padding: 0 10px 8px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .est dt { color: var(--hint); } .est dd { margin: 0; }
+  .price { margin: 6px 0 0 32px; font-size: 12px; color: var(--ink-2); }
+  .price b { color: var(--ink); }
+
+  /* 지도에서 담기 */
+  .mexp { position: relative; height: 300px; background: linear-gradient(rgba(0,0,0,.025) 1px, transparent 1px) 0 0 / 40px 40px, linear-gradient(90deg, rgba(0,0,0,.025) 1px, transparent 1px) 0 0 / 40px 40px, #efefed; }
+  .mexp .tool { position: absolute; left: 0; right: 0; top: 0; padding: 8px 10px; display: grid; gap: 7px; }
+  .mexp .tool.dim { background: linear-gradient(rgba(239,239,237,.0), rgba(239,239,237,0)); }
+  .search { display: flex; gap: 8px; }
+  .search .in { flex: 1; height: 42px; padding: 0 12px; display: flex; align-items: center; border-radius: 10px; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.1); font-size: 13px; color: var(--ink-3); }
+  .search .go2 { width: 56px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: var(--accent-deep); color: #fff; font-size: 13px; font-weight: 700; }
+  .sel { display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 8px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.1); font-size: 12px; font-weight: 600; }
+  .mk { position: absolute; width: 22px; height: 22px; border-radius: 99px 99px 99px 0; transform: rotate(-45deg); background: #fff; border: 3px solid var(--meal-ink); }
+  .mk.c { border-color: var(--cafe-ink); } .mk.p { border-color: var(--place-ink); } .mk.s { border-color: var(--accent-deep); background: var(--accent-deep); width: 28px; height: 28px; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px; background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -4px 18px rgba(0,0,0,.1); font-size: 12px; }
+  .sheet b { display: block; font-size: 14px; }
+  .cover { position: absolute; left: 0; right: 0; top: 0; background: rgba(212,42,42,.08); border-bottom: 1.5px dashed #d42a2a; }
+  .cover span { position: absolute; right: 8px; bottom: 4px; font-size: 10px; font-weight: 700; color: #a12020; }
+  .pop { position: absolute; right: 10px; top: 104px; width: 170px; padding: 10px; border-radius: 12px; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.16); font-size: 11px; }
+
+  /* 로그인 티켓 */
+  .ticket { margin: 16px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+  .ticket .top { position: relative; padding: 16px; color: #fff; }
+  .ticket .top.old { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 55%, var(--stay-ink) 100%); }
+  .ticket .top.new { background: #2650bd; }
+  .ticket .brand { font-size: 13px; font-weight: 700; }
+  .ticket .route { display: flex; justify-content: space-between; margin-top: 12px; }
+  .ticket .route small { display: block; font-size: 12px; opacity: .9; }
+  .ticket .route b { font-size: 22px; }
+  .ratio { position: absolute; right: 10px; top: 10px; padding: 2px 7px; border-radius: 99px; background: #fff; font-size: 10px; font-weight: 800; }
+  .ratio.bad { color: #a12020; } .ratio.good { color: var(--ok-ink); }
+  .ticket .body { padding: 12px 16px 14px; font-size: 12px; color: var(--ink-2); display: grid; gap: 4px; }
+
+  /* 하단 동작 바 */
+  .abar { padding: 10px 14px 12px; background: #fff; border-top: 1px solid var(--border); }
+  .tabs { display: flex; gap: 20px; margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+  .tabs span { padding: 6px 0; color: var(--hint); }
+  .tabs .on { color: var(--ink); border-bottom: 2px solid var(--accent-deep); }
+  .sortbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--ink-3); }
+  .sb { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+  .sb.p { background: var(--accent-deep); color: #fff; }
+  .sb.l { background: #fff; border: 1px solid var(--border-strong); color: var(--ink-2); }
+
+  /* 여행 목록 */
+  .grp { margin: 12px 2px 6px; font-size: 11px; font-weight: 700; color: var(--hint); }
+  .grp:first-child { margin-top: 0; }
+  .trip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .trip b { display: block; font-size: 14px; }
+  .trip small { font-size: 11px; color: var(--ink-3); }
+  .dd { margin-left: auto; padding: 2px 8px; border-radius: 99px; background: var(--ground-2); font-size: 12px; font-weight: 700; color: var(--ink-3); }
+  .dd.new { color: var(--ink-3-new); }
+  .dd.live { background: var(--accent-deep); color: #fff; }
+  .today { padding: 14px; margin-bottom: 8px; border-radius: 16px; background: var(--accent-deep); color: #fff; }
+  .today small { font-size: 11px; opacity: .85; }
+  .today b { display: block; font-size: 16px; margin: 2px 0 6px; }
+  .today .nx { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,.14); font-size: 12px; }
+
+  /* 가계부 */
+  .sum { display: flex; padding: 16px; }
+  .sum > div { flex: 1; }
+  .sum > div + div { padding-left: 16px; border-left: 1px solid var(--border); }
+  .sum small { display: block; font-size: 11px; color: var(--ink-3); }
+  .sum b { display: block; margin: 3px 0; font-size: 22px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .sum .bl { color: var(--accent-deep); }
+  .stack { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--ground-2); }
+  .stack i { display: block; height: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: 0; }
+  .budget { height: 6px; margin: 8px 0 4px; border-radius: 99px; background: var(--ground-2); overflow: hidden; }
+  .budget i { display: block; height: 100%; border-radius: 99px; background: var(--accent-deep); }
+  .s { font-size: 11px; color: var(--hint); }
+
+  @media (max-width: 720px) { body { padding: 20px 16px 56px; } .opt { width: 100%; } }
+</style>
+</head>
+<body>
+<h1>디자인 개선 전후 시안</h1>
+<p class="lede">개선 목록(<code>docs/design/DESIGN-IMPROVEMENTS.md</code>)의 P1·P2 항목을 변경 전과 변경 후로 나란히 놓았습니다. 왼쪽은 지금 화면이고 오른쪽은 제안입니다. 빨간 점선은 문제가 있는 자리를, 초록 점선은 눈에 보이지 않게 넓힌 44px 터치 영역을 뜻합니다.</p>
+
+<!-- 1 -->
+<section class="blk">
+  <h2><span class="pr p1">P1</span>1. 선택 상태를 한 가지 모양으로</h2>
+  <p>지금은 같은 "선택됨"이 날짜 탭에서는 남색 그라데이션, 분류 칩에서는 딥 블루 채움, 평점·장소 종류에서는 검정 채움으로 나옵니다. 검정 채움은 주 동작 버튼과도 구별되지 않습니다. 제안은 모든 선택을 <b>연한 파랑 바탕 + 딥 블루 테두리·글자 + 체크</b>로 통일하고, 채움 색은 주 동작에만 남기는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>화면마다 다른 선택 표현</small></div>
+      <div class="fr pad">
+        <div class="lbl">여행 상세 · 날짜 탭</div>
+        <div class="days"><div class="on-sel"><b>1일차</b>10.12</div><div><b>2일차</b>10.13</div><div><b>3일차</b>10.14</div></div>
+        <div class="lbl">지도에서 담기 · 분류</div>
+        <div class="seg"><span class="pill on-blue">음식점</span><span class="pill">카페</span><span class="pill">관광</span><span class="pill">숙소</span></div>
+        <div class="lbl">지도에서 담기 · 평점</div>
+        <div class="seg"><span class="pill sm on-ink">전체</span><span class="pill sm">4.0+</span><span class="pill sm">4.5+</span></div>
+        <div class="lbl">장소 추가 · 종류</div>
+        <div class="seg"><span class="pill on-ink">장소</span><span class="pill">식사</span><span class="pill">카페</span></div>
+        <div class="lbl">같은 화면의 주 동작</div>
+        <div class="btn btn--p">일정 추가</div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>공통 선택 칩 하나</small></div>
+      <div class="fr pad">
+        <div class="lbl">여행 상세 · 날짜 탭</div>
+        <div class="days"><div class="on"><b>1일차</b>10.12</div><div><b>2일차</b>10.13</div><div><b>3일차</b>10.14</div></div>
+        <div class="lbl">지도에서 담기 · 분류</div>
+        <div class="seg"><span class="pill on">음식점</span><span class="pill">카페</span><span class="pill">관광</span><span class="pill">숙소</span></div>
+        <div class="lbl">지도에서 담기 · 평점</div>
+        <div class="seg"><span class="pill sm on">전체</span><span class="pill sm">4.0+</span><span class="pill sm">4.5+</span></div>
+        <div class="lbl">장소 추가 · 종류</div>
+        <div class="seg"><span class="pill on">장소</span><span class="pill">식사</span><span class="pill">카페</span></div>
+        <div class="lbl">같은 화면의 주 동작</div>
+        <div class="btn btn--p">일정 추가</div>
+      </div>
+      <p class="why"><b>효과:</b> 채움 색은 "누르면 실행", 테두리+체크는 "지금 고른 것"으로 의미가 갈립니다. 체크 표시 덕분에 색을 구별하기 어려운 사람도 선택을 알아볼 수 있습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="blk">
+  <h2><span class="pr p1">P1</span>2. AI 추정값을 메모에서 분리</h2>
+  <p>지금은 AI가 추정한 시각·요금이 사용자 메모 칸에 대시 목록으로 그대로 들어갑니다. "무료 (무료)"처럼 같은 말이 반복되고, 숙소 카드에서는 서로 다른 가격 두 개가 함께 보입니다. 제안은 추정값을 접힌 작은 블록으로 따로 보이고, 대표 숫자 하나만 펼치지 않아도 보이게 하는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>메모 칸에 AI 원문</small></div>
+      <div class="fr">
+        <div class="card stop" style="margin:12px">
+          <div class="t"><span class="pin">1</span><b>경포대</b><span class="chip c-place">장소</span></div>
+          <div class="memo">AI 추정
+- 시각 10:00
+- 요금 무료 (무료)
+- 체류 1시간 30분</div>
+        </div>
+        <div class="card stop" style="margin:0 12px 12px">
+          <div class="t"><span class="pin" style="background:var(--stay-ink)">숙</span><b>강릉 씨마크 호텔</b><span class="chip c-stay">숙소</span></div>
+          <div class="price">예상 <b>120,000원</b></div>
+          <div class="memo">AI 추정 90,000~120,000원</div>
+        </div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>추정은 접힌 블록, 숫자는 하나</small></div>
+      <div class="fr">
+        <div class="card stop" style="margin:12px">
+          <div class="t"><span class="pin">1</span><b>경포대</b><span class="chip c-place">장소</span></div>
+          <details class="est" open>
+            <summary><span class="ai">AI 추정</span>10:00 · 1시간 30분<span class="v">무료</span></summary>
+            <dl><dt>근거</dt><dd>공개 정보 기준, 방문 전 확인 필요</dd></dl>
+          </details>
+        </div>
+        <div class="card stop" style="margin:0 12px 12px">
+          <div class="t"><span class="pin" style="background:var(--stay-ink)">숙</span><b>강릉 씨마크 호텔</b><span class="chip c-stay">숙소</span></div>
+          <details class="est">
+            <summary><span class="ai">AI 추정</span>1박<span class="v">약 120,000원</span></summary>
+            <dl><dt>범위</dt><dd>90,000~120,000원</dd></dl>
+          </details>
+        </div>
+      </div>
+      <p class="why"><b>효과:</b> 메모는 사용자가 쓴 글만 남습니다. 추정값은 늘 같은 자리에 같은 모양으로 나와 "확인된 정보와 추정을 구분한다"는 약속이 화면에서 지켜집니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="blk">
+  <h2><span class="pr p1">P1</span>3. 작은 컨트롤의 터치 영역 44px</h2>
+  <p>지도에서 담기의 날짜 선택(32px), 분류 칩(약 30px), 평점 칩(약 26px), 가계부 필터(32px), 토스트 닫기(32px)는 손가락으로 누르기에 작습니다. 제안은 보이는 크기를 그대로 두고, 눈에 보이지 않는 영역(<code>after:-inset-*</code>)만 44px로 넓히는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>보이는 크기 = 누르는 크기</small></div>
+      <div class="fr pad">
+        <div class="lbl">지도에서 담기</div>
+        <div class="seg" style="align-items:center; gap:10px">
+          <span class="sel miss" style="height:32px">1일차 ▾</span><span class="meas">32</span>
+          <span class="pill on miss">음식점</span><span class="meas">30</span>
+          <span class="pill sm miss">4.5+</span><span class="meas">26</span>
+        </div>
+        <div class="lbl">가계부 · 토스트</div>
+        <div class="seg" style="align-items:center; gap:10px">
+          <span class="sb l miss">분류 ▾</span><span class="meas">32</span>
+          <span class="sb l miss" style="width:32px;padding:0;justify-content:center">✕</span><span class="meas">32</span>
+        </div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>모양은 그대로, 누르는 영역만 넓힘</small></div>
+      <div class="fr pad">
+        <div class="lbl">지도에서 담기</div>
+        <div class="seg" style="align-items:center; gap:10px; padding:6px 0">
+          <span class="sel hit" style="height:32px">1일차 ▾</span><span class="meas ok">44</span>
+          <span class="pill on hit">음식점</span><span class="meas ok">44</span>
+          <span class="pill sm hit">4.5+</span><span class="meas ok">44</span>
+        </div>
+        <div class="lbl">가계부 · 토스트</div>
+        <div class="seg" style="align-items:center; gap:10px; padding:6px 0">
+          <span class="sb l hit">분류 ▾</span><span class="meas ok">44</span>
+          <span class="sb l hit" style="width:32px;padding:0;justify-content:center">✕</span><span class="meas ok">44</span>
+        </div>
+      </div>
+      <p class="why"><b>효과:</b> 화면 밀도는 그대로이고, 여행 중 한 손으로 지도를 쓸 때 잘못 누르는 일이 줄어듭니다. 이웃한 칩끼리 영역이 겹치지 않게 간격을 6px 이상으로 둡니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="blk">
+  <h2><span class="pr p1">P1</span>4. 지도에서 담기 위쪽 정리</h2>
+  <p>지금은 검색, 날짜, 분류 4개, 평점 3개가 세 줄로 쌓여 지도의 약 30%를 가리고, 정보판이 열리면 고른 마커가 아래에서 잘립니다. 제안은 평점을 "필터" 칩 하나 안으로 접어 두 줄로 줄이고, 정보판이 열리면 고른 마커를 보이는 영역 가운데로 옮기는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>컨트롤 세 줄 + 잘린 마커</small></div>
+      <div class="fr">
+        <div class="mexp">
+          <div class="cover" style="height:142px"><span>지도 가림</span></div>
+          <div class="tool">
+            <div class="search"><div class="in">주변 장소 검색</div><div class="go2">찾기</div></div>
+            <div class="seg"><span class="sel" style="height:32px">1일차 ▾</span><span class="pill on-blue">음식점</span><span class="pill">카페</span><span class="pill">관광</span><span class="pill">숙소</span></div>
+            <div class="seg"><span class="pill sm on-ink">전체</span><span class="pill sm">4.0+</span><span class="pill sm">4.5+</span></div>
+          </div>
+          <span class="mk" style="left:60px;top:170px"></span>
+          <span class="mk c" style="left:150px;top:160px"></span>
+          <span class="mk s" style="right:34px;top:206px"></span>
+          <div class="sheet" style="height:80px"><b>강릉 초당 순두부</b>음식점 · 4.4 · 직선 1.2km</div>
+        </div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>두 줄 + 평점은 필터 안으로</small></div>
+      <div class="fr">
+        <div class="mexp">
+          <div class="tool">
+            <div class="search"><div class="in">주변 장소 검색</div><div class="go2">검색</div></div>
+            <div class="seg"><span class="sel" style="height:32px">1일차 ▾</span><span class="pill on">음식점</span><span class="pill">카페</span><span class="pill">관광</span><span class="pill">필터 ▾</span></div>
+          </div>
+          <div class="pop"><b style="display:block;margin-bottom:6px">평점</b><div class="seg"><span class="pill sm on">전체</span><span class="pill sm">4.0+</span><span class="pill sm">4.5+</span></div></div>
+          <span class="mk" style="left:30px;top:118px"></span>
+          <span class="mk c" style="left:40px;top:180px"></span>
+          <span class="mk s" style="left:100px;top:150px"></span>
+          <div class="sheet" style="height:80px"><b>강릉 초당 순두부</b>음식점 · 4.4 · 직선 1.2km</div>
+        </div>
+      </div>
+      <p class="why"><b>효과:</b> 한 번에 보이는 선택지가 9개에서 6개로 줄고 지도가 더 넓게 보입니다. 숙소 칩은 "필터" 안 분류 목록으로 옮기거나, 쓰임이 많으면 남기고 평점만 접습니다. 버튼 이름도 "검색"으로 맞춥니다(9번 항목).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="blk">
+  <h2><span class="pr p1">P1</span>5. 로그인·초대·설치 화면 상단 대비</h2>
+  <p>탑승권 상단의 파랑→보라 그라데이션은 시작 색(#3b6fef) 위 흰 글자가 4.46:1로 기준 4.5:1에 조금 못 미칩니다. 보라로 끝나는 그라데이션은 흔한 "AI 앱" 색으로도 읽힙니다. 제안은 한 가지 진한 파랑(#2650bd)으로 바꾸는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>파랑→보라 그라데이션</small></div>
+      <div class="fr">
+        <div class="ticket">
+          <div class="top old"><span class="ratio bad">4.46:1</span><div class="brand">트립플로</div>
+            <div class="route"><div><small>FROM</small><b>여기</b></div><div style="text-align:right"><small>TO</small><b>어디든</b></div></div></div>
+          <div class="body"><span>날짜별 일정</span><span>숙소</span><span>정산</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>진한 파랑 단색</small></div>
+      <div class="fr">
+        <div class="ticket">
+          <div class="top new"><span class="ratio good">7.1:1</span><div class="brand">트립플로</div>
+            <div class="route"><div><small>FROM</small><b>여기</b></div><div style="text-align:right"><small>TO</small><b>어디든</b></div></div></div>
+          <div class="body"><span>AI로 일정 짜기</span><span>날짜별 일정·숙소</span><span>정산</span></div>
+        </div>
+      </div>
+      <p class="why"><b>효과:</b> 작은 흰 글자도 충분히 읽히고 앱 안의 딥 블루와 같은 색 계열이 됩니다. 소개 문구에는 빠져 있던 핵심 기능 "AI로 일정 짜기"를 넣었습니다(사소한 관찰 항목).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 + 9 -->
+<section class="blk">
+  <h2><span class="pr p2">P2</span>6·9. 주 버튼 하나, 탭에 맞는 하단 버튼</h2>
+  <p>"가까운 순 정렬"이 주 버튼 색이라 하단 "일정 추가"와 시선이 나뉩니다. 숙소 탭에서도 하단 버튼이 "일정 추가"로 남아 있습니다. 제안은 정렬을 보조 버튼으로 낮추고, 하단 버튼 이름을 지금 탭에 맞추는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>숙소 탭</small></div>
+      <div class="fr">
+        <div class="pad">
+          <div class="tabs"><span>일정</span><span class="on">숙소</span><span>가계부</span></div>
+          <div class="sortbar"><span>숙소 2곳</span><span class="sb p">가까운 순 정렬</span></div>
+          <div class="card stop"><div class="t"><span class="pin" style="background:var(--stay-ink)">숙</span><b>강릉 씨마크 호텔</b></div></div>
+        </div>
+        <div class="abar"><div class="btn btn--p">일정 추가</div></div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>숙소 탭</small></div>
+      <div class="fr">
+        <div class="pad">
+          <div class="tabs"><span>일정</span><span class="on">숙소</span><span>가계부</span></div>
+          <div class="sortbar"><span>숙소 2곳</span><span class="sb l">가까운 순 정렬</span></div>
+          <div class="card stop"><div class="t"><span class="pin" style="background:var(--stay-ink)">숙</span><b>강릉 씨마크 호텔</b></div></div>
+        </div>
+        <div class="abar"><div class="btn btn--p">숙소 추가</div></div>
+      </div>
+      <p class="why"><b>효과:</b> 화면마다 채운 버튼이 하나뿐이라 다음에 할 일이 바로 보입니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 + 10 -->
+<section class="blk">
+  <h2><span class="pr p2">P2</span>7·10. 여행 목록 순서와 "지금 여행" 진입점</h2>
+  <p>지금 목록은 마지막으로 고친 순서라 D-78이 D-36보다 위에 오고, 여행 중에 오늘 일정으로 바로 가는 길이 없습니다. 제안은 진행 중인 여행을 맨 위 카드로 올리고, 나머지는 다가오는 날짜순과 지난 여행 묶음으로 나누는 방식입니다. D-day 라벨 글자색도 한 단계 진하게 해서 대비 4.5:1을 넘깁니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>최근 수정순</small></div>
+      <div class="fr pad">
+        <div class="card trip"><div><b>제주 가족 여행</b><small>12.20 – 12.23</small></div><span class="dd">D-78</span></div>
+        <div class="card trip"><div><b>강릉·속초</b><small>10.01 – 10.04</small></div><span class="dd">진행 중</span></div>
+        <div class="card trip"><div><b>부산 먹방</b><small>11.08 – 11.09</small></div><span class="dd">D-36</span></div>
+        <div class="card trip"><div><b>경주 수학여행 다시</b><small>날짜 미정</small></div><span class="dd">미정</span></div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>지금 여행 → 다가오는 순 → 미정</small></div>
+      <div class="fr pad">
+        <div class="today"><small>여행 중 · 2일차</small><b>강릉·속초</b>
+          <div class="nx"><span class="pin" style="background:#fff;color:var(--accent-deep)">2</span>다음 일정 · 14:00 안목해변 카페거리 ›</div></div>
+        <div class="grp">다가오는 여행</div>
+        <div class="card trip"><div><b>부산 먹방</b><small>11.08 – 11.09</small></div><span class="dd new">D-36</span></div>
+        <div class="card trip"><div><b>제주 가족 여행</b><small>12.20 – 12.23</small></div><span class="dd new">D-78</span></div>
+        <div class="grp">날짜 미정</div>
+        <div class="card trip"><div><b>경주 수학여행 다시</b><small>날짜 미정</small></div></div>
+      </div>
+      <p class="why"><b>효과:</b> 여행 중에 앱을 열면 한 번에 오늘 일정으로 갑니다. D-day는 숫자 순서대로 읽힙니다. 라벨 글자는 #5f6571로 바꿔 #f0f0ee 위에서 5.1:1이 됩니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="blk">
+  <h2><span class="pr p2">P2</span>8. 가계부 요약 막대</h2>
+  <p>지금 막대는 실제 지출의 분류별 비율인데, "예상/실제" 숫자 아래에 전체 폭으로 놓여 있어 분류가 하나면 예산을 다 쓴 것처럼 꽉 찬 막대가 됩니다. 제안은 위에는 예산 대비 사용률을, 아래에는 이름표를 붙인 분류 비율을 따로 두는 방식입니다.</p>
+  <div class="row">
+    <div class="opt">
+      <div class="cap">변경 전 <small>분류 하나 → 막대가 가득 참</small></div>
+      <div class="fr pad">
+        <div class="card">
+          <div class="sum"><div><small>예상</small><b>125,000</b></div><div><small>실제</small><b class="bl">24,000</b></div></div>
+          <div style="padding:0 16px 16px"><div class="stack"><i style="width:100%;background:#78b065"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="opt">
+      <div class="cap after">변경 후 <small>사용률과 분류 비율을 나눔</small></div>
+      <div class="fr pad">
+        <div class="card">
+          <div class="sum"><div><small>예상</small><b>125,000</b></div><div><small>실제</small><b class="bl">24,000</b>
+            <div class="budget"><i style="width:19%"></i></div><span class="s">예상의 19% 사용</span></div></div>
+          <div style="padding:0 16px 14px; border-top:1px solid var(--border); padding-top:12px">
+            <div class="stack"><i style="width:100%;background:#78b065"></i></div>
+            <div class="legend"><span><i style="background:#78b065"></i>식비 24,000 · 100%</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="why"><b>효과:</b> "얼마나 썼나"와 "어디에 썼나"가 따로 읽힙니다. 분류가 하나뿐일 때는 아래 막대를 숨기고 이름표만 보여도 됩니다.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -364,6 +364,9 @@
 #### Scenario: Unknown onward travel
 - **WHEN** 장소 미정 활동 또는 이동시간 미확인 구간이 있다
 - **THEN** 이후 도착시각을 미확인으로 표시하거나 사용자가 입력한 추정 가정을 명시하며 실현 가능성을 단정하지 않는다
+#### Scenario: Straight-line distance between verified places
+- **WHEN** 날짜별 일정의 이동 구간 앞뒤 두 곳이 모두 확인된 좌표를 가진다
+- **THEN** 좌표로 계산한 직선 거리를 `직선`이라고 밝혀 보이고 이동시간은 미확인으로 유지하며 거리를 저장하거나 시간으로 바꾸지 않는다
 
 ### Requirement: Whole trip overview
 시스템은 전체·날짜별·숙소 보기와 미배치 항목 목록을 SHALL 제공한다.
