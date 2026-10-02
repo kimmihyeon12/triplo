@@ -1,26 +1,28 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { UiButton } from '../button/button';
 import { IconComponent, type IconName } from '../icon/icon';
 import type { ToastAction, ToastKind } from '../../../core/toast-service';
 
-/** 종류마다 바탕·테두리·아이콘 색을 나눈다. 글자는 모두 본문색이라 읽기 쉽다. */
+/**
+ * 종류마다 바탕·아이콘 색을 나눈다. 글자는 모두 본문색이라 읽기 쉽다.
+ * 바탕은 옅은 종류색(45%)을 흰 유리(30%) 위에 얹어 뒤가 비친다(2026-10-02 사용자 결정, 시안 C).
+ */
 const TONE: Record<ToastKind, { card: string; icon: string; close: string; glyph: IconName; label: string }> = {
   success: {
-    card: 'bg-ok-tint/70',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-ok-tint)_45%,transparent),color-mix(in_srgb,var(--color-ok-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
     icon: 'text-ok-ink',
     close: 'hover:bg-ok-fill/60',
     glyph: 'circle-check',
     label: '알림 닫기',
   },
   info: {
-    card: 'bg-accent-tint/70',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-accent-tint)_45%,transparent),color-mix(in_srgb,var(--color-accent-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
     icon: 'text-accent-deep',
     close: 'hover:bg-accent-fill/60',
     glyph: 'info',
     label: '알림 닫기',
   },
   error: {
-    card: 'bg-danger-tint/70',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-danger-tint)_45%,transparent),color-mix(in_srgb,var(--color-danger-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
     icon: 'text-danger-ink',
     close: 'hover:bg-danger-fill/50',
     glyph: 'alert',
@@ -37,7 +39,7 @@ const DISMISS_PX = 40;
       'fixed [z-index:10008] [inset-inline:16px] [top:calc(env(safe-area-inset-top,_0px)_+_64px)] [width:min(440px,_calc(100%_-_32px))] [margin-inline:auto]',
   },
   selector: 'app-toast',
-  imports: [UiButton, IconComponent],
+  imports: [IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './toast.html',
 })
