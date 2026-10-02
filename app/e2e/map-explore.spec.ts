@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createTrip, expectNoHorizontalScroll, resetApp } from './helpers';
+import { createTrip, expectNoHorizontalScroll, resetApp, chooseOption } from './helpers';
 
 /**
  * 큰 지도에서 주변 장소 골라 담기(2026-10-01). 테스트 지도는 타일 없이 핀을 DOM으로 그리고,
@@ -17,7 +17,7 @@ async function tripWithAnmok(page: Page): Promise<string> {
   await page.getByTestId('place-link-url').fill('https://naver.me/test-in-kakao');
   await page.getByTestId('place-link-find').click();
   await expect(page.getByTestId('stop-location-verified')).toBeVisible();
-  await page.getByTestId('stop-date').selectOption('2026-05-01');
+  await chooseOption(page, 'stop-date', '2026-05-01');
   await page.getByTestId('stop-save').click();
   await expect(page).toHaveURL(new RegExp(`/trips/${id}(\\?|$)`));
   return id;
@@ -43,8 +43,8 @@ test('여행 상세에서 크게 보고, 주변 맛집을 골라 다른 날에 �
   await expect(page.getByTestId('map-explore-name')).toHaveText('테스트 회센터');
   // 고른 곳의 카카오맵 평점을 읽어 보인다(저장하지 않는다).
   await expect(page.getByTestId('map-explore-rating')).toHaveText('· ★ 4.4 · 후기 9 · 카카오맵');
-  await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-01');
-  await page.getByTestId('map-explore-day').selectOption('2026-05-02');
+  await expect(page.getByTestId('map-explore-day')).toHaveAttribute('data-value', '2026-05-01');
+  await chooseOption(page, 'map-explore-day', '2026-05-02');
   await page.getByTestId('map-explore-add').click();
   await expect(page.getByTestId('success-toast')).toContainText('2일차 맨 아래 후보로 담았어요');
   await expect(page.getByTestId('map-explore-add')).toHaveText('담았어요');
@@ -105,7 +105,7 @@ test('위 날짜를 바꾸면 그날 일정이 지도에 보이고, 담을 날�
   await page.getByTestId('map-day-2026-05-02').click();
   await page.getByTestId('map-category-cafe').click();
   await page.getByTestId('map-place-n-cafe').click();
-  await expect(page.getByTestId('map-explore-day')).toHaveValue('2026-05-02');
+  await expect(page.getByTestId('map-explore-day')).toHaveAttribute('data-value', '2026-05-02');
 });
 
 test('평점 필터를 켜면 보이는 핀의 평점을 읽어 기준 미만은 숨긴다', async ({ page }) => {

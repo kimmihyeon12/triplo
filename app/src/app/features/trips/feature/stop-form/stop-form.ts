@@ -14,6 +14,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TripEditorStore } from '../../data/trip-editor-store';
@@ -40,7 +41,7 @@ import type { GeoPoint, PlaceRef } from '../../../places/model/place';
 
 @Component({
   selector: 'app-stop-form',
-  imports: [
+  imports: [UiSelect, 
     UiButton,
     UiInput,
     UiBadge,
@@ -114,6 +115,11 @@ export class StopFormPage {
       label: `${i + 1}일차 · ${formatKoreanDate(d)}`,
     }));
   });
+
+  readonly dateOptions = computed(() => [
+    { value: '', label: '미배치' },
+    ...this.days().map((d) => ({ value: d.date as string, label: d.label })),
+  ]);
 
   readonly nameError = computed(() =>
     STOP_KIND_DEFAULT_NAME[this.kind()] === '' && !this.name().trim() ? '이름을 입력하세요.' : null,

@@ -30,7 +30,7 @@ test.describe('정산 화면 진입', () => {
     });
 
     await page.goto(`/trips/${id}/expenses?add=none`);
-    await expect(page.locator('#expense-payer')).toHaveValue('self');
+    await expect(page.locator('#expense-payer')).toHaveAttribute('data-value', 'self');
     await expect(page.locator('#expense-share-self')).toBeChecked();
   });
 
@@ -67,7 +67,7 @@ test.describe('정산 화면 진입', () => {
     const select = page.locator('#expense-link');
     const box = (await select.boundingBox())!;
     const tap = () => page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-    const isOpen = () => select.evaluate((el) => el.matches(':open'));
+    const isOpen = async () => (await select.getAttribute('aria-expanded')) === 'true';
     await tap();
     await expect.poll(isOpen).toBe(true);
     await tap();

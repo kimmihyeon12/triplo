@@ -7,10 +7,10 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { FormsModule } from '@angular/forms';
 import { PageBar } from '../../../../core/page-bar';
 import { UiButton } from '../../../../shared/ui/button/button';
-import { UiInput } from '../../../../shared/ui/input/input';
 import { UiField } from '../../../../shared/ui/field/field';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
@@ -27,10 +27,9 @@ import { renderItineraryPng } from '../../data/itinerary-png';
 @Component({
   selector: 'app-itinerary-export',
   templateUrl: './itinerary-export.html',
-  imports: [
+  imports: [UiSelect, 
     FormsModule,
     UiButton,
-    UiInput,
     UiField,
     UiCheckbox,
     UiToast,
@@ -46,6 +45,10 @@ export class ItineraryExport {
   readonly includeCosts = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly sectionOptions = computed(() => [
+    { value: '', label: '전체 일정' },
+    ...this.allSections().map((section) => ({ value: section.key, label: section.title })),
+  ]);
   readonly allSections = computed(() =>
     this.store.current() ? itinerarySections(this.store.current()!) : [],
   );

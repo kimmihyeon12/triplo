@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addStop, createTrip, resetApp } from './helpers';
+import { addStop, createTrip, resetApp, chooseOption } from './helpers';
 
 /**
  * 테스트 앱은 외부 호출 없는 픽스처 검색·지도를 쓴다.
@@ -81,7 +81,7 @@ test.describe('장소 검색으로 위치 확인, 날짜별 지도 마커', () =
     await page.getByTestId('place-search-btn').click();
     await expect(page.getByTestId('place-search-empty')).toBeVisible();
     await page.getByTestId('stop-name').fill('우리 집');
-    await page.getByTestId('stop-date').selectOption('2026-05-01');
+    await chooseOption(page, 'stop-date', '2026-05-01');
     await page.getByTestId('stop-save').click();
     await expect(page.getByTestId('day-items')).toContainText('위치 미확인');
   });

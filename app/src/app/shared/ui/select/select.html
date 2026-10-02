@@ -1,0 +1,54 @@
+<button
+  type="button"
+  role="combobox"
+  [id]="inputId()"
+  class="select text-left"
+  [class]="classes + ' ' + buttonClass()"
+  [class.border-accent-deep]="open()"
+  [disabled]="isDisabled()"
+  aria-haspopup="listbox"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="listId()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-activedescendant]="open() && active() >= 0 ? listId() + '-' + active() : null"
+  [attr.data-testid]="testId()"
+  [attr.data-value]="value()"
+  (click)="toggle()"
+>
+  {{ label() }}
+</button>
+@if (open()) {
+  <ul
+    #list
+    role="listbox"
+    [id]="listId()"
+    class="absolute inset-x-0 z-40 m-0 max-h-72 list-none overflow-y-auto rounded-control border border-border bg-panel p-1 shadow-float"
+    [class]="up() ? 'bottom-full mb-1.5' : 'top-full mt-1.5'"
+    [attr.aria-label]="ariaLabel()"
+  >
+    @for (o of options(); track o.value; let i = $index) {
+      <li
+        role="option"
+        [id]="listId() + '-' + i"
+        [attr.data-index]="i"
+        [attr.aria-selected]="o.value === value()"
+        [attr.aria-disabled]="o.disabled || null"
+        [attr.data-testid]="testId() ? testId() + '-option-' + o.value : null"
+        class="flex min-h-11 cursor-pointer items-center gap-2 rounded-cell px-3 py-2.5 text-14 leading-normal text-ink"
+        [class.bg-ground-2]="i === active() && o.value !== value()"
+        [class.bg-accent-tint]="o.value === value()"
+        [class.text-accent-deep]="o.value === value()"
+        [class.font-semibold]="o.value === value()"
+        [class.text-ink-3]="o.disabled"
+        [class.cursor-not-allowed]="o.disabled"
+        (pointerenter)="active.set(i)"
+        (click)="pick(i)"
+      >
+        <span class="min-w-0 flex-1">{{ o.label }}</span>
+        @if (o.value === value()) {
+          <svg class="flex-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+        }
+      </li>
+    }
+  </ul>
+}

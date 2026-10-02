@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createTrip, FAIL_FLAG, resetApp } from './helpers';
+import { createTrip, FAIL_FLAG, resetApp, chooseOption } from './helpers';
 
 test.describe('저장 실패 · 입력 보존 · 재시도', () => {
   test.beforeEach(async ({ page }) => resetApp(page));
@@ -51,11 +51,11 @@ test.describe('저장 실패 · 입력 보존 · 재시도', () => {
     const id = await createTrip(page, { start: '2026-05-01', end: '2026-05-01' });
     await page.goto(`/trips/${id}/stops/new`);
     await page.getByTestId('stop-name').fill('가');
-    await page.getByTestId('stop-date').selectOption('2026-05-01');
+    await chooseOption(page, 'stop-date', '2026-05-01');
     await page.getByTestId('stop-save').click();
     await page.goto(`/trips/${id}/stops/new`);
     await page.getByTestId('stop-name').fill('나');
-    await page.getByTestId('stop-date').selectOption('2026-05-01');
+    await chooseOption(page, 'stop-date', '2026-05-01');
     await page.getByTestId('stop-save').click();
     const items = page.getByTestId('day-items').locator('li.item strong');
     await expect(items).toHaveText(['가', '나']);

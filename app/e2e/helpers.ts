@@ -3,6 +3,16 @@ import { expect, type Page } from '@playwright/test';
 export const STORAGE_KEY = 'tc.test.trips.v1';
 export const FAIL_FLAG = 'tc.test.trips.v1.failSave';
 
+/**
+ * 앱 공통 선택 상자(app-select)에서 값을 고른다(2026-10-02, 브라우저 기본 select를 대신한다).
+ * 상자를 눌러 목록을 열고 그 값의 항목을 누른다.
+ */
+export async function chooseOption(page: Page, testId: string, value: string): Promise<void> {
+  await page.getByTestId(testId).click();
+  await page.getByTestId(`${testId}-option-${value}`).click();
+  await expect(page.getByTestId(testId)).toHaveAttribute('data-value', value);
+}
+
 /** 테스트 앱 저장소를 비우고 목록 화면에서 시작한다. */
 export async function resetApp(page: Page): Promise<void> {
   // Exercise the real route guard with an isolated authenticated fixture session.
@@ -95,7 +105,7 @@ export async function addStop(page: Page, tripId: string, input: StopInput): Pro
   // 실제 검색 결과와 같은 모양으로 만든다.
   const stopAddress = input.address ?? (input.region ? `강원 ${input.region}시 어딘가` : '');
   if (stopAddress) await page.getByTestId('stop-address').fill(stopAddress);
-  if (input.date) await page.getByTestId('stop-date').selectOption(input.date);
+  if (input.date) await chooseOption(page, 'stop-date', input.date);
   // 체류시간 입력칸은 없앴다(2026-09-30). stayMinutes를 넘겨도 입력하지 않는다.
   if (input.fixedTime) await page.getByTestId('stop-fixed').fill(input.fixedTime);
   if (input.memo) await page.getByTestId('stop-memo').fill(input.memo);

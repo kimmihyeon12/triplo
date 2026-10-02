@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
@@ -24,7 +25,7 @@ export type { ExpenseLink } from '../../util/expense-link';
 @Component({
   selector: 'app-expense-form',
   templateUrl: './expense-form.html',
-  imports: [FormsModule, UiButton, UiInput, UiField, UiCheckbox, IconComponent],
+  imports: [UiSelect, FormsModule, UiButton, UiInput, UiField, UiCheckbox, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExpenseForm {
@@ -40,6 +41,9 @@ export class ExpenseForm {
   readonly saved = output<Expense>();
   readonly cancelled = output<void>();
   readonly categories = Object.entries(EXPENSE_CATEGORIES);
+  readonly categoryOptions = this.categories.map(([value, label]) => ({ value, label: String(label) }));
+  readonly peopleOptions = computed(() => this.people().map((p) => ({ value: p.id, label: p.name })));
+  readonly linkOptions = computed(() => [{ value: '', label: '직접 입력' }, ...this.links().map((l) => ({ value: l.id, label: l.name }))]);
   readonly title = signal('');
   readonly amount = signal<number | null>(null);
   readonly date = signal('');
