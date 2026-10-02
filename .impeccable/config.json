@@ -38,6 +38,15 @@
         ],
         "createdAt": "2026-09-15T13:34:37.047Z",
         "reason": "agent triage 2026-09-29: flagged lines only transition background-color; detector matched 'width' inside [@media(min-width:_720px)] condition, not an animated layout property"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "docs/design/references/design-improvements-before-after.html"
+        ],
+        "createdAt": "2026-10-02T03:45:51.553Z",
+        "reason": "Claude triage: L102 grid is the map placeholder surface in a mockup board (domain-appropriate map canvas)"
       }
     ]
   }

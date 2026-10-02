@@ -1,3 +1,4 @@
+import { UiMemo } from '../../../../shared/ui/memo/memo';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
@@ -67,6 +68,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
 @Component({
   selector: 'app-trip-detail',
   imports: [
+    UiMemo,
     UiMapLinks,
     UiButton,
     UiBadge,

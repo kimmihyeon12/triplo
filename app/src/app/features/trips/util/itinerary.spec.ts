@@ -113,6 +113,22 @@ describe('itinerary', () => {
     expect(legs[1]).toMatchObject({ fromRegion: '강릉', toRegion: '속초', regionChange: true });
   });
 
+  it('daySegments: 두 곳 모두 확인된 좌표일 때만 직선 거리를 붙인다', () => {
+    const verified = (lat: number, lng: number) => ({ locationStatus: 'verified' as const, location: { lat, lng } });
+    const t = createTrip({
+      startDate: '2026-05-01',
+      endDate: '2026-05-01',
+      stops: [
+        createStop({ id: 'a', date: '2026-05-01', order: 0, ...verified(37.77, 128.95) }),
+        createStop({ id: 'b', date: '2026-05-01', order: 1, ...verified(37.78, 128.95) }),
+        createStop({ id: 'c', date: '2026-05-01', order: 2, locationStatus: 'unverified', location: null }),
+      ],
+    });
+    const legs = daySegments(t, '2026-05-01').filter((s) => s.type === 'leg');
+    // 위도 0.01도는 약 1.1km다.
+    expect(legs.map((l) => l.km)).toEqual([1.1, null]);
+  });
+
   it('dayStays: 연박 숙소는 체크아웃 전날까지 매일 목록에 선다', () => {
     const t = createTrip({
       startDate: '2026-05-01',

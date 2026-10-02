@@ -96,6 +96,34 @@ export class TripListPage implements OnInit {
     if (await this.store.removeTrip(id)) this.deleteTripId.set(null);
   }
 
+  /**
+   * 목록 순서(2026-10-02 디자인 점검). 저장소는 최근 수정순으로 주지만 구분선이 D-day를 보이므로
+   * 날짜 흐름대로 다시 놓는다: 여행 중·오늘 출발 → 다가오는 여행(가까운 순) → 날짜 미정 → 지난 여행(최근 순).
+   * 같은 묶음 안에서 기준이 같으면 받은 순서(최근 수정순)를 지킨다.
+   */
+  readonly orderedTrips = computed(() => {
+    const today = todayIso();
+    const rank = (trip: Trip): [number, string] => {
+      const status = tripTimelineStatus(trip.startDate, trip.endDate, today);
+      if (status.kind === 'ongoing' || status.kind === 'today') return [0, ''];
+      if (status.kind === 'upcoming') return [1, trip.startDate ?? ''];
+      if (status.kind === 'undecided') return [2, ''];
+      return [3, invert(trip.endDate ?? '')];
+    };
+    return this.store
+      .trips()
+      .map((trip, index) => ({ trip, index, key: rank(trip) }))
+      .sort((a, b) => a.key[0] - b.key[0] || a.key[1].localeCompare(b.key[1]) || a.index - b.index)
+      .map((entry) => entry.trip);
+  });
+
+  /** 여행 중이거나 오늘 출발하는 여행. 카드를 누르면 오늘 날짜를 바로 연다. */
+  isLive(trip: Trip): boolean {
+    const kind = tripTimelineStatus(trip.startDate, trip.endDate, todayIso()).kind;
+    return kind === 'ongoing' || kind === 'today';
+  }
+  readonly today = todayIso;
+
   ngOnInit(): void {
     void this.store.loadList();
   }
@@ -125,4 +153,9 @@ export class TripListPage implements OnInit {
         return '지난 일정';
     }
   }
+}
+
+/** 날짜 문자열을 거꾸로 정렬하려고 숫자를 뒤집는다(지난 여행은 최근에 끝난 것이 먼저). */
+function invert(date: string): string {
+  return date.replace(/\d/g, (d) => String(9 - Number(d)));
 }

@@ -128,7 +128,7 @@
                 />
                 <!-- 크게 보고 주변 장소를 골라 담는다(2026-10-01). -->
                 <a
-                  class="absolute top-2 right-2 z-10 inline-flex min-h-9 items-center gap-1 rounded-pill border border-border bg-panel px-3 text-12 font-semibold text-ink no-underline shadow-[0_2px_6px_rgb(22_24_29/0.14)] hover:bg-ground-2"
+                  class="absolute top-2 right-2 z-10 inline-flex min-h-9 items-center after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] gap-1 rounded-pill border border-border bg-panel px-3 text-12 font-semibold text-ink no-underline shadow-[0_2px_6px_rgb(22_24_29/0.14)] hover:bg-ground-2"
                   [routerLink]="['/trips', id(), 'map']"
                   [queryParams]="selectedDay() ? { day: selectedDay() } : {}"
                   data-testid="open-map-explore"
@@ -262,7 +262,10 @@
                 >
                   @for (seg of segments(); track segKey(seg, $index); let idx = $index) {
                     @if (seg.type === 'leg') {
-                      <!-- 이동 구간: 자동차 아이콘은 '이동'을 뜻할 뿐 이동시간이 아니다(시간은 계속 미확인). -->
+                      <!--
+                        이동 구간: 자동차 아이콘은 '이동'을 뜻할 뿐 이동시간이 아니다(시간은 계속 미확인).
+                        두 곳 모두 확인된 좌표면 직선 거리를 함께 보인다(2026-10-02 사용자 결정). 도로 거리가 아님을 '직선'으로 밝힌다.
+                      -->
                       <li
                         class="leg flex min-w-0 items-center gap-2.5 text-ink-3 text-12 py-1 px-4 in-[.items]:[border-top:1px_solid_var(--color-border)]"
                         [class.leg--change]="seg.regionChange"
@@ -278,10 +281,12 @@
                           <span
                             appBadge
                             class="cell cell--ghost leg__change min-w-0 truncate text-ink-2! bg-panel-2! border-border"
-                            >{{ seg.fromRegion }} → {{ seg.toRegion }} 이동 · 시간 미확인</span
+                            >{{ seg.fromRegion }} → {{ seg.toRegion }} 이동 · {{ seg.km !== null ? '직선 ' + seg.km + 'km · ' : '' }}시간 미확인</span
                           >
                         } @else {
-                          <span class="leg__text text-ink-3 text-12">이동 · 시간 미확인</span>
+                          <span class="leg__text text-ink-3 text-12" [attr.data-testid]="'leg-text-' + idx"
+                            >이동 · {{ seg.km !== null ? '직선 ' + seg.km + 'km · ' : '' }}시간 미확인</span
+                          >
                         }
                       </li>
                     } @else if (seg.type === 'stay') {
@@ -379,8 +384,8 @@
                             </p>
                           }
                           @if (seg.stay.memo) {
-                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
-                            <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stay.memo }}</div>
+                            <!-- AI 추정 목록은 라벨 아래에 묶고 사용자가 쓴 글은 그 아래에 둔다. -->
+                            <app-memo [memo]="seg.stay.memo" />
                           }
                           <span
                             class="hidden flex-wrap items-center gap-1.5 [@media(min-width:_720px)]:flex"
@@ -580,8 +585,7 @@
                             </p>
                           }
                           @if (seg.stop.memo) {
-                            <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
-                            <div class="item__memo text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ seg.stop.memo }}</div>
+                            <app-memo class="item__memo" [memo]="seg.stop.memo" />
                           }
                           @if (copyFallback() && copyFallbackId() === seg.stop.id) {
                             <p class="text-12 leading-normal copy-fallback text-warn-ink">

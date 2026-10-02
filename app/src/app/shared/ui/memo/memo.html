@@ -1,0 +1,15 @@
+@let p = parts();
+@if (p.estimate.length) {
+  <div data-testid="memo-estimate">
+    <span appBadge tone="accent"><app-icon name="sparkle" [size]="12" />AI 추정</span>
+    <ul class="m-0 mt-1 list-none p-0 text-12 leading-normal text-ink-2">
+      @for (line of p.estimate; track $index) {
+        <li>{{ line }}</li>
+      }
+    </ul>
+  </div>
+}
+@if (p.note) {
+  <!-- 줄바꿈을 그대로 보여 주므로 값 앞뒤에 공백을 두지 않는다. -->
+  <div class="text-12 leading-normal text-ink-2 whitespace-pre-wrap">{{ p.note }}</div>
+}
