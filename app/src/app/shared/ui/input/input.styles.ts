@@ -39,20 +39,6 @@ export const INPUT_CLASSES = String.raw`
   [&.select]:bg-[url('/icons/select-chevron.svg')] [&.select]:[background-size:16px_16px]
   [&.select]:[background-repeat:no-repeat] [&.select]:[background-position:right_12px_center]
   forced-colors:[&.select]:appearance-auto forced-colors:[&.select]:bg-none
-  supports-[appearance:base-select]:[&.select]:[appearance:base-select]
-  [&.select::picker-icon]:hidden
-  [&.select::picker(select)]:[appearance:base-select]
-  [&.select::picker(select)]:rounded-control [&.select::picker(select)]:border [&.select::picker(select)]:border-border
-  [&.select::picker(select)]:bg-panel [&.select::picker(select)]:p-1 [&.select::picker(select)]:shadow-float
-  [&.select::picker(select)]:mt-1.5 [&.select::picker(select)]:max-h-72 [&.select::picker(select)]:overflow-y-auto
-  [&.select::picker(select)]:font-body [&.select::picker(select)]:text-14 [&.select::picker(select)]:text-ink
-  [&.select_option]:min-h-11 [&.select_option]:rounded-cell [&.select_option]:px-3 [&.select_option]:py-2.5
-  [&.select_option]:font-body [&.select_option]:text-14 [&.select_option]:font-normal [&.select_option]:leading-normal
-  [&.select_option]:whitespace-normal [&.select_option]:cursor-pointer
-  [&.select_option:hover]:bg-ground-2 [&.select_option:focus]:bg-accent-tint [&.select_option:focus]:outline-none
-  [&.select_option:checked]:bg-accent-tint [&.select_option:checked]:text-accent-deep [&.select_option:checked]:font-medium
-  [&.select_option:disabled]:text-ink-3 [&.select_option:disabled]:cursor-not-allowed
-  [&.select_option::checkmark]:text-accent-deep
   [&.input[type='date']]:pr-10 [&.input[type='time']]:pr-10
   [&.input[type='date']]:[-webkit-appearance:none] [&.input[type='time']]:[-webkit-appearance:none]
   [&.input[type='date']]:appearance-none [&.input[type='time']]:appearance-none
