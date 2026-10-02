@@ -93,12 +93,15 @@ test('위 날짜를 바꾸면 그날 일정이 지도에 보이고, 담을 날�
   const id = await tripWithAnmok(page);
   await page.goto(`/trips/${id}/map`);
   await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(1);
+  await page.getByTestId('map-day-select').click();
   await page.getByTestId('map-day-2026-05-02').click();
-  await expect(page.getByTestId('map-day-2026-05-02')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('map-day-select')).toContainText('2일차');
   // 2일차에는 담은 곳이 없다.
   await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(0);
+  await page.getByTestId('map-day-select').click();
   await page.getByTestId('map-day-2026-05-01').click();
   await expect(page.locator('[data-testid^=map-marker-]')).toHaveCount(1);
+  await page.getByTestId('map-day-select').click();
   await page.getByTestId('map-day-2026-05-02').click();
   await page.getByTestId('map-category-cafe').click();
   await page.getByTestId('map-place-n-cafe').click();

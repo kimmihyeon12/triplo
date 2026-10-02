@@ -17,7 +17,12 @@
 
   <div class="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
     <!-- 장소·동네 이름으로 찾기(2026-10-02). 고르면 그 자리로 옮기고 정보판을 연다. -->
-    <form class="pointer-events-auto relative" role="search" (submit)="searchPlace($event)" data-testid="map-search">
+    <form
+      class="pointer-events-auto relative"
+      role="search"
+      (submit)="searchPlace($event)"
+      data-testid="map-search"
+    >
       <label class="sr-only" for="map-search-input">장소·동네 찾기</label>
       <!-- 앱 공통 네모 입력칸과 찾기 버튼을 나란히 둔다(2026-10-02 사용자 요청). -->
       <div class="flex items-center gap-2">
@@ -46,44 +51,72 @@
         </button>
       </div>
       @if (searchResults(); as found) {
-        <ul class="absolute inset-x-0 top-full z-20 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-panel border border-border bg-panel p-1 shadow-[0_6px_20px_rgb(22_24_29/0.16)]" data-testid="map-search-results">
+        <ul
+          class="absolute inset-x-0 top-full z-20 m-0 mt-1 max-h-72 list-none overflow-y-auto rounded-panel border border-border bg-panel p-1 shadow-[0_6px_20px_rgb(22_24_29/0.16)]"
+          data-testid="map-search-results"
+        >
           @for (c of found; track c.id) {
             <li>
-              <button type="button" class="flex w-full flex-col items-start rounded-control px-3 py-2 text-left hover:bg-ground-2" (click)="pickSearch(c)" [attr.data-testid]="'map-search-result-' + c.id">
+              <button
+                type="button"
+                class="flex w-full flex-col items-start rounded-control px-3 py-2 text-left hover:bg-ground-2"
+                (click)="pickSearch(c)"
+                [attr.data-testid]="'map-search-result-' + c.id"
+              >
                 <span class="text-14 font-semibold text-ink">{{ c.name }}</span>
-                <span class="text-12 text-ink-3">{{ c.category ? c.category + ' · ' : '' }}{{ c.roadAddress || c.address }}</span>
+                <span class="text-12 text-ink-3"
+                  >{{ c.category ? c.category + ' · ' : '' }}{{ c.roadAddress || c.address }}</span
+                >
               </button>
             </li>
           } @empty {
-            <li class="px-3 py-2 text-13 text-ink-3" data-testid="map-search-empty">찾는 곳이 없어요. 다른 이름으로 찾아 보세요.</li>
+            <li class="px-3 py-2 text-13 text-ink-3" data-testid="map-search-empty">
+              찾는 곳이 없어요. 다른 이름으로 찾아 보세요.
+            </li>
           }
         </ul>
       }
     </form>
-    <!-- 날짜 칩은 여행 상세의 날짜 탭과 같은 색이다(2026-10-02 사용자 요청). 고른 날은 어두운 선택색, 나머지는 옅은 회색이다. -->
-    @if (days().length > 1) {
-      <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" role="tablist" aria-label="날짜">
-        @for (d of days(); track d; let i = $index) {
+    <!--
+      날짜 선택 상자를 분류 줄 맨 앞에 둔다(2026-10-02 사용자 결정: 일자 선택 · 맛집 · 카페 · 관광 · 숙소 한 줄).
+      날짜 버튼 줄을 따로 두면 지도 위쪽을 한 줄 더 가렸다.
+    -->
+    <div
+      class="pointer-events-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]"
+      aria-label="날짜와 주변 장소 찾기"
+    >
+      @if (days().length > 1) {
+        <!--
+          날짜는 앱이 직접 그린 목록으로 고른다(2026-10-02 사용자 요청: 브라우저 기본 목록을 쓰지 않는다).
+          남색 알약에 꺾쇠를 가운데 맞춰 두고, 누르면 바로 아래에 날짜 목록이 열린다.
+        -->
+        <div class="flex-none">
           <button
             type="button"
-            role="tab"
-            class="flex-none rounded-pill border-0 px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
-            [class]="d === selectedDay() ? 'text-white [background:var(--selected-fill)]' : 'bg-ground-2 text-ink-2 hover:text-ink'"
-            [attr.aria-selected]="d === selectedDay()"
-            (click)="pickDay(d)"
-            [attr.data-testid]="'map-day-' + d"
+            class="flex h-8 items-center gap-1 rounded-pill border-0 pr-2.5 pl-3 text-13 font-semibold leading-none text-white shadow-[0_2px_6px_rgb(22_24_29/0.12)] [background:var(--selected-fill)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+            aria-haspopup="listbox"
+            [attr.aria-expanded]="dayMenu()"
+            (click)="dayMenu.set(!dayMenu())"
+            data-testid="map-day-select"
           >
-            {{ i + 1 }}일차
+            {{ dayIndex() + 1 }}일차
+            <app-icon
+              name="chevron-right"
+              [size]="14"
+              [class]="dayMenu() ? '-rotate-90' : 'rotate-90'"
+            />
           </button>
-        }
-      </div>
-    }
-    <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label="주변 장소 찾기">
+        </div>
+      }
       @for (c of categories; track c.id) {
         <button
           type="button"
           class="inline-flex flex-none items-center gap-1 rounded-pill border px-3 py-1.5 text-13 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
-          [class]="c.id === category() ? 'border-accent-deep bg-accent-deep text-white' : 'border-border bg-panel text-ink'"
+          [class]="
+            c.id === category()
+              ? 'border-accent-deep bg-accent-deep text-white'
+              : 'border-border bg-panel text-ink'
+          "
           [attr.aria-pressed]="c.id === category()"
           (click)="pickCategory(c.id)"
           [attr.data-testid]="'map-category-' + c.id"
@@ -93,42 +126,96 @@
         </button>
       }
     </div>
+    <!-- 칩 줄은 가로 스크롤이라 그 안에 두면 목록이 잘린다. 줄 바로 아래에 펼친다. -->
+    @if (dayMenu()) {
+      <ul
+        class="pointer-events-auto relative z-30 m-0 -mt-1 w-40 min-w-36 list-none rounded-control border border-border bg-panel p-1 shadow-float"
+        role="listbox"
+        aria-label="날짜"
+        data-testid="map-day-menu"
+      >
+        @for (d of days(); track d; let i = $index) {
+          <li>
+            <button
+              type="button"
+              role="option"
+              class="flex min-h-10 w-full items-center rounded-cell px-3 text-left text-14 text-ink hover:bg-ground-2"
+              [class.bg-accent-tint]="d === selectedDay()"
+              [class.text-accent-deep]="d === selectedDay()"
+              [class.font-semibold]="d === selectedDay()"
+              [attr.aria-selected]="d === selectedDay()"
+              (click)="pickDay(d); dayMenu.set(false)"
+              [attr.data-testid]="'map-day-' + d"
+            >
+              {{ dayLabel(d) }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
     @if (category()) {
-      <div class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]" aria-label="평점">
+      <div
+        class="pointer-events-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none]"
+        aria-label="평점"
+      >
         @for (r of ratingFilters; track r) {
           <button
             type="button"
             class="inline-flex flex-none items-center gap-0.5 rounded-pill border px-2.5 py-1 text-12 font-semibold shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
-            [class]="r === minRating() ? 'border-ink bg-ink text-white' : 'border-border bg-panel text-ink-2'"
+            [class]="
+              r === minRating()
+                ? 'border-ink bg-ink text-white'
+                : 'border-border bg-panel text-ink-2'
+            "
             [attr.aria-pressed]="r === minRating()"
             (click)="pickRating(r)"
             [attr.data-testid]="'map-rating-' + r"
           >
-            <span [class]="r === minRating() ? 'text-white' : 'text-warn-ink'" aria-hidden="true">★</span>
+            <span [class]="r === minRating() ? 'text-white' : 'text-warn-ink'" aria-hidden="true"
+              >★</span
+            >
             {{ r }}점 이상
           </button>
         }
       </div>
     }
     @if (ratingsLoading()) {
-      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status">
+      <p
+        class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+        role="status"
+      >
         평점 읽는 중…
       </p>
     } @else if (filteredEmpty()) {
-      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status" data-testid="map-rating-empty">
+      <p
+        class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+        role="status"
+        data-testid="map-rating-empty"
+      >
         {{ minRating() }}점 이상인 곳이 없어요.
       </p>
     }
     @if (searching()) {
-      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status">
+      <p
+        class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+        role="status"
+      >
         찾는 중…
       </p>
     } @else if (error(); as message) {
-      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-danger-ink shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="alert" data-testid="map-explore-error">
+      <p
+        class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-danger-ink shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+        role="alert"
+        data-testid="map-explore-error"
+      >
         {{ message }}
       </p>
     } @else if (empty()) {
-      <p class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]" role="status" data-testid="map-explore-empty">
+      <p
+        class="pointer-events-auto m-0 self-center rounded-pill bg-panel px-3 py-1.5 text-12 text-ink-2 shadow-[0_2px_6px_rgb(22_24_29/0.12)]"
+        role="status"
+        data-testid="map-explore-empty"
+      >
         이 범위에는 없어요. 지도를 옮겨 다시 찾아 보세요.
       </p>
     }
@@ -152,7 +239,11 @@
   -->
   <div
     class="absolute right-3 z-10 grid gap-2 [transition:bottom_var(--dur)_var(--ease-out)]"
-    [class]="selected() ? 'bottom-[calc(200px+env(safe-area-inset-bottom))]' : 'bottom-[calc(16px+env(safe-area-inset-bottom))]'"
+    [class]="
+      selected()
+        ? 'bottom-[calc(200px+env(safe-area-inset-bottom))]'
+        : 'bottom-[calc(16px+env(safe-area-inset-bottom))]'
+    "
     role="group"
     aria-label="지도 조작"
   >
@@ -168,11 +259,35 @@
       <app-icon name="place" [size]="20" />
     </button>
     <div class="grid gap-1">
-      <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="확대" (click)="zoom(1)" data-testid="map-zoom-in">
+      <button
+        appButton
+        type="button"
+        class="w-11 border-transparent! bg-panel! px-0! shadow-panel"
+        aria-label="확대"
+        (click)="zoom(1)"
+        data-testid="map-zoom-in"
+      >
         <app-icon name="plus" [size]="19" />
       </button>
-      <button appButton type="button" class="w-11 border-transparent! bg-panel! px-0! shadow-panel" aria-label="축소" (click)="zoom(-1)" data-testid="map-zoom-out">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14" /></svg>
+      <button
+        appButton
+        type="button"
+        class="w-11 border-transparent! bg-panel! px-0! shadow-panel"
+        aria-label="축소"
+        (click)="zoom(-1)"
+        data-testid="map-zoom-out"
+      >
+        <svg
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14" />
+        </svg>
       </button>
     </div>
   </div>
@@ -185,28 +300,51 @@
     >
       <div class="flex items-start gap-2">
         <div class="min-w-0 flex-1">
-          <h2 class="m-0 text-16 font-bold leading-snug" data-testid="map-explore-name">{{ p.name }}</h2>
+          <h2 class="m-0 text-16 font-bold leading-snug" data-testid="map-explore-name">
+            {{ p.name }}
+          </h2>
           <p class="m-0 mt-0.5 flex flex-wrap items-center gap-x-1.5 text-12 text-ink-3">
             <span>{{ p.category }}</span>
             @if (rating() === 'loading') {
               <span aria-live="polite">· 평점 불러오는 중…</span>
             } @else if (ratingValue(); as r) {
               <span class="font-semibold text-ink" data-testid="map-explore-rating"
-                >· <span class="text-warn-ink" aria-hidden="true">★</span> {{ r.score }} · 후기 {{ r.count }} · 카카오맵</span
+                >· <span class="text-warn-ink" aria-hidden="true">★</span> {{ r.score }} · 후기
+                {{ r.count }} · 카카오맵</span
               >
             }
           </p>
           <p class="m-0 mt-1 text-13 text-ink-2">{{ p.roadAddress || p.address }}</p>
           @if (p.url) {
-            <a class="mt-1 inline-block text-12 font-medium text-accent-deep" [href]="p.url" target="_blank" rel="noopener">카카오맵에서 보기</a>
+            <a
+              class="mt-1 inline-block text-12 font-medium text-accent-deep"
+              [href]="p.url"
+              target="_blank"
+              rel="noopener"
+              >카카오맵에서 보기</a
+            >
           }
         </div>
-        <button appButton type="button" class="btn" variant="icon" aria-label="닫기" (click)="close()">
+        <button
+          appButton
+          type="button"
+          class="btn"
+          variant="icon"
+          aria-label="닫기"
+          (click)="close()"
+        >
           <app-icon name="x" [size]="18" />
         </button>
       </div>
       @if (p.nearby === 'stay') {
-        <button appButton type="button" class="btn" variant="primary" (click)="add()" data-testid="map-explore-add">
+        <button
+          appButton
+          type="button"
+          class="btn"
+          variant="primary"
+          (click)="add()"
+          data-testid="map-explore-add"
+        >
           숙소로 담기 · 날짜 정하기
         </button>
       } @else {

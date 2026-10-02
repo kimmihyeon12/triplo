@@ -121,8 +121,7 @@
   --color-shopping-tint: #ffecf4;
   --color-other-ink: #606f82;
   --color-other-tint: #eef4fc;
-  /* 고른 날짜 탭(2026-10-02 사용자 요청: 남색을 반투명하게 연하게). 흰 글자 대비 4.5:1 이상을 지킨다. */
-  --selected-fill: linear-gradient(135deg, rgb(30 42 74 / 0.85) 0%, rgb(42 59 99 / 0.85) 100%);
+  --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
   /*
     일정 짜기(AI 진입)는 파랑→보라 그라데이션이다. 2026-09-29 1일차 칩의 남색 그라데이션도
     써 봤으나 사용자가 이전 색을 골랐다. 빨강(danger)은 같은 날 칙칙하다는 의견으로
