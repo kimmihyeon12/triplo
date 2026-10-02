@@ -144,7 +144,7 @@ Select는 공통 `appInput`으로 input과 같은 테두리·44px 높이·10px �
 - 미확인 위치·시각·숙소와 저장 오류는 숨기지 않는다. 오류 후 입력을 유지하고 재시도를 제공한다.
 - 모바일 360px와 PC에서 가로 넘침·고정 버튼에 가려진 내용·키보드 조작을 확인한다.
 
-펼쳐진 select 목록은 지원 브라우저에서 `appearance: base-select`와 `::picker(select)`로 앱 폰트·둥근 패널·선택 배경을 적용한다. 미지원 브라우저는 네이티브 목록으로 동작한다. [브라우저 지원 및 선택 동작 참고](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select).
+펼쳐진 select 목록은 브라우저 기본 목록을 쓴다(2026-10-02). 전에는 `appearance: base-select`와 `::picker(select)`로 꾸몄으나, 일부 크롬에서 항목을 눌러도 골라지지 않고 멈춰 껐다. 선택 상자 자체(테두리·꺾쇠 아이콘)는 그대로다. 아이폰까지 모양을 맞추는 공통 드롭다운은 따로 만든다. [브라우저 지원 및 선택 동작 참고](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select).
 
 날짜·시간도 같은 input 토큰(테두리·44px 높이·10px 모서리)을 사용한다. 공통 TemporalPicker는 지연 로드하며 앱 폰트와 둥근 패널을 제공한다. 날짜는 월 이동·방향키·min/max 범위를 지원하고 시간은 시/분(필요시 초) 선택 후 적용한다. 네이티브 입력 유형과 폼 검증·직접 입력은 유지한다. 기본 버튼과 하단 행동 버튼의 실제 높이는 모두 44px이며 작은 보조 버튼·아이콘 버튼은 별도 규격이다.
 
