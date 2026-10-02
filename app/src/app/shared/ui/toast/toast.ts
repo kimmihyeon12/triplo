@@ -4,25 +4,25 @@ import type { ToastAction, ToastKind } from '../../../core/toast-service';
 
 /**
  * 종류마다 바탕·아이콘 색을 나눈다. 글자는 모두 본문색이라 읽기 쉽다.
- * 바탕은 옅은 종류색(45%)을 흰 유리(30%) 위에 얹어 뒤가 비친다(2026-10-02 사용자 결정, 시안 C).
+ * 바탕은 옅은 종류색(30%)을 흰 유리(25%) 위에 얹어 뒤가 비친다(2026-10-02 사용자 결정, 시안 C를 한 번 더 옅게).
  */
 const TONE: Record<ToastKind, { card: string; icon: string; close: string; glyph: IconName; label: string }> = {
   success: {
-    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-ok-tint)_45%,transparent),color-mix(in_srgb,var(--color-ok-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-ok-tint)_30%,transparent),color-mix(in_srgb,var(--color-ok-tint)_30%,transparent)),rgb(255_255_255/0.25)]',
     icon: 'text-ok-ink',
     close: 'hover:bg-ok-fill/60',
     glyph: 'circle-check',
     label: '알림 닫기',
   },
   info: {
-    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-accent-tint)_45%,transparent),color-mix(in_srgb,var(--color-accent-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-accent-tint)_30%,transparent),color-mix(in_srgb,var(--color-accent-tint)_30%,transparent)),rgb(255_255_255/0.25)]',
     icon: 'text-accent-deep',
     close: 'hover:bg-accent-fill/60',
     glyph: 'info',
     label: '알림 닫기',
   },
   error: {
-    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-danger-tint)_45%,transparent),color-mix(in_srgb,var(--color-danger-tint)_45%,transparent)),rgb(255_255_255/0.3)]',
+    card: '[background:linear-gradient(color-mix(in_srgb,var(--color-danger-tint)_30%,transparent),color-mix(in_srgb,var(--color-danger-tint)_30%,transparent)),rgb(255_255_255/0.25)]',
     icon: 'text-danger-ink',
     close: 'hover:bg-danger-fill/50',
     glyph: 'alert',
