@@ -179,13 +179,13 @@ export const GUIDE_MARKS: Readonly<Record<string, readonly GuideMark[]>> = {
       "x": 3.08,
       "y": 7.7,
       "w": 93.85,
-      "h": 4.98,
+      "h": 5.21,
       "r": 0
     },
     {
       "spot": 1,
       "x": 3.08,
-      "y": 18.62,
+      "y": 18.86,
       "w": 93.85,
       "h": 4.05,
       "r": 0
@@ -193,17 +193,17 @@ export const GUIDE_MARKS: Readonly<Record<string, readonly GuideMark[]>> = {
     {
       "spot": 2,
       "x": 3.08,
-      "y": 23.61,
+      "y": 23.85,
       "w": 93.85,
       "h": 3.39,
       "r": 0
     },
     {
       "spot": 3,
-      "x": 86.15,
-      "y": 45.38,
-      "w": 10.77,
-      "h": 15.52,
+      "x": 85.64,
+      "y": 59.24,
+      "w": 11.28,
+      "h": 17.06,
       "r": 0
     },
     {
