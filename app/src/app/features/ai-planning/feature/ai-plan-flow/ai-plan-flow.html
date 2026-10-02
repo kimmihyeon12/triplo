@@ -162,10 +162,13 @@
           </div>
           <div class="flex flex-col gap-1">
             <label for="ai-budget-basis" class="text-13 font-medium text-ink-2">예산 기준</label>
-            <select appInput id="ai-budget-basis" [ngModel]="draft.budgetBasis()" (ngModelChange)="draft.set('budgetBasis', $event)" data-testid="ai-budget-basis">
-              <option value="group">전체 인원 기준</option>
-              <option value="person">1인 기준</option>
-            </select>
+            <app-select
+              inputId="ai-budget-basis"
+              testId="ai-budget-basis"
+              [options]="budgetOptions"
+              [value]="draft.budgetBasis()"
+              (changed)="draft.set('budgetBasis', $any($event))"
+            />
           </div>
         </div>
         <p id="ai-budget-help" class="text-12 text-ink-3 mb-4">인원과 예산에 맞춰 후보를 추천해요. 금액과 체류시간은 AI 예상이며 실제 요금과 다를 수 있어요.</p>
@@ -535,17 +538,15 @@
                     <span appBadge [tone]="kindTone(item.kind)">{{ kindLabels[item.kind] }}</span>
                     @if (canChangeDay()) {
                       <label class="sr-only" [attr.for]="'ai-day-' + item.id">{{ item.name }} 일차</label>
-                      <select
-                        appInput
-                        class="select ml-auto h-auto! min-h-9! w-auto! bg-position-[right_8px_center]! py-1.5! pr-7! pl-2.5! text-13!"
-                        [id]="'ai-day-' + item.id"
-                        (change)="changeDay(item.id, $any($event.target).value)"
-                        [attr.data-testid]="'ai-day-' + item.id"
-                      >
-                        @for (d of dayChoices(); track d) {
-                          <option [value]="d" [selected]="d === item.day">{{ d }}일차</option>
-                        }
-                      </select>
+                      <app-select
+                        class="ml-auto w-auto"
+                        buttonClass="h-auto! min-h-9! w-auto! bg-position-[right_8px_center]! py-1.5! pr-7! pl-2.5! text-13!"
+                        [inputId]="'ai-day-' + item.id"
+                        [testId]="'ai-day-' + item.id"
+                        [options]="dayOptions()"
+                        [value]="'' + item.day"
+                        (changed)="changeDay(item.id, $event)"
+                      />
                     }
                   </div>
                 </li>

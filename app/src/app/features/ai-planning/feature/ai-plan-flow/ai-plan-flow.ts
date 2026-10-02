@@ -1,3 +1,4 @@
+import { UiSelect } from '../../../../shared/ui/select/select';
 import { wonRange } from '../../../../shared/util/plan-estimate';
 import { aiStopMemo } from '../../../trips/util/ai-selection';
 import type { CourseEntry } from '../../util/course';
@@ -34,7 +35,7 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
 
 @Component({
   selector: 'app-ai-plan-flow',
-  imports: [
+  imports: [UiSelect,
     UiMapLinks,
     UiButton,
     UiInput,
@@ -93,6 +94,11 @@ export class AiPlanFlow {
   readonly dayChoices = this.draft.dayChoices;
   readonly error = this.draft.error;
   /** 당일 여행처럼 고를 일차가 하나뿐이면 바꿀 것이 없어 감춘다. */
+  readonly dayOptions = computed(() => this.dayChoices().map((d) => ({ value: String(d), label: d + '일차' })));
+  readonly budgetOptions = [
+    { value: 'group', label: '전체 인원 기준' },
+    { value: 'person', label: '1인 기준' },
+  ];
   readonly canChangeDay = computed(() => this.dayChoices().length > 1);
   readonly stepNumber = this.draft.stepNumber;
   readonly dateValidation = this.draft.dateValidation;
