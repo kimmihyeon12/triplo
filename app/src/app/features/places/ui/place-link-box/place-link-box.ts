@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiButton } from '../../../../shared/ui/button/button';
 import { UiInput } from '../../../../shared/ui/input/input';
@@ -30,6 +30,8 @@ export class PlaceLinkBoxComponent {
   private readonly search = inject(PLACE_SEARCH);
 
   readonly picked = output<PlaceCandidate>();
+  /** 같은 줄 왼쪽에 둘 이름표(예: 장소 검색으로 위치 확인). */
+  readonly label = input('');
   readonly open = signal(false);
   readonly url = signal('');
   readonly working = signal(false);

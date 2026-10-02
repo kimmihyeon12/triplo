@@ -1,17 +1,23 @@
 <div class="flex flex-col gap-2" data-testid="place-link">
-  <button
-    appButton
-    type="button"
-    class="btn btn--sm self-start"
-    variant="ghost"
-    [attr.aria-expanded]="open()"
-    aria-controls="place-link-panel"
-    (click)="toggle()"
-    data-testid="place-link-toggle"
-  >
-    <app-icon name="share" [size]="14" />
-    링크로 담기
-  </button>
+  <!-- 이름표 오른쪽 끝에 '링크로 담기'를 둬 한 줄을 아낀다(2026-10-02 사용자 제안). -->
+  <div class="flex items-center justify-between gap-2">
+    @if (label()) {
+      <span class="field__label text-13 font-medium text-ink-2">{{ label() }}</span>
+    }
+    <button
+      appButton
+      type="button"
+      class="btn btn--sm ml-auto"
+      variant="ghost"
+      [attr.aria-expanded]="open()"
+      aria-controls="place-link-panel"
+      (click)="toggle()"
+      data-testid="place-link-toggle"
+    >
+      <app-icon name="share" [size]="14" />
+      링크로 담기
+    </button>
+  </div>
 
   @if (open()) {
     <div

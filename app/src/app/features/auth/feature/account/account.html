@@ -237,15 +237,14 @@
     </button>
 
     <!--
-      로그아웃과 같은 폭의 큰 버튼으로 두고 연분홍 바탕과 빨간 글자로 되돌릴 수
-      없는 동작임을 알린다. 작은 글자 버튼·순수 글자도 써 봤으나 큰 버튼이
-      나았다(2026-09-29 사용자 확인). 누르는 즉시 지우지 않고 확인을 한 번 받는다.
+      되돌릴 수 없는 동작이라 눈에 덜 띄게 두되 빨간 밑줄로 위험을 알린다(2026-10-02 사용자 결정).
+      로그아웃과 같은 폭의 큰 분홍 버튼으로 두었으나(2026-09-29) 화면 아래가 무겁고
+      로그아웃과 같은 무게로 눈에 들어와 바꿨다. 누르는 즉시 지우지 않고 확인을 한 번 받는다.
+      44px 조작 영역을 위해 높이를 주고 글자 자체는 작게 둔다.
     -->
     <button
-      appButton
-      variant="danger"
       type="button"
-      class="w-full"
+      class="mx-auto flex min-h-11 cursor-pointer items-center justify-center border-0 bg-transparent px-3 text-13 font-medium text-danger-ink underline underline-offset-4 focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:outline-offset-2"
       (click)="toggleLeaving()"
       [attr.aria-expanded]="leaving()"
       data-testid="open-delete"

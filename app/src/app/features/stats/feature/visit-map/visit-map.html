@@ -101,6 +101,16 @@
               곳이 있어도 '거의 못 갔다'로만 읽히므로 센 수를 먼저 보여준다.
             -->
             <p class="absolute bottom-4 left-4 rounded-pill bg-panel/85 px-2.5 py-1 text-12 font-medium text-ink-2 shadow-panel backdrop-blur-sm"><span class="tabular-nums text-accent-deep">{{ visitedRegions() }}</span>개 지역 · 전국의 <span class="tabular-nums">{{ coverage() }}%</span></p>
+          } @else {
+            <!--
+              기록이 없으면 흰 지형뿐이라 지도가 아직 불러오는 중이거나 실패한 것처럼 보였다
+              (2026-10-02 사용자 결정). 지도 위에서 비어 있는 까닭과 앞으로 채워질 모습을 알린다.
+              오른쪽 조작 버튼과 겹치지 않게 오른쪽 여백을 둔다.
+            -->
+            <p class="absolute bottom-4 left-4 right-18 rounded-control-lg bg-panel/95 px-3 py-2.5 text-12 leading-normal text-ink-2 shadow-panel" role="status" data-testid="stats-map-hint">
+              <strong class="block font-semibold text-ink">아직 칠해진 곳이 없어요.</strong>
+              여행이 끝나면 다녀온 곳이 청록으로 채워져요.
+            </p>
           }
         }
         @if (state() === 'loading') { <div class="absolute inset-0 flex items-center justify-center gap-2 bg-ground-2 text-13 text-ink-2" role="status"><app-spinner/> 지도를 불러오는 중…</div> }
