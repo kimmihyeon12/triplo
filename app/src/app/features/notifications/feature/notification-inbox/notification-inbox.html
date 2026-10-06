@@ -1,0 +1,53 @@
+<div
+  class="page mx-auto my-0 flex max-w-(--content-max) flex-col gap-3 p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
+  [attr.aria-busy]="loading()"
+>
+  @if (loading()) {
+    <div class="flex justify-center py-16" role="status" aria-label="알림 내역 불러오는 중">
+      <app-spinner />
+    </div>
+  } @else if (error(); as message) {
+    <div appNotice tone="danger" role="alert" data-testid="inbox-error">{{ message }}</div>
+  } @else if (items().length === 0) {
+    <section class="panel rounded-panel bg-panel p-5 shadow-panel" data-testid="inbox-empty">
+      <app-empty-state title="아직 받은 알림이 없어요" />
+    </section>
+  } @else {
+    <!-- 공지사항 목록과 같은 한 장의 카드. 줄을 누르면 알림이 가리키는 화면으로 간다. -->
+    <ul class="m-0 list-none rounded-panel bg-panel p-0 shadow-panel" data-testid="inbox-list">
+      @for (item of items(); track item.id) {
+        <li class="border-b border-border last:border-b-0">
+          <a
+            class="flex min-h-14 items-start gap-3 px-4 py-3 text-ink no-underline"
+            [routerLink]="link(item.url)"
+            [attr.data-testid]="'inbox-' + item.id"
+          >
+            <span
+              class="mt-0.5 flex size-8 flex-none items-center justify-center rounded-full bg-ground-2 text-ink-2"
+              aria-hidden="true"
+            >
+              <app-icon [name]="icon[item.kind]" [size]="16" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-1.5">
+                <span class="min-w-0 truncate text-14 font-bold">{{ item.title }}</span>
+                @if (!item.read) {
+                  <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-label="새 알림" data-testid="inbox-unread"></span>
+                }
+                <span class="ml-auto flex-none pl-2 text-12 text-ink-3 [font-variant-numeric:tabular-nums]">{{ time(item.createdAt) }}</span>
+              </span>
+              <span class="mt-1 block text-13 text-ink-2 wrap-anywhere">{{ item.body }}</span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (!loading()) {
+    <p class="px-1 text-12 leading-relaxed text-ink-3" data-testid="inbox-retention">
+      알림은 30일 동안 남아요. 받을 알림 종류는
+      <a class="font-semibold text-accent-deep" routerLink="/account/notifications">알림 설정</a>에서 고를 수 있어요.
+    </p>
+  }
+</div>

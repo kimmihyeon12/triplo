@@ -181,3 +181,29 @@ test('설정에서 다크 모드를 켜고 끄며 기기에 남긴다', async ({
   await page.reload();
   await expect(html).not.toHaveAttribute('data-theme', 'dark');
 });
+
+test('알림 내역에서 지난 알림을 보고, 열면 새 표시가 사라진다', async ({ page }) => {
+  await page.goto('/account');
+  // 테스트 앱은 예시 알림 세 개(안 읽음 둘)로 시작한다.
+  await expect(page.getByTestId('inbox-count')).toHaveText(/새 알림 2/);
+
+  await page.getByTestId('go-inbox').click();
+  await expect(page).toHaveURL(/\/account\/notifications\/history$/);
+  const list = page.getByTestId('inbox-list');
+  await expect(list.locator('li')).toHaveCount(3);
+  await expect(list.locator('li').first()).toContainText('일정이 바뀌었어요');
+  await expect(list.locator('li').first()).toContainText('12분 전');
+  await expect(page.getByTestId('inbox-unread')).toHaveCount(2);
+  await expect(page.getByTestId('inbox-retention')).toContainText('30일');
+
+  // 화면을 열었으면 본 것이다. 내 정보로 돌아가면 새 알림 수가 없다.
+  await page.goto('/account');
+  await expect(page.getByTestId('go-inbox')).toBeVisible();
+  await expect(page.getByTestId('inbox-count')).toHaveCount(0);
+
+  // 다시 열면 새 표시 없이 그대로 남아 있고, 줄을 누르면 그 화면으로 간다.
+  await page.goto('/account/notifications/history');
+  await expect(page.getByTestId('inbox-unread')).toHaveCount(0);
+  await page.getByTestId('inbox-1').click();
+  await expect(page).toHaveURL(/\/account\/notices$/);
+});

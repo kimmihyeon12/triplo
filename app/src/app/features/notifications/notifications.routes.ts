@@ -26,7 +26,7 @@ const safeStorage: KeyValueStorage = {
 };
 
 /**
- * 알림 설정 화면의 라우트. 계정 라우트가 이 목록을 이어 붙인다.
+ * 알림 설정·알림 내역 화면의 라우트. 계정 라우트가 이 목록을 이어 붙인다.
  * 구독 저장소는 이 화면을 열 때만 받도록 라우트에서 제공한다(첫 화면 번들에 넣지 않는다).
  * 테스트 앱·미리보기는 실제 구독 없이 계정별 기기 저장을 쓴다.
  */
@@ -54,5 +54,12 @@ export const NOTIFICATION_ROUTES: Routes = [
     loadComponent: () =>
       import('./feature/notification-settings/notification-settings').then((m) => m.NotificationSettingsPage),
     title: '알림',
+  },
+  // 알림 내역(2026-10-06). 저장소는 내 정보의 안 읽은 수와 함께 쓰므로 루트에서 받는다(NOTIFICATION_INBOX).
+  {
+    path: 'notifications/history',
+    loadComponent: () =>
+      import('./feature/notification-inbox/notification-inbox').then((m) => m.NotificationInboxPage),
+    title: '알림 내역',
   },
 ];

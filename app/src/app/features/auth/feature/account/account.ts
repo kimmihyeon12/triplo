@@ -16,6 +16,7 @@ import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiSwitch } from '../../../../shared/ui/switch/switch';
 import { ThemeMode } from '../../../../core/theme-mode';
+import { NOTIFICATION_INBOX } from '../../../notifications/data/notification-inbox-token';
 import { avatarTone } from '../../../../shared/util/avatar-tone';
 
 /**
@@ -54,6 +55,7 @@ export class AccountPage {
   readonly admin = inject(AdminAccess);
   /** 다크 모드 스위치. 기본은 라이트이고 이 기기에만 남는다. */
   readonly theme = inject(ThemeMode);
+  private readonly inbox = inject(NOTIFICATION_INBOX);
 
   /** 배포된 화면이 어느 것인지 알리는 버전. 빌드가 만든다. */
   readonly version = APP_VERSION;
@@ -100,6 +102,8 @@ export class AccountPage {
 
   readonly unreadNotices = signal(0);
   readonly unreadReplies = signal(0);
+  /** 알림 내역의 안 읽은 수(2026-10-06). */
+  readonly unreadInbox = signal(0);
 
 
   /** 회원탈퇴 확인 영역이 열려 있는지. */
@@ -123,6 +127,8 @@ export class AccountPage {
 
     void this.auth.initialize();
     void this.loadCounts();
+    // 알림 수는 공지·문의와 다른 표라 따로 센다. 하나가 실패해도 다른 수는 보인다.
+    void this.inbox.unreadCount().then((n) => this.unreadInbox.set(n)).catch(() => undefined);
     void this.admin.check();
   }
 

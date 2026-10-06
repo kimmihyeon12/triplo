@@ -124,6 +124,22 @@
 
     <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">소식</p>
     <nav class="rounded-panel bg-panel shadow-panel" aria-label="소식">
+      <!-- 지난 알림(2026-10-06). 푸시를 켜지 않아도 앱 안에서 30일 동안 본다. -->
+      <a
+        class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"
+        routerLink="/account/notifications/history"
+        data-testid="go-inbox"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="inbox" [size]="18" /></span>
+        <span class="flex-1">알림 내역</span>
+        @if (unreadInbox() > 0) {
+          <span class="flex items-center gap-1.5 text-12 text-ink-3" data-testid="inbox-count">
+            <span class="size-1.5 flex-none rounded-full bg-danger-ink" aria-hidden="true"></span>
+            새 알림 {{ unreadInbox() }}
+          </span>
+        }
+        <span class="flex size-4 flex-none items-center justify-center text-border-strong"><app-icon name="chevron-right" [size]="16" /></span>
+      </a>
       <a
         class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"
         routerLink="/account/notices"
