@@ -1,5 +1,6 @@
 import { DestroyRef, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { freshlyOpened } from './app-update-timing';
 import { ToastService } from './toast-service';
 
 /**
@@ -7,15 +8,8 @@ import { ToastService } from './toast-service';
  * 서비스 워커는 열 때 기기에 저장된 버전을 먼저 보여 주고 새 버전은 뒤에서 받아 둔다.
  * 열거나 앱으로 돌아올 때 새 버전을 확인하고, 막 연 참이면 바로 새로고침한다.
  * 쓰는 중일 수 있는 때는 입력이 날아가지 않게 알림으로 묻는다.
+ * 시간 판단은 서비스 워커 없이 시험하도록 app-update-timing.ts에 둔다.
  */
-
-/** 열거나 돌아온 뒤 이 시간 안에 새 버전이 준비되면 바로 새로고침한다(아직 아무것도 입력하기 전). */
-export const RELOAD_WINDOW_MS = 10_000;
-
-/** 막 열었거나 막 돌아온 참인지. */
-export function freshlyOpened(lastOpenedAt: number, now: number): boolean {
-  return now - lastOpenedAt <= RELOAD_WINDOW_MS;
-}
 
 export function startAppUpdates(): void {
   const updates = inject(SwUpdate);
