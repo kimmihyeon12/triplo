@@ -26,6 +26,7 @@
 | --- | --- |
 | [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Angular 21·NgRx Signals·Zoneless 구현과 폴더·의존성·상태 수명·공통 코드·비동기 처리 기준과 출처 |
 | [DATABASE.md](architecture/DATABASE.md) | 여행 표 구조·관계·접근 제어와 설계 결정. 원본 마이그레이션은 `supabase/migrations/` |
+| [API.md](architecture/API.md) | 기능별 API 호출 구조와 계약(Supabase 조회·RPC·Edge Functions·외부 SDK). ERD 그림은 `architecture/diagrams/` |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 개발 순서·연동 범위·검증 안내 |
 | [HARNESS.md](HARNESS.md) | MCP·지도·Supabase 인증 설정과 개발 도구 안내 |
 | [AI-PLANNING.md](AI-PLANNING.md) | AI 일정 만들기의 모델 선택 근거, 키 설정, 무료 한도, 실제 검증 기록 |
