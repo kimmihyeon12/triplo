@@ -155,6 +155,25 @@
 
     <p class="px-1 pt-2 text-12 font-bold tracking-wide text-hint">설정</p>
     <div class="rounded-panel bg-panel shadow-panel">
+      <!--
+        다크 모드는 누르는 즉시 바뀐다(2026-10-06). 기본은 라이트이고 선택은 이 기기에 남는다.
+        줄 전체가 스위치라 손가락이 닿는 자리가 넓다(알림 설정과 같은 문법).
+      -->
+      <button
+        type="button"
+        class="flex min-h-12 w-full cursor-pointer items-center gap-3 border-0 border-b border-solid border-border bg-transparent px-4 py-3 text-left text-14 text-ink"
+        role="switch"
+        [attr.aria-checked]="theme.isDark()"
+        (click)="theme.setDark(!theme.isDark())"
+        data-testid="dark-mode"
+      >
+        <span class="flex size-5 flex-none items-center justify-center text-ink-3"><app-icon name="moon" [size]="18" /></span>
+        <span class="min-w-0 flex-1">
+          <span class="block">다크 모드</span>
+          <span class="mt-0.5 block text-12 text-ink-3">이 기기에서만 바뀌어요</span>
+        </span>
+        <app-switch [checked]="theme.isDark()" presentational />
+      </button>
       <!-- 알림은 기기마다 켜고, 받을 종류는 계정마다 정한다. 따로 화면에서 고른다(2026-10-01). -->
       <a
         class="flex min-h-12 items-center gap-3 border-b border-border px-4 py-3 text-14 text-ink no-underline"

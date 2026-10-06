@@ -14,6 +14,8 @@ import { UiNotice } from '../../../../shared/ui/notice/notice';
 import { UiSpinner } from '../../../../shared/ui/spinner/spinner';
 import { UiToast } from '../../../../shared/ui/toast/toast';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
+import { UiSwitch } from '../../../../shared/ui/switch/switch';
+import { ThemeMode } from '../../../../core/theme-mode';
 import { avatarTone } from '../../../../shared/util/avatar-tone';
 
 /**
@@ -36,6 +38,7 @@ import { avatarTone } from '../../../../shared/util/avatar-tone';
     UiSpinner,
     UiToast,
     IconComponent,
+    UiSwitch,
     RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +52,8 @@ export class AccountPage {
   private readonly router = inject(Router);
   private readonly support = inject(SUPPORT_REPOSITORY);
   readonly admin = inject(AdminAccess);
+  /** 다크 모드 스위치. 기본은 라이트이고 이 기기에만 남는다. */
+  readonly theme = inject(ThemeMode);
 
   /** 배포된 화면이 어느 것인지 알리는 버전. 빌드가 만든다. */
   readonly version = APP_VERSION;

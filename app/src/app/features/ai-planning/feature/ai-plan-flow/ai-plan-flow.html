@@ -186,7 +186,7 @@
           >
             @for (c of companions; track c) {
               <label
-                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-white [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
+                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-panel [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
                 [class.pick--on]="companion() === c"
               >
                 <input
@@ -213,7 +213,7 @@
           >
             @for (t of transports; track t) {
               <label
-                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-white [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
+                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-panel [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
                 [class.pick--on]="transport() === t"
               >
                 <input
@@ -237,7 +237,7 @@
           <div class="chips flex flex-wrap gap-2" role="radiogroup" aria-labelledby="ai-pace-label">
             @for (p of paces; track p) {
               <label
-                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-white [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
+                class="pick relative inline-flex items-center gap-1.25 min-h-9 border border-border rounded-control text-13 font-medium text-ink-2 bg-panel cursor-pointer py-0 px-3 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-border-strong hover:text-ink [&.pick--on]:bg-ink [&.pick--on]:border-ink [&.pick--on]:text-panel [&.pick--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
                 [class.pick--on]="pace() === p"
               >
                 <input

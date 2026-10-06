@@ -18,7 +18,7 @@
         >
           @for (k of kinds; track k) {
             <label
-              class="kind flex items-center justify-center gap-1.25 min-h-10 rounded-control font-medium text-13 cursor-pointer bg-panel text-ink-2 [border:1px_solid_var(--color-border-strong)] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] relative after:pointer-events-none after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-ink-3 hover:text-ink [&.kind--on]:bg-ink [&.kind--on]:border-ink [&.kind--on]:text-white [&.kind--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
+              class="kind flex items-center justify-center gap-1.25 min-h-10 rounded-control font-medium text-13 cursor-pointer bg-panel text-ink-2 [border:1px_solid_var(--color-border-strong)] [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] relative after:pointer-events-none after:absolute after:h-11 after:[content:''] after:left-0 after:right-0 after:top-[50%] after:transform-[translateY(-50%)] hover:border-ink-3 hover:text-ink [&.kind--on]:bg-ink [&.kind--on]:border-ink [&.kind--on]:text-panel [&.kind--on]:font-bold [&:has(input:focus-visible)]:[outline:2px_solid_var(--color-accent-deep)] [&:has(input:focus-visible)]:outline-offset-2"
               [class.kind--on]="kind() === k"
             >
               <input

@@ -176,6 +176,79 @@
   --content-max: 940px;
   --content-narrow: 640px;
 }
+
+/*
+  다크 모드(2026-10-06 사용자 결정: 시안 A '그래파이트'). 기본은 라이트이고 계정 화면의
+  스위치로 켠다(core/theme-mode.ts가 html에 data-theme="dark"를 단다).
+  라이트의 중성 회색을 그대로 어둡게 옮기고 파랑은 강조에만 남긴다. 색을 뒤집지 않고
+  바탕(ground) < 카드(panel) < 칩·호버(ground-2) 순으로 밝아져 층이 보이게 했다.
+  라벨은 뜻(색상)을 그대로 두고 어두운 바탕 위 글자 6:1 이상이 되게 밝기만 옮겼다.
+  check-contrast.mjs가 이 블록도 따로 검사한다.
+*/
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-ground: #111214;
+  --color-ground-2: #1f2125;
+  --color-panel: #18191c;
+  --color-panel-2: #1b1c20;
+  --color-ink: #ececee;
+  --color-ink-2: #b4b8c0;
+  --color-ink-3: #9097a3;
+  --color-hint: #8b919c;
+  --color-border: #2a2c31;
+  --color-border-strong: #3a3d44;
+  --color-accent: #6f97ff;
+  --color-accent-deep: #5280f5;
+  --color-accent-deep-hover: #6690f7;
+  --color-accent-tint: #161e36;
+  --color-accent-fill: #2a3b6b;
+  --color-float: #2b2f38;
+  --color-float-hover: #363b46;
+  --color-place-ink: #8db4ff;
+  --color-place-tint: #1a2a4a;
+  --color-place-fill: #2a3d6b;
+  --color-stay-ink: #c3a6ff;
+  --color-stay-tint: #2a2145;
+  --color-stay-fill: #3d2f66;
+  --color-region-ink: #7cc7ec;
+  --color-region-tint: #13303d;
+  --color-warn-ink: #f2c14e;
+  --color-warn-tint: #3a2d0d;
+  --color-warn-fill: #6b5212;
+  --color-danger-ink: #ff7b72;
+  --color-danger-tint: #3d1716;
+  --color-danger-fill: #6b2522;
+  --color-ok-ink: #4fd3a6;
+  --color-ok-tint: #0f3329;
+  --color-ok-fill: #1b5a46;
+  --color-meal-ink: #8fd46a;
+  --color-meal-tint: #1d3315;
+  --color-cafe-ink: #5fd1c4;
+  --color-cafe-tint: #10332f;
+  --color-activity-ink: #ffa45c;
+  --color-activity-tint: #3d2410;
+  --color-shopping-ink: #f38ab8;
+  --color-shopping-tint: #3d1a2b;
+  --color-other-ink: #a8b3c2;
+  --color-other-tint: #232a35;
+  --color-exp-transport-ink: #6cc0ff;
+  --color-exp-transport-tint: #12304a;
+  --color-exp-activity-ink: #58d6d9;
+  --color-exp-activity-tint: #0f3436;
+  --color-exp-shopping-ink: #f38ab8;
+  --color-exp-shopping-tint: #3d1a2b;
+  --color-exp-other-ink: #a8b3c2;
+  --color-exp-other-tint: #232a35;
+  /* 우리나라 지도는 다크에서도 흰 땅으로 둔다(2026-10-06 사용자 결정). 어두운 바다 위에서 더 또렷하다. */
+  --color-map-land: #fcfdfe;
+  --color-map-water: #16283d;
+  --color-map-water-light: #1a2433;
+  --selected-fill: linear-gradient(135deg, #3b6fef 0%, #2f5fdb 100%);
+  --ai-fill: linear-gradient(135deg, #4f7ff5 0%, #7a5ce6 100%);
+  --ai-fill-hover: linear-gradient(135deg, #5d8af7 0%, #8669ea 100%);
+  --shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 20px rgba(0, 0, 0, 0.5);
+}
 details.menu-sheet > .menu-backdrop {
   opacity: 0;
   pointer-events: none;

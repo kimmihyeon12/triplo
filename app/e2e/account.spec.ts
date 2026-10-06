@@ -153,3 +153,31 @@ test('내 정보 화면 아래에 배포 버전이 보인다', async ({ page }) 
   await page.goto('/account');
   await expect(page.getByTestId('app-version')).toContainText('버전');
 });
+
+test('설정에서 다크 모드를 켜고 끄며 기기에 남긴다', async ({ page }) => {
+  await page.goto('/account');
+  const html = page.locator('html');
+  const toggle = page.getByTestId('dark-mode');
+
+  // 기본은 라이트다.
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await expect(html).not.toHaveAttribute('data-theme', 'dark');
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', 'true');
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  // 토큰이 바뀌어 바탕이 실제로 어두워진다(다크 ground #111214).
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(17, 18, 20)');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#18191c');
+
+  // 다시 열어도 앱이 뜨기 전에 어둡게 시작한다.
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByTestId('dark-mode')).toHaveAttribute('aria-checked', 'true');
+
+  await page.getByTestId('dark-mode').click();
+  await expect(html).not.toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#ffffff');
+  await page.reload();
+  await expect(html).not.toHaveAttribute('data-theme', 'dark');
+});

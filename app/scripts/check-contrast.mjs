@@ -12,7 +12,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const css = readFileSync(resolve(here, '../src/styles/theme.css'), 'utf-8');
+const source = readFileSync(resolve(here, '../src/styles/theme.css'), 'utf-8');
+// 다크 모드 토큰(:root[data-theme='dark'])은 같은 이름을 다시 정의한다. 라이트와 다크를 따로 검사한다.
+const darkStart = source.indexOf(":root[data-theme='dark']");
+const THEMES = [
+  ['라이트', darkStart < 0 ? source : source.slice(0, darkStart)],
+  ...(darkStart < 0 ? [] : [['다크', source.slice(darkStart, source.indexOf('}', darkStart))]]),
+];
+let css = '';
 
 /** 배지·안내처럼 글자를 얹는 색 쌍. 이름은 theme.css의 토큰 접두사다. */
 const PAIRS = ['place', 'activity', 'shopping', 'other', 'stay', 'region', 'meal', 'cafe', 'warn', 'danger', 'ok', 'accent'];
@@ -41,6 +48,9 @@ const contrast = (a, b) => {
 };
 
 let failed = 0;
+for (const [label, block] of THEMES) {
+css = block;
+console.log(`[${label}]`);
 for (const name of PAIRS) {
   // accent는 글자색이 accent-deep, 배경이 accent-tint다.
   const ink = token(name === 'accent' ? 'accent-deep' : `${name}-ink`);
@@ -56,6 +66,7 @@ for (const name of PAIRS) {
   console.log(
     `${name.padEnd(8)} ${ink} on ${tint}  ${ratio.toFixed(2)}  ${ok ? '통과' : '미달(4.5 필요)'}`,
   );
+}
 }
 
 console.log(failed ? `\n${failed}개가 기준에 미달합니다.` : '\n모든 조합이 AA를 통과합니다.');

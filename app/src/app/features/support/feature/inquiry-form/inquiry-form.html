@@ -14,7 +14,7 @@
             type="button"
             role="radio"
             [attr.aria-checked]="kind() === k"
-            class="kind min-h-10 rounded-control border border-border-strong bg-panel text-13 font-medium text-ink-2 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:border-ink-3 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:outline-offset-2 [&.kind--on]:border-ink [&.kind--on]:bg-ink [&.kind--on]:font-bold [&.kind--on]:text-white"
+            class="kind min-h-10 rounded-control border border-border-strong bg-panel text-13 font-medium text-ink-2 [transition:background-color_var(--dur)_var(--ease-out),border-color_var(--dur)_var(--ease-out),color_var(--dur)_var(--ease-out)] hover:border-ink-3 hover:text-ink focus-visible:[outline:2px_solid_var(--color-accent-deep)] focus-visible:outline-offset-2 [&.kind--on]:border-ink [&.kind--on]:bg-ink [&.kind--on]:font-bold [&.kind--on]:text-panel"
             [class.kind--on]="kind() === k"
             (click)="pick(k)"
             [attr.data-testid]="'kind-' + k"
