@@ -249,6 +249,74 @@
   --shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 10px rgba(0, 0, 0, 0.35);
   --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 20px rgba(0, 0, 0, 0.5);
 }
+/*
+  종이 표면(2026-10-06 사용자 결정): 초대장·로그인·설치 안내 티켓의 반권과 '이미지로 저장' 미리보기는
+  다크 모드에서도 흰 종이로 둔다. 위 다크 블록이 바꾼 토큰을 라이트 값으로 되돌린다.
+  라이트 토큰을 고치면 여기 값도 함께 고친다(같은 이름·같은 값).
+*/
+:root[data-theme='dark'] .paper-light {
+  color-scheme: light;
+  --color-ground: #fbfbfa;
+  --color-ground-2: #f0f0ee;
+  --color-panel: #ffffff;
+  --color-panel-2: #fcfdfe;
+  --color-ink: #16181d;
+  --color-ink-2: #4a4f58;
+  --color-ink-3: #6b7280;
+  --color-hint: #707782;
+  --color-border: #e8eaef;
+  --color-border-strong: #d4d8e0;
+  --color-accent: #3b6fef;
+  --color-accent-deep: #2f5fdb;
+  --color-accent-deep-hover: #2650bd;
+  --color-accent-tint: #eaf0fe;
+  --color-accent-fill: #cfdcfb;
+  --color-float: #16181d;
+  --color-float-hover: #2b2f38;
+  --color-place-ink: #3569cd;
+  --color-place-tint: #e9f4ff;
+  --color-place-fill: #cfdcfb;
+  --color-stay-ink: #7f56c4;
+  --color-stay-tint: #f5f0ff;
+  --color-stay-fill: #ddd2f5;
+  --color-region-ink: #2f759a;
+  --color-region-tint: #e3f9ff;
+  --color-warn-ink: #975f03;
+  --color-warn-tint: #fff3d5;
+  --color-warn-fill: #ffe08a;
+  --color-danger-ink: #d42a2a;
+  --color-danger-tint: #fff3f2;
+  --color-danger-fill: #fbcfcb;
+  --color-ok-ink: #067d5f;
+  --color-ok-tint: #defcef;
+  --color-ok-fill: #b3edd5;
+  --color-meal-ink: #387d16;
+  --color-meal-tint: #e4fcdc;
+  --color-cafe-ink: #107c73;
+  --color-cafe-tint: #dbfcf6;
+  --color-activity-ink: #a5480c;
+  --color-activity-tint: #fff0e5;
+  --color-shopping-ink: #ba3d78;
+  --color-shopping-tint: #ffecf4;
+  --color-other-ink: #606f82;
+  --color-other-tint: #eef4fc;
+  --color-exp-transport-ink: #0072b5;
+  --color-exp-transport-tint: #e3f6ff;
+  --color-exp-activity-ink: #017b80;
+  --color-exp-activity-tint: #ddfafb;
+  --color-exp-shopping-ink: #ba3d78;
+  --color-exp-shopping-tint: #ffecf4;
+  --color-exp-other-ink: #606f82;
+  --color-exp-other-tint: #eef4fc;
+  --color-map-land: #fcfdfe;
+  --color-map-water: #dcecfa;
+  --color-map-water-light: #f0f8ff;
+  --selected-fill: linear-gradient(135deg, #16181d 0%, #2a3b63 100%);
+  --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+  --ai-fill-hover: linear-gradient(135deg, #2f5fdb 0%, #5c40c4 100%);
+  --shadow-panel: 0 0 0 1px rgba(28, 25, 23, 0.025), 0 2px 10px rgba(28, 25, 23, 0.07);
+  --shadow-float: 0 0 0 1px rgba(28, 25, 23, 0.03), 0 4px 20px rgba(28, 25, 23, 0.12);
+}
 details.menu-sheet > .menu-backdrop {
   opacity: 0;
   pointer-events: none;
