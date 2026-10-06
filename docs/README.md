@@ -76,7 +76,15 @@
 
 - [사진으로 지출 입력·정산 복사](../openspec/changes/add-receipt-scan/proposal.md): 영수증 인식 흐름, 형광펜 범위 지정, 확인 후 저장 규칙.
 
-## 구름이 챗봇
+## 챗봇 캐릭터
+
+- [펭귄 적용 변경](../openspec/changes/replace-bami-with-penguin/proposal.md): 전체 앱 비교 시안에서 승인된 펭귄을 적용한다. 현재 색상과 버튼 크기를 유지한다. [검증 기록](../openspec/changes/replace-bami-with-penguin/tasks.md). 아래 밤이 자료는 이전 결정 및 탐색 이력이다.
+
+- 캐릭터 후보 비교판(2026-10-06)은 펭귄을 채택한 뒤 지웠다. 결정과 근거는 [펭귄 적용 변경](../openspec/changes/replace-bami-with-penguin/proposal.md)에 있다.
+
+- [밤이가 앞발을 걸친 진입 버튼](../openspec/changes/bami-peeking-chat-entry/proposal.md): 현재 버튼 색을 유지하고 진입 캐릭터만 변경한 후속 결정.
+
+- [밤이 적용 변경](../openspec/changes/replace-cloud-with-bami/proposal.md): 2026-10-06 승인된 큰 얼굴·둥근 선·1번 콩눈으로 구름이를 교체한다. [검증 및 진행 기록](../openspec/changes/replace-cloud-with-bami/tasks.md).
 
 - [실제 채팅 AI 연결](../openspec/changes/connect-chat-ai/proposal.md): 실행/테스트 제공자 분리, 인증·응답 검증 및 배포 상태.
 
@@ -85,6 +93,7 @@
 - [AI 없는 미배치 날짜 배정](../openspec/changes/local-chat-assignment/proposal.md): 날짜 해석·확인·되돌리기 및 검증 기록.
 
 구름이 챗봇: [확정 시안과 적용 기록](design/references/cloud-chat-preview.md), [적용 OpenSpec](../openspec/changes/apply-cloud-chat-mascot/proposal.md). 미채택 캐릭터·생성 프롬프트 기록과 낡은 비교판은 정리했으며 최종 미리보기만 유지한다.
+
 
 ## 입체 기록 지도
 
