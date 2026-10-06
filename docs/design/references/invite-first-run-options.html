@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>처음 초대받은 사람 화면 시안</title>
+<!--
+  2026-10-02 사용자 요청: "처음 초대받은 사람은 어떻게 보여?" → "시안으로 보여줘".
+  위쪽 줄은 지금 구현된 흐름(app/src/app/features/collaboration/feature/join, auth/feature/onboarding)을 옮긴 것이고,
+  아래 줄은 여행이 없는 사람의 첫 화면(trip-list.html 빈 상태)의 초대 링크 자리 후보다.
+  색과 그림자는 app/src/styles/theme.css 값을 옮겼다. 결정하면 코드와 DESIGN.md에 반영하고 이 파일은 지운다.
+-->
+<style>
+  :root {
+    --ground: #fbfbfa; --ground-2: #f0f0ee; --panel: #ffffff; --panel-2: #fcfdfe;
+    --ink: #16181d; --ink-2: #4a4f58; --ink-3: #6b7280; --hint: #707782;
+    --border: #e8eaef; --border-strong: #d4d8e0;
+    --accent-deep: #2f5fdb; --accent-tint: #eaf0fe;
+    --place-ink: #3569cd; --place-tint: #e9f4ff;
+    --meal-ink: #387d16; --meal-tint: #e4fcdc;
+    --stay-ink: #7f56c4; --stay-tint: #f5f0ff;
+    --region-ink: #2f759a; --region-tint: #e3f9ff;
+    --ok-ink: #067d5f; --ok-tint: #defcef;
+    --ai-fill: linear-gradient(135deg, #3b6fef 0%, #6d4fd6 100%);
+    --float: #16181d;
+    --shadow: 0 0 0 1px rgba(28,25,23,.025), 0 2px 10px rgba(28,25,23,.07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 20px 72px; background: #e9e9e6; color: var(--ink);
+    font: 15px/1.5 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+  h1 { margin: 0 0 6px; font-size: 22px; }
+  .lede { max-width: 80ch; margin: 0 0 24px; color: var(--ink-2); font-size: 14px; line-height: 1.65; }
+  section.blk { margin: 0 0 44px; }
+  section.blk > h2 { margin: 0 0 4px; font-size: 16px; }
+  section.blk > p { max-width: 92ch; margin: 0 0 14px; font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+  .tag { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--accent-tint); color: var(--accent-deep); vertical-align: 1px; }
+  .tag--rec { background: #fde68a; color: #7a4b00; }
+  .tag--now { background: #d9dbe0; color: var(--ink-2); }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+  .cap { width: 300px; margin: 0 0 8px; font-size: 13px; font-weight: 700; }
+  .cap small { display: block; margin-top: 2px; font-weight: 400; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+
+  .phone { position: relative; width: 300px; height: 600px; overflow: hidden; border-radius: 26px; background: var(--ground); box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 12px 32px rgba(0,0,0,.12); }
+  .bar { display: flex; align-items: center; justify-content: center; height: 48px; padding: 0 12px; background: #fff; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; position: relative; }
+  .bar .t { position: absolute; left: 14px; font-size: 18px; }
+  .bar .avatar { position: absolute; right: 12px; }
+  .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: var(--accent-tint); color: var(--accent-deep); font-size: 11px; font-weight: 700; }
+  .body { padding: 14px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 44px; border-radius: 10px; font-size: 14px; font-weight: 700; width: 100%; }
+  .btn--primary { background: var(--accent-deep); color: #fff; }
+  .btn--line { background: #fff; border: 1px solid var(--border-strong); color: var(--ink); }
+  .btn--ghost { color: var(--ink-2); }
+  .btn--ai { color: #fff; background: var(--ai-fill); }
+  .mail { width: 14px; height: 10px; border: 1.5px solid currentColor; border-radius: 2px; position: relative; flex: none; }
+  .mail::after { content: ''; position: absolute; left: 1px; top: -1px; width: 8px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) scale(.7); transform-origin: 50% 0; }
+  .float { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; height: 38px; padding: 0 13px; border-radius: 999px; background: var(--float); color: #fff; font-size: 12px; font-weight: 700; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+  .toast { position: absolute; z-index: 3; left: 12px; right: 12px; top: 56px; padding: 11px 14px; border-radius: 14px; background: rgba(222,252,239,.78); box-shadow: 0 6px 20px rgba(0,0,0,.1); border: 1px solid rgba(255,255,255,.65); font-size: 12px; line-height: 1.5; display: flex; gap: 8px; }
+  .toast i { flex: none; width: 16px; height: 16px; border-radius: 99px; background: var(--ok-ink); color: #fff; font-size: 11px; font-style: normal; display: grid; place-items: center; }
+
+  /* 초대 화면 */
+  .inv { padding: 16px; border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
+  .inv .who { margin: 0; font-size: 12px; font-weight: 600; color: var(--accent-deep); }
+  .inv h3 { margin: 0; font-size: 17px; }
+  .inv .note { margin: 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); }
+  .inv .btn { margin-top: 4px; }
+  .ios { padding: 14px; margin-bottom: 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel-2); display: flex; flex-direction: column; gap: 8px; }
+  .ios p { margin: 0; }
+  .ios .h { font-size: 13px; font-weight: 600; }
+  .ios .s { font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+  .ios .btn { height: 40px; font-size: 13px; }
+  .snap { margin-top: 12px; border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); overflow: hidden; }
+  .snap .hd { padding: 14px 14px 10px; border-bottom: 1px dashed var(--border-strong); }
+  .snap .hd b { display: block; font-size: 15px; }
+  .snap .hd span { font-size: 12px; color: var(--ink-3); }
+  .snap .it { display: flex; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .snap .it:last-child { border-bottom: 0; }
+  .snap .n { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 99px; background: var(--accent-deep); color: #fff; font-size: 11px; font-weight: 700; }
+  .snap .it small { display: block; color: var(--hint); font-size: 11px; margin-top: 1px; }
+  .chip { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+  .c-place { background: var(--place-tint); color: var(--place-ink); }
+  .c-meal { background: var(--meal-tint); color: var(--meal-ink); }
+
+  /* 닉네임 */
+  .nick h2 { margin: 20px 0 6px; font-size: 22px; }
+  .nick p { margin: 0 0 26px; font-size: 14px; color: var(--ink-2); }
+  .field label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+  .field .in { height: 44px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 10px; background: #fff; display: flex; align-items: center; color: var(--ink-3); font-size: 14px; }
+  .field small { display: block; margin: 6px 0 22px; font-size: 12px; color: var(--hint); }
+
+  /* 빈 상태 */
+  .empty { text-align: center; padding-top: 22px; }
+  .empty .k { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--accent-deep); }
+  .empty h2 { margin: 0 0 16px; font-size: 22px; }
+  .ecard { display: flex; gap: 12px; align-items: flex-start; padding: 16px; margin-bottom: 10px; border-radius: 16px; text-align: left; box-shadow: var(--shadow); background: var(--panel); }
+  .ecard .ic { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-tint); color: var(--accent-deep); font-weight: 700; font-size: 18px; }
+  .ecard b { display: block; font-size: 15px; }
+  .ecard span.s { display: block; margin-top: 2px; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
+  .ecard--ai { color: #fff; background: var(--ai-fill); }
+  .ecard--ai .ic { background: rgba(255,255,255,.2); color: #fff; }
+  .ecard--ai span.s { color: rgba(255,255,255,.9); }
+  .small-join { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--ink-3); }
+  .small-join .mini { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border: 1px solid var(--border-strong); border-radius: 8px; background: #fff; color: var(--ink); font-size: 12px; }
+  .invite-row { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; margin-top: 12px; padding: 0 14px; border-radius: 10px; background: var(--accent-tint); color: var(--accent-deep); font-size: 13px; font-weight: 700; text-align: left; }
+  .invite-row span { font-weight: 500; color: var(--ink-2); }
+  .invite-row i { margin-left: auto; font-style: normal; font-size: 16px; }
+  .ecard--line { border: 1.5px dashed var(--border-strong); box-shadow: none; background: transparent; }
+  .ecard--line .ic { background: var(--stay-tint); color: var(--stay-ink); }
+
+  /* 여행 목록 */
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btns .btn--ai, .btns .btn--line { height: 44px; }
+  .mini-r { display: flex; justify-content: flex-end; margin: 10px 0 14px; }
+  .mini-r .mini { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: #fff; font-size: 12px; }
+  .ban { display: flex; align-items: center; gap: 12px; padding: 11px 13px; margin: 14px 0 12px; border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); font-size: 12px; color: var(--ink-3); }
+  .ban b { display: block; margin-bottom: 2px; font-size: 13px; color: var(--ink); }
+  .ban .th { flex: none; width: 44px; height: 44px; border-radius: 10px; background: radial-gradient(ellipse at 50% 25%, #f0f8ff, #dcecfa); }
+  .ban .go { margin-left: auto; font-size: 16px; }
+  .dday { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; color: var(--ink-3); font-size: 11px; font-weight: 700; }
+  .dday::before, .dday::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .dday span { padding: 2px 9px; border-radius: 999px; background: var(--ground-2); }
+  .tcard { padding: 15px; margin-bottom: 12px; border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); }
+  .tcard h3 { margin: 0 0 4px; font-size: 16px; }
+  .tcard .d { margin: 0 0 10px; font-size: 12px; color: var(--ink-2); }
+  .tcard .chip { margin: 0 6px 0 0; }
+  .c-region { background: var(--region-tint); color: var(--region-ink); }
+  .c-stay { background: var(--stay-tint); color: var(--stay-ink); }
+  /* 처음 로그인 흐름 */
+  .lt { margin: 12px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: var(--shadow); }
+  .lt .hd { padding: 15px; color: #fff; background: linear-gradient(135deg, #3b6fef 0%, #2f5fdb 48%, #7f56c4 100%); }
+  .lt .r { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; }
+  .lt .r span:last-child { font-weight: 500; letter-spacing: .16em; opacity: .8; }
+  .lt .ft { display: flex; align-items: flex-end; gap: 10px; margin-top: 14px; }
+  .lt .ft small { display: block; font-size: 10px; opacity: .75; letter-spacing: .05em; }
+  .lt .ft b { font-size: 16px; }
+  .lt .ft .to { flex: 1.3; text-align: right; }
+  .lt .ft .from { flex: 1; }
+  .lt .sub { margin: 12px 0 0; font-size: 13px; font-weight: 500; opacity: .92; }
+  .lt .perf { border-top: 2px dashed #b9bec8; margin: 0 14px; }
+  .lt ul { margin: 0; padding: 16px 16px 6px; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 12px; color: var(--ink-2); }
+  .lt li b { display: block; color: var(--ink); font-size: 12px; }
+  .lt .ib { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-tint); color: var(--accent-deep); font-size: 12px; font-weight: 700; margin-right: 10px; vertical-align: middle; flex: none; }
+  .lt li { display: flex; align-items: center; }
+  .lbtns { padding: 6px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .lbtn { display: flex; align-items: center; justify-content: center; height: 42px; border-radius: 10px; font-size: 13px; font-weight: 700; border: 1px solid var(--border-strong); background: #fff; }
+  .lbtn--k { background: #fee500; border-color: #fee500; color: #3c1e1e; }
+  .phone--col { display: flex; flex-direction: column; }
+  .stage { position: relative; flex: 1; overflow: hidden; background: var(--ground); }
+  .stage .body { padding-top: 14px; }
+  .hole { position: relative; z-index: 2; border-radius: 10px; box-shadow: 0 0 0 800px rgba(22,24,29,.62); outline: 1.5px solid rgba(255,255,255,.9); }
+  .hole .invite-row { margin-top: 0; }
+  .hole .callout { position: absolute; left: 50%; top: calc(100% + 9px); transform: translateX(-50%); width: max-content; max-width: 250px; padding: 4px 9px; border-radius: 8px; background: rgba(22,24,29,.92); color: #fff; font-size: 11px; font-weight: 500; line-height: 15px; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+  .gpanel { padding: 12px 16px 14px; background: #fff; border-top: 1px solid var(--border); }
+  .gpanel h4 { margin: 0; font-size: 15px; }
+  .gpanel p { margin: 2px 0 0; min-height: 36px; font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+  .gnav { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .gnav .b { width: 74px; height: 40px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--border-strong); font-size: 13px; font-weight: 700; background: #fff; color: var(--ink-3); }
+  .gnav .b--p { background: var(--accent-deep); border-color: var(--accent-deep); color: #fff; }
+  .gnav .dots { flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; }
+  .gnav .dots i { width: 6px; height: 6px; border-radius: 99px; background: var(--border-strong); }
+  .gnav .dots i.on { width: 16px; background: var(--accent-deep); }
+  .notes { max-width: 1120px; padding: 16px 20px; border-radius: 14px; background: #fff; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+  .notes h3 { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
+  .notes ul { margin: 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+  <h1>처음 초대받은 사람 화면 시안</h1>
+  <p class="lede">위쪽 줄은 지금 구현된 흐름이고, 아래 줄은 여행이 없는 사람의 첫 화면에서 초대 링크 자리를 어떻게 둘지 비교한 것이다. 링크를 눌러 들어온 사람은 여행 목록을 거치지 않으므로, 목록의 초대 링크 버튼은 아이폰에서 링크를 복사해 앱으로 온 사람이 주로 쓴다.</p>
+
+  <!-- ===== 현재 흐름 ===== -->
+  <section class="blk">
+    <h2><span class="tag tag--now">현재</span>링크를 눌러 들어온 흐름</h2>
+    <p>① 로그인 전 초대 화면 → ② 로그인하면 닉네임이 없는 경우 닉네임 설정 → ③ 초대 화면으로 돌아와 함께하기 → ④ 완료 토스트와 함께 여행 상세로 이동한다. 아이폰 Safari에서는 ①에 앱 안내가 한 줄 더 붙는다(ⓘ).</p>
+    <div class="row">
+      <div>
+        <p class="cap">① 로그인 전<small>/join/코드. 일정은 보기 전용으로 보인다</small></p>
+        <div class="phone">
+          <div class="bar">여행 초대</div>
+          <div class="body">
+            <div class="inv">
+              <p class="who">민지님이 여행에 초대했어요</p>
+              <h3>강릉 바다 여행</h3>
+              <p class="note">지금은 일정을 보기만 할 수 있어요. 함께하면 장소·숙소와 가계부를 같이 고칠 수 있어요.</p>
+              <div class="btn btn--primary">로그인하고 함께하기</div>
+            </div>
+            <div class="snap">
+              <div class="hd"><b>강릉 바다 여행</b><span>11월 7일(토) – 11월 9일(월) · 2박 3일</span></div>
+              <div class="it"><span class="n">1</span><div><b>경포해변</b><span class="chip c-place">관광</span><small>강원 강릉시 창해로</small></div></div>
+              <div class="it"><span class="n">2</span><div><b>초당순두부 본점</b><span class="chip c-meal">식사</span><small>12:30 고정</small></div></div>
+              <div class="it"><span class="n">3</span><div><b>안목해변 카페거리</b><small>위치 미확인</small></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap">ⓘ 아이폰 Safari<small>링크가 앱이 아닌 Safari로 열려서 안내가 위에 붙는다</small></p>
+        <div class="phone">
+          <div class="bar">여행 초대</div>
+          <div class="body">
+            <div class="ios">
+              <p class="h">홈 화면에 추가한 트립플로 앱에서 열려면</p>
+              <p class="s">아이폰은 링크를 앱으로 바로 열지 못해요. 링크를 복사한 뒤 트립플로 앱의 여행 목록에서 ‘초대 링크로 참여’에 붙여 넣어 주세요. 앱이 없다면 여기서 그대로 함께하면 돼요.</p>
+              <div class="btn btn--line">앱이 있어요 · 링크 복사</div>
+              <div class="btn btn--ghost">앱이 없어요 · 설치 방법</div>
+            </div>
+            <div class="inv">
+              <p class="who">민지님이 여행에 초대했어요</p>
+              <h3>강릉 바다 여행</h3>
+              <p class="note">지금은 일정을 보기만 할 수 있어요. 함께하면 장소·숙소와 가계부를 같이 고칠 수 있어요.</p>
+              <div class="btn btn--primary">로그인하고 함께하기</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap">② 닉네임 설정<small>닉네임이 없으면 멤버 목록에 이름이 비므로 먼저 정한다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>닉네임 설정</div>
+          <div class="body nick">
+            <h2>어떻게 불러드릴까요?</h2>
+            <p>여행에서 사용할 닉네임을 정해주세요.</p>
+            <div class="field"><label>닉네임</label><div class="in">닉네임 입력</div><small>2~20자로 입력해주세요.</small></div>
+            <div class="btn btn--primary" style="height:48px">시작하기</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap">③ 로그인 후 · ④ 완료<small>③에서 '지수님으로 함께하기'를 누르면 ④ 토스트와 함께 여행 상세로 간다</small></p>
+        <div class="phone">
+          <div class="bar">여행 초대</div>
+          <div class="body">
+            <div class="inv">
+              <p class="who">민지님이 여행에 초대했어요</p>
+              <h3>강릉 바다 여행</h3>
+              <p class="note">지금은 일정을 보기만 할 수 있어요. 함께하면 장소·숙소와 가계부를 같이 고칠 수 있어요.</p>
+              <div class="btn btn--primary">지수님으로 함께하기</div>
+              <div class="btn btn--line">다른 계정으로 로그인</div>
+            </div>
+            <div class="snap">
+              <div class="hd"><b>강릉 바다 여행</b><span>11월 7일(토) – 11월 9일(월) · 2박 3일</span></div>
+              <div class="it"><span class="n">1</span><div><b>경포해변</b><span class="chip c-place">관광</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 처음 로그인 흐름 ===== -->
+  <section class="blk">
+    <h2>처음 로그인한 경우(링크 없이 직접 앱을 연 사람)</h2>
+    <p>① 로그인 → ② 닉네임 설정 → ③ 사용법(처음 한 번, 여행 목록 장부터) → ④ 여행이 없는 첫 화면 순서다. ①②③은 지금 구현된 모습이고 ④만 안 C를 적용한 모습이다. ③ 첫 장의 마지막 밝힘 자리는 '받은 초대 링크를 붙여 넣어 함께해요'라서, 초대 링크 줄 모양이 바뀌면 사용법 캡처도 다시 찍어야 한다.</p>
+    <div class="row">
+      <div>
+        <p class="cap">① 로그인<small>/login. 티켓 모양 카드와 소셜 로그인 버튼</small></p>
+        <div class="phone">
+          <div class="lt" style="margin-top:24px">
+            <div class="hd">
+              <div class="r"><span>트립플로</span><span>여행 준비</span></div>
+              <div class="ft"><div class="from"><small>FROM</small><b>오늘</b></div><span style="opacity:.8;margin-bottom:3px">→</span><div class="to"><small>TO</small><b>다음 여행</b></div></div>
+              <p class="sub">계정만 있으면 바로 시작</p>
+            </div>
+            <div class="perf"></div>
+            <ul>
+              <li><span class="ib">일</span><div><b>날짜별 일정</b>장소·숙소를 날짜별로 정리해요</div></li>
+              <li><span class="ib">AI</span><div><b>AI 일정 짜기</b>조건만 고르면 코스를 짜 줘요</div></li>
+              <li><span class="ib">₩</span><div><b>가계부·정산</b>함께 쓴 돈을 나눠요</div></li>
+            </ul>
+            <div class="lbtns"><div class="lbtn">Google로 계속하기</div><div class="lbtn lbtn--k">카카오로 계속하기</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap">② 닉네임 설정<small>닉네임이 없는 새 계정만 거친다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>닉네임 설정</div>
+          <div class="body nick">
+            <h2>어떻게 불러드릴까요?</h2>
+            <p>여행에서 사용할 닉네임을 정해주세요.</p>
+            <div class="field"><label>닉네임</label><div class="in">닉네임 입력</div><small>2~20자로 입력해주세요.</small></div>
+            <div class="btn btn--primary" style="height:48px">시작하기</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap">③ 사용법 첫 장<small>/account/guide?first=1. 실제 앱 캡처 위에 회색 덮개를 씌우고 설명할 곳만 밝힌다. 아래는 초대 링크 줄을 밝힌 장이다</small></p>
+        <div class="phone phone--col">
+          <div class="stage">
+            <div class="body">
+              <div class="btns"><div class="btn btn--ai">일정 짜기</div><div class="btn btn--line">+ 직접 만들기</div></div>
+              <div style="height:10px"></div>
+              <div class="hole"><div class="invite-row"><i class="mail"></i>초대 링크로 참여 <span>링크를 받았다면</span><i>›</i></div><span class="callout">받은 초대 링크를 붙여 넣어 함께해요</span></div>
+              <div class="ban" style="margin-top:62px"><span class="th"></span><div><b>다녀온 곳 지도</b>여행이 끝나면 여기에 쌓여요</div><span class="go">›</span></div>
+              <div class="dday"><span>D-36</span></div>
+              <div class="tcard"><h3>강릉 바다 여행</h3><p class="d">11월 7일(토) – 11월 9일(월) · 2박 3일</p><span class="chip c-region">강릉시</span><span class="chip c-place">장소 6</span><span class="chip c-stay">숙소 1</span></div>
+            </div>
+          </div>
+          <div class="gpanel">
+            <h4>여행 목록</h4>
+            <p>여행 계획부터 정산까지 이 앱 하나로 해요. 여행 목록에서 시작해요.</p>
+            <div class="gnav"><span class="b">이전</span><span class="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></span><span class="b b--p">다음</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag">안 C</span><span class="tag tag--rec">추천</span>④ 여행이 없는 첫 화면<small>사용법의 마지막 장에서 '시작하기'를 누르면 도착한다. 초대받은 사람은 여기서 줄을 눌러 링크를 붙여 넣는다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="invite-row"><i class="mail"></i>초대 링크로 참여 <span>링크를 받았다면</span><i>›</i></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 빈 상태 ===== -->
+  <section class="blk">
+    <h2>여행이 없는 사람의 첫 화면: 초대 링크 자리</h2>
+    <p>아이폰에서 링크를 복사해 앱으로 온 초대받은 사람은 이 화면을 본다. 지금은 큰 카드 두 장 아래 작은 글씨 속의 작은 버튼이라 가장 필요한 사람에게 가장 약하게 보인다. 두 후보 모두 기존 두 카드(AI, 직접 만들기)는 그대로 둔다.</p>
+    <div class="row">
+      <div>
+        <p class="cap"><span class="tag tag--now">현재</span>작은 글씨와 작은 버튼<small>큰 카드 두 장 아래에 가려져 있다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="small-join">친구에게 초대받았나요? <span class="mini"><i class="mail"></i>초대 링크로 참여</span></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag">안 C</span><span class="tag tag--rec">추천</span>연한 파란 안내 줄<small>목록의 안 C와 같은 모양이다. 카드 두 장 아래에서 한눈에 읽힌다. 화면 높이 차이가 가장 작다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="invite-row"><i class="mail"></i>초대 링크로 참여 <span>링크를 받았다면</span><i>›</i></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag">안 D</span>세 번째 카드<small>"친구에게 초대받았어요"를 점선 카드로 둔다. 가장 크게 보이지만 카드가 세 장이 되어 첫 선택지가 늘어난다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="ecard ecard--line"><span class="ic"><i class="mail" style="color:var(--stay-ink)"></i></span><div><b>친구에게 초대받았어요</b><span class="s">받은 링크를 붙여 넣으면 함께하는 여행으로 들어가요</span></div></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 안 C를 두 화면에 같이 ===== -->
+  <section class="blk">
+    <h2>안 C를 여행 목록과 첫 화면에 같이 적용한 모습</h2>
+    <p>같은 안내 줄 하나를 두 화면에서 쓴다. 여행이 있는 사람의 목록에서는 두 버튼 바로 아래에, 여행이 없는 사람의 첫 화면에서는 큰 카드 두 장 아래에 놓인다. 목록의 현재 모양은 두 버튼 아래 오른쪽의 작은 버튼이다.</p>
+    <div class="row">
+      <div>
+        <p class="cap"><span class="tag tag--now">현재</span>여행이 있는 목록<small>작은 흰 버튼이 오른쪽에 따로 떠 있다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body">
+            <div class="btns"><div class="btn btn--ai">일정 짜기</div><div class="btn btn--line">+ 직접 만들기</div></div>
+            <div class="mini-r"><span class="mini"><i class="mail"></i>초대 링크로 참여</span></div>
+            <div class="ban" style="margin-top:0"><span class="th"></span><div><b>다녀온 곳 지도</b>여행이 끝나면 여기에 쌓여요</div><span class="go">›</span></div>
+            <div class="dday"><span>D-36</span></div>
+            <div class="tcard"><h3>강릉 바다 여행</h3><p class="d">11월 7일(토) – 11월 9일(월) · 2박 3일</p><span class="chip c-region">강릉시</span><span class="chip c-place">장소 6</span><span class="chip c-stay">숙소 1</span></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag">안 C</span><span class="tag tag--rec">추천</span>여행이 있는 목록<small>두 버튼 바로 아래 전체 폭 줄. 줄 하나가 44px 늘어난다</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body">
+            <div class="btns"><div class="btn btn--ai">일정 짜기</div><div class="btn btn--line">+ 직접 만들기</div></div>
+            <div class="invite-row"><i class="mail"></i>초대 링크로 참여 <span>링크를 받았다면</span><i>›</i></div>
+            <div class="ban"><span class="th"></span><div><b>다녀온 곳 지도</b>여행이 끝나면 여기에 쌓여요</div><span class="go">›</span></div>
+            <div class="dday"><span>D-36</span></div>
+            <div class="tcard"><h3>강릉 바다 여행</h3><p class="d">11월 7일(토) – 11월 9일(월) · 2박 3일</p><span class="chip c-region">강릉시</span><span class="chip c-place">장소 6</span><span class="chip c-stay">숙소 1</span></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag tag--now">현재</span>여행이 없는 첫 화면<small>큰 카드 아래 작은 글씨와 작은 버튼</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="small-join">친구에게 초대받았나요? <span class="mini"><i class="mail"></i>초대 링크로 참여</span></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="cap"><span class="tag">안 C</span><span class="tag tag--rec">추천</span>여행이 없는 첫 화면<small>목록과 같은 줄이다. 카드 두 장은 그대로</small></p>
+        <div class="phone">
+          <div class="bar"><span class="t">τ</span>내 여행<span class="avatar">지</span></div>
+          <div class="body empty">
+            <p class="k">첫 여행</p><h2>어떻게 시작할까요</h2>
+            <div class="ecard ecard--ai"><span class="ic">✦</span><div><b>AI가 초안을 짜 드려요</b><span class="s">지역과 날짜만 고르면 하루 흐름까지 만들어 줍니다</span></div></div>
+            <div class="ecard"><span class="ic">+</span><div><b>직접 만들래요</b><span class="s">이름만 적고 빈 일정부터 시작합니다</span></div></div>
+            <div class="invite-row"><i class="mail"></i>초대 링크로 참여 <span>링크를 받았다면</span><i>›</i></div>
+          </div>
+          <div class="float">AI 챗봇</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="notes">
+    <h3>확인할 점</h3>
+    <ul>
+      <li>위쪽 네 화면은 지금 구현의 문구와 구조를 그대로 옮긴 정적 목업이다. 실제 앱 렌더링이 아니며, 닉네임 후 초대 화면으로 돌아오는 동작은 코드로만 확인했다.</li>
+      <li>안 C는 목록의 초대 줄과 같은 부품을 쓰므로 한 번 만들어 두 곳에 쓸 수 있다. 안 D는 처음 선택지가 세 개가 되어 AI 일정 짜기로 가는 비율이 떨어질 수 있다.</li>
+      <li>저는 안 C를 권한다. 목록과 첫 화면이 같은 모양이라 사용법 설명도 한 번이면 된다.</li>
+    </ul>
+  </div>
+</body>
+</html>

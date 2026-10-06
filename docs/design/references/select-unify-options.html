@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>선택 상자 통일 비교</title>
+<!--
+  2026-10-02 사용자 요청: "1일차 2일차 빼고 선택박스 통일하면 기존과 어떻게 다른지 시안으로".
+  대상: 장소·숙소 추가의 날짜, 가계부의 일정에서 가져오기·분류·낸 사람, 큰 지도의 담을 날 등 appInput 선택 상자 전부.
+  지금은 브라우저마다 열린 목록 모양이 다르다(크롬은 꾸민 목록, 아이폰·사파리는 기기 기본 목록).
+  색은 app/src/styles/theme.css 값이다. 결정하면 코드와 DESIGN.md에 반영하고 이 파일은 지운다.
+-->
+<style>
+  :root { --ground: #fbfbfa; --ground-2: #f0f0ee; --panel: #fff; --ink: #16181d; --ink-2: #4a4f58; --ink-3: #6b7280;
+    --border: #e8eaef; --border-strong: #d6d9e0; --accent-deep: #2f5fdb; --accent-tint: #eaf0fe; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 20px 60px; background: var(--ground-2); color: var(--ink); font: 14px/1.55 -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif; }
+  h1 { margin: 0 0 6px; font-size: 21px; } .lede { max-width: 78ch; margin: 0 0 22px; color: var(--ink-2); font-size: 13.5px; }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; }
+  .opt { width: 300px; } .opt h2 { margin: 0 0 6px; font-size: 14px; display: flex; gap: 6px; align-items: center; }
+  .opt p { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-2); }
+  .tag { padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--accent-tint); color: var(--accent-deep); }
+  .tag--now { background: #e5e7eb; color: var(--ink-3); } .tag--pick { background: #dcfce7; color: #166534; }
+  .phone { position: relative; width: 300px; height: 420px; overflow: hidden; border-radius: 24px; background: var(--ground); box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08); padding: 16px; }
+  .label { font-size: 12.5px; font-weight: 500; color: var(--ink-2); margin: 0 0 6px; }
+  .box { position: relative; height: 44px; border: 1px solid var(--border-strong); border-radius: 10px; background: #fff; display: flex; align-items: center; padding: 0 12px; font-size: 14px; }
+  .box::after { content: ''; position: absolute; right: 12px; width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(45deg) translateY(-2px); }
+  .box.text::after { display: none; }
+  .box.on { border-color: var(--accent-deep); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .field { margin-bottom: 16px; }
+  .faint { opacity: .35; }
+  /* 크롬 꾸민 목록: 상자 위나 아래, 상자 폭 */
+  .picker { position: absolute; left: 16px; right: 16px; border: 1px solid var(--border); border-radius: 10px; background: #fff; padding: 4px; box-shadow: 0 4px 20px rgba(28,25,23,.12); }
+  .picker div { min-height: 40px; padding: 9px 12px; border-radius: 8px; font-size: 14px; }
+  .picker .sel { background: var(--accent-tint); color: var(--accent-deep); font-weight: 600; }
+  .picker .sel::after { content: '✓'; float: right; }
+  /* 아이폰 기본 휠 */
+  .wheel { position: absolute; left: 0; right: 0; bottom: 0; height: 210px; background: #d1d4db; border-top: 1px solid #b8bcc5; }
+  .wheel .bar { height: 36px; background: #f6f6f7; border-bottom: 1px solid #c7cad1; text-align: right; padding: 8px 14px; color: #0a7aff; font-weight: 600; font-size: 14px; }
+  .wheel .items { text-align: center; padding-top: 18px; font-size: 17px; color: #8a8f99; line-height: 34px; font-family: -apple-system, sans-serif; }
+  .wheel .items b { display: block; color: #000; font-weight: 400; background: rgba(255,255,255,.5); margin: 0 10px; border-radius: 8px; }
+  /* 바텀시트 */
+  .dim { position: absolute; inset: 0; background: rgba(22,24,29,.35); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 18px 18px 0 0; padding: 8px 8px 14px; }
+  .sheet .grab { width: 36px; height: 4px; border-radius: 4px; background: var(--border-strong); margin: 4px auto 8px; }
+  .sheet h3 { margin: 0 8px 6px; font-size: 14px; }
+  .sheet div.i { min-height: 46px; padding: 12px; border-radius: 10px; font-size: 15px; }
+  .sheet .sel { background: var(--accent-tint); color: var(--accent-deep); font-weight: 600; }
+  .sheet .sel::after { content: '✓'; float: right; }
+  .cap { position: absolute; left: 8px; top: 8px; font-size: 10.5px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<h1>선택 상자 통일 비교</h1>
+<p class="lede">닫힌 상자 모양은 지금도 모든 기기에서 같다. 다른 것은 <b>눌렀을 때 열리는 목록</b>이다. 지금은 크롬만 앱 모양 목록이고 아이폰·사파리는 기기 기본 목록(휠)이 뜬다. 큰 지도의 1일차 선택처럼 앱이 목록을 직접 그리면 모든 기기에서 같아진다. 예시는 장소 추가의 '날짜' 칸이다.</p>
+
+<div class="row">
+  <div class="opt"><h2>지금 · PC·안드로이드 크롬 <span class="tag tag--now">현재</span></h2>
+    <div class="phone"><span class="cap">크롬</span>
+      <div class="field faint"><p class="label">장소 이름</p><div class="box text" style="border-color:var(--border)">안목해변</div></div>
+      <div class="field"><p class="label">날짜</p><div class="box on">1일차 · 5월 1일(금)</div></div>
+      <div class="picker" style="top:170px"><div class="sel">1일차 · 5월 1일(금)</div><div>2일차 · 5월 2일(토)</div><div>3일차 · 5월 3일(일)</div><div>미배치</div></div>
+    </div>
+    <p>크롬이 그리는 꾸민 목록(base-select). 상자 바로 아래나 위에 앱 폰트·연파랑 선택으로 열린다. 화면 아래쪽 칸이면 위로 열려 위 칸을 가린다.</p></div>
+
+  <div class="opt"><h2>지금 · 아이폰·사파리 <span class="tag tag--now">현재</span></h2>
+    <div class="phone"><span class="cap">아이폰</span>
+      <div class="field faint"><p class="label">장소 이름</p><div class="box text" style="border-color:var(--border)">안목해변</div></div>
+      <div class="field"><p class="label">날짜</p><div class="box on">1일차 · 5월 1일(금)</div></div>
+      <div class="wheel"><div class="bar">완료</div><div class="items">미배치<b>1일차 · 5월 1일(금)</b>2일차 · 5월 2일(토)<br>3일차 · 5월 3일(일)</div></div>
+    </div>
+    <p>기기 기본 휠이 아래에서 올라온다. 앱 글꼴·색이 아니고 기기마다 모양이 다르다(크롬이 아닌 브라우저도 제각각).</p></div>
+
+  <div class="opt"><h2>통일 A · 상자 아래 목록 <span class="tag tag--pick">추천</span></h2>
+    <div class="phone"><span class="cap">모든 기기</span>
+      <div class="field faint"><p class="label">장소 이름</p><div class="box text" style="border-color:var(--border)">안목해변</div></div>
+      <div class="field"><p class="label">날짜</p><div class="box on">1일차 · 5월 1일(금)</div></div>
+      <div class="picker" style="top:170px"><div class="sel">1일차 · 5월 1일(금)</div><div>2일차 · 5월 2일(토)</div><div>3일차 · 5월 3일(일)</div><div>미배치</div></div>
+    </div>
+    <p>앱이 직접 그린 목록. 크롬의 지금 모습과 같고 아이폰에서도 똑같이 열린다. 항목 6개가 넘으면 목록 안에서 스크롤. 키보드(↑↓·Enter·Esc)와 화면 읽기 지원을 직접 만든다.</p></div>
+
+  <div class="opt"><h2>통일 B · 휴대폰은 아래 시트</h2>
+    <div class="phone"><span class="cap">휴대폰 · PC는 A와 같음</span>
+      <div class="field faint"><p class="label">장소 이름</p><div class="box text" style="border-color:var(--border)">안목해변</div></div>
+      <div class="field"><p class="label">날짜</p><div class="box on">1일차 · 5월 1일(금)</div></div>
+      <div class="dim"></div>
+      <div class="sheet"><div class="grab"></div><h3>날짜</h3><div class="i sel">1일차 · 5월 1일(금)</div><div class="i">2일차 · 5월 2일(토)</div><div class="i">3일차 · 5월 3일(일)</div><div class="i">미배치</div></div>
+    </div>
+    <p>휴대폰에서는 아래에서 시트가 올라와 엄지로 고르기 쉽고 항목이 커서 덜 잘못 누른다. PC는 A처럼 상자 아래. 한 번 더 화면이 바뀌는 느낌이 있다.</p></div>
+</div>
+
+<div style="max-width:78ch;margin-top:26px;font-size:13px;color:var(--ink-2)">
+  <b style="color:var(--ink)">바뀌는 점 정리</b>
+  <ul>
+    <li>아이폰·사파리에서 기기 휠 대신 앱 모양 목록이 뜬다(가장 큰 차이).</li>
+    <li>크롬은 겉모습이 거의 같다. 대신 크롬 버전마다 다르게 동작하던 꾸민 목록(오늘 고친 '눌러도 안 골라짐' 같은 문제)에 기대지 않는다.</li>
+    <li>공통 컴포넌트 하나(예: <code>app-select</code>)로 바꾸고 기존 선택 상자 전부를 옮긴다. 키보드·화면 읽기·바깥 누르면 닫기를 직접 맞춰야 해 작업량이 가장 큰 부분이다.</li>
+    <li>큰 지도의 1일차 선택은 칩 줄에 맞춘 남색 알약이라 이번 통일에서 뺀다(요청대로).</li>
+  </ul>
+</div>
+</body>
+</html>
