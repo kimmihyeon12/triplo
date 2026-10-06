@@ -75,3 +75,35 @@ describe('웹 푸시 구독', () => {
     expect(swPush.unsubscribe).toHaveBeenCalled();
   });
 });
+
+describe('구독 다시 맞추기(2026-10-06 공지 미수신)', () => {
+  it('브라우저에 구독이 있고 권한이 있으면 서버에 다시 남긴다', async () => {
+    const { repo, rpc } = setup({ permission: 'granted', subscribed: true });
+    expect(await repo.resync()).toBe(true);
+    expect(rpc).toHaveBeenCalledWith('save_push_subscription', {
+      p_endpoint: 'https://push.example/abc',
+      p_p256dh: 'P',
+      p_auth: 'A',
+      p_user_agent: CHROME,
+    });
+  });
+
+  it('구독이 없거나 권한이 없거나 설치 전이면 아무것도 하지 않는다', async () => {
+    for (const options of [
+      { permission: 'granted' as const, subscribed: false },
+      { permission: 'default' as const, subscribed: true },
+      { permission: 'granted' as const, subscribed: true, enabled: false },
+      { permission: 'granted' as const, subscribed: true, ua: IPHONE },
+    ]) {
+      const { repo, rpc } = setup(options);
+      expect(await repo.resync()).toBe(false);
+      expect(rpc).not.toHaveBeenCalled();
+    }
+  });
+
+  it('서버에 남기지 못해도 구독을 지우거나 오류를 내지 않는다', async () => {
+    const { repo, unsubscribe } = setup({ permission: 'granted', subscribed: true, rpcError: true });
+    expect(await repo.resync()).toBe(false);
+    expect(unsubscribe).not.toHaveBeenCalled();
+  });
+});

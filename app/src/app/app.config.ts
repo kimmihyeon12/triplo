@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { startAppUpdates } from './core/app-update';
+import { startPushResync } from './features/notifications/data/push-resync';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -202,6 +203,8 @@ export const appConfig: ApplicationConfig = {
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
     // 새 버전을 열 때·돌아올 때 확인해 반영한다(core/app-update.ts).
     provideAppInitializer(() => startAppUpdates()),
+    // 서버에서 지워진 푸시 구독을 앱을 열 때 다시 맞춘다(2026-10-06 공지 미수신).
+    provideAppInitializer(() => startPushResync()),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && !environment.isTest,
       registrationStrategy: 'registerWhenStable:30000',

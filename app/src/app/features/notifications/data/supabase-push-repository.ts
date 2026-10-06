@@ -35,6 +35,30 @@ export class SupabasePushRepository implements PushRepository {
     return subscription && permission === 'granted' ? 'on' : 'off';
   }
 
+  /**
+   * 이 기기의 구독을 서버에 다시 남긴다(2026-10-06). 화면은 브라우저 구독만 보고 '켜짐'으로 보이는데,
+   * 서버 구독은 만료(404·410)로 지워지거나 다른 계정으로 옮겨질 수 있다. 그러면 공지가 아무에게도 가지 않는다.
+   * 앱을 열 때마다 부른다. 같은 기기는 덮어써질 뿐이라 여러 번 불러도 된다. 실패해도 구독은 건드리지 않는다.
+   */
+  async resync(): Promise<boolean> {
+    if ((await this.deviceState()) !== 'on') return false;
+    const subscription = await firstValueFrom(this.swPush.subscription);
+    if (!subscription) return false;
+    try {
+      const json = subscription.toJSON();
+      const db = await this.client();
+      const { error } = await db.rpc('save_push_subscription', {
+        p_endpoint: subscription.endpoint,
+        p_p256dh: json.keys?.['p256dh'] ?? '',
+        p_auth: json.keys?.['auth'] ?? '',
+        p_user_agent: this.env.userAgent,
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
   async enable(): Promise<DeviceState> {
     const state = await this.deviceState();
     if (state !== 'off') return state;
