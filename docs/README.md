@@ -62,6 +62,10 @@
 - 각 기능 작업에는 필요한 문서를 골라 읽는다. 분석 기록·도구 설치 이력 전체를 매번 필수 입력으로 넣지 않는다.
 - MD 파일 간 동기화는 자동이 아니다. 작업하는 에이전트가 직접 관련 원본을 수정하고 링크·명세를 검증한다.
 
+## 화면 테마
+
+- [다크 모드](../openspec/changes/add-dark-mode/proposal.md): 설정에서 켜고 끄는 그래파이트 다크 테마. 기획안 43절, DESIGN.md '다크 모드'.
+
 ## 장소 담기
 
 - [큰 지도에서 주변 장소 골라 담기](../openspec/changes/add-map-explore/proposal.md): 분류 핀·다시 찾기·정보판에서 담기. [설계](superpowers/specs/2026-10-01-map-explore-design.md).
