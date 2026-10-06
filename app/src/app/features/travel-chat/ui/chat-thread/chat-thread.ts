@@ -70,7 +70,7 @@ export class ChatThread {
   readonly messages = input.required<readonly ChatMessage[]>();
   readonly chips = input.required<readonly string[]>();
   readonly pending = input(false);
-  /** 빈 화면에 구름이를 세울지. 머리글에 이미 구름이가 있는 시트는 끈다. */
+  /** 빈 화면에 펭이를 세울지. 머리글에 이미 펭이가 있는 시트는 끈다. */
   readonly showMascot = input(true);
   readonly error = input<ChatError | null>(null);
   readonly trip = input<Trip | null>(null);

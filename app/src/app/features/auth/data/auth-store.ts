@@ -37,7 +37,7 @@ export class AuthStore {
   readonly googleEnabled = this.state.googleEnabled;
   readonly kakaoEnabled = this.state.kakaoEnabled;
   readonly nickname = computed(() => nicknameFrom(this.state.user()?.user_metadata));
-  /** 구름이가 안내하는 사용법을 본 적이 있는지. 계정 정보에 남겨 기기를 바꿔도 다시 뜨지 않는다. */
+  /** 펭이가 안내하는 사용법을 본 적이 있는지. 계정 정보에 남겨 기기를 바꿔도 다시 뜨지 않는다. */
   readonly guideSeen = computed(() => this.state.user()?.user_metadata?.['travel_guide_seen'] === true);
   readonly user = this.state.user;
   readonly error = this.state.error;

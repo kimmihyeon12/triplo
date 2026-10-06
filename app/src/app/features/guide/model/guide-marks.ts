@@ -32,11 +32,11 @@ export const GUIDE_MARKS: Readonly<Record<string, readonly GuideMark[]>> = {
     },
     {
       "spot": 3,
-      "x": 69.16,
-      "y": 92.89,
-      "w": 26.73,
-      "h": 5.21,
-      "r": 22
+      "x": 75.38,
+      "y": 87.56,
+      "w": 20.51,
+      "h": 10.55,
+      "r": 45
     },
     {
       "spot": 4,

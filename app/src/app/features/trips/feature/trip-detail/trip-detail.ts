@@ -53,7 +53,6 @@ import { TripMapComponent } from '../../../places/ui/trip-map/trip-map';
 import { buildDayMap } from '../../util/map-markers';
 import { type DayMapModel } from '../../../places/model/map';
 import { ChatSheet } from '../../../travel-chat/travel-chat';
-import { CompanionFace } from '../../../travel-chat/companion';
 import type { BadgeTone } from '../../../../shared/util/badge-tone';
 import { ToastService } from '../../../../core/toast-service';
 import { canDeleteTrip, tripPeople } from '../../util/sharing';
@@ -84,7 +83,6 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
     TripStays,
     TripMapComponent,
     ChatSheet,
-    CompanionFace,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-detail.html',

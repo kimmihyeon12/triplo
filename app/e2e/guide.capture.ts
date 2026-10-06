@@ -45,10 +45,20 @@ async function tidy(page: Page): Promise<void> {
  * 밝게 남길 자리를 잰다. 화면 비율(%)로 남겨 어떤 크기로 보여도 맞게 한다.
  * 찾지 못하거나 화면 밖이면 건너뛴다(캡처는 계속한다).
  */
-async function mark(slide: string, spot: number, target: Locator): Promise<void> {
+async function mark(slide: string, spot: number, target: Locator, overflow?: Locator): Promise<void> {
   if (!GUIDE_SLIDES.find((s) => s.key === slide)?.spots[spot]) throw new Error(`${slide}의 ${spot}번 설명이 없다`);
   const box = await target.first().boundingBox({ timeout: 3000 }).catch(() => null);
   if (!box) return;
+  // 버튼 위로 올라온 펭이도 사용법의 밝은 영역에 함께 포함한다.
+  const extra = await overflow?.first().boundingBox();
+  if (extra) {
+    const right = Math.max(box.x + box.width, extra.x + extra.width);
+    const bottom = Math.max(box.y + box.height, extra.y + extra.height);
+    box.x = Math.min(box.x, extra.x);
+    box.y = Math.min(box.y, extra.y);
+    box.width = right - box.x;
+    box.height = bottom - box.y;
+  }
   // 밝힌 자리의 테두리를 요소와 같은 중심으로 둥글리려고 요소의 모서리 둥글기를 읽는다.
   const r = await target.first().evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0);
   const x = Math.max(0, box.x);
@@ -106,7 +116,7 @@ test('사용법 캡처', async ({ page, context }) => {
   await mark('trips', 0, page.getByTestId('new-trip-ai'));
   await mark('trips', 1, page.getByTestId('new-trip'));
   await mark('trips', 2, page.getByTestId('trip-list').locator('a, [role=link], article').first());
-  await mark('trips', 3, page.getByTestId('open-chat'));
+  await mark('trips', 3, page.getByTestId('open-chat'), page.getByTestId('open-chat').locator('img'));
   await mark('trips', 4, page.getByTestId('go-stats'));
   await mark('trips', 5, page.getByTestId('open-join-paste'));
   await shot(page, 'trips');

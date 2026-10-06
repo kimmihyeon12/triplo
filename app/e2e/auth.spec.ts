@@ -132,7 +132,7 @@ for (const provider of ['google', 'kakao'])
       'aria-busy',
       'true',
     );
-    // 처음 가입한 사람은 구름이가 안내하는 사용법을 먼저 본다(2026-10-01).
+    // 처음 가입한 사람은 펭이가 안내하는 사용법을 먼저 본다(2026-10-01).
     await expect(page).toHaveURL('http://localhost:4300/account/guide?first=1');
   });
 

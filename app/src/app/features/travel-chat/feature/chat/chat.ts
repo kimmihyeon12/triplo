@@ -53,7 +53,7 @@ export class ChatPage implements OnInit {
   constructor() {
     /*
       '새 대화'를 상단 바에 둔다. 전에는 본문 맨 위에 헤더를 하나 더 만들어
-      넣었고, 그 탓에 이 화면만 제목이 'AI 챗봇'과 '여행 친구 구름이'로 두 번
+      넣었고, 그 탓에 이 화면만 제목이 'AI 챗봇'과 '여행 친구 펭이'로 두 번
       나왔다. 처리 중 상태를 따라가야 하므로 effect 안에서 지정한다.
     */
     const bar = inject(PageBar);

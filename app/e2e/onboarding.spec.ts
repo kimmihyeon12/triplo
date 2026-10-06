@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
   }, newUser);
 });
 
-test('처음 인증한 회원은 닉네임을 저장하면 구름이 사용법을 보고 여행 목록으로 간다', async ({ page }) => {
+test('처음 인증한 회원은 닉네임을 저장하면 펭이 사용법을 보고 여행 목록으로 간다', async ({ page }) => {
   let saved = '';
   let meta: Record<string, unknown> = { ...newUser.user_metadata };
   await page.route(`${authUrl}/auth/v1/user**`, async (route) => {
@@ -45,7 +45,7 @@ test('처음 인증한 회원은 닉네임을 저장하면 구름이 사용법�
   await expect(page.locator('input')).toHaveCount(1);
   await page.getByLabel('닉네임', { exact: true }).fill('  바다여행  ');
   await page.getByRole('button', { name: '시작하기' }).click();
-  // 처음 가입한 사람은 구름이가 안내하는 사용법을 먼저 본다. 건너뛰면 본 것으로 남긴다.
+  // 처음 가입한 사람은 펭이가 안내하는 사용법을 먼저 본다. 건너뛰면 본 것으로 남긴다.
   await expect(page).toHaveURL('http://localhost:4300/account/guide?first=1');
   await page.getByTestId('guide-skip').click();
   await expect(page).toHaveURL('http://localhost:4300/trips');

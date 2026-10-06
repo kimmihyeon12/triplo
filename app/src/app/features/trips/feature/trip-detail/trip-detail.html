@@ -1,4 +1,4 @@
-﻿@if (store.currentState() === 'loading' && !trip()) {
+@if (store.currentState() === 'loading' && !trip()) {
   <div
     class="page mx-auto my-0 max-w-(--content-max) p-[var(--sp-4)_var(--sp-4)_calc(var(--sp-6)+80px)] [@media(min-width:_720px)]:p-[var(--sp-4)_var(--sp-6)_calc(var(--sp-6)+80px)]"
   >
@@ -948,12 +948,12 @@
     -->
     <button
       type="button"
-      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-10004 flex h-11 items-center rounded-pill bg-float pr-3.5 pl-[52px] text-13 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
+      class="fixed right-4 bottom-[calc(65px+12px+env(safe-area-inset-bottom,0px))] z-10004 flex h-12 w-20 items-center justify-center rounded-pill bg-float px-2 text-12 font-bold whitespace-nowrap text-white shadow-float hover:bg-float-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-deep [transition:transform_var(--dur)_var(--ease-out)] active:scale-95"
       (click)="chatOpen.set(true)"
       aria-label="AI 챗봇 열기"
       data-testid="open-chat"
     >
-      <app-companion-face class="pointer-events-none absolute bottom-px left-0" [mood]="'idle'" [size]="56" [decorative]="true" /><span>AI 챗봇</span>
+      <img class="pointer-events-none absolute bottom-[calc(100%-7px)] left-1/2 h-12 w-16 max-w-none -translate-x-1/2 object-contain object-bottom" src="/brand/companion-penguin-v1.png" alt="" aria-hidden="true" width="64" height="48" decoding="async" /><span>AI 챗봇</span>
     </button>
 
     <app-chat-sheet

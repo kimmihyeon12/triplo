@@ -30,7 +30,7 @@ export class OnboardingPage {
       if (!this.auth.user()) void this.router.navigateByUrl('/login', { replaceUrl: true });
       else if (this.auth.nickname() && !this.auth.busy())
         // 초대 링크로 왔다면 닉네임을 정한 뒤 합류 화면으로 돌아간다. 처음 가입해 닉네임을 막
-        // 정한 사람은 구름이가 안내하는 사용법을 먼저 본다(2026-10-01 사용자 요청).
+        // 정한 사람은 펭이가 안내하는 사용법을 먼저 본다(2026-10-01 사용자 요청).
         void this.router.navigateByUrl(
           takeReturn() ?? (this.justSaved && !this.auth.guideSeen() ? '/account/guide?first=1' : '/trips'),
           { replaceUrl: true },

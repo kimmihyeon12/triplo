@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** 구름이 전신 이미지. 대기는 졸림, 응답에는 승인된 작은 미소를 사용한다. */
+/** 여행 친구 펭이(승인된 펭귄 이미지). 모든 상태에 같은 기본 표정을 사용한다. */
 
 /** 어떤 얼굴을 보일지. 대화의 상태와 이어진다. */
 export type CompanionMood =
@@ -12,16 +12,16 @@ export type CompanionMood =
   | 'found';
 
 const FACE: Record<CompanionMood, string> = {
-  idle: '/brand/companion-cloud-sleepy-v1.png',
-  talking: '/brand/companion-cloud-sorry-v1.png',
-  found: '/brand/companion-cloud-sorry-v1.png',
+  idle: '/brand/companion-penguin-v1.png',
+  talking: '/brand/companion-penguin-v1.png',
+  found: '/brand/companion-penguin-v1.png',
 };
 
 /** 얼굴마다 다른 설명. 표정이 뜻을 담고 있으므로 읽어 주는 값도 달라야 한다. */
 const LABEL: Record<CompanionMood, string> = {
-  idle: '쉬고 있는 구름이',
-  talking: '구름이가 답합니다',
-  found: '구름이가 갈 곳을 찾았습니다',
+  idle: '쉬고 있는 펭이',
+  talking: '펭이가 답합니다',
+  found: '펭이가 갈 곳을 찾았습니다',
 };
 
 @Component({
