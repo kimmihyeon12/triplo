@@ -122,6 +122,37 @@ node app/scripts/release-notice-draft.mjs v0.1.0 release-notes.txt
 
 Redirect URLs에서 기존 `localhost` 항목은 지우지 않는다. 로컬 개발에 계속 쓴다.
 
+### Google Play 출시 준비(TWA, 2026-10-06)
+
+Play 스토어 앱은 배포 사이트를 Chrome으로 띄우는 TWA로 만든다. 웹에 배포하면 앱에도 바로 반영되므로 화면 수정마다 스토어 심사를 다시 받지 않는다. 앱 패키지(AAB)는 PWABuilder나 Bubblewrap으로 `https://triplo.pages.dev/manifest.webmanifest`에서 만든다.
+
+저장소에 준비된 것:
+
+- 매니페스트 PNG 아이콘: `app/public/icons/app-icon-192.png`·`app-icon-512.png`(둥근 모서리)와 `app-icon-maskable-512.png`(꽉 찬 사각형, 글자는 안전 영역 안). `brand/triplo-app-icon.svg`에서 만들었다. 둥근 SVG를 maskable로 쓰면 안드로이드가 자를 때 모서리가 비어 maskable은 PNG로 바꿨다.
+- 스토어 등록 이미지: `store/out/`(아이콘 512, 피처 그래픽 1024×500, 휴대폰 스크린숏 1080×1920).
+- 개인정보처리방침·계정 삭제 안내 URL: `https://triplo.pages.dev/account/privacy`. 로그인 없이 열리고 탈퇴 방법과 삭제 범위를 적고 있다. 앱 안 탈퇴는 내 정보 > 회원탈퇴다.
+
+사람이 해야 할 것(아직 안 함):
+
+1. Play Console 개발자 계정을 만든다. 개인 계정은 비공개 테스트(테스터 12명, 14일)를 거쳐야 프로덕션을 신청할 수 있다. 수치는 진행할 때 Play Console 기준으로 다시 확인한다.
+2. AAB를 만들고 서명 키(`.keystore`)와 비밀번호를 저장소 밖에 보관한다. 키를 커밋하지 않는다.
+3. Play Console > 앱 무결성 > 앱 서명에서 **앱 서명 키**의 SHA-256 지문을 받아 `app/public/.well-known/assetlinks.json`을 만든다. 로컬 설치 시험에는 업로드 키 지문도 함께 넣는다. 지문 없이 빈 파일을 배포하지 않는다.
+
+```json
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "<AAB를 만들 때 정한 패키지 이름>",
+    "sha256_cert_fingerprints": ["<앱 서명 키 SHA-256>"]
+  }
+}]
+```
+
+4. 배포 후 `https://triplo.pages.dev/.well-known/assetlinks.json`이 JSON으로 열리는지 확인한다. Angular 빌드는 `public/.well-known/`을 산출물에 복사한다(2026-10-06 빌드로 확인). 이 파일이 맞지 않으면 앱 위에 주소창이 보인다.
+5. 스토어 등록 정보, 데이터 보안 양식(위치·영수증 사진·계정 정보, Gemini 전송), 콘텐츠 등급, 심사용 테스트 계정을 입력한다.
+6. 실제 기기에서 구글·카카오 로그인과 알림 권한 요청을 확인한다.
+
 ## 검증 기준
 
 단위 테스트는 날짜·숙박·기간 변경·저장 실패·상태 경쟁을 검증한다. 브라우저에서는 여행 편집·재열기, 인증·닉네임·로그아웃, 키보드 조작, 360px 화면, 공통 UI·스피너를 확인한다. 런타임 앱과 테스트 앱의 포트·저장소를 분리하고 캡처는 Git에서 제외된 `output/playwright/`에 둔다.
