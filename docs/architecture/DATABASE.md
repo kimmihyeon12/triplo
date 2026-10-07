@@ -135,7 +135,7 @@ trip_regions       trip_stops      accommodation_stays
 
 | 함수 | 누가 | 하는 일 |
 | --- | --- | --- |
-| `send_inquiry(kind, body, app_version, user_agent)` → id | 로그인한 사람 | 문의를 남긴다. 닉네임은 계정 정보에서 서버가 채운다 |
+| `send_inquiry(kind, body, app_version, user_agent)` → id | 로그인한 사람 | 문의를 남긴다. 닉네임은 계정 정보에서 서버가 채운다. 한 사람이 최근 1시간에 5건까지 보낼 수 있고 넘으면 `P0429`(2026-10-07 `20261007000000`) |
 | `mark_inquiry_read(id, seen_at?)` | 본인 | 답변 확인 시각을 화면에 보인 마지막 답변 시각(`seen_at`)으로 한다. 그 뒤에 달린 답변은 새 답변으로 남는다. `seen_at`이 없으면 지금 시각, 미래 시각은 지금으로 자르고 확인 시각은 뒤로 돌리지 않는다(2026-10-01 `20261001100000`). 남의 문의면 `P0404` |
 | `mark_notices_read()` | 로그인한 사람 | 지금 발행된 공지를 모두 읽음으로 기록한다 |
 | `admin_save_notice(id, title, body)` → id | 관리자 | id가 없으면 초안을 만들고 있으면 고친다 |
@@ -145,7 +145,7 @@ trip_regions       trip_stops      accommodation_stays
 | `admin_set_inquiry_status(id, status)` | 관리자 | 확인 중·접수됨으로 바꾼다 |
 | `release_notice_draft(tag, title, body)` → id 또는 null | 배포 담당(CLI, DB 소유자) | 배포 공지 초안을 만든다(`generated`=true). 같은 태그의 자동 초안이 있으면 만들지 않고 null. 앱 사용자·관리자 화면은 부를 수 없다(2026-10-01 `20261001110000`) |
 
-오류 코드: 길이·값 `P0400`, 없는 대상 `P0404`, 권한 없음 `42501`. 로컬 확인: `supabase/tests/support.local.sql`.
+오류 코드: 길이·값 `P0400`, 없는 대상 `P0404`, 문의 횟수 초과 `P0429`, 권한 없음 `42501`. 내부 도우미 `require_admin()`·`clean_text()`는 다른 함수 안에서만 쓰며 `authenticated`가 직접 부를 수 없다(2026-10-07). 로컬 확인: `supabase/tests/support.local.sql`.
 
 ### 관리자 판별
 

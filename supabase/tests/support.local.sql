@@ -11,6 +11,8 @@ do $$ begin
   if not exists (select from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
 end $$;
 grant usage on schema public, auth to anon, authenticated;
+-- Supabase는 새 함수에 authenticated 실행 권한을 기본으로 준다. 같은 조건에서 회수를 확인한다.
+alter default privileges in schema public grant execute on functions to authenticated;
 insert into auth.users values
   ('11111111-1111-1111-1111-111111111111', '{"travel_nickname":"관리자"}'),
   ('22222222-2222-2222-2222-222222222222', '{"travel_nickname":"민지"}'),
@@ -18,6 +20,7 @@ insert into auth.users values
 \ir ../migrations/20260930000002_profiles_role.sql
 \ir ../migrations/20261001000000_support.sql
 \ir ../migrations/20261001100000_inquiry_read_seen_at.sql
+\ir ../migrations/20261007000000_support_hardening.sql
 insert into public.profiles values ('11111111-1111-1111-1111-111111111111', 'admin');
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
@@ -93,6 +96,23 @@ select admin_set_inquiry_status(:'qid', 'reading');
 select 'A status reading (reading)' as t, status from inquiries;
 select 'A delete missing notice (P0404)' as t, admin_delete_notice('99999999-9999-9999-9999-999999999999');
 
+-- 내부 도우미는 로그인한 사람도 직접 부르지 못한다
+set request.jwt.claim.sub = :'C';
+select 'C require_admin (permission denied)' as t, require_admin();
+select 'C clean_text (permission denied)' as t, clean_text('x', 10);
+
+-- 문의는 1시간에 5건까지. 다른 사람의 한도에는 영향이 없다
+select send_inquiry('etc', '문의 ' || n, 'v', 'ua') from generate_series(1, 5) n;
+select 'C sixth inquiry (P0429)' as t, send_inquiry('etc', '여섯째', 'v', 'ua');
+select 'C kept five (5)' as t, count(*) from inquiries;
+set request.jwt.claim.sub = :'B';
+select 'B still sends (t)' as t, send_inquiry('bug', '다른 사람', 'v', 'ua') is not null;
+reset role;
+update inquiries set created_at = now() - interval '61 minutes' where user_id = :'C';
+set role authenticated;
+set request.jwt.claim.sub = :'C';
+select 'C sends after an hour (t)' as t, send_inquiry('etc', '한 시간 뒤', 'v', 'ua') is not null;
+
 -- 로그인하지 않은 사람
 set role anon;
 set request.jwt.claim.sub = '';
@@ -102,6 +122,6 @@ select 'anon send (denied)' as t, send_inquiry('bug', 'x', 'v', 'ua');
 -- 탈퇴하면 함께 지워진다
 reset role;
 delete from auth.users where id = :'B';
-select 'after delete B inquiries (0)' as t, count(*) from inquiries;
+select 'after delete B inquiries (0)' as t, count(*) from inquiries where user_id = :'B';
 select 'after delete B replies (0)' as t, count(*) from inquiry_replies;
 select 'after delete B reads (0)' as t, count(*) from notice_reads;
