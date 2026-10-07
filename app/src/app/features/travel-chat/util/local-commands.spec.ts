@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createStop, createTrip } from '../../trips/util/factories';
 import { localCommand } from './local-commands';
 import { applyDraft } from './chat-draft';
+import { addDays } from '../../../shared/util/dates';
 
 const trip = createTrip({ title: '강릉 여행', startDate: '2026-10-01', endDate: '2026-10-03', stops: [
   createStop({ id: 'a', name: '오죽헌', date: '2026-10-01', order: 0, stayMinutes: 60 }),
@@ -40,6 +41,32 @@ describe('local commands', () => {
     const next = applyDraft(trip, localCommand('여행 전체를 하루 뒤로 미뤄', trip)!.draft!);
     expect(next.startDate).toBe('2026-10-02');
     expect(next.stops[0].date).toBe('2026-10-02');
+  });
+  // 2026-10-07 사용자 제보: '일정 오늘자로 변경'이 안내문만 돌려주었다.
+  it.each([
+    ['일정 오늘자로 변경', '2026-10-07'],
+    ['일정 오늘로 옮겨', '2026-10-07'],
+    ['일정 오늘로', '2026-10-07'],
+    ['여행 오늘부터로 바꿔', '2026-10-07'],
+    ['여행 내일부터 시작하게 해줘', '2026-10-08'],
+    ['여행 전체를 2026-11-20으로 옮겨', '2026-11-20'],
+  ])('%s는 기간 길이를 지키며 여행 전체를 옮긴다', (text, start) => {
+    const result = localCommand(text, trip, '2026-10-07')!;
+    expect(result.draft).toBeTruthy();
+    const next = applyDraft(trip, result.draft!);
+    expect(next.startDate).toBe(start);
+    expect(next.endDate).toBe(addDays(start, 2));
+    expect(next.stops.find(s => s.id === 'a')!.date).toBe(start);
+    expect(next.stops.find(s => s.id === 'c')!.date).toBeNull();
+  });
+  it('여행이 이미 그날 시작하면 바꾸지 않는다', () => {
+    const result = localCommand('일정 오늘로 옮겨', trip, '2026-10-01')!;
+    expect(result.draft).toBeUndefined();
+    expect(result.text).toContain('이미');
+  });
+  it('알아듣지 못한 여행 날짜 변경에는 날짜 변경 예시를 보인다', () => {
+    const result = localCommand('여행 날짜 좀 바꿔줘', trip, '2026-10-07')!;
+    expect(result.text).toContain('여행 오늘부터로 옮겨');
   });
   it('answers stored queries and distinguishes missing durations', () => {
     expect(localCommand('2일차 일정 보여줘', trip)?.text).toContain('없');

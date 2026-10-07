@@ -7,7 +7,12 @@ import { localQuery } from './local-queries';
 
 const HELP = '장소 이름과 변경할 값을 명확히 알려 주세요. 예: 오죽헌 2일차로 옮겨 / 오죽헌 메모에 입장권 확인 추가해';
 /** 체류시간은 화면에서 없앴다(2026-09-30 사용자 결정). 저장값은 보유하지만 명령으로 바꾸거나 세지 않는다. */
+const DATE_HELP = '여행 날짜는 이렇게 바꿀 수 있어요. 예: 여행 오늘부터로 옮겨 / 여행 전체를 2일 앞으로 당겨 / 여행 시작일을 2026-10-10으로 바꿔';
 const STAY_NOTICE = '체류시간은 이제 일정에 따로 적지 않아요. 필요하면 비고(메모)에 적어 주세요. 예: 오죽헌 메모에 체류 1시간 추가해';
+/** 장소·숙박 날짜를 함께 옮긴다. 미배치 장소는 그대로 둔다. */
+function shiftTrip(trip: Trip, delta: number): Trip {
+  return { ...trip, startDate: addDays(trip.startDate!, delta), endDate: addDays(trip.endDate!, delta), stops: trip.stops.map(s => ({ ...s, date: s.date ? addDays(s.date, delta) : null })), stays: trip.stays.map(s => ({ ...s, checkIn: addDays(s.checkIn, delta), checkOut: addDays(s.checkOut, delta) })) };
+}
 const END = '(?:해줘|해주세요|해요|해|줘|주세요|바꿔줘|바꿔|변경해|설정해|설정|수정해|수정)?[.!?]*';
 
 function select(text: string, trip: Trip, today: string, includeExcluded = false): TripStop[] | string {
@@ -23,7 +28,7 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   if (/(?:\d+일차|오늘|내일|\d{4}-\d{2}-\d{2})(?:으로|로)$/.test(text)) text += ' 옮겨';
   if (/체류시간/.test(text)) return { text: STAY_NOTICE };
   if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
-  const editing = /옮|이동|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
+  const editing = /옮|이동|시작하게|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
   const querying = /일정|장소|미배치|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);
   // 화면 열기는 여는 대상(가계부·지도·일정)이 있을 때만 명령이다. '불국사 몇 시에 열어'처럼
   // 영업시간을 묻는 말까지 가로채 AI가 답하지 못했다(2026-09-30).
@@ -49,12 +54,24 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
     const title = match[1].trim();
     return title.length > 80 ? { text: '여행 제목은 80자 이내로 입력해 주세요.' } : change(trip, { ...trip, title }, '여행 제목 변경');
   }
+  // '일정 오늘자로 변경'처럼 여행·일정과 날짜만 말하면 시작일을 그날로 옮긴다(2026-10-07 사용자 제보).
+  // 장소만 옮기려면 '1일차 장소 전부 오늘로 옮겨'처럼 장소를 말한다.
+  match = text.match(/^(?:여행|일정)(?:\s*전체)?(?:을|를)?\s*(오늘|내일|\d{4}-\d{2}-\d{2})\s*(?:부터|자)?\s*(?:으로|로|에)?\s*(?:시작하게\s*)?(?:옮겨|이동해|바꿔|변경해|변경|당겨|미뤄|해)?(?:줘|주세요)?[.!?]*$/);
+  if (match) {
+    if (!trip.startDate || !trip.endDate) return { text: '먼저 여행 날짜를 정해 주세요.' };
+    const start = match[1] === '오늘' ? today : match[1] === '내일' ? addDays(today, 1) : match[1];
+    if (!isIsoDate(start)) return { text: '날짜를 YYYY-MM-DD 형식으로 알려 주세요.' };
+    const delta = diffDays(trip.startDate, start);
+    if (delta === 0) return { text: `여행이 이미 ${start}에 시작해요.` };
+    if (Math.abs(delta) > 3650) return {text: '날짜 이동은 3650일 이내로 지정해 주세요.'};
+    return change(trip, shiftTrip(trip, delta), `여행 시작일 ${start}로 이동`);
+  }
   match = text.match(/^여행 전체(?:를)? (하루|\d+일) (뒤로 미뤄|앞으로 당겨)(?:줘)?[.!?]*$/);
   if (match) {
     if (!trip.startDate || !trip.endDate) return { text: '먼저 여행 날짜를 정해 주세요.' };
     const delta = (match[1] === '하루' ? 1 : parseInt(match[1])) * (match[2].startsWith('뒤') ? 1 : -1);
     if (Math.abs(delta) > 3650) return {text: '날짜 이동은 3650일 이내로 지정해 주세요.'};
-    return change(trip, { ...trip, startDate: addDays(trip.startDate, delta), endDate: addDays(trip.endDate, delta), stops: trip.stops.map(s => ({ ...s, date: s.date ? addDays(s.date, delta) : null })), stays: trip.stays.map(s => ({ ...s, checkIn: addDays(s.checkIn, delta), checkOut: addDays(s.checkOut, delta) })) }, `여행 전체 ${delta}일 이동`);
+    return change(trip, shiftTrip(trip, delta), `여행 전체 ${delta}일 이동`);
   }
   if (/^여행 날짜(?:를)? (?:아직 )?미정으로 (?:해줘|바꿔)$/.test(text)) {
     if (trip.stays.length) return { text: '숙박 날짜가 연결되어 있어요. 숙박을 먼저 정리한 뒤 날짜를 미정으로 바꿔 주세요.' };
@@ -131,5 +148,6 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
     if (!targets.length) return {text: '삭제할 저장된 장소가 없어요.'};
     return change(trip, targets.reduce((next, s) => removeStop(next, s.id), trip), `${targets.length}곳 삭제`);
   }
+  if (editing && /^(?:여행|일정)/.test(text) && /날짜|시작|오늘|내일|\d{4}-\d{2}-\d{2}/.test(text)) return { text: DATE_HELP };
   return editing ? {text: HELP} : null;
 }
