@@ -122,6 +122,18 @@ trip_regions       trip_stops      accommodation_stays
 
 `auth.uid()`를 `(select auth.uid())`로 감싼 것은 의도적이다. 행마다 다시 부르지 않고 한 번만 계산하게 한다.
 
+### 채팅 기록 (2026-10-07)
+
+`chat_messages`: 계정·메시지 id(기본 키 둘), 여행(목록 대화는 null)·역할·종류·본문(4000자)·부가 정보 `extra`(확인 카드 초안·칩·링크, 64KB)·메시지 시각. 본인 행만 읽는다. `authenticated`에는 `select`만 준다. 여행을 지우거나 탈퇴하면 함께 지워진다. 여행에서 나가도 본인 대화는 남는다.
+
+| 함수 | 누가 | 하는 일 |
+| --- | --- | --- |
+| `append_chat_message(trip_id, message)` | 로그인한 사람, 여행 대화면 그 여행 멤버 | 한 줄을 남긴다. 같은 id는 무시. 그 대화의 최근 200줄 밖은 지운다 |
+| `import_chat_threads(threads)` → 옮긴 줄 수 | 로그인한 사람 | 기기 기록 옮기기. 서버에 이미 있는 대화·남길 수 없는 여행·깨진 줄은 건너뛴다. 대화마다 최근 200줄, 전체 2MB |
+| `clear_chat(trip_id)` | 본인 | 그 대화를 지운다 |
+
+내부 도우미 `insert_chat_message`·`trim_chat_thread`·`can_chat_in`은 직접 부를 수 없다. 오류 코드: 형식·크기 `P0400`, 비로그인·멤버 아님 `42501`. 로컬 확인: `supabase/tests/chat-messages.local.sql`.
+
 ### 공지·문의 (2026-10-01)
 
 | 표 | 담는 것 · 읽기 규칙 |

@@ -92,6 +92,7 @@
 - [AI 없는 채팅 명령 사용법](local-chat-commands.md): 일정 편집·조회·경비·되돌리기 명령과 지원 범위.
 
 - [AI 없는 미배치 날짜 배정](../openspec/changes/local-chat-assignment/proposal.md): 날짜 해석·확인·되돌리기 및 검증 기록.
+- [채팅 기록 서버 저장](../openspec/changes/store-chat-history/proposal.md): 본인만 보는 서버 대화 기록과 기기 기록 옮기기. [설계](superpowers/specs/2026-10-07-chat-history-server-design.md).
 
 구름이 챗봇: [확정 시안과 적용 기록](design/references/cloud-chat-preview.md), [적용 OpenSpec](../openspec/changes/apply-cloud-chat-mascot/proposal.md). 미채택 캐릭터·생성 프롬프트 기록과 낡은 비교판은 정리했으며 최종 미리보기만 유지한다.
 

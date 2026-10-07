@@ -96,7 +96,8 @@ supabase/migrations/                  # 여행·가계부·멤버·버전·권�
 | 로그인 세션 | auth 전역 서비스 | AuthStore가 인증 복원·변경·로그아웃을 관리 |
 | 저장 실패한 입력 | 여행·사용자별 PendingDraftRegistry | 화면 서비스와 별도인 세션 메모리 보관소, 저장 성공·명시적 폐기 시 제거, 로그아웃 시 비공개 초안 정리 |
 | 서버에 저장된 여행·경비·멤버 | 운영 구성의 Supabase 저장소 | 클라이언트 상태는 조회·편집용 사본. 권한·버전·복합 명령 검증 SQL/RPC 존재. 실제 서버 적용은 별도 검증 |
-| 기기의 대화·문의 기록 | `LocalChatHistory`·`LocalSupportRepository` | 현재 사용자 ID를 포함한 키로 읽고 쓴다. 로그인 전에는 guest 키, 소유자를 알 수 없는 과거 공용 키는 삭제 |
+| 대화 기록 | 운영 구성은 `SupabaseChatHistory`(서버, 본인만), 테스트·미리보기는 `LocalChatHistory`(기기) | 새 줄만 `append`한다. 운영 구성은 계정으로 처음 읽거나 쓸 때 그 계정의 기기 기록을 한 번 서버로 옮기고 기기 사본을 지운다(2026-10-07) |
+| 기기의 문의 기록(테스트·미리보기) | `LocalSupportRepository` | 현재 사용자 ID를 포함한 키로 읽고 쓴다. 로그인 전에는 guest 키, 소유자를 알 수 없는 과거 공용 키는 삭제 |
 
 편집 부모가 유지되는 장소·숙소 자식 경로는 같은 서비스 인스턴스를 사용한다. 같은 컴포넌트에서 여행 ID만 바뀌는 경우에도 이전 상태·요청을 명시적으로 초기화한다. Router 재사용 전략이 도입되면 서비스 수명을 다시 검증한다.
 
@@ -127,7 +128,8 @@ N박 N일·D-day·선택 개수·지출 합계는 원본에서 `computed`로 계
 | 여행 | `SupabaseTripRepository` | `isTest` 또는 `designPreview`이면 `LocalStorageTripRepository` |
 | 가계부 | `SupabaseLedgerRepository` | 같은 조건에서 `LocalLedgerRepository` |
 | 초대·멤버 | `SupabaseTripMembers` | 같은 조건에서 `LocalTripMembers` |
-| 문의·대화 기록 | 계정별 키의 로컬 저장소 | 같은 구현 사용 |
+| 문의 | `SupabaseSupportRepository` | 같은 조건에서 `LocalSupportRepository` |
+| 대화 기록 | `SupabaseChatHistory` | 같은 조건에서 `LocalChatHistory` |
 | 지도·장소·AI·영수증 인식 | `adapters.ts`의 실제 제공자 | test 빌드는 `adapters.fixture.ts`로 교체. designPreview만으로 외부 어댑터가 fixture로 바뀌지는 않음 |
 
 실행 선택의 원본은 [app.config.ts](../../app/src/app/app.config.ts), [adapters.ts](../../app/src/app/adapters.ts), [angular.json](../../app/angular.json)이다. 운영에서 과거 기기 여행·가계부 데이터는 정리하며 서버로 자동 이전하지 않는다.
