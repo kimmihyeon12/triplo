@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { createReceiptScanHandler } from './handler.ts';
 import { limitFromEnv, quotaDeps } from '../_shared/quota.ts';
 import { RESPONSE_SCHEMA } from './prompt.ts';
+import { callRecorder, tokenUsage } from '../_shared/usage.ts';
 
 /**
  * ai-plan과 같은 키·모델 설정을 쓴다. 이미지 입력은 같은 generateContent에
@@ -16,6 +17,8 @@ const admin = createClient(
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite';
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+// 실제 호출을 남겨 관리자 사용량 화면이 무료 한도와 비교한다(2026-10-07).
+const record = callRecorder(admin, 'receipt', MODEL);
 
 Deno.serve(
   createReceiptScanHandler({
@@ -25,29 +28,37 @@ Deno.serve(
       return error ? null : data.user;
     },
     async callModel({ system, image, mimeType }) {
-      const res = await fetch(`${ENDPOINT}/${MODEL}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { inlineData: { mimeType, data: image } },
-                { text: '이 사진의 결제 항목을 읽어 줘.' },
-              ],
+      let res: Response;
+      try {
+        res = await fetch(`${ENDPOINT}/${MODEL}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { inlineData: { mimeType, data: image } },
+                  { text: '이 사진의 결제 항목을 읽어 줘.' },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: RESPONSE_SCHEMA,
             },
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            responseSchema: RESPONSE_SCHEMA,
-          },
-        }),
-      });
+          }),
+        });
+      } catch (error) {
+        await record(false);
+        throw error;
+      }
+      if (!res.ok) await record(false);
       if (res.status === 429) throw new Error('quota_exceeded');
       if (!res.ok) throw new Error(`model_error_${res.status}`);
       const body = await res.json();
+      await record(true, tokenUsage(body));
       return body?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
     },
   }),

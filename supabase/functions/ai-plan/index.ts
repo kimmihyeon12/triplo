@@ -2,6 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.116.0';
 import { createAiPlanHandler } from './handler.ts';
 import { limitFromEnv, quotaDeps } from '../_shared/quota.ts';
 import { RESPONSE_SCHEMA } from './prompt.ts';
+import { callRecorder, tokenUsage } from '../_shared/usage.ts';
 
 /**
  * 이 비밀값들은 Supabase Edge 런타임이 넣는다. 브라우저는 볼 수 없다.
@@ -16,6 +17,8 @@ const admin = createClient(
 const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.5-flash-lite';
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+// 실제 호출을 남겨 관리자 사용량 화면이 무료 한도와 비교한다(2026-10-07).
+const record = callRecorder(admin, 'plan', MODEL);
 
 Deno.serve(
   createAiPlanHandler({
@@ -25,23 +28,31 @@ Deno.serve(
       return error ? null : data.user;
     },
     async callModel({ system, user }) {
-      const res = await fetch(`${ENDPOINT}/${MODEL}:generateContent`, {
-        method: 'POST',
-        // 키를 주소에 넣으면 서버 기록에 남는다. 헤더로 보낸다.
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            responseSchema: RESPONSE_SCHEMA,
-          },
-        }),
-      });
+      let res: Response;
+      try {
+        res = await fetch(`${ENDPOINT}/${MODEL}:generateContent`, {
+          method: 'POST',
+          // 키를 주소에 넣으면 서버 기록에 남는다. 헤더로 보낸다.
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents: [{ role: 'user', parts: [{ text: user }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: RESPONSE_SCHEMA,
+            },
+          }),
+        });
+      } catch (error) {
+        await record(false);
+        throw error;
+      }
+      if (!res.ok) await record(false);
       // 하루 한도 초과는 사용자가 할 수 있는 일이 달라 따로 구분한다.
       if (res.status === 429) throw new Error('quota_exceeded');
       if (!res.ok) throw new Error(`model_error_${res.status}`);
       const body = await res.json();
+      await record(true, tokenUsage(body));
       return body?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
     },
   }),
