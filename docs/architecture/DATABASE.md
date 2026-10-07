@@ -165,6 +165,8 @@ trip_regions       trip_stops      accommodation_stays
 
 `admin_usage_summary()` → jsonb는 관리자만 부른다(아니면 `42501`). 태평양 시간 오늘 호출·실패 수, 한국 시간 이번 달 기능·모델별 호출·토큰, DB 크기, `storage.objects` 크기 합, 최근 30일 로그인 사용자를 돌려준다. 무료 한도·단가와 견주는 일은 앱(`features/admin/model/usage.ts`)이 한다. 마이그레이션 `20261007200000_admin_usage.sql`, 로컬 확인 `supabase/tests/admin-usage.local.sql`.
 
+pg_cron 실행 기록(`cron.job_run_details`)은 매분 도는 푸시 발송 때문에 6일 만에 23MB가 됐다(앱 데이터 1.3MB). 매일 7일 지난 기록을 지운다(`20261007300000`). 2026-10-07 한 번 `vacuum full`로 공간을 돌려 DB가 36MB에서 18MB가 됐다.
+
 ### 관리자 판별
 
 `profiles(id, role)`은 역할 전용 표다. 행이 없으면 일반 사용자다. 본인 행 조회만 허용하고 쓰기 권한과 정책은 두지 않아 사용자가 스스로 관리자가 될 수 없다. 계정을 지우면 함께 지운다.
