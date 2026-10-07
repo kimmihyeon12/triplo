@@ -90,11 +90,12 @@ describe('사용자 수별 예상 월 비용', () => {
     const empty = toUsageSummary({ ...RAW, gemini: { ...RAW.gemini, month: [] } });
     expect(projectPerUser(empty)).toBeNull();
   });
-  it('사용자 수마다 Gemini 비용과 Supabase 유료 플랜을 더한 비용을 보인다', () => {
+  it('사용자 수마다 Gemini 월 비용을 보이고, 무료 한도 안의 Supabase 정액을 더하지 않는다', () => {
+    // 표가 Supabase Pro($25)를 항상 더해 10명에도 1명당 3,823원처럼 보였다(2026-10-07 사용자 지적).
     const row = userScenarios(435.05).find((s) => s.users === 100)!;
+    expect(Object.keys(row).sort()).toEqual(['geminiKrw', 'perUserKrw', 'users']);
     expect(row.geminiKrw).toBeCloseTo(43505, 0);
-    expect(row.withProKrw).toBeCloseTo(43505 + SUPABASE_PRO_KRW, 0);
-    expect(row.perUserWithProKrw).toBeCloseTo((43505 + SUPABASE_PRO_KRW) / 100, 1);
+    expect(row.perUserKrw).toBeCloseTo(435.05, 2);
     expect(userScenarios(1).map((s) => s.users)).toEqual([10, 100, 1000, 10000]);
     expect(SUPABASE_PRO_KRW).toBe(25 * 1355);
   });

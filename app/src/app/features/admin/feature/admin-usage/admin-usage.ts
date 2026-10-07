@@ -131,8 +131,7 @@ export class AdminUsagePage {
     return userScenarios(p.perUserKrw).map((row) => ({
       users: `${n(row.users)}명`,
       gemini: won(row.geminiKrw),
-      withPro: won(row.withProKrw),
-      perUser: won(row.perUserWithProKrw),
+      perUser: won(row.perUserKrw),
     }));
   });
 

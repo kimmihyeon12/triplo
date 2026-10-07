@@ -92,8 +92,7 @@
           <thead>
             <tr class="text-left text-ink-3">
               <th scope="col" class="py-1.5 pr-2 font-normal">사용자</th>
-              <th scope="col" class="py-1.5 pr-2 text-right font-normal">Gemini</th>
-              <th scope="col" class="py-1.5 pr-2 text-right font-normal">+Supabase Pro</th>
+              <th scope="col" class="py-1.5 pr-2 text-right font-normal">월 예상</th>
               <th scope="col" class="py-1.5 text-right font-normal">1명당</th>
             </tr>
           </thead>
@@ -102,15 +101,14 @@
               <tr class="border-t border-border">
                 <th scope="row" class="py-2 pr-2 text-left font-normal text-ink">{{ row.users }}</th>
                 <td class="py-2 pr-2 text-right">{{ row.gemini }}</td>
-                <td class="py-2 pr-2 text-right">{{ row.withPro }}</td>
                 <td class="py-2 text-right">{{ row.perUser }}</td>
               </tr>
             }
           </tbody>
         </table>
         <p class="m-0 text-12 leading-normal text-ink-3">
-          Supabase는 무료 한도 안이면 0원이고, 넘으면 사용자 수와 관계없이 월 $25(약 {{ proKrw }}) 정액이에요. 기록이
-          적을수록 추정이 크게 흔들려요.
+          Gemini 유료 단가로 계산한 값이에요. Supabase는 무료 한도 안이면 0원이라 더하지 않았어요. 아래 Supabase 막대가
+          80%를 넘으면 월 $25(약 {{ proKrw }}) 정액 플랜을 고려하세요. 기록이 적을수록 추정이 크게 흔들려요.
         </p>
       } @else {
         <p class="m-0 text-13 text-ink-3" data-testid="usage-scenarios-empty">이번 달 기록이 쌓이면 보여요.</p>

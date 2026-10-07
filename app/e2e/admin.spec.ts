@@ -226,11 +226,11 @@ test('관리자는 사용량 화면에서 무료 한도 대비 사용률과 이�
   await expect(page.getByTestId('usage-meter-db')).toHaveAttribute('data-level', 'ok');
   await expect(page.getByTestId('usage-month')).toContainText('챗봇');
   await expect(page.getByTestId('usage-month-total')).toContainText('1,179원');
-  // 10월 7일까지 1,179원, 활성 12명 → 1명당 월 435원. 100명이면 Gemini 43,505원, Supabase Pro를 더해 77,380원.
+  // 10월 7일까지 1,179원, 활성 12명 → 1명당 월 435원. 100명이면 43,505원. 무료 한도 안의 Supabase 정액은 더하지 않는다.
   const row100 = page.getByTestId('usage-scenarios').getByRole('row', { name: /^100명/ });
   await expect(row100).toContainText('43,505원');
-  await expect(row100).toContainText('77,380원');
-  await expect(row100).toContainText('774원');
+  await expect(row100).toContainText('435원');
+  await expect(page.getByTestId('usage-scenarios')).not.toContainText('77,380원');
   await expectNoHorizontalScroll(page);
 });
 

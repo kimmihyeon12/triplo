@@ -157,15 +157,13 @@ export function projectPerUser(
 export interface UserScenario {
   readonly users: number;
   readonly geminiKrw: number;
-  readonly withProKrw: number;
-  readonly perUserWithProKrw: number;
+  readonly perUserKrw: number;
 }
 
-/** 사용자 수마다 Gemini 비용, Supabase Pro를 더한 비용, 그때 1명당 비용 */
+/**
+ * 사용자 수마다 Gemini 월 비용. Supabase는 무료 한도 안이면 0원이라 더하지 않는다.
+ * 전에는 Pro 정액($25)을 항상 더해 10명에도 1명당 3,823원처럼 보였다(2026-10-07 사용자 지적).
+ */
 export function userScenarios(perUserKrw: number): UserScenario[] {
-  return SCENARIO_USERS.map((users) => {
-    const geminiKrw = perUserKrw * users;
-    const withProKrw = geminiKrw + SUPABASE_PRO_KRW;
-    return { users, geminiKrw, withProKrw, perUserWithProKrw: withProKrw / users };
-  });
+  return SCENARIO_USERS.map((users) => ({ users, geminiKrw: perUserKrw * users, perUserKrw }));
 }
