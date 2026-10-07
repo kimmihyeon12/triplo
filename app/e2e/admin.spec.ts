@@ -204,6 +204,7 @@ test('관리자는 사용량 화면에서 무료 한도 대비 사용률과 이�
           dayStart: '2026-10-07T07:00:00+00:00',
           dayRequests: 420,
           dayFailed: 2,
+          last24hRequests: 431,
           month: [
             { kind: 'chat', model: 'gemini-3.5-flash-lite', requests: 1000, inputTokens: 400000, outputTokens: 300000 },
           ],
@@ -219,9 +220,16 @@ test('관리자는 사용량 화면에서 무료 한도 대비 사용률과 이�
   await expect(gemini).toContainText('420 / 500회 · 84%');
   await expect(gemini).toHaveAttribute('data-level', 'warn');
   await expect(gemini).toContainText('80% 넘음');
+  // 하루 기준이 오후 4시에 바뀌어 0회로 보여도 실제 사용량을 알 수 있게 한다(2026-10-07 사용자 지적).
+  await expect(page.getByTestId('usage-last24h')).toContainText('최근 24시간 431회');
   await expect(page.getByTestId('usage-meter-db')).toHaveAttribute('data-level', 'ok');
   await expect(page.getByTestId('usage-month')).toContainText('챗봇');
   await expect(page.getByTestId('usage-month-total')).toContainText('1,179원');
+  // 10월 7일까지 1,179원, 활성 12명 → 1명당 월 435원. 100명이면 Gemini 43,505원, Supabase Pro를 더해 77,380원.
+  const row100 = page.getByTestId('usage-scenarios').getByRole('row', { name: /^100명/ });
+  await expect(row100).toContainText('43,505원');
+  await expect(row100).toContainText('77,380원');
+  await expect(row100).toContainText('774원');
   await expectNoHorizontalScroll(page);
 });
 

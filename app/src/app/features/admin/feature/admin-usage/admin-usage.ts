@@ -9,8 +9,11 @@ import { adminExit } from '../admin-exit';
 import {
   FREE_LIMITS,
   PRICE_CHECKED_ON,
+  SUPABASE_PRO_KRW,
   monthCost,
+  projectPerUser,
   rowCostKrw,
+  userScenarios,
   usageLevel,
   type AiCallKind,
   type UsageLevel,
@@ -75,6 +78,9 @@ export class AdminUsagePage {
     ];
   });
 
+  /** 하루 기준이 바뀐 직후 0회로 보여도 실제 사용량을 알 수 있게 함께 보인다(2026-10-07). */
+  readonly last24h = computed(() => n(this.summary()?.gemini.last24hRequests ?? 0));
+
   /** Gemini 하루 한도는 태평양 시간 0시에 다시 채워진다. 한국 시간으로 보인다. */
   readonly resetAt = computed(() => {
     const s = this.summary();
@@ -108,6 +114,26 @@ export class AdminUsagePage {
     if (!s) return null;
     const cost = monthCost(s.gemini.month);
     return { krw: won(cost.totalKrw), unpriced: cost.unpricedRequests };
+  });
+
+  readonly proKrw = won(SUPABASE_PRO_KRW);
+
+  /** 이번 달 기록을 한 달로 늘린 활성 사용자 1명당 비용. 기록이 없으면 null(2026-10-07 사용자 요청). */
+  readonly projection = computed(() => {
+    const s = this.summary();
+    const p = s ? projectPerUser(s) : null;
+    return p ? { ...p, perUser: won(p.perUserKrw) } : null;
+  });
+
+  readonly scenarios = computed(() => {
+    const p = this.projection();
+    if (!p) return [];
+    return userScenarios(p.perUserKrw).map((row) => ({
+      users: `${n(row.users)}명`,
+      gemini: won(row.geminiKrw),
+      withPro: won(row.withProKrw),
+      perUser: won(row.perUserWithProKrw),
+    }));
   });
 
   constructor() {

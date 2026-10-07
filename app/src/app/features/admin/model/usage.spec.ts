@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FREE_LIMITS, monthCost, rowCostKrw, toUsageSummary, usageLevel } from './usage';
+import { FREE_LIMITS, SUPABASE_PRO_KRW, monthCost, projectPerUser, rowCostKrw, toUsageSummary, usageLevel, userScenarios } from './usage';
 
 const RAW = {
   measuredAt: '2026-10-07T06:00:00+00:00',
@@ -7,6 +7,7 @@ const RAW = {
     dayStart: '2026-10-07T07:00:00+00:00',
     dayRequests: 42,
     dayFailed: 1,
+    last24hRequests: 50,
     month: [
       { kind: 'chat', model: 'gemini-3.5-flash-lite', requests: 1000, inputTokens: 400_000, outputTokens: 300_000 },
       { kind: 'plan', model: 'old-model', requests: 3, inputTokens: 10, outputTokens: 10 },
@@ -43,6 +44,7 @@ describe('toUsageSummary', () => {
   it('서버 응답을 그대로 옮긴다', () => {
     const s = toUsageSummary(RAW);
     expect(s.gemini.dayRequests).toBe(42);
+    expect(s.gemini.last24hRequests).toBe(50);
     expect(s.gemini.month).toHaveLength(2);
     expect(s.supabase.activeUsers30d).toBe(12);
   });
@@ -50,6 +52,7 @@ describe('toUsageSummary', () => {
     null,
     {},
     { ...RAW, gemini: { ...RAW.gemini, dayRequests: '42' } },
+    { ...RAW, gemini: { ...RAW.gemini, last24hRequests: undefined } },
     { ...RAW, gemini: { ...RAW.gemini, month: [{ kind: 'chat' }] } },
     { ...RAW, supabase: { dbBytes: -1, storageBytes: 0, activeUsers30d: 0 } },
   ])('형식이 깨졌으면 오류다 %#', (raw) => expect(() => toUsageSummary(raw)).toThrow());
@@ -61,5 +64,29 @@ it('무료 한도는 Gemini 하루 500회, DB 500MB, 파일 1GB, 활성 사용�
     dbBytes: 500 * 1024 ** 2,
     storageBytes: 1024 ** 3,
     activeUsers: 50_000,
+  });
+});
+
+describe('사용자 수별 예상 월 비용', () => {
+  it('이번 달 기록을 한 달로 늘려 활성 사용자 1명당 비용을 구한다', () => {
+    // 10월 7일(한국 시간)까지 7일 동안 1,178.85원, 활성 사용자 12명 → 1,178.85 / 12 × 31 / 7
+    const p = projectPerUser(toUsageSummary(RAW))!;
+    expect(p.basisDays).toBe(7);
+    expect(p.users).toBe(12);
+    expect(p.perUserKrw).toBeCloseTo(435.05, 1);
+  });
+  it('활성 사용자나 기록이 없으면 지어내지 않는다', () => {
+    const none = toUsageSummary({ ...RAW, supabase: { ...RAW.supabase, activeUsers30d: 0 } });
+    expect(projectPerUser(none)).toBeNull();
+    const empty = toUsageSummary({ ...RAW, gemini: { ...RAW.gemini, month: [] } });
+    expect(projectPerUser(empty)).toBeNull();
+  });
+  it('사용자 수마다 Gemini 비용과 Supabase 유료 플랜을 더한 비용을 보인다', () => {
+    const row = userScenarios(435.05).find((s) => s.users === 100)!;
+    expect(row.geminiKrw).toBeCloseTo(43505, 0);
+    expect(row.withProKrw).toBeCloseTo(43505 + SUPABASE_PRO_KRW, 0);
+    expect(row.perUserWithProKrw).toBeCloseTo((43505 + SUPABASE_PRO_KRW) / 100, 1);
+    expect(userScenarios(1).map((s) => s.users)).toEqual([10, 100, 1000, 10000]);
+    expect(SUPABASE_PRO_KRW).toBe(25 * 1355);
   });
 });

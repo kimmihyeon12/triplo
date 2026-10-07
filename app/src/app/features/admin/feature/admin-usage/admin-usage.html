@@ -39,6 +39,7 @@
     <section class="flex flex-col gap-4 rounded-panel bg-panel p-4 shadow-panel" aria-labelledby="usage-gemini">
       <h2 id="usage-gemini" class="m-0 text-16 font-bold">Gemini</h2>
       <ng-container *ngTemplateOutlet="bar; context: { $implicit: geminiMeter() }" />
+      <p class="m-0 text-13 tabular-nums text-ink-2" data-testid="usage-last24h">최근 24시간 {{ last24h() }}회</p>
       <p class="m-0 text-12 leading-normal text-ink-3">
         실패 {{ summary()!.gemini.dayFailed }}회 포함. 한도는 {{ resetAt() }}에 다시 채워져요(태평양 시간 0시). 하루
         500회는 기록해 둔 값이라 실제 한도는
@@ -78,6 +79,42 @@
         지금은 무료 등급이라 실제 청구액은 0원이에요. 표준 단가({{ priceCheckedOn }} 확인)와 1달러 1,355원으로 계산한
         추정이에요.
       </p>
+    </section>
+
+    <section class="flex flex-col gap-3 rounded-panel bg-panel p-4 shadow-panel" aria-labelledby="usage-scenarios">
+      <h2 id="usage-scenarios" class="m-0 text-16 font-bold">사용자 수별 예상 월 비용</h2>
+      @if (projection(); as p) {
+        <p class="m-0 text-13 leading-normal text-ink-2">
+          이번 달 {{ p.basisDays }}일 기록, 활성 사용자 {{ p.users }}명 기준으로 1명당 Gemini 월 약
+          <strong class="tabular-nums">{{ p.perUser }}</strong>이에요.
+        </p>
+        <table class="w-full border-collapse text-12 tabular-nums" data-testid="usage-scenarios">
+          <thead>
+            <tr class="text-left text-ink-3">
+              <th scope="col" class="py-1.5 pr-2 font-normal">사용자</th>
+              <th scope="col" class="py-1.5 pr-2 text-right font-normal">Gemini</th>
+              <th scope="col" class="py-1.5 pr-2 text-right font-normal">+Supabase Pro</th>
+              <th scope="col" class="py-1.5 text-right font-normal">1명당</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of scenarios(); track row.users) {
+              <tr class="border-t border-border">
+                <th scope="row" class="py-2 pr-2 text-left font-normal text-ink">{{ row.users }}</th>
+                <td class="py-2 pr-2 text-right">{{ row.gemini }}</td>
+                <td class="py-2 pr-2 text-right">{{ row.withPro }}</td>
+                <td class="py-2 text-right">{{ row.perUser }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="m-0 text-12 leading-normal text-ink-3">
+          Supabase는 무료 한도 안이면 0원이고, 넘으면 사용자 수와 관계없이 월 $25(약 {{ proKrw }}) 정액이에요. 기록이
+          적을수록 추정이 크게 흔들려요.
+        </p>
+      } @else {
+        <p class="m-0 text-13 text-ink-3" data-testid="usage-scenarios-empty">이번 달 기록이 쌓이면 보여요.</p>
+      }
     </section>
 
     <section class="flex flex-col gap-4 rounded-panel bg-panel p-4 shadow-panel" aria-labelledby="usage-supabase">

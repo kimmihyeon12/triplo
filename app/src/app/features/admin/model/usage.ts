@@ -46,6 +46,8 @@ export interface UsageSummary {
     readonly dayStart: string;
     readonly dayRequests: number;
     readonly dayFailed: number;
+    /** 하루 기준이 바뀐 직후에도 실제 사용량이 보이도록 함께 센다(2026-10-07). */
+    readonly last24hRequests: number;
     readonly month: readonly MonthRow[];
   };
   readonly supabase: {
@@ -104,6 +106,7 @@ export function toUsageSummary(raw: unknown): UsageSummary {
       dayStart: text(gemini['dayStart']),
       dayRequests: count(gemini['dayRequests']),
       dayFailed: count(gemini['dayFailed']),
+      last24hRequests: count(gemini['last24hRequests']),
       month: month.map((item) => {
         const row = record(item);
         const kind = text(row['kind']);
@@ -123,4 +126,40 @@ export function toUsageSummary(raw: unknown): UsageSummary {
       activeUsers30d: count(supabase['activeUsers30d']),
     },
   };
+}
+
+/** Supabase Pro 플랜 월 $25(https://supabase.com/pricing, 2026-10-07 확인). 사용자 수와 관계없는 정액이다. */
+export const SUPABASE_PRO_KRW = 25 * USD_KRW;
+const SCENARIO_USERS = [10, 100, 1000, 10000] as const;
+
+/**
+ * 이번 달 기록을 한 달로 늘려 최근 30일 활성 사용자 1명당 Gemini 비용을 구한다(2026-10-07 사용자 요청).
+ * 사용자나 기록이 없으면 null이다. 모르는 값을 0원으로 보이면 비용을 낮춰 보게 된다.
+ */
+export function projectPerUser(
+  summary: UsageSummary,
+): { perUserKrw: number; basisDays: number; users: number } | null {
+  const users = summary.supabase.activeUsers30d;
+  if (!users || !summary.gemini.month.length) return null;
+  const kst = new Date(new Date(summary.measuredAt).getTime() + 9 * 60 * 60 * 1000);
+  const basisDays = kst.getUTCDate();
+  const daysInMonth = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth() + 1, 0)).getUTCDate();
+  const monthKrw = monthCost(summary.gemini.month).totalKrw;
+  return { perUserKrw: (monthKrw / users) * (daysInMonth / basisDays), basisDays, users };
+}
+
+export interface UserScenario {
+  readonly users: number;
+  readonly geminiKrw: number;
+  readonly withProKrw: number;
+  readonly perUserWithProKrw: number;
+}
+
+/** 사용자 수마다 Gemini 비용, Supabase Pro를 더한 비용, 그때 1명당 비용 */
+export function userScenarios(perUserKrw: number): UserScenario[] {
+  return SCENARIO_USERS.map((users) => {
+    const geminiKrw = perUserKrw * users;
+    const withProKrw = geminiKrw + SUPABASE_PRO_KRW;
+    return { users, geminiKrw, withProKrw, perUserWithProKrw: withProKrw / users };
+  });
 }
