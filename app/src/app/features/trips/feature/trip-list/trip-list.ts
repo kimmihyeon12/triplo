@@ -17,6 +17,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { PageBar } from '../../../../core/page-bar';
 import { AuthStore } from '../../../auth/data/auth-store';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiReveal } from '../../../../shared/ui/reveal/reveal';
 import { UiBadge } from '../../../../shared/ui/badge/badge';
 import { VisitMapBanner } from '../../../stats/ui/visit-map-banner/visit-map-banner';
 import { canDeleteTrip, memberSummary } from '../../util/sharing';
@@ -33,6 +34,7 @@ import { UiMemberStack } from '../../../../shared/ui/member-stack/member-stack';
     RouterLink,
     IconComponent,
     UiRowMenu,
+    UiReveal,
     VisitMapBanner,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

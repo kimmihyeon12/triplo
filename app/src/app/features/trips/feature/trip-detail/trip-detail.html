@@ -448,7 +448,7 @@
                         </div>
                         @if (deleteDayStayId() === seg.stay.id) {
                           <div
-                            class="col-span-full mt-2 flex flex-col gap-2 border-t border-border pt-3"
+                            appReveal class="col-span-full mt-2 flex flex-col gap-2 border-t border-border pt-3"
                           >
                             <p class="text-13">
                               ‘{{ seg.stay.name }}’을 삭제할까요? 되돌릴 수 없습니다.
@@ -663,7 +663,7 @@
                         </div>
                         @if (deleteStopId() === seg.stop.id) {
                           <div
-                            class="col-span-full mt-2 flex flex-col gap-2 border-t border-border pt-3"
+                            appReveal class="col-span-full mt-2 flex flex-col gap-2 border-t border-border pt-3"
                           >
                             <p class="text-13">
                               ‘{{ seg.stop.name }}’을 일정에서 삭제할까요? 되돌릴 수 없습니다.

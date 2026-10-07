@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon';
 import { UiEmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiReveal } from '../../../../shared/ui/reveal/reveal';
 import { kakaoSearchUrl, mapQuery, naverSearchUrl } from '../../../places/data/map-links';
 import { copyText } from '../../../../core/clipboard';
 import { formatKoreanDate } from '../../../../shared/util/dates';
@@ -17,7 +18,7 @@ import { UiMapLinks } from '../../../places/ui/map-links/map-links';
   host: { class: 'block' },
   selector: 'app-trip-stays',
   imports: [
-    UiMapLinks, UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu],
+    UiMapLinks, UiButton, UiBadge, UiNotice, IconComponent, UiEmptyState, UiRowMenu, UiReveal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './trip-stays.html',
 })

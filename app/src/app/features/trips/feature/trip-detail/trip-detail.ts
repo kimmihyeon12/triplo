@@ -1,6 +1,7 @@
 import { UiMemo } from '../../../../shared/ui/memo/memo';
 import { UiActionBar } from '../../../../shared/ui/action-bar/action-bar';
 import { UiRowMenu, type RowMenuItem } from '../../../../shared/ui/row-menu/row-menu';
+import { UiReveal } from '../../../../shared/ui/reveal/reveal';
 import { UiTabs, type TabItem } from '../../../../shared/ui/tabs/tabs';
 import { UiDismissible } from '../../../../shared/ui/dismissible/dismissible';
 import { UiNotice } from '../../../../shared/ui/notice/notice';
@@ -75,6 +76,7 @@ type MapTarget = { readonly id: string; readonly name: string; readonly address:
     UiActionBar,
     UiDismissible,
     UiRowMenu,
+    UiReveal,
     UiTabs,
     RouterLink,
     IconComponent,
