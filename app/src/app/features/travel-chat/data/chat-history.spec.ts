@@ -21,11 +21,32 @@ describe('LocalChatHistory', () => {
     const storage = memory();
     let account = 'a';
     const history = new LocalChatHistory(storage, () => `tc.chat.${account}`);
-    await history.save(null, [said('A의 비밀 여행')]);
+    await history.append(null, said('A의 비밀 여행'));
     account = 'b';
     expect(await history.load(null)).toEqual([]);
-    await history.save(null, [said('B의 대화')]);
+    await history.append(null, said('B의 대화'));
     account = 'a';
     expect((await history.load(null)).map((m) => m.text)).toEqual(['A의 비밀 여행']);
+  });
+
+  it('한 줄씩 덧붙이고 대화마다 최근 200줄만 남긴다', async () => {
+    const history = new LocalChatHistory(memory(), 'tc.chat.a');
+    for (let i = 0; i < 205; i++) await history.append('t1', said(`줄 ${i}`));
+    await history.append(null, said('목록'));
+    const trip = await history.load('t1');
+    expect(trip).toHaveLength(200);
+    expect(trip[0]!.text).toBe('줄 5');
+    expect((await history.load(null)).map((m) => m.text)).toEqual(['목록']);
+  });
+
+  it('기기 대화를 열쇠별로 내보내고 forget하면 모두 지운다', async () => {
+    const storage = memory();
+    const history = new LocalChatHistory(storage, 'tc.chat.a');
+    await history.append(null, said('목록'));
+    await history.append('t1', said('여행'));
+    expect(Object.keys(history.exportThreads()).sort()).toEqual(['__list__', 't1']);
+    history.forget();
+    expect(storage.map.has('tc.chat.a')).toBe(false);
+    expect(history.exportThreads()).toEqual({});
   });
 });

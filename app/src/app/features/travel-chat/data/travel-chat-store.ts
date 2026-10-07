@@ -419,7 +419,7 @@ export class TravelChatStore {
     };
     const messages = [...this.messages(), message];
     patchState(this.state, { messages });
-    void this.history.save(this.trip()?.id ?? null, messages);
+    void this.history.append(this.trip()?.id ?? null, message).catch(() => undefined);
   }
 
   /** 모델에게 넘길 앞선 대화. 시스템 안내는 빼고 주고받은 말만 준다. */

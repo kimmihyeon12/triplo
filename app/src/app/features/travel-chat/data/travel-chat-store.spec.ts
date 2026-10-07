@@ -6,7 +6,7 @@ import type { PlaceCandidate } from '../../places/model/place';
 import type { Trip, TripStop } from '../../trips/model/trip';
 import { CHAT_TURN_LIMIT, type ChatReply } from '../model/chat';
 import { CHAT_PROVIDER, type ChatProvider } from './chat-provider';
-import { CHAT_HISTORY, LocalChatHistory, type KeyValueStorage } from './chat-history';
+import { CHAT_HISTORY, LocalChatHistory, type ChatHistoryStore, type KeyValueStorage } from './chat-history';
 import { TravelChatStore } from './travel-chat-store';
 import { LEDGER_REPOSITORY, type LedgerRepository } from '../../expenses/data/ledger-repository';
 import { applyOp } from '../../expenses/util/ledger-ops';
@@ -584,5 +584,33 @@ describe('실제 장소 후보로 답하기', () => {
     expect(places.map((p) => [p.name, p.why, p.verified])).toEqual([['테라로사', '바다 가는 길', true]]);
     // 고른 장소를 이름으로 다시 찾지 않는다.
     expect(searched).toEqual(['강릉시 카페']);
+  });
+});
+
+describe('TravelChatStore 대화 저장', () => {
+  it('새 말풍선 한 줄만 저장소에 덧붙인다', async () => {
+    const appended: { tripId: string | null; text: string }[] = [];
+    const history: ChatHistoryStore = {
+      load: async () => [],
+      append: async (tripId, message) => void appended.push({ tripId, text: message.text }),
+      clear: async () => undefined,
+    };
+    const injector = Injector.create({
+      providers: [
+        { provide: CHAT_PROVIDER, useValue: fakeChat() },
+        { provide: PLACE_SEARCH, useValue: fakeSearch() },
+        { provide: CHAT_HISTORY, useValue: history },
+        TravelChatStore,
+        { provide: LEDGER_REPOSITORY, useValue: fakeLedger().repo },
+      ],
+    });
+    const store = runInInjectionContext(injector, () => injector.get(TravelChatStore));
+    store.open('list', null);
+    store.notifyTripSaved('t1');
+    store.notifyTripSaved('t2');
+    expect(appended).toEqual([
+      { tripId: null, text: '여행에 담았어요. 일정을 확인해 보세요.' },
+      { tripId: null, text: '여행에 담았어요. 일정을 확인해 보세요.' },
+    ]);
   });
 });

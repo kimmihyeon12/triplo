@@ -4,17 +4,23 @@ import type { ChatMessage } from '../model/chat';
 /**
  * 대화 기록 저장소. 화면은 이 인터페이스만 쓴다.
  *
- * 지금은 기기에만 저장하고 서버로 보내지 않는다. 사진·여행 기록을 기본
- * 비공개로 두는 것과 같은 기준이다. 13-B에서 서버 구현으로 갈아 끼울 때
- * 화면 코드는 고치지 않는다.
+ * 운영 빌드는 서버 구현(`SupabaseChatHistory`, 본인만 읽음), 테스트 빌드와
+ * 미리보기는 이 파일의 기기 구현을 쓴다. 화면 코드는 어느 쪽인지 모른다.
  *
  * 대화는 여행마다 따로 보관한다. 여행 목록에서 연 대화는 아직 대상 여행이
  * 없으므로 `null` 열쇠를 쓴다.
  */
 export interface ChatHistoryStore {
   load(tripId: string | null): Promise<readonly ChatMessage[]>;
-  save(tripId: string | null, messages: readonly ChatMessage[]): Promise<void>;
+  /** 새 줄만 받는다. 화면 상태가 원본이다. */
+  append(tripId: string | null, message: ChatMessage): Promise<void>;
   clear(tripId: string | null): Promise<void>;
+}
+
+/** 기기에 남은 대화 묶음. 서버로 옮길 때 쓴다. 열쇠는 여행 id, 목록 대화는 '__list__'. */
+export interface DeviceChatThreads {
+  exportThreads(): Record<string, readonly ChatMessage[]>;
+  forget(): void;
 }
 
 export const CHAT_HISTORY = new InjectionToken<ChatHistoryStore>('CHAT_HISTORY');
@@ -56,7 +62,7 @@ function isMessage(value: unknown): value is ChatMessage {
  * 읽다가 형식이 깨진 줄을 만나면 그 줄만 버리고 나머지를 살린다. 대화 전체를
  * 잃는 것보다 낫고, 저장 형식이 바뀌어도 앞선 기록이 화면을 막지 않는다.
  */
-export class LocalChatHistory implements ChatHistoryStore {
+export class LocalChatHistory implements ChatHistoryStore, DeviceChatThreads {
   /**
    * 열쇠는 계정마다 달라야 한다. 함수로 받으면 읽고 쓸 때마다 지금 계정의 열쇠를 쓴다.
    * 하나의 열쇠를 쓰면 같은 기기에서 계정을 바꿨을 때 이전 계정의 대화가 보이고
@@ -101,10 +107,23 @@ export class LocalChatHistory implements ChatHistoryStore {
     return this.read()[tripId ?? LIST_KEY] ?? [];
   }
 
-  async save(tripId: string | null, messages: readonly ChatMessage[]): Promise<void> {
+  async append(tripId: string | null, message: ChatMessage): Promise<void> {
     const threads = this.read();
-    threads[tripId ?? LIST_KEY] = messages.slice(-MAX_MESSAGES);
+    const key = tripId ?? LIST_KEY;
+    threads[key] = [...(threads[key] ?? []), message].slice(-MAX_MESSAGES);
     this.write(threads);
+  }
+
+  exportThreads(): Record<string, readonly ChatMessage[]> {
+    return this.read();
+  }
+
+  forget(): void {
+    try {
+      this.storage.removeItem(this.storageKey);
+    } catch {
+      // 저장소 접근이 막혀도 대화는 이어진다.
+    }
   }
 
   async clear(tripId: string | null): Promise<void> {
