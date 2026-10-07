@@ -8,6 +8,7 @@ const RAW = {
     dayRequests: 42,
     dayFailed: 1,
     last24hRequests: 50,
+    monthSince: '2026-09-30T15:00:00+00:00',
     month: [
       { kind: 'chat', model: 'gemini-3.5-flash-lite', requests: 1000, inputTokens: 400_000, outputTokens: 300_000 },
       { kind: 'plan', model: 'old-model', requests: 3, inputTokens: 10, outputTokens: 10 },
@@ -53,6 +54,7 @@ describe('toUsageSummary', () => {
     {},
     { ...RAW, gemini: { ...RAW.gemini, dayRequests: '42' } },
     { ...RAW, gemini: { ...RAW.gemini, last24hRequests: undefined } },
+    { ...RAW, gemini: { ...RAW.gemini, monthSince: 5 } },
     { ...RAW, gemini: { ...RAW.gemini, month: [{ kind: 'chat' }] } },
     { ...RAW, supabase: { dbBytes: -1, storageBytes: 0, activeUsers30d: 0 } },
   ])('형식이 깨졌으면 오류다 %#', (raw) => expect(() => toUsageSummary(raw)).toThrow());
@@ -74,6 +76,13 @@ describe('사용자 수별 예상 월 비용', () => {
     expect(p.basisDays).toBe(7);
     expect(p.users).toBe(12);
     expect(p.perUserKrw).toBeCloseTo(435.05, 1);
+  });
+  it('기록이 이번 달 중간부터 쌓였으면 그날부터 센다', () => {
+    // 2026-10-07 오후에 기록을 시작했다. 1일부터 7일로 나누면 하루치를 7일치로 나눠 7분의 1로 낮아졌다.
+    const late = toUsageSummary({ ...RAW, gemini: { ...RAW.gemini, monthSince: '2026-10-07T06:52:00+00:00' } });
+    const p = projectPerUser(late)!;
+    expect(p.basisDays).toBe(1);
+    expect(p.perUserKrw).toBeCloseTo((1178.85 / 12) * 31, 1);
   });
   it('활성 사용자나 기록이 없으면 지어내지 않는다', () => {
     const none = toUsageSummary({ ...RAW, supabase: { ...RAW.supabase, activeUsers30d: 0 } });

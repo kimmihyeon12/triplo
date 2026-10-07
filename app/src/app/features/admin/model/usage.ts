@@ -48,6 +48,8 @@ export interface UsageSummary {
     readonly dayFailed: number;
     /** 하루 기준이 바뀐 직후에도 실제 사용량이 보이도록 함께 센다(2026-10-07). */
     readonly last24hRequests: number;
+    /** 이번 달 첫 기록 시각. 기록이 없으면 null. 예상 월 비용을 이 날부터 센다. */
+    readonly monthSince: string | null;
     readonly month: readonly MonthRow[];
   };
   readonly supabase: {
@@ -107,6 +109,7 @@ export function toUsageSummary(raw: unknown): UsageSummary {
       dayRequests: count(gemini['dayRequests']),
       dayFailed: count(gemini['dayFailed']),
       last24hRequests: count(gemini['last24hRequests']),
+      monthSince: gemini['monthSince'] === null ? null : text(gemini['monthSince']),
       month: month.map((item) => {
         const row = record(item);
         const kind = text(row['kind']);
@@ -141,8 +144,11 @@ export function projectPerUser(
 ): { perUserKrw: number; basisDays: number; users: number } | null {
   const users = summary.supabase.activeUsers30d;
   if (!users || !summary.gemini.month.length) return null;
-  const kst = new Date(new Date(summary.measuredAt).getTime() + 9 * 60 * 60 * 1000);
-  const basisDays = kst.getUTCDate();
+  // 기록이 이번 달 중간부터 쌓였으면 그날부터 센다. 1일부터 세면 비용을 낮춰 본다(2026-10-07).
+  const kstDay = (iso: string) => new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const kst = kstDay(summary.measuredAt);
+  const since = summary.gemini.monthSince ? kstDay(summary.gemini.monthSince).getUTCDate() : 1;
+  const basisDays = Math.max(1, kst.getUTCDate() - since + 1);
   const daysInMonth = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth() + 1, 0)).getUTCDate();
   const monthKrw = monthCost(summary.gemini.month).totalKrw;
   return { perUserKrw: (monthKrw / users) * (daysInMonth / basisDays), basisDays, users };

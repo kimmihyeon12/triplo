@@ -7,7 +7,7 @@ import { SupportError } from '../../support/data/support-data-client';
 
 const SUMMARY = {
   measuredAt: '2026-10-07T06:00:00Z',
-  gemini: { dayStart: '2026-10-07T07:00:00Z', dayRequests: 3, dayFailed: 0, last24hRequests: 3, month: [] },
+  gemini: { dayStart: '2026-10-07T07:00:00Z', dayRequests: 3, dayFailed: 0, last24hRequests: 3, monthSince: null, month: [] },
   supabase: { dbBytes: 1, storageBytes: 0, activeUsers30d: 1 },
 };
 

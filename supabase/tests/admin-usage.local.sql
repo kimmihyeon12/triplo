@@ -26,6 +26,7 @@ insert into storage.objects (metadata) values ('{"size": 1000}'), ('{"size": 234
 \ir ../migrations/20260930000002_profiles_role.sql
 \ir ../migrations/20261007200000_admin_usage.sql
 \ir ../migrations/20261007400000_usage_last24h.sql
+\ir ../migrations/20261007500000_usage_month_since.sql
 insert into public.profiles values ('11111111-1111-1111-1111-111111111111', 'admin');
 \set ON_ERROR_STOP 0
 \set A '11111111-1111-1111-1111-111111111111'
@@ -55,6 +56,9 @@ set request.jwt.claim.sub = :'A';
 select 'A day requests (3)' as t, (public.admin_usage_summary() -> 'gemini' ->> 'dayRequests')::int;
 -- 지난달 기록(이틀 넘게 전)은 빠지고 오늘 3줄만 최근 24시간에 든다
 select 'A last 24h requests (3)' as t, (public.admin_usage_summary() -> 'gemini' ->> 'last24hRequests')::int;
+-- 이번 달 첫 기록은 오늘 넣은 줄이다. 지난달(이틀 전) 줄을 집으면 거짓이 된다.
+select 'A month since is first record this month (t)' as t,
+  (public.admin_usage_summary() -> 'gemini' ->> 'monthSince')::timestamptz > now() - interval '1 day';
 select 'A day failed (1)' as t, (public.admin_usage_summary() -> 'gemini' ->> 'dayFailed')::int;
 select 'A month chat requests (2)' as t, (m ->> 'requests')::int
   from jsonb_array_elements(public.admin_usage_summary() -> 'gemini' -> 'month') m where m ->> 'kind' = 'chat';

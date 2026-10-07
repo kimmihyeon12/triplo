@@ -205,6 +205,7 @@ test('관리자는 사용량 화면에서 무료 한도 대비 사용률과 이�
           dayRequests: 420,
           dayFailed: 2,
           last24hRequests: 431,
+          monthSince: '2026-09-30T15:00:00+00:00',
           month: [
             { kind: 'chat', model: 'gemini-3.5-flash-lite', requests: 1000, inputTokens: 400000, outputTokens: 300000 },
           ],
