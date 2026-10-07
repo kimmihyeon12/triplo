@@ -227,10 +227,14 @@ export class TravelChatStore {
       undoTrip: null,
       recentRegions: [],
     });
-    await this.history.clear(this.trip()?.id ?? null);
-    if (this.scope() === 'list') {
-      await this.history.clear(null);
-      this.setTrip(null);
+    const targets = this.scope() === 'list' ? [this.trip()?.id ?? null, null] : [this.trip()?.id ?? null];
+    if (this.scope() === 'list') this.setTrip(null);
+    // 서버 기록을 지우지 못해도 새 대화는 연다. 다른 기기에서 다시 보일 수 있다는 것만 알린다.
+    const results = await Promise.allSettled(targets.map((id) => this.history.clear(id)));
+    if (results.some((r) => r.status === 'rejected')) {
+      patchState(this.state, {
+        error: { kind: 'other', message: '이전 대화를 서버에서 지우지 못했어요. 다른 기기에서 다시 보일 수 있어요.' },
+      });
     }
   }
 
@@ -414,7 +418,7 @@ export class TravelChatStore {
       reference: null,
       draft: null,
       chips: [],
-      at: new Date().toISOString(),
+      at: nextAt(this.messages().at(-1)?.at),
       ...partial,
     };
     const messages = [...this.messages(), message];
@@ -507,4 +511,14 @@ function toChatError(error: unknown): ChatError {
   if (error instanceof TypeError)
     return { kind: 'offline', message: 'AI에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.' };
   return { kind: 'other', message };
+}
+
+/**
+ * 새 줄의 시각. 앞 줄과 같은 밀리초면 1ms 뒤로 민다. 서버는 시각 순서로 대화를 돌려주므로
+ * 질문과 바로 이어진 앱의 답이 같은 시각이면 다시 열었을 때 순서가 뒤바뀔 수 있다.
+ */
+function nextAt(previous: string | undefined): string {
+  const now = Date.now();
+  const last = previous ? Date.parse(previous) : Number.NaN;
+  return new Date(Number.isNaN(last) || now > last ? now : last + 1).toISOString();
 }

@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { Injector, runInInjectionContext } from '@angular/core';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PLACE_SEARCH, type PlaceSearchProvider } from '../../places/data/place-search';
 import type { PlaceCandidate } from '../../places/model/place';
 import type { Trip, TripStop } from '../../trips/model/trip';
@@ -612,5 +612,50 @@ describe('TravelChatStore 대화 저장', () => {
       { tripId: null, text: '여행에 담았어요. 일정을 확인해 보세요.' },
       { tripId: null, text: '여행에 담았어요. 일정을 확인해 보세요.' },
     ]);
+  });
+
+  function storeWith(history: ChatHistoryStore): TravelChatStore {
+    const injector = Injector.create({
+      providers: [
+        { provide: CHAT_PROVIDER, useValue: fakeChat() },
+        { provide: PLACE_SEARCH, useValue: fakeSearch() },
+        { provide: CHAT_HISTORY, useValue: history },
+        TravelChatStore,
+        { provide: LEDGER_REPOSITORY, useValue: fakeLedger().repo },
+      ],
+    });
+    return runInInjectionContext(injector, () => injector.get(TravelChatStore));
+  }
+
+  afterEach(() => vi.useRealTimers());
+
+  it('같은 밀리초에 만든 줄도 앞 줄보다 늦은 시각으로 남긴다', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-07T00:00:00.000Z'));
+    const ats: string[] = [];
+    const store = storeWith({ load: async () => [], append: async (_t, m) => void ats.push(m.at), clear: async () => undefined });
+    store.open('list', null);
+    store.notifyTripSaved('t1');
+    store.notifyTripSaved('t2');
+    store.notifyTripSaved('t3');
+    expect(ats).toEqual(['2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.001Z', '2026-10-07T00:00:00.002Z']);
+  });
+
+  it('서버 기록 지우기가 실패해도 새 대화로 비우고 실패를 알린다', async () => {
+    const cleared: (string | null)[] = [];
+    const store = storeWith({
+      load: async () => [],
+      append: async () => undefined,
+      clear: async (tripId) => {
+        cleared.push(tripId);
+        throw new Error('offline');
+      },
+    });
+    store.open('list', null);
+    store.notifyTripSaved('t1');
+    await expect(store.reset()).resolves.toBeUndefined();
+    expect(store.messages()).toEqual([]);
+    expect(cleared).toEqual([null, null]);
+    expect(store.error()).toEqual({ kind: 'other', message: '이전 대화를 서버에서 지우지 못했어요. 다른 기기에서 다시 보일 수 있어요.' });
   });
 });
