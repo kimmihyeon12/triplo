@@ -129,7 +129,7 @@ trip_regions       trip_stops      accommodation_stays
 | 함수 | 누가 | 하는 일 |
 | --- | --- | --- |
 | `append_chat_message(trip_id, message)` | 로그인한 사람, 여행 대화면 그 여행 멤버 | 한 줄을 남긴다. 같은 id는 무시. 그 대화의 최근 200줄 밖은 지운다 |
-| `import_chat_threads(threads)` → 옮긴 줄 수 | 로그인한 사람 | 기기 기록 옮기기. 서버에 이미 있는 대화·남길 수 없는 여행·깨진 줄은 건너뛴다. 대화마다 최근 200줄, 전체 2MB |
+| `import_chat_threads(threads)` → 옮긴 줄 수 | 로그인한 사람 | 기기 기록 옮기기. 서버 대화에 메시지 id로 합치고 이미 있는 줄·남길 수 없는 여행·깨진 줄은 건너뛴다. 대화마다 최근 200줄로 자른다. 한 번에 2MB |
 | `clear_chat(trip_id)` | 본인 | 그 대화를 지운다 |
 
 내부 도우미 `insert_chat_message`·`trim_chat_thread`·`can_chat_in`은 직접 부를 수 없다. 오류 코드: 형식·크기 `P0400`, 비로그인·멤버 아님 `42501`. 로컬 확인: `supabase/tests/chat-messages.local.sql`.
