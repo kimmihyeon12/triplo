@@ -193,3 +193,41 @@ test('없는 공지를 열면 목록으로 돌아가며 알린다', async ({ pag
   await expect(page).toHaveURL(/\/admin\/notices$/);
   await expect(page.getByTestId('error-toast')).toContainText('이미 지워진 공지예요');
 });
+
+test('관리자는 사용량 화면에서 무료 한도 대비 사용률과 이번 달 추정 비용을 본다', async ({ page }) => {
+  await answerIsAdmin(page, true);
+  await page.route('**/rest/v1/rpc/admin_usage_summary', (route) =>
+    route.fulfill({
+      json: {
+        measuredAt: '2026-10-07T06:00:00+00:00',
+        gemini: {
+          dayStart: '2026-10-07T07:00:00+00:00',
+          dayRequests: 420,
+          dayFailed: 2,
+          month: [
+            { kind: 'chat', model: 'gemini-3.5-flash-lite', requests: 1000, inputTokens: 400000, outputTokens: 300000 },
+          ],
+        },
+        supabase: { dbBytes: 31457280, storageBytes: 0, activeUsers30d: 12 },
+      },
+    }),
+  );
+  await page.goto('/admin');
+  await page.getByTestId('admin-usage').click();
+  await expect(page).toHaveURL(/\/admin\/usage$/);
+  const gemini = page.getByTestId('usage-meter-gemini-day');
+  await expect(gemini).toContainText('420 / 500회 · 84%');
+  await expect(gemini).toHaveAttribute('data-level', 'warn');
+  await expect(gemini).toContainText('80% 넘음');
+  await expect(page.getByTestId('usage-meter-db')).toHaveAttribute('data-level', 'ok');
+  await expect(page.getByTestId('usage-month')).toContainText('챗봇');
+  await expect(page.getByTestId('usage-month-total')).toContainText('1,179원');
+  await expectNoHorizontalScroll(page);
+});
+
+test('사용량을 불러오지 못하면 숫자를 지어내지 않고 알린다', async ({ page }) => {
+  await answerIsAdmin(page, true);
+  await page.route('**/rest/v1/rpc/admin_usage_summary', (route) => route.fulfill({ json: { broken: true } }));
+  await page.goto('/admin/usage');
+  await expect(page.getByTestId('admin-usage-error')).toBeVisible();
+});

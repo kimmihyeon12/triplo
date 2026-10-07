@@ -55,4 +55,10 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./feature/admin-inquiry/admin-inquiry').then((m) => m.AdminInquiryPage),
     title: '문의 상세',
   },
+  {
+    path: 'usage',
+    canActivate: [requireAdmin],
+    loadComponent: () => import('./feature/admin-usage/admin-usage').then((m) => m.AdminUsagePage),
+    title: '사용량',
+  },
 ];
