@@ -83,11 +83,15 @@ export class AiPlanStore {
   /** 선택된 항목을 코스 순서대로. 옮긴 항목은 옮긴 일차로 들어 있다. */
   private readonly selectedEntries = computed(() => this.courses().flatMap((c) => c.entries).filter((e) => e.selected));
   private readonly selectedItems = computed(() => this.selectedEntries().map((e) => e.item));
-  readonly costSummary = computed(() => summarizeEstimates(this.selectedItems(), this.partySize()));
+  /** 실제로 담기는 항목. 날짜 미정이면 숙소는 숙박으로 담지 않으므로 합계·예산에서도 뺀다. */
+  private readonly savedItems = computed(() =>
+    this.startDate() ? this.selectedItems() : this.selectedItems().filter((i) => i.kind !== 'stay'),
+  );
+  readonly costSummary = computed(() => summarizeEstimates(this.savedItems(), this.partySize()));
   /** 가계부 분류와 같은 칸으로 나눈 합계. 담은 뒤 실제 지출과 같은 분류로 비교할 수 있다. */
   readonly groupSummary = computed(() =>
     summarizeGroups(
-      this.selectedItems().map((i) => ({ group: expenseCategoryOf(i.kind) as BudgetGroup, estimate: i.estimate })),
+      this.savedItems().map((i) => ({ group: expenseCategoryOf(i.kind) as BudgetGroup, estimate: i.estimate })),
       this.partySize(),
       BUDGET_GROUPS,
     ),

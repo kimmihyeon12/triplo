@@ -334,6 +334,18 @@ describe('AiPlanStore 코스와 예산 묶음', () => {
     store.toggle(store.courses()[0]!.entries[0]!.item.id);
     expect(store.staysNeedDates()).toBe(false);
   });
+  it('날짜 미정이면 담지 않는 숙소 비용을 합계와 예산에서 뺀다', async () => {
+    const store = undatedTrip(fakeAi({ generate: async () => [
+      { day: 1, order: 1, start: '10:00', moveToNext: null, name: '안목해변', kind: 'activity', estimate: est(5000) },
+      { day: 1, order: 9, start: null, moveToNext: null, name: '강릉 호텔', kind: 'stay', estimate: est(120000) },
+    ] }));
+    store.set('budget', 10000);
+    await store.generate();
+    expect(store.costSummary().max).toBe(5000);
+    expect(store.groupSummary().stay).toEqual({ min: 0, max: 0, known: 0, unknown: 0 });
+    expect(store.budgetRemaining()).toBe(5000);
+    expect(store.budgetExceeded()).toBe(false);
+  });
 });
 
 describe('AiPlanStore 마지막 날 숙소', () => {
