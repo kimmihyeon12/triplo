@@ -1,6 +1,7 @@
-import { addDays, diffDays, isIsoDate, todayIso } from '../../../shared/util/dates';
+import { addDays, diffDays, isIsoDate, todayIso, validateTripDates } from '../../../shared/util/dates';
 import type { Trip, TripStop } from '../../trips/model/trip';
 import { placeStopOnDate, removeStop } from '../../trips/util/itinerary';
+import { applyPeriodChange, periodChangeImpact } from '../../trips/util/period';
 import { change, type LocalResult } from './local-command-draft';
 import { commandDate, commandTargets } from './local-command-targets';
 import { localQuery } from './local-queries';
@@ -14,6 +15,20 @@ const STAY_NOTICE = '체류시간은 이제 일정에 따로 적지 않아요. �
 function shiftTrip(trip: Trip, delta: number): Trip {
   return { ...trip, startDate: addDays(trip.startDate!, delta), endDate: addDays(trip.endDate!, delta), stops: trip.stops.map(s => ({ ...s, date: s.date ? addDays(s.date, delta) : null })), stays: trip.stays.map(s => ({ ...s, checkIn: addDays(s.checkIn, delta), checkOut: addDays(s.checkOut, delta) })) };
 }
+const DAY = String.raw`오늘|내일|모레|\d{4}-\d{2}-\d{2}|\d{1,2}\s*월\s*\d{1,2}\s*일`;
+/** '날짜 오늘부터 내일까지로 설정'처럼 여행 기간을 정하는 말(2026-10-07 사용자 제보: AI로 넘어가 장소 코스만 제안받았다). */
+const PERIOD = new RegExp(String.raw`^(?:(?:여행|일정)\s*)?(?:날짜|기간|일정)(?:을|를)?\s*(${DAY})\s*부터\s*(${DAY})\s*까지\s*(?:으로|로)?\s*(?:설정|변경|바꿔|정해|해)\S*[.!?]*$`);
+
+/** 말한 날을 YYYY-MM-DD로 바꾼다. 'M월 D일'은 올해로 본다. */
+function dayOf(token: string, today: string): string {
+  if (token === '오늘') return today;
+  if (token === '내일') return addDays(today, 1);
+  if (token === '모레') return addDays(today, 2);
+  const md = token.match(/^(\d{1,2})\s*월\s*(\d{1,2})\s*일$/);
+  if (md) return `${today.slice(0, 4)}-${md[1]!.padStart(2, '0')}-${md[2]!.padStart(2, '0')}`;
+  return token;
+}
+
 const END = '(?:해줘|해주세요|해요|해|줘|주세요|바꿔줘|바꿔|변경해|설정해|설정|수정해|수정)?[.!?]*';
 
 function select(text: string, trip: Trip, today: string, includeExcluded = false): TripStop[] | string {
@@ -34,6 +49,21 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   // 장소를 말했으면 '알아서'는 맡긴다는 말일 뿐이다. 빼고 장소 명령으로 읽는다.
   text = text.replace(/\s*(?:너가|네가|니가)?\s*알아서\s*/g, ' ').trim();
   if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
+  const period = text.match(PERIOD);
+  if (period) {
+    if (!trip) return { text: '먼저 날짜를 정할 여행을 열어 주세요.' };
+    const start = dayOf(period[1]!, today);
+    const end = dayOf(period[2]!, today);
+    const valid = validateTripDates(start, end);
+    if (!valid.ok) return { text: valid.message };
+    // 여행 편집 화면과 같다. 새 기간 밖의 장소는 지우지 않고 미배치로 옮기고, 숙박은 그대로 둔다.
+    const impact = periodChangeImpact(trip, start, end);
+    const notes = [
+      impact.displacedStops.length ? `기간 밖 장소 ${impact.displacedStops.length}곳은 미배치로 옮겨요` : '',
+      impact.outOfRangeStays.length ? `숙박 ${impact.outOfRangeStays.length}곳은 기간 밖에 그대로 남아요` : '',
+    ].filter(Boolean).join(', ');
+    return change(trip, applyPeriodChange(trip, start, end), `여행 날짜 ${start} ~ ${end}${notes ? ` (${notes})` : ''}`);
+  }
   const editing = /옮|이동|시작하게|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
   const querying = /일정|장소|미배치|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);
   // 화면 열기는 여는 대상(가계부·지도·일정)이 있을 때만 명령이다. '불국사 몇 시에 열어'처럼

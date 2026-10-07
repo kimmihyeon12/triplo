@@ -63,6 +63,35 @@ describe('local commands', () => {
     const result = localCommand('오죽헌 2일차로 알아서 옮겨', trip, '2026-10-07')!;
     expect(applyDraft(trip, result.draft!).stops.find(s => s.id === 'a')!.date).toBe('2026-10-02');
   });
+  // 2026-10-07 사용자 제보: '날짜 오늘부터 내일까지로 설정'이 AI로 넘어가 장소 코스 제안만 받았다.
+  it.each([
+    ['날짜 오늘부터 내일까지로 설정', '2026-10-07', '2026-10-08'],
+    ['여행 기간 2026-10-02부터 2026-10-03까지로 바꿔', '2026-10-02', '2026-10-03'],
+    ['일정 10월 1일부터 10월 2일까지로 정해줘', '2026-10-01', '2026-10-02'],
+    ['여행 날짜를 오늘부터 모레까지로 변경해', '2026-10-07', '2026-10-09'],
+  ])('%s는 여행 기간을 그대로 정한다', (text, start, end) => {
+    const result = localCommand(text, trip, '2026-10-07')!;
+    expect(result.draft).toBeTruthy();
+    const next = applyDraft(trip, result.draft!);
+    expect([next.startDate, next.endDate]).toEqual([start, end]);
+  });
+  it('새 기간 밖의 장소는 지우지 않고 미배치로 옮기고 몇 곳인지 알린다', () => {
+    const result = localCommand('날짜 오늘부터 내일까지로 설정', trip, '2026-10-07')!;
+    const next = applyDraft(trip, result.draft!);
+    expect(next.stops.map(s => s.date)).toEqual([null, null, null]);
+    expect(next.stops).toHaveLength(3);
+    expect(result.text).toContain('2곳');
+  });
+  it('날짜가 없던 여행도 기간을 정한다', () => {
+    const undated = { ...trip, startDate: null, endDate: null, stops: trip.stops.map(s => ({ ...s, date: null })) };
+    const next = applyDraft(undated, localCommand('날짜 오늘부터 내일까지로 설정', undated, '2026-10-07')!.draft!);
+    expect([next.startDate, next.endDate]).toEqual(['2026-10-07', '2026-10-08']);
+  });
+  it('끝나는 날이 먼저면 바꾸지 않고 알린다', () => {
+    const result = localCommand('날짜 내일부터 오늘까지로 설정', trip, '2026-10-07')!;
+    expect(result.draft).toBeUndefined();
+    expect(result.text).toContain('종료일');
+  });
   it('여행이 이미 그날 시작하면 바꾸지 않는다', () => {
     const result = localCommand('일정 오늘로 옮겨', trip, '2026-10-01')!;
     expect(result.draft).toBeUndefined();
