@@ -33,6 +33,7 @@
 | [채팅 기록 서버 저장 설계](superpowers/specs/2026-10-07-chat-history-server-design.md) | AI 대화를 본인만 보는 서버 기록으로 옮기는 표·함수·기기 기록 이전 결정 |
 | [관리자 권한 설계](superpowers/specs/2026-09-29-admin-access-design.md) | 관리자 판별 방식·`/admin` 진입 범위와 근거. 요구사항은 기획안 36절에 있다 |
 | [공지·문의 관리 설계](superpowers/specs/2026-10-01-support-admin-design.md) | 공지·문의 서버 저장과 관리자 공지·문의 관리 화면의 결정과 근거 |
+| [관리자 사용량·비용 설계](superpowers/specs/2026-10-07-admin-usage-design.md) | Gemini·Supabase 무료 한도 대비 사용률과 유료 전환 비용 추정 화면, AI 호출 기록 표. [OpenSpec](../openspec/changes/add-admin-usage/proposal.md) |
 | [AI 답변 품질 개선 설계](superpowers/specs/2026-10-01-chat-grounded-places-design.md) | 일정 짜기·챗봇이 실제 장소 후보 위에서 정해진 일만 하게 하는 설계와 프롬프트 초안. [OpenSpec](../openspec/changes/ground-ai-places/proposal.md) |
 | [프로젝트 README](../README.md) | 앱 실행·테스트 명령 |
 | [AGENTS.md](../AGENTS.md) / [CLAUDE.md](../CLAUDE.md) | 모든 에이전트의 공통 규칙 / Claude Code 진입점 |

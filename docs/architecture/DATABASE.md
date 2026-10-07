@@ -159,6 +159,12 @@ trip_regions       trip_stops      accommodation_stays
 
 오류 코드: 길이·값 `P0400`, 없는 대상 `P0404`, 문의 횟수 초과 `P0429`, 권한 없음 `42501`. 내부 도우미 `require_admin()`·`clean_text()`는 다른 함수 안에서만 쓰며 `authenticated`가 직접 부를 수 없다(2026-10-07). 로컬 확인: `supabase/tests/support.local.sql`.
 
+### AI 호출 기록과 사용량 집계 (2026-10-07)
+
+`ai_calls(at, kind, model, ok, input_tokens, output_tokens)`는 서버 함수(`ai-plan`·`ai-chat`·`receipt-scan`)가 Gemini를 실제로 부를 때마다 service_role로 한 줄 넣는다. 실패·시간 초과도 남긴다. 사용자 id는 없다. `ai_usage`(사용자별 요청 횟수, 실패 시 되돌림)와 다르다. RLS를 켜고 `anon`·`authenticated` 권한을 모두 거둬 사용자는 읽지 못한다. pg_cron이 매일 90일 지난 줄을 지운다(`20261007200001`).
+
+`admin_usage_summary()` → jsonb는 관리자만 부른다(아니면 `42501`). 태평양 시간 오늘 호출·실패 수, 한국 시간 이번 달 기능·모델별 호출·토큰, DB 크기, `storage.objects` 크기 합, 최근 30일 로그인 사용자를 돌려준다. 무료 한도·단가와 견주는 일은 앱(`features/admin/model/usage.ts`)이 한다. 마이그레이션 `20261007200000_admin_usage.sql`, 로컬 확인 `supabase/tests/admin-usage.local.sql`.
+
 ### 관리자 판별
 
 `profiles(id, role)`은 역할 전용 표다. 행이 없으면 일반 사용자다. 본인 행 조회만 허용하고 쓰기 권한과 정책은 두지 않아 사용자가 스스로 관리자가 될 수 없다. 계정을 지우면 함께 지운다.
