@@ -4,6 +4,7 @@ import { placeStopOnDate, removeStop } from '../../trips/util/itinerary';
 import { change, type LocalResult } from './local-command-draft';
 import { commandDate, commandTargets } from './local-command-targets';
 import { localQuery } from './local-queries';
+import { isDistributeRequest } from './local-distribute';
 
 const HELP = '장소 이름과 변경할 값을 명확히 알려 주세요. 예: 오죽헌 2일차로 옮겨 / 오죽헌 메모에 입장권 확인 추가해';
 /** 체류시간은 화면에서 없앴다(2026-09-30 사용자 결정). 저장값은 보유하지만 명령으로 바꾸거나 세지 않는다. */
@@ -27,6 +28,11 @@ export function localCommand(input: string, trip: Trip | null, today = todayIso(
   let text = input.trim();
   if (/(?:\d+일차|오늘|내일|\d{4}-\d{2}-\d{2})(?:으로|로)$/.test(text)) text += ' 옮겨';
   if (/체류시간/.test(text)) return { text: STAY_NOTICE };
+  // 여러 날에 나눠 담기는 앱의 나눠 담기(local-distribute)가 맡는다. '옮겨'가 있어도 여기서 가로채지 않는다(2026-10-07).
+  const named = !!trip?.stops.some(s => s.name && text.includes(s.name));
+  if (isDistributeRequest(text) && !named) return null;
+  // 장소를 말했으면 '알아서'는 맡긴다는 말일 뿐이다. 빼고 장소 명령으로 읽는다.
+  text = text.replace(/\s*(?:너가|네가|니가)?\s*알아서\s*/g, ' ').trim();
   if (/^(?:로컬 명령|내부 명령|할 수 있는 일|명령어)(?: 알려줘| 보여줘)?$/.test(text)) return { text: '일정 조회, 미배치 배정, 장소 날짜·순서·고정 시각·메모·제외, 여행 제목·날짜 변경, 중복·시간 충돌·숙박 누락 조회, 경비 조회·기록·예산, 변경 되돌리기를 AI 없이 처리해요.' };
   const editing = /옮|이동|시작하게|배정|배치|바꿔|변경|수정|고정|해제|메모|제외|포함|복원|미뤄|당겨|맨 앞|맨 뒤|취소|삭제|지워|빼줘|미정으로/.test(text.replace(/미배치/g, ''));
   const querying = /일정|장소|미배치|숙소|숙박|몇\s*일차|중복|충돌|겹치|카페|좌표/.test(text) && /보여|알려|찾아|합계|몇|없|누락|복사|내보내|넣었/.test(text);

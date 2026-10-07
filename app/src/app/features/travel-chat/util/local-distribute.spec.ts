@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createStop, createTrip } from '../../trips/util/factories';
 import type { Trip } from '../../trips/model/trip';
 import { answerLocally } from './local-answer';
+import { localCommand } from './local-commands';
 import { applyDraft, previewDraft } from './chat-draft';
 import type { DistributeDraft } from '../model/chat';
 
@@ -39,6 +40,20 @@ describe('저장된 장소를 여러 날에 나눠 담기', () => {
     expect(new Set(result.assignments.map((a) => a.date))).toEqual(new Set(['2026-10-02', '2026-10-03']));
   });
 
+  // 2026-10-07 사용자 제보: '알아서'·날짜 나열을 알아듣지 못해 사용법 안내만 나왔다.
+  it.each([
+    ['미배치장소 1일차 2일차 너가 알아서옮겨', ['2026-10-02', '2026-10-03']],
+    ['미배치 장소 1~2일차에 골고루 넣어줘', ['2026-10-02', '2026-10-03']],
+    ['1일차랑 3일차에 미배치 알아서 배치해', ['2026-10-02', '2026-10-04']],
+    ['미배치 장소 적당히 나눠서 넣어줘', ['2026-10-02', '2026-10-03', '2026-10-04']],
+  ])('%s는 말한 날에만 나눠 담는다', (text, dates) => {
+    const result = edit(text) as { action: string; assignments: { date: string }[] };
+    expect(result?.action).toBe('distribute');
+    expect([...new Set(result.assignments.map((a) => a.date))].sort()).toEqual(dates);
+  });
+  it('나눠 담기 문장은 장소 명령이 가로채지 않는다', () => {
+    expect(localCommand('미배치장소 1일차 2일차 너가 알아서옮겨', trip(), '2026-10-01')).toBeNull();
+  });
   it('한 날짜로 모두 옮기는 명령은 그대로 한 날짜 배정이다', () => {
     expect(edit('미배치 장소 모두 1일차로 배정해')).toEqual({ action: 'assign-unassigned', date: '2026-10-02' });
   });

@@ -10,9 +10,13 @@ import type { ChatReply } from '../model/chat';
  */
 
 /** 여러 날에 나누라는 말. 한 날짜로 모두 옮기는 명령(local-assignment)과 구분한다. */
-const SPREAD = /나눠|나누어|일차별|날짜별|하루씩|일차에|코스\s*(로|를)?\s*(짜|구성)|일정\s*(으로|에)\s*(담|배치|나눠)/;
-const ALL = /모두|전부|전체|저장된|해당\s*여행|장소들/;
+const SPREAD = /나눠|나누어|알아서|골고루|고르게|적당히|일차별|날짜별|하루씩|일차에|코스\s*(로|를)?\s*(짜|구성)|일정\s*(으로|에)\s*(담|배치|나눠)/;
+const ALL = /모두|전부|전체|저장된|미배치|해당\s*여행|장소들/;
 const RANGE_DAYS = /(\d+)\s*일\s*차\s*부터\s*(\d+)\s*일\s*차/;
+/** '1~2일차'처럼 물결표로 이은 범위 */
+const RANGE_TILDE = /(\d+)\s*(?:일\s*차)?\s*[~\-]\s*(\d+)\s*일\s*차/;
+/** '1일차 2일차', '1일차랑 3일차'처럼 늘어놓은 날. 범위가 아니므로 말한 날만 쓴다. */
+const LIST_DAYS = /(\d+)\s*일\s*차/g;
 const RANGE_DATES = /(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*부터\s*(?:(\d{1,2})\s*월\s*)?(\d{1,2})\s*일/;
 
 const reply = (text: string): ChatReply => ({
@@ -31,6 +35,13 @@ function datesFor(text: string, trip: Trip): string[] | null {
     if (from < 1 || to < from || to > all.length) return null;
     return all.slice(from - 1, to);
   }
+  const tilde = RANGE_TILDE.exec(text);
+  if (tilde) {
+    const from = Number(tilde[1]);
+    const to = Number(tilde[2]);
+    if (from < 1 || to < from || to > all.length) return null;
+    return all.slice(from - 1, to);
+  }
   const dates = RANGE_DATES.exec(text);
   if (dates) {
     const year = start.slice(0, 4);
@@ -39,6 +50,11 @@ function datesFor(text: string, trip: Trip): string[] | null {
     const to = `${year}-${pad(dates[3] ?? dates[1]!)}-${pad(dates[4]!)}`;
     if (from < start || to > end || to < from) return null;
     return enumerateDays(from, to);
+  }
+  const listed = [...new Set([...text.matchAll(LIST_DAYS)].map((m) => Number(m[1])))].sort((a, b) => a - b);
+  if (listed.length) {
+    if (listed[0]! < 1 || listed.at(-1)! > all.length) return null;
+    return listed.map((day) => all[day - 1]!);
   }
   return all;
 }
@@ -80,9 +96,14 @@ export function distributeStops(stops: readonly TripStop[], dates: readonly stri
   return out;
 }
 
+/** 여러 날에 나눠 담으라는 말인가. 장소 명령(local-commands)이 먼저 가로채지 않게 쓴다. */
+export function isDistributeRequest(text: string): boolean {
+  const ranged = RANGE_DAYS.test(text) || RANGE_TILDE.test(text) || RANGE_DATES.test(text) || /\d+\s*일\s*차/.test(text);
+  return SPREAD.test(text) && (ALL.test(text) || ranged);
+}
+
 export function distributeAnswer(text: string, trip: Trip | null): ChatReply | null {
-  const ranged = RANGE_DAYS.test(text) || RANGE_DATES.test(text);
-  if (!SPREAD.test(text) || !(ALL.test(text) || ranged)) return null;
+  if (!isDistributeRequest(text)) return null;
   if (!trip) return null;
   if (!trip.startDate || !trip.endDate) return reply('먼저 여행 날짜를 정해 주세요. 날짜가 있어야 일차별로 나눌 수 있어요.');
   const dates = datesFor(text, trip);

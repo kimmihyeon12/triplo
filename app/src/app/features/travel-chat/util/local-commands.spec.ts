@@ -59,6 +59,10 @@ describe('local commands', () => {
     expect(next.stops.find(s => s.id === 'a')!.date).toBe(start);
     expect(next.stops.find(s => s.id === 'c')!.date).toBeNull();
   });
+  it('장소 이름을 말하면 알아서라는 말이 있어도 그 장소만 옮긴다', () => {
+    const result = localCommand('오죽헌 2일차로 알아서 옮겨', trip, '2026-10-07')!;
+    expect(applyDraft(trip, result.draft!).stops.find(s => s.id === 'a')!.date).toBe('2026-10-02');
+  });
   it('여행이 이미 그날 시작하면 바꾸지 않는다', () => {
     const result = localCommand('일정 오늘로 옮겨', trip, '2026-10-01')!;
     expect(result.draft).toBeUndefined();
