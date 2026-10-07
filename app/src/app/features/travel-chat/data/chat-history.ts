@@ -20,7 +20,8 @@ export interface ChatHistoryStore {
 /** 기기에 남은 대화 묶음. 서버로 옮길 때 쓴다. 열쇠는 여행 id, 목록 대화는 '__list__'. */
 export interface DeviceChatThreads {
   exportThreads(): Record<string, readonly ChatMessage[]>;
-  forget(): void;
+  /** 서버로 옮긴 대화 하나를 기기에서 지운다. */
+  forgetThread(key: string): void;
 }
 
 export const CHAT_HISTORY = new InjectionToken<ChatHistoryStore>('CHAT_HISTORY');
@@ -118,7 +119,13 @@ export class LocalChatHistory implements ChatHistoryStore, DeviceChatThreads {
     return this.read();
   }
 
-  forget(): void {
+  forgetThread(key: string): void {
+    const threads = this.read();
+    delete threads[key];
+    if (Object.keys(threads).length > 0) {
+      this.write(threads);
+      return;
+    }
     try {
       this.storage.removeItem(this.storageKey);
     } catch {

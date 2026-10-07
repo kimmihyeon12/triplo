@@ -80,7 +80,9 @@ begin
 end;
 $$;
 
--- 기기 기록 옮기기. 서버에 이미 있는 대화, 남길 수 없는 여행의 대화, 깨진 줄은 건너뛴다.
+-- 기기 기록 옮기기. 서버 대화에 메시지 id로 합친다. 이미 있는 줄은 다시 넣지 않고, 남길 수 없는 여행의
+-- 대화와 깨진 줄은 건너뛴다. 대화를 통째로 건너뛰면 옮기기가 한 번 실패한 사이 새로 쓴 줄 때문에
+-- 다음 옮기기에서 옛 기록이 버려진다. 앱은 대화별로 나눠 보내고 성공한 대화만 기기에서 지운다.
 create function public.import_chat_threads(p_threads jsonb) returns integer
   language plpgsql security definer set search_path = '' as $$
 declare
@@ -95,8 +97,6 @@ begin
     v_trip := nullif(v_key, '__list__');
     continue when jsonb_typeof(v_messages) is distinct from 'array';
     continue when not public.can_chat_in(v_trip);
-    continue when exists (select 1 from public.chat_messages
-                           where user_id = v_user and trip_id is not distinct from v_trip);
     v_len := jsonb_array_length(v_messages);
     for v_message in select value from jsonb_array_elements(v_messages) with ordinality e(value, n)
                       where n > v_len - 200 loop
@@ -106,6 +106,7 @@ begin
         null;
       end;
     end loop;
+    perform public.trim_chat_thread(v_user, v_trip);
   end loop;
   return v_count;
 end;

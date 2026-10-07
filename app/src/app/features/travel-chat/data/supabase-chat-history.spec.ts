@@ -19,10 +19,10 @@ function fakeData(rows: ChatRow[] = []) {
 }
 
 function fakeDevice(threads: Record<string, readonly ChatMessage[]> = {}) {
-  const device: DeviceChatThreads & { forgotten: number } = {
-    forgotten: 0,
+  const device: DeviceChatThreads & { forgotten: string[] } = {
+    forgotten: [],
     exportThreads: () => threads,
-    forget() { this.forgotten += 1; },
+    forgetThread(key) { this.forgotten.push(key); },
   };
   return device;
 }
@@ -69,7 +69,7 @@ describe('SupabaseChatHistory', () => {
     expect(calls.filter((c) => c.fn === 'import_chat_threads')).toEqual([
       { fn: 'import_chat_threads', args: { p_threads: { __list__: [toChatRow(message('old'))] } } },
     ]);
-    expect(device.forgotten).toBe(1);
+    expect(device.forgotten).toEqual(['__list__']);
   });
 
   it('옮기기 전에 보낸 말은 옮기기가 끝난 뒤에 저장한다', async () => {
@@ -85,7 +85,7 @@ describe('SupabaseChatHistory', () => {
     fake.failNext();
     const history = new SupabaseChatHistory(fake.data, device, () => 'a');
     await history.load(null);
-    expect(device.forgotten).toBe(0);
+    expect(device.forgotten).toEqual([]);
   });
 
   it('기기 기록이 없으면 옮기기를 부르지 않는다', async () => {
@@ -110,5 +110,77 @@ describe('SupabaseChatHistory', () => {
     expect(await history.load(null)).toEqual([]);
     await history.append(null, message('m'));
     expect(calls).toEqual([]);
+  });
+
+  it('대화마다 나눠 옮기고 성공한 대화만 기기에서 지운다', async () => {
+    const calls: string[] = [];
+    const data: ChatDataClient = {
+      thread: async () => [],
+      call: async (_fn, args) => {
+        const keys = Object.keys(args['p_threads'] as object);
+        calls.push(keys.join(','));
+        if (keys.includes('t1')) throw new Error('offline');
+        return 1;
+      },
+    };
+    const device = fakeDevice({ __list__: [message('a')], t1: [message('b')] });
+    await new SupabaseChatHistory(data, device, () => 'u').load(null);
+    expect(calls.sort()).toEqual(['__list__', 't1']);
+    expect(device.forgotten).toEqual(['__list__']);
+  });
+
+  it('큰 대화는 서버 상한보다 작게 나눠 보내고, 서버가 받지 않을 큰 줄은 뺀다', async () => {
+    const sizes: number[] = [];
+    const ids: string[] = [];
+    const data: ChatDataClient = {
+      thread: async () => [],
+      call: async (_fn, args) => {
+        sizes.push(new TextEncoder().encode(JSON.stringify(args['p_threads'])).length);
+        ids.push(...((args['p_threads'] as Record<string, { id: string }[]>)['t1'] ?? []).map((r) => r.id));
+        return 0;
+      },
+    };
+    const big = 'x'.repeat(60_000);
+    const lines = Array.from({ length: 40 }, (_, i) => message(`m${i}`, { copyText: big }));
+    const tooBig = message('huge', { copyText: 'y'.repeat(70_000) });
+    const device = fakeDevice({ t1: [...lines, tooBig] });
+    await new SupabaseChatHistory(data, device, () => 'u').load('t1');
+    expect(sizes.length).toBeGreaterThan(1);
+    expect(Math.max(...sizes)).toBeLessThan(1_500_000);
+    expect(ids).toEqual(lines.map((m) => m.id));
+    expect(device.forgotten).toEqual(['t1']);
+  });
+
+  it('기기 저장소를 읽을 수 없어도 서버 대화를 읽고 쓴다', async () => {
+    const { data, calls } = fakeData([toChatRow(message('m1'))]);
+    const device: DeviceChatThreads = {
+      exportThreads: () => { throw new DOMException('blocked', 'SecurityError'); },
+      forgetThread: () => undefined,
+    };
+    const history = new SupabaseChatHistory(data, device, () => 'u');
+    expect((await history.load(null)).map((m) => m.id)).toEqual(['m1']);
+    await history.append(null, message('m2'));
+    expect(calls.map((c) => c.fn)).toEqual(['append_chat_message']);
+  });
+
+  it('지우기는 앞서 보낸 줄의 저장이 끝난 뒤에 보낸다', async () => {
+    const finished: string[] = [];
+    let release: () => void = () => undefined;
+    const data: ChatDataClient = {
+      thread: async () => [],
+      call: async (fn) => {
+        if (fn === 'append_chat_message') await new Promise<void>((r) => (release = r));
+        finished.push(fn);
+        return null;
+      },
+    };
+    const history = new SupabaseChatHistory(data, fakeDevice(), () => 'u');
+    const appending = history.append(null, message('m1'));
+    const clearing = history.clear(null);
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+    release();
+    await Promise.all([appending, clearing]);
+    expect(finished).toEqual(['append_chat_message', 'clear_chat']);
   });
 });

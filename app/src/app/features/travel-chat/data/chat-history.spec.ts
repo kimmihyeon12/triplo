@@ -39,14 +39,15 @@ describe('LocalChatHistory', () => {
     expect((await history.load(null)).map((m) => m.text)).toEqual(['목록']);
   });
 
-  it('기기 대화를 열쇠별로 내보내고 forget하면 모두 지운다', async () => {
+  it('기기 대화를 열쇠별로 내보내고 옮긴 대화만 지운다', async () => {
     const storage = memory();
     const history = new LocalChatHistory(storage, 'tc.chat.a');
     await history.append(null, said('목록'));
     await history.append('t1', said('여행'));
     expect(Object.keys(history.exportThreads()).sort()).toEqual(['__list__', 't1']);
-    history.forget();
+    history.forgetThread('__list__');
+    expect(Object.keys(history.exportThreads())).toEqual(['t1']);
+    history.forgetThread('t1');
     expect(storage.map.has('tc.chat.a')).toBe(false);
-    expect(history.exportThreads()).toEqual({});
   });
 });

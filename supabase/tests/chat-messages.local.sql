@@ -73,8 +73,12 @@ select 'B import (2)' as t, import_chat_threads('{
   "gone": [{"id":"i5","role":"user","text":"지운 여행","at":"2026-10-01T00:00:00Z","extra":{}}]
 }');
 select 'B rows after import (2)' as t, count(*) from chat_messages;
--- 서버에 이미 있는 대화는 건너뛴다
-select 'B import again (0)' as t, import_chat_threads('{"__list__":[{"id":"i9","role":"user","text":"또","at":"2026-10-02T00:00:00Z","extra":{}}]}');
+-- 서버에 이미 있는 대화에는 id로 합친다. 이미 있는 줄은 다시 넣지 않는다(옮기기 재시도에도 잃지 않는다)
+select 'B import merge (1)' as t, import_chat_threads('{"__list__":[{"id":"i1","role":"user","text":"예전 질문","at":"2026-10-01T00:00:00Z","extra":{}},{"id":"i9","role":"user","text":"또","at":"2026-10-02T00:00:00Z","extra":{}}]}');
+select 'B rows after merge (3)' as t, count(*) from chat_messages;
+-- 합친 뒤에도 대화마다 최근 200줄만 남긴다
+select 'B import 250 keeps last 200 (200)' as t, import_chat_threads(jsonb_build_object('__list__', (select jsonb_agg(jsonb_build_object('id','k'||n,'role','user','text','줄','at',('2026-10-03T00:00:00Z'::timestamptz + n * interval '1 second'),'extra','{}'::jsonb)) from generate_series(1, 250) n)));
+select 'B list trimmed (200)' as t, count(*) from chat_messages where trip_id is null;
 select 'B import too big (P0400)' as t, import_chat_threads(jsonb_build_object('__list__', jsonb_build_array(jsonb_build_object('id','x','role','user','text',repeat('a',2000001),'at','2026-10-01T00:00:00Z','extra','{}'::jsonb))));
 
 -- 지우기
