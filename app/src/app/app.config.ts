@@ -46,7 +46,7 @@ import { supabaseSupportDataClient } from './features/support/data/support-data-
 import { clearLocalSupport } from './features/support/data/local-support-cleanup';
 import { APP_VERSION } from './core/version';
 import { MapConfig } from './features/places/data/map-config';
-import { CHAT_HISTORY, LocalChatHistory } from './features/travel-chat/travel-chat';
+import { CHAT_HISTORY, LocalChatHistory, SupabaseChatHistory, supabaseChatDataClient } from './features/travel-chat/travel-chat';
 import { ADAPTER_PROVIDERS } from './adapters';
 
 /** 브라우저가 localStorage 접근을 막으면 예외 대신 실패 상태로 이어지도록 감싼다. */
@@ -195,10 +195,20 @@ export const appConfig: ApplicationConfig = {
     },
     // 지도·장소 검색·AI 어댑터. 테스트 빌드는 파일째 고정 응답으로 바뀐다(adapters.ts).
     ...ADAPTER_PROVIDERS,
-    // 대화 기록은 기기에만 남긴다. 사진·여행 기록 기본 비공개와 같은 기준이다.
+    // 대화 기록은 실행 앱에서 서버에 남기고 본인만 본다(2026-10-07). 기기에 남은 대화는
+    // 그 계정으로 처음 열 때 서버로 옮긴다. 테스트 앱과 미리보기는 기기 저장을 쓴다.
     {
       provide: CHAT_HISTORY,
-      useFactory: () => new LocalChatHistory(new SafeLocalStorage(), accountKey('chat')),
+      useFactory: () => {
+        const device = new LocalChatHistory(new SafeLocalStorage(), accountKey('chat'));
+        if (environment.isTest || environment.designPreview) return device;
+        const auth = inject(AuthStore);
+        return new SupabaseChatHistory(
+          supabaseChatDataClient(() => auth.dataClient()),
+          device,
+          () => auth.user()?.id ?? null,
+        );
+      },
     },
     // 설치형 앱 요건. 개발·테스트에서는 캐시가 변경을 가리므로 끈다.
     // 새 버전을 열 때·돌아올 때 확인해 반영한다(core/app-update.ts).

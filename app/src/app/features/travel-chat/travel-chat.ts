@@ -7,6 +7,8 @@
 export { ChatSheet } from './feature/chat-sheet/chat-sheet';
 export { CHAT_PROVIDER, type ChatProvider } from './data/chat-provider';
 export { CHAT_HISTORY, LocalChatHistory, type ChatHistoryStore } from './data/chat-history';
+export { SupabaseChatHistory } from './data/supabase-chat-history';
+export { supabaseChatDataClient } from './data/chat-data-client';
 export { FixtureChatProvider } from './data/fixture-chat-provider';
 export { EdgeChatProvider } from './data/edge-chat-provider';
 export { AiDisclaimer } from './ui/ai-disclaimer/ai-disclaimer';
